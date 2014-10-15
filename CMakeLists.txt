@@ -71,22 +71,28 @@ ENDIF(DOXYGEN_FOUND)
 #      FORCE)
 #ENDIF(NOT CMAKE_BUILD_TYPE)
 
-#include(CheckCXXCompilerFlag)
-#check_cxx_compiler_flag(-std=c++03 HAS_STD_FLAG)
-#check_cxx_compiler_flag(--std=c++03 HAS_STD_FLAG_ALTERNATIVE)
-#if (HAS_STD_FLAG)
-#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++03")
-#elseif (HAS_STD_FLAG_ALTERNATIVE)
-#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++03")
-#else()
-#  message("Neither --std=c++03 nor -std=c++03 seem to work.  Moving on.")
-#endif()
-
 ## require proper c++, standard is C++03, flag reads: c++98
 ##SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -ansi -pedantic -Wno-long-long -Wshadow -Werror=overloaded-virtual"   )
 #SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -g3")
 #SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3")
 #SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS} -O3 -g3")
+
+######################################
+#
+# check for C++11
+#
+######################################
+
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag(-std=c++11 HAS_CPP11)
+check_cxx_compiler_flag(-std=c++0x HAS_CPP11_ALTERNATIVE)
+if (HAS_CPP11)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+elseif (HAS_CPP11_ALTERNATIVE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+else()
+  message("No C++11 support.  Moving on.")
+endif()
 
 # set additional compiler flags
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++11-extensions"   )
@@ -124,7 +130,6 @@ SET(CORE_DICTIONARY_SOURCES
 	#RooHistInterpol.h      
 	RooHistPdfAngleVar.h
 	RooHistPdfVar.h
-	#RooPhysBkg.h
 	RooPoly3Var.h
 	RooPoly4Var.h
 	RooSlimFitResult.h      

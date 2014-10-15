@@ -84,10 +84,9 @@ function(ROOT_GENERATE_DICTIONARY dictionary)
 		unset(headerFile CACHE)
 	endforeach()
 	#---call rootcint------------------------------------------
-	#message("${ROOTCINT_EXECUTABLE} -cint -f ${dictionary}.cxx -c ${ARG_OPTIONS} ${includedirs} ${headerfiles} ${linkdefs}")
 	add_custom_command(OUTPUT ${dictionary}.cxx ${dictionary}.h
 		     COMMAND ${ROOTCINT_EXECUTABLE} -cint -f ${dictionary}.cxx 
-		     -c ${ARG_OPTIONS} ${includedirs} ${headerfiles} ${linkdefs} 
+		     -c -p ${ARG_OPTIONS} ${includedirs} ${headerfiles} ${linkdefs} 
 		     DEPENDS ${headerfiles} ${linkdefs} VERBATIM)
 endfunction()
 
