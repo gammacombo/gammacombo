@@ -1,0 +1,20 @@
+To build gammacombo cmake is needed in version 3.0 or higher.
+
+To create the library, create a build directory and change into it. E.g.
+ mkdir build; cd build
+ 
+Now create the Makefiles:
+ cmake ..
+
+And build:
+ make
+ 
+The libraries are created in the subdirectory lib/ of the build directory.
+
+To install the libraries and copy all header files into the directories lib/ and
+include/ in the root directory of the project:
+ make install
+ 
+To build the doxygen, which will create an HTML class documentation in
+the doc/html subdirectory:
+ make doc

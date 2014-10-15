@@ -1,0 +1,5 @@
+PDF_Circle.cpp:  parameters->add(*(p.get("a_gaus")));
+PDF_Circle.cpp:  parameters->add(*(p.get("b_gaus")));
+PDF_Gaus.cpp:  parameters->add(*(p.get("a_gaus")));
+PDF_Gaus2d.cpp:  parameters->add(*(p.get("a_gaus"))); 
+PDF_Gaus2d.cpp:  parameters->add(*(p.get("b_gaus")));
