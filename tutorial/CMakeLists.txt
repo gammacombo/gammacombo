@@ -9,7 +9,7 @@ SET(COMBINER_NAME
 #  They have to be located in the main/ subdirectory, and
 #  end with .cpp.
 SET(COMBINER_EXECUTABLES
-	#${COMBINER_NAME}
+	${COMBINER_NAME}
 	# tutorial2 # <-- add other execubables here
 )
 
