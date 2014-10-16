@@ -1,5 +1,5 @@
 # require a certain cmake version
-CMAKE_MINIMUM_REQUIRED( VERSION 3.0 )
+CMAKE_MINIMUM_REQUIRED( VERSION 2.8 )
 
 # declare the project name
 PROJECT(gammacomboCore)
@@ -162,11 +162,10 @@ TARGET_LINK_LIBRARIES( ${PROJECT_NAME}Components ${ROOT_LIBRARIES} )
 #
 ######################################
 
-add_subdirectory(tutorial)
-#add_subdirectory(gammacombo)
-#add_subdirectory(hfag)
-#add_subdirectory(bsmumu)
-#add_subdirectory(biggammacombo)
+include( combiners )
+foreach( dir ${COMBINER_MODULES} )
+	add_subdirectory(dir)
+endforeach()
 
 ######################################
 #
