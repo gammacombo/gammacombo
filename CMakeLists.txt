@@ -164,7 +164,7 @@ TARGET_LINK_LIBRARIES( ${PROJECT_NAME}Components ${ROOT_LIBRARIES} )
 
 include( combiners )
 foreach( dir ${COMBINER_MODULES} )
-	add_subdirectory(dir)
+	add_subdirectory(${dir})
 endforeach()
 
 ######################################
