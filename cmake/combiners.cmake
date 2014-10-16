@@ -12,10 +12,10 @@
 
 SET( COMBINER_MODULES
 	tutorial
-	#gammacombo
-	#hfag
+	gammacombo
+	hfag
 	bsmumu
-	#biggammacombo
+	biggammacombo
 	# add your combiners here
 )
 

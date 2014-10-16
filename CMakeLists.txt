@@ -23,6 +23,7 @@ ENDIF()
 LIST( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake )
 INCLUDE(settings)
 INCLUDE(macros)
+INCLUDE(combiners)
 
 # find ROOT
 FIND_PACKAGE(ROOT REQUIRED)
@@ -49,14 +50,24 @@ ENDIF()
 FIND_PACKAGE(Doxygen)
 
 if(DOXYGEN_FOUND)
-    CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/doc/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile @ONLY)
-
-    ADD_CUSTOM_TARGET(doc
-        ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc
-        COMMENT "Generating API documentation with Doxygen" VERBATIM)
+	# add combiner modules to Doxygen
+	set(COMBINER_MODULES_DOXYGEN_SOURCES)
+	foreach( dir ${COMBINER_MODULES} )
+		set(COMBINER_MODULES_DOXYGEN_SOURCES "${COMBINER_MODULES_DOXYGEN_SOURCES} 
+			INPUT += ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/include
+			INPUT += ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/src"
+		)
+	endforeach()
+	# configure Doxygen config file
+	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/doc/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile @ONLY)
+	# add target
+	ADD_CUSTOM_TARGET(doc
+		${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc
+		COMMENT "Generating API documentation with Doxygen" VERBATIM
+	)
 ELSE()
-    MESSAGE( STATUS "Doxygen not installed or found -- API documentation can't be generated!" )
+	MESSAGE( STATUS "Doxygen not installed or found -- API documentation can't be generated!" )
 ENDIF(DOXYGEN_FOUND)
 
 ######################################
@@ -162,7 +173,6 @@ TARGET_LINK_LIBRARIES( ${PROJECT_NAME}Components ${ROOT_LIBRARIES} )
 #
 ######################################
 
-include( combiners )
 foreach( dir ${COMBINER_MODULES} )
 	add_subdirectory(${dir})
 endforeach()
