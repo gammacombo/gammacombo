@@ -35,6 +35,8 @@ OptParser::OptParser()
   debug = false;
   digits = -99;
   enforcePhysRange = false;
+  group = "GammaCombo";
+  groupPos = "";
   id = -99;
   importance = false;
   interactive = false;
@@ -57,8 +59,8 @@ OptParser::OptParser()
 	plotlegend = true;
   plotlegx = -99;
   plotlegy = -99;
-  plotlhcbx = -99;
-  plotlhcby = -99;
+  plotgroupx = -99;
+  plotgroupy = -99;
   plotlog = false;
   plotmagnetic = false;
   plotnsigmacont = 2;
@@ -109,7 +111,7 @@ void OptParser::defineOptions()
   availableOptions.push_back("jobs");
   availableOptions.push_back("largest");
   availableOptions.push_back("leg");
-  availableOptions.push_back("lhcb");
+  availableOptions.push_back("group");
   availableOptions.push_back("lightfiles");
 	availableOptions.push_back("loadParamsFile");
   availableOptions.push_back("log");
@@ -173,7 +175,7 @@ void OptParser::bookPlottingOptions()
 	bookedOptions.push_back("color");
   bookedOptions.push_back("digits");
   bookedOptions.push_back("leg");
-  bookedOptions.push_back("lhcb");
+  bookedOptions.push_back("group");
   bookedOptions.push_back("log");
   bookedOptions.push_back("magnetic");
   bookedOptions.push_back("prelim");
@@ -330,9 +332,9 @@ void OptParser::parseArguments(int argc, char* argv[])
   TCLAP::ValueArg<string> pluginplotrangeArg("", "pluginplotrange", "Restrict the Plugin plot to a given range to "
     "rejcet low-statistics outliers. Format: --pluginplotrange min-max.", false, "default", "string");
   TCLAP::ValueArg<int> plotnsigmacontArg("", "ncontours", "plot this many sigma contours in 2d plots (max 5)", false, 2, "int");
-  TCLAP::ValueArg<string> plotlhcbArg("", "lhcb", "Set the position of the LHCb logo. "
-    "Format: --lhcb xmin:ymin in normalized coordinates [0,1]. To use default values "
-    "for one coordinate use -1: -1:y. Use '--lhcb off' to disable the logo.", false, "default", "string");
+  TCLAP::ValueArg<string> plotgroupArg("", "group", "Set the position of the group logo. "
+    "Format: --group xmin:ymin in normalized coordinates [0,1]. To use default values "
+    "for one coordinate use -1: -1:y. Use '--group off' to disable the logo.", false, "default", "string");
   TCLAP::ValueArg<int> nBBpointsArg("", "nBBpoints", "number of BergerBoos points per scanpoint", false, 1, "int");
   TCLAP::ValueArg<int> idArg("", "id", "When making controlplots (--controlplots), only consider the "
     "point with this ID. This can be used to plot a certain Berger-Boos point only, "
@@ -445,9 +447,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 		"If given multiple times, the first --fix argument refers to the first combination, "
 		"the second one to the second and so on. "
 		"If given a single time, it is applied to all combinations. \n"
-  	"Example: --fix 'g=1.7,r_dk-0.09' \n"
+  	"Example: --fix 'g=1.7,r_dk=-0.09' \n"
 		"To fix just the parameters in the second combination, do\n"
-  	"Example: --fix 'none' --fix 'g=1.7,r_dk-0.09' \n"
+  	"Example: --fix 'none' --fix 'g=1.7,r_dk=-0.09' \n"
 		, false, "string");
 	TCLAP::MultiArg<float> snArg("", "sn", "--sn x. Save nuisances to parameter cache file at certain points after a "
   	"1d scan was performed. This can be used to set these as starting points "
@@ -519,7 +521,7 @@ void OptParser::parseArguments(int argc, char* argv[])
   if ( isIn<TString>(bookedOptions, "log" ) ) cmd.add( plotlogArg );
 	if ( isIn<TString>(bookedOptions, "loadParamsFile" ) ) cmd.add( loadParamsFileArg );
   if ( isIn<TString>(bookedOptions, "lightfiles" ) ) cmd.add( lightfilesArg );
-  if ( isIn<TString>(bookedOptions, "lhcb" ) ) cmd.add( plotlhcbArg );
+  if ( isIn<TString>(bookedOptions, "group" ) ) cmd.add( plotgroupArg );
   if ( isIn<TString>(bookedOptions, "leg" ) ) cmd.add( plotlegArg );
   if ( isIn<TString>(bookedOptions, "largest" ) ) cmd.add( largestArg );
   if ( isIn<TString>(bookedOptions, "jobs" ) ) cmd.add(jobsArg);
@@ -691,9 +693,9 @@ void OptParser::parseArguments(int argc, char* argv[])
   	parsePosition(plotlegArg.getValue(), plotlegx, plotlegy);
 	}
 
-  // --lhcb
-  lhcb = plotlhcbArg.getValue();
-  parsePosition(plotlhcbArg.getValue(), plotlhcbx, plotlhcby);
+  // --group
+  groupPos = plotgroupArg.getValue();
+  parsePosition(groupPos, plotgroupx, plotgroupy);
 
   // --pluginplotrange
   parseRange(pluginplotrangeArg.getValue(), pluginPlotRangeMin, pluginPlotRangeMax);

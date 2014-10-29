@@ -48,6 +48,8 @@ public:
   int		          digits;
   bool            enforcePhysRange;
 	vector<vector<FixPar> >	fixParameters;
+  TString	group;
+  TString	groupPos;
   int             id;
   bool            importance;
   bool		        interactive;
@@ -55,7 +57,6 @@ public:
   vector<int>   	jmin;
   TString         jobdir;
   bool            largest;
-  TString         lhcb;
 	vector<TString> loadParamsFile;
   bool            lightfiles;
   int             nBBpoints;
@@ -77,8 +78,8 @@ public:
 	bool						plotlegend;
   float           plotlegx;
   float           plotlegy;
-  float           plotlhcbx;
-  float           plotlhcby;
+  float           plotgroupx;
+  float           plotgroupy;
   bool            plotmagnetic;
   int             plotnsigmacont;
   bool            plotpluginonly;

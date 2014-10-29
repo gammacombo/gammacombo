@@ -31,7 +31,7 @@ public:
   void            DrawFull();
 	void						drawCLcontent();
   void            drawMarker(float x, float y, int color=0, int style=3, float size=2.0);
-  void            drawLHCb();
+  void            drawGroup();
   void            drawSolutions();
   void            save();
   inline void     setContoursOnly(){contoursOnly = true;};

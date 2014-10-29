@@ -566,19 +566,19 @@ void OneMinusClPlot::Draw()
   c1->Update();
   drawCLguideLines();
   
-  // draw the LHCb logo
-  float yLHCb = 0.6;
+  // draw the logo
+  float yGroup = 0.6;
   if ( plotLegend ){
     // we have a legend
-    if ( arg->plotlog )   yLHCb = 0.775;
-    else                  yLHCb = 0.60;
+    if ( arg->plotlog )   yGroup = 0.775;
+    else                  yGroup = 0.60;
   }
   else{
     // no legend
-    if ( arg->plotlog )   yLHCb = 0.3;
-    else                  yLHCb = 0.775;
+    if ( arg->plotlog )   yGroup = 0.3;
+    else                  yGroup = 0.775;
   }
-  drawLHCb(yLHCb);
+  drawGroup(yGroup);
   
   c1->Update();
 }

@@ -11,7 +11,7 @@ OneMinusClPlotAbs::OneMinusClPlotAbs(OptParser *arg, TString name, TString title
 {
   font       = 133;
   labelsize  = 35;  ///< axis labels, numeric solutions, CL guide lines
-  titlesize  = 45;  ///< axis titles, "LHCb", "Preliminary" is x0.75
+  titlesize  = 45;  ///< axis titles, group label, "Preliminary" is x0.75
   legendsize = 29;  ///< legends in 1d and 2d plots
   
   gStyle->SetOptTitle(0);
@@ -65,23 +65,28 @@ void OneMinusClPlotAbs::save()
 }
 
 ///
-/// Draw the LHCb (preliminary) label on plots.
+/// Draw the group (preliminary) label on plots.
 /// It is possible to configure the position of the label through
 /// the --lhcb command line argument.
 ///
-void OneMinusClPlotAbs::drawLHCb(float yPos)
+void OneMinusClPlotAbs::drawGroup(float yPos)
 {
-  if ( arg->lhcb==TString("off") ) return;
+  if ( arg->groupPos==TString("off") ) return;
+  // determine x position from the length of the group string
+  float groupLength = arg->group.Length();
+  float charsPerFullWidth = 28.; // true for font and size configured below
+  float xPos = 0.15 + 0.70 * (1. - groupLength/charsPerFullWidth);
+  // override positions if being set on the command line
   float xLow, yLow;
-  if ( arg->plotlhcbx==-1 ) xLow = 0.75; else xLow = arg->plotlhcbx;
-  if ( arg->plotlhcby==-1 ) yLow = yPos; else yLow = arg->plotlhcby;
+  if ( arg->plotgroupx==-1 ) xLow = xPos; else xLow = arg->plotgroupx;
+  if ( arg->plotgroupy==-1 ) yLow = yPos; else yLow = arg->plotgroupy;
   TPaveText *t1 = new TPaveText(xLow, yLow, xLow+0.20, yLow+0.125, "BRNDC");
   t1->SetBorderSize(0);
   t1->SetFillStyle(0);
   t1->SetTextAlign(12);
   t1->SetTextFont(font);
   t1->SetTextSize(titlesize*1.0);
-  t1->AddText("LHCb");
+  t1->AddText(arg->group);
   if ( arg->plotprelim ) t1->AddText("Preliminary")->SetTextSize(titlesize*0.525);
   else if ( arg->plotunoff ) t1->AddText("Unofficial")->SetTextSize(titlesize*0.525);
   t1->Draw();
