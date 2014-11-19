@@ -33,7 +33,7 @@ public:
     inline void     disableSolution(bool yesNo=false){plotSolution = yesNo;};
     virtual void    drawSolutions();
     virtual void    drawLabel(float yPos=0.6){cout << "nothing yet" << endl;};
-    virtual void    drawLHCb(float yPos=0.6);
+    virtual void    drawGroup(float yPos=0.6);
     inline TString  getName(){return name;};
     void            save();
     void            setYLogRange(double min=1.e-3, double max=1){ plotLogYMin=min; plotLogYMax=max;};

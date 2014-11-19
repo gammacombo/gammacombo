@@ -202,11 +202,11 @@ void OneMinusClPlot2d::addFile(TString fName)
 }
 
 ///
-/// Draw the LHCb (preliminary) label on a 2d plot at a higher position.
+/// Draw the group label on a 2d plot at a higher position.
 ///
-void OneMinusClPlot2d::drawLHCb()
+void OneMinusClPlot2d::drawGroup()
 {
-  OneMinusClPlotAbs::drawLHCb(0.775);
+  OneMinusClPlotAbs::drawGroup(0.775);
 }
 
 ///
@@ -776,7 +776,7 @@ void OneMinusClPlot2d::Draw()
   
   drawSolutions();
   drawLegend();
-  drawLHCb();
+  drawGroup();
 	drawCLcontent();
   c1->Update();
 }

@@ -27,7 +27,6 @@
 #include "TVectorD.h"
 #include <sys/stat.h>
 #include "boost/algorithm/string.hpp"
-
 #include "UtilsConfig.h"
 
 using namespace std;
@@ -101,8 +100,6 @@ namespace Utils
     void savePlot(TCanvas *c1, TString name);
     bool FileExists( TString strFilename );
     template<class T> inline bool isIn(vector<T> vec, T var){return (find(vec.begin(), vec.end(), var) != vec.end());};
-    
-    RooWorkspace* makeWorkspace(TString name="w", config cCoords=usePolarCoords);
     
     static int uniqueRootNameId = 0;
     inline TString          getUniqueRootName(){return (TString)Form("UID%i", ++        uniqueRootNameId);}
