@@ -25,10 +25,7 @@ namespace Utils
 		babar2008,
 		babar2010,
 		babar2012,
-<<<<<<< HEAD
-=======
 		belle,
->>>>>>> c0465bc2b71c27f33aff3df1331c306ead5ce165
 		belle2005cleo2009,
 		belle2006,
 		belle2007,
@@ -89,7 +86,6 @@ namespace Utils
 		lumi9fb,
 		lumi50ab,
 		lumi50fb,
-		lumi50ab,
 		lambda1_3fb,
 		lambdafree_3fb,
 		manual,

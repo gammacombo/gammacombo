@@ -219,7 +219,7 @@ void GammaComboEngine::disableSystematics()
 
 ///
 /// Make an Asimov toy: set all observables set to truth values.
-/// The Asimov point needs to be laoded in the combiner before.
+/// The Asimov point needs to be loaded in the combiner before.
 /// \param c - combiner which should be set to an asimov toy
 ///
 void GammaComboEngine::setAsimovToy(Combiner* c)
@@ -227,7 +227,7 @@ void GammaComboEngine::setAsimovToy(Combiner* c)
 	cout << "\nModifying combination \"" << c->getName() << "\": Running an ASIMOV TOY.\n" << endl;
 	if ( !c->isCombined() ){
 		cout << "GammaComboEngine::setAsimovToy() : ERROR : Can't set an Asimov toy before "
-			"the combiner is combined. Call combine() first." << endl;
+							    "the combiner is combined. Call combine() first." << endl;
 		exit(1);
 	}
 
@@ -249,22 +249,22 @@ void GammaComboEngine::setAsimovToy(Combiner* c)
 	}
 	delete itObs;
 
-	// // write back the asimov values to the PDF object so that when
-	// // the PDF is printed, the asimov values show up
-	// for ( int i=0; i<c->getPdfs().size(); i++ ){
-	// 	PDF_Abs* pdf = c->getPdfs()[i];
-	// 	pdf->setObservableSourceString("Asimov");
-	// 	TIterator* itObs = pdf->getObservables()->createIterator();
-	// 	while(RooRealVar* pObs = (RooRealVar*) itObs->Next()){
-	// 		RooAbsReal* obs =  w->var(pObs->GetName());
-	// 		if ( obs==0 ){
-	// 			cout << "GammaComboEngine::setAsimovToy() : ERROR : observable not found in workspace: " << pObs->GetName() << endl;
-	// 			exit(1);
-	// 		}
-	// 		pdf->setObservable(pObs->GetName(), obs->getVal());
-	// 	}
-	// 	delete itObs;
-	// }
+	// write back the asimov values to the PDF object so that when
+	// the PDF is printed, the asimov values show up
+	for ( int i=0; i<c->getPdfs().size(); i++ ){
+		PDF_Abs* pdf = c->getPdfs()[i];
+		pdf->setObservableSourceString("Asimov");
+		TIterator* itObs = pdf->getObservables()->createIterator();
+		while(RooRealVar* pObs = (RooRealVar*) itObs->Next()){
+			RooAbsReal* obs =  w->var(pObs->GetName());
+			if ( obs==0 ){
+				cout << "GammaComboEngine::setAsimovToy() : ERROR : observable not found in workspace: " << pObs->GetName() << endl;
+				exit(1);
+			}
+			pdf->setObservable(pObs->GetName(), obs->getVal());
+		}
+		delete itObs;
+	}
 }
 
 ///
