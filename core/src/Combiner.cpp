@@ -211,10 +211,11 @@ void Combiner::combine()
     w->factory("PROD::pdf_"+newName+"(pdf_"+pdfName+", pdf_"+pdfNames[i]+")");
 
     // define sets of combined parameters
-    mergeNamedSets(w, "par_"+newName, "par_"+pdfName, "par_"+pdfNames[i]);
-    mergeNamedSets(w, "obs_"+newName, "obs_"+pdfName, "obs_"+pdfNames[i]);
-    mergeNamedSets(w, "th_" +newName, "th_" +pdfName, "th_" +pdfNames[i]);
-
+    parsName = "par_"+newName;
+    obsName = "obs_"+newName;
+    mergeNamedSets(w, parsName, "par_"+pdfName, "par_"+pdfNames[i]);
+    mergeNamedSets(w, obsName,  "obs_"+pdfName, "obs_"+pdfNames[i]);
+    mergeNamedSets(w, "th_"+newName, "th_" +pdfName, "th_" +pdfNames[i]);
     pdfName = newName;
   }
 	setParametersConstant();
@@ -282,6 +283,29 @@ vector<string>& Combiner::getParameterNames()
     previous=varsAll[i];
   }
   return *vars;
+}
+
+///
+/// Return a vector of all observables names present
+/// in this combination. This works only after 
+/// combine() was called as this adds the unification strings.
+///
+vector<string>& Combiner::getObservableNames()
+{
+	if ( !_isCombined ){
+		cout << "Combiner::getObservableNames() : ERROR : Combiner needs to be combined first!" << endl;
+		assert(0);
+	}
+	vector<string>* vars = new vector<string>();
+	const RooArgSet* obs = w->set("obs_"+pdfName);
+	if ( !obs ){
+		cout << "Combiner::getObservableNames() : ERROR : Observables set not found in workspace: " << "obs_"+pdfName << endl;
+		assert(0);
+	}
+	TIterator* it = obs->createIterator();
+	while ( RooRealVar* p = (RooRealVar*)it->Next() ) vars->push_back(p->GetName());
+	delete it;
+	return *vars;
 }
 
 ///

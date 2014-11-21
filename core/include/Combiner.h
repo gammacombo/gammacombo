@@ -42,9 +42,12 @@ public:
   const RooArgSet*         getParameters();
   vector<string>&          getParameterNames();
   const RooArgSet*         getObservables();
+  vector<string>&	   getObservableNames();
   inline TString           getTitle() const {return title;};
   inline TString           getName() const {return name;};
   inline TString           getPdfName() const {return pdfName;};    ///< Returns name of combined pdf. Call combine() first.
+  inline TString           getParsName() const {return parsName;};  ///< Returns name of combined parameter set. Call combine() first.
+  inline TString           getObsName() const {return obsName;};    ///< Returns name of combined observables set. Call combine() first.
   RooAbsPdf*               getPdf();
   inline vector<PDF_Abs*>& getPdfs(){return pdfs;};
   inline RooWorkspace*     getWorkspace(){return w;};
@@ -63,6 +66,8 @@ private:
   TString                 title;       // title of the combination, used in plots
   TString                 name;        // name of the combination, used to refer to it and as part of file names
   TString                 pdfName;     // Name of combined pdf. Call combine() first.
+  TString                 parsName;    // Name of combined parameter set. Call combine() first.
+  TString                 obsName;     // Name of combined observables set. Call combine() first.
   OptParser*              arg;         // command line arguments
   RooWorkspace*           w;           // holds all input pdfs, parameters, and observables, as well as the combination
   vector<string>          pdfNames;    // hold all unique names of the pdfs to be combined

@@ -654,9 +654,11 @@ void GammaComboEngine::make1dProbScan(MethodProbScan *scanner, int cId)
 	if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
 		if ( arg->plotpulls ) scanner->plotPulls();
 		if ( arg->parevol ){
-			//scanner->plotParEvolution();
 			ParameterEvolutionPlotter plotter(scanner);
 			plotter.plotParEvolution();
+		}
+		if ( isScanVarObservable(scanner->getCombiner(), arg->var[0]) ){
+			ParameterEvolutionPlotter plotter(scanner);
 			plotter.plotObsScanCheck();
 		}
 		if ( arg->printnuisances1d.size()>0 ) scanner->printNuisances(arg->printnuisances1d);
@@ -734,12 +736,16 @@ void GammaComboEngine::scanStrategy1d(MethodProbScan *scanner, ParameterCache *p
 {
 	int nStartingPoints = pCache->getNPoints();
 	if (nStartingPoints==0) {
+		cout << "Scan strategy: Now performing the first scan." << endl;
 		scanner->scan1d();
-    if ( !(scanner->getArg()->probforce) )
-    for ( int j=0; j<scanner->getNSolutions(); j++ ){
-        scanner->loadSolution(j);
-        scanner->scan1d(true);
-    }
+		cout << "Scan strategy: Now performing an additional scan starting at each solution found." << endl;
+		cout << "Scan strategy: Number of scans to run: " << scanner->getNSolutions() << endl;
+		if ( !(scanner->getArg()->probforce) ){
+			for ( int j=0; j<scanner->getNSolutions(); j++ ){
+				scanner->loadSolution(j);
+				scanner->scan1d(true);
+			}
+		}
 	}
 	// otherwise load each starting value found
 	else {
@@ -869,16 +875,33 @@ bool GammaComboEngine::isAsimovCombiner(int i)
 	return i<arg->asimov.size() && arg->asimov[i]>0;
 }
 
+
+///
+/// Checks if a given variable name is in the list of observables
+/// of a combiner.
+/// \param c		- the combiner
+/// \param scanVar 	- the scan variable name
+/// \return	true if included, else false
+///
+bool GammaComboEngine::isScanVarObservable(Combiner *c, TString scanVar)
+{
+	vector<string> obs = c->getObservableNames();
+	for ( int i=0; i<obs.size(); i++ ){
+		if ( TString(obs[i])==scanVar ) return true;
+	}
+	return false;
+}
+
+
 ///
 /// scan engine
 ///
 void GammaComboEngine::scan()
 {
-	// for ( int i=arg->combid.size()-1; i>=0; i-- )
 	for ( int i=0; i<arg->combid.size(); i++ )
-  {
-    int combinerId = arg->combid[i];
-    Combiner *c = cmb[combinerId];
+	{
+		int combinerId = arg->combid[i];
+		Combiner *c = cmb[combinerId];
 
 		// work with a clone - this way we can easily make plots with the
 		// same combination in twice (once with asimov, for example)
@@ -894,24 +917,33 @@ void GammaComboEngine::scan()
 		}
 
 		// combine
-    c->combine();
-    if ( !c->isCombined() ) continue; // error during combining
+		c->combine();
+		if ( !c->isCombined() ) continue; // error during combining
 
 		// set an asimov toy - only possible after combining
 		if ( isAsimovCombiner(i) ) setAsimovToy(c, i);
 
-    c->print();
-    if ( arg->debug ) c->getWorkspace()->Print("v");
+		// configure scans for observables
+		if ( isScanVarObservable(c, arg->var[0]) ){
+			cout << "setting up a scan for an observable ..." << endl;
+			// 1. tighten the constraint on the observable
+			// 2. add observable to the list of parameters
+			c->getWorkspace()->extendSet(c->getParsName(), arg->var[0]);
+		}
+
+		// printout
+		c->print();
+		if ( arg->debug ) c->getWorkspace()->Print("v");
 
 		/////////////////////////////////////////////////////
-   	//
+		//
 		// PROB
 		//
 		/////////////////////////////////////////////////////
 
 		if ( !arg->isAction("plugin") && !arg->isAction("pluginbatch") )
 		{
-	    MethodProbScan *scannerProb = new MethodProbScan(c);
+			MethodProbScan *scannerProb = new MethodProbScan(c);
 			// pvalue corrector
 			PValueCorrection *pvalueCorrector;
 			if (arg->coverageCorrectionID>0) {
@@ -922,44 +954,44 @@ void GammaComboEngine::scan()
 			}
 
 			// 1D SCANS
-	    if ( arg->var.size()==1 )
-	    {
-	      if ( arg->isAction("plot") ){
+			if ( arg->var.size()==1 )
+			{
+				if ( arg->isAction("plot") ){
 					scannerProb->loadScanner(fb->getFileNameScanner(scannerProb));
-	      }
-	      else{
+				}
+				else{
 					make1dProbScan(scannerProb, i);
 				}
 				make1dProbPlot(scannerProb, i);
-		  }
-	    // 2D SCANS
-	    else if ( arg->var.size()==2 )
-	    {
-	      if ( arg->isAction("plot") ){
+			}
+			// 2D SCANS
+			else if ( arg->var.size()==2 )
+			{
+				if ( arg->isAction("plot") ){
 					make2dProbPlot(scannerProb, i);
-	      }
-	      else{
+				}
+				else{
 					make2dProbScan(scannerProb, i);
-	      }
-	    }
+				}
+			}
 		}
-		
-    /////////////////////////////////////////////////////
+
+		/////////////////////////////////////////////////////
 		//
-    // PLUGIN
-    //
+		// PLUGIN
+		//
 		/////////////////////////////////////////////////////
 
-    if ( arg->isAction("plugin") || arg->isAction("pluginbatch") )
-    {
+		if ( arg->isAction("plugin") || arg->isAction("pluginbatch") )
+		{
 			MethodProbScan *scannerProb = new MethodProbScan(c);
 			if ( arg->isAction("plot") ){
 				scannerProb->loadScanner(fb->getFileNameScanner(scannerProb));
-      }
-      else{
+			}
+			else{
 				make1dProbScan(scannerProb, i);
 			}
-      MethodPluginScan *scannerPlugin = new MethodPluginScan(scannerProb);
+			MethodPluginScan *scannerPlugin = new MethodPluginScan(scannerProb);
 			PValueCorrection *pvalueCorrector2;
 			if (arg->coverageCorrectionID>0) {
 				pvalueCorrector2 = new PValueCorrection(arg->coverageCorrectionID, arg->verbose);
@@ -968,53 +1000,53 @@ void GammaComboEngine::scan()
 				scannerPlugin->setPValueCorrector(pvalueCorrector2);
 			}
 
-				//       // Hybrid Plugin: compute a second profile likelihood to define the parameter evolution
-				//       if ( arg->pevid.size()==1 )
-				//       {
-				//         cout << "HYBRID PLUGIN: preparing profile likelihood to be used for parameter evolution:" << endl;
-				// // load start parameters
-				// ParameterCache *pCache = new ParameterCache(arg, getFileBaseName(cmb[arg->pevid[0]]));
-				// pCache->loadPoints();
-				//         MethodProbScan *scanner3 = new MethodProbScan(cmb[arg->pevid[0]]);
-				//         scanner3->initScan();
-				// scanStrategy1d(scanner3,pCache);
-				//         scanner3->confirmSolutions();
-				//         scanner3->printLocalMinima();
-				//         scanner2->setParevolPLH(scanner3);
-				//       }
+			//       // Hybrid Plugin: compute a second profile likelihood to define the parameter evolution
+			//       if ( arg->pevid.size()==1 )
+			//       {
+			//         cout << "HYBRID PLUGIN: preparing profile likelihood to be used for parameter evolution:" << endl;
+			// // load start parameters
+			// ParameterCache *pCache = new ParameterCache(arg, getFileBaseName(cmb[arg->pevid[0]]));
+			// pCache->loadPoints();
+			//         MethodProbScan *scanner3 = new MethodProbScan(cmb[arg->pevid[0]]);
+			//         scanner3->initScan();
+			// scanStrategy1d(scanner3,pCache);
+			//         scanner3->confirmSolutions();
+			//         scanner3->printLocalMinima();
+			//         scanner2->setParevolPLH(scanner3);
+			//       }
 
 			// 1D SCANS
-	    if ( arg->var.size()==1 )
-	    {
-	      if ( arg->isAction("plot") ){
+			if ( arg->var.size()==1 )
+			{
+				if ( arg->isAction("plot") ){
 					scannerPlugin->loadScanner(fb->getFileNameScanner(scannerPlugin));
-	      }
-	      else {
+				}
+				else {
 					make1dPluginScan(scannerPlugin, i);
 				}
 				if ( !arg->isAction("pluginbatch") ){
-		      if ( arg->plotpluginonly ){
+					if ( arg->plotpluginonly ){
 						make1dPluginOnlyPlot(scannerPlugin, i);
-		      }
+					}
 					else{
 						make1dPluginPlot(scannerPlugin, scannerProb, i);
 					}
 				}
-		  }
-	    // 2D SCANS
-	    else if ( arg->var.size()==2 )
-	    {
-	      if ( arg->isAction("plot") ){
+			}
+			// 2D SCANS
+			else if ( arg->var.size()==2 )
+			{
+				if ( arg->isAction("plot") ){
 					scannerPlugin->loadScanner(fb->getFileNameScanner(scannerPlugin));
-	      }
-	      else {
+				}
+				else {
 					make2dPluginScan(scannerPlugin, i);
-	      }
+				}
 				if ( !arg->isAction("pluginbatch") ){
 					make2dPluginPlot(scannerPlugin);
 				}
-	    }
-    }
+			}
+		}
 
 		/////////////////////////////////////////////////////
 
@@ -1045,7 +1077,7 @@ void GammaComboEngine::run()
 	if ( arg->isQuickhack(6) ) scaleDownErrors();
 	if ( arg->nosyst ) disableSystematics();
 	makeAddDelCombinations("add");
-  makeAddDelCombinations("del");
+	makeAddDelCombinations("del");
 	defineColors();
 	printCombinerStructure();
 	customizeCombinerTitles();
@@ -1053,6 +1085,7 @@ void GammaComboEngine::run()
 	scan();
 	if (!arg->isAction("pluginbatch")) savePlot();
 	t.Stop();
-  t.Print();
-  runApplication();
+	t.Print();
+	runApplication();
 }
+

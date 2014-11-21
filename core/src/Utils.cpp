@@ -588,7 +588,9 @@ void Utils::floatParameters(const RooAbsCollection* set)
 ///
 void Utils::setLimit(RooRealVar* v, TString limitname)
 {
-  v->setRange(v->getMin(limitname), v->getMax(limitname));
+	RooMsgService::instance().setGlobalKillBelow(ERROR);
+	v->setRange(v->getMin(limitname), v->getMax(limitname));
+	RooMsgService::instance().setGlobalKillBelow(INFO);
 }
 
 ///
@@ -600,7 +602,9 @@ void Utils::setLimit(RooRealVar* v, TString limitname)
 ///
 void Utils::setLimit(RooWorkspace* w, TString parname, TString limitname)
 {
-  w->var(parname)->setRange(w->var(parname)->getMin(limitname), w->var(parname)->getMax(limitname));
+	RooMsgService::instance().setGlobalKillBelow(ERROR);
+	w->var(parname)->setRange(w->var(parname)->getMin(limitname), w->var(parname)->getMax(limitname));
+	RooMsgService::instance().setGlobalKillBelow(INFO);
 }
 
 ///
@@ -611,10 +615,12 @@ void Utils::setLimit(RooWorkspace* w, TString parname, TString limitname)
 ///
 void Utils::setLimit(const RooAbsCollection* set, TString limitname)
 {
-  TIterator* it = set->createIterator();
-  while ( RooRealVar* p = (RooRealVar*)it->Next() ){
-    p->setRange(p->getMin(limitname), p->getMax(limitname));
-  }
+	RooMsgService::instance().setGlobalKillBelow(ERROR);
+	TIterator* it = set->createIterator();
+	while ( RooRealVar* p = (RooRealVar*)it->Next() ){
+		p->setRange(p->getMin(limitname), p->getMax(limitname));
+	}
+	RooMsgService::instance().setGlobalKillBelow(INFO);
 }
 
 ///

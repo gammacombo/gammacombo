@@ -189,7 +189,11 @@ void MethodAbsScan::initScan()
     cout << endl;
     exit(1);
   }
-  if ( arg->scanrangeMin != arg->scanrangeMax ) par1->setRange("scan", arg->scanrangeMin, arg->scanrangeMax);
+  if ( arg->scanrangeMin != arg->scanrangeMax ){
+	RooMsgService::instance().setGlobalKillBelow(ERROR);
+	par1->setRange("scan", arg->scanrangeMin, arg->scanrangeMax);
+	RooMsgService::instance().setGlobalKillBelow(INFO);
+  }
   setLimit(w, scanVar1, "scan");
   float min1 = par1->getMin();
   float max1 = par1->getMax();
@@ -215,7 +219,11 @@ void MethodAbsScan::initScan()
       cout << endl;
       exit(1);
     }
-    if ( arg->scanrangeyMin != arg->scanrangeyMax ) par2->setRange("scan", arg->scanrangeyMin, arg->scanrangeyMax);
+    if ( arg->scanrangeyMin != arg->scanrangeyMax ){
+	RooMsgService::instance().setGlobalKillBelow(ERROR);
+	par2->setRange("scan", arg->scanrangeyMin, arg->scanrangeyMax);
+	RooMsgService::instance().setGlobalKillBelow(INFO);
+    }    
     setLimit(w, scanVar2, "scan");
     float min2 = par2->getMin();
     float max2 = par2->getMax();
