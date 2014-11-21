@@ -57,7 +57,6 @@ public:
   
   float           getChi2min(float scanpoint);
   inline TH1F*    getHChi2min(){return hChi2min;};
-  void            plotParEvolution();
   void            saveSolutions();
   void            saveSolutions2d();
   int             scan1d(bool fast=false, bool reverse=false);
@@ -68,7 +67,6 @@ private:
   bool            computeInnerTurnCoords(const int iStart, const int jStart, const int i, const int j, 
                     int &iResult, int &jResult, int nTurn);
   bool            deleteIfNotInCurveResults2d(RooSlimFitResult *r);
-  vector<float>   getLocalMinChi2();
   void            sanityChecks();
 
   bool            scanDisableDragMode;

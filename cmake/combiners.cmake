@@ -11,7 +11,11 @@
 ###############################################
 
 SET( COMBINER_MODULES
-	tutorial
-	# add your combiners here
+	#tutorial
+	#belle2
+	#biggammacombo
+	#bsmumu
+	gammacombo
+	#hfag
 )
 

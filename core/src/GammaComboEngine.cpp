@@ -647,19 +647,24 @@ void GammaComboEngine::make1dProbScan(MethodProbScan *scanner, int cId)
 		pCache->loadPoints(nonAsimovDefaultFile);
 	}
 
-  scanner->initScan();
+	scanner->initScan();
 	scanStrategy1d(scanner, pCache);
-  scanner->printLocalMinima();
-  scanner->calcCLintervals();
-  if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
-	  if ( arg->plotpulls ) scanner->plotPulls();
-	  if ( arg->parevol ) scanner->plotParEvolution();
-	  if ( arg->printnuisances1d.size()>0 ) scanner->printNuisances(arg->printnuisances1d);
-    if (!arg->isAction("plugin")){
-    	scanner->saveScanner(fb->getFileNameScanner(scanner));
+	scanner->printLocalMinima();
+	scanner->calcCLintervals();
+	if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
+		if ( arg->plotpulls ) scanner->plotPulls();
+		if ( arg->parevol ){
+			//scanner->plotParEvolution();
+			ParameterEvolutionPlotter plotter(scanner);
+			plotter.plotParEvolution();
+			plotter.plotObsScanCheck();
+		}
+		if ( arg->printnuisances1d.size()>0 ) scanner->printNuisances(arg->printnuisances1d);
+		if (!arg->isAction("plugin")){
+			scanner->saveScanner(fb->getFileNameScanner(scanner));
 			pCache->cacheParameters(scanner);
 		}
-  }
+	}
 }
 
 ///

@@ -20,6 +20,7 @@ using namespace std;
 namespace Utils
 {
 	enum config {
+		year2014,
 		babar,
 		babar2007,
 		babar2008,

@@ -51,6 +51,8 @@ public:
     void                            confirmSolutions();
     void                            doInitialFit(bool force=false);
     inline OptParser*               getArg(){return arg;};
+	inline const vector<RooSlimFitResult*>& getAllResults(){return allResults;};
+	inline const vector<RooSlimFitResult*>& getCurveResults(){return curveResults;};
     inline float                    getChi2minGlobal(){return chi2minGlobal;}
     float                           getCL(double val);
     CLInterval                      getCLintervalCentral(int sigma=1);
@@ -71,6 +73,8 @@ public:
     inline int                      getNPoints2dy(){return nPoints2dy;}
     inline int                      getNSolutions(){return solutions.size();};
     inline const RooArgSet*         getObservables(){return w->set(obsName);}
+	inline TString			getObsName(){return obsName;};
+	inline TString			getParsName(){return parsName;};
     float                           getScanVarSolution(int iVar, int iSol);
     RooRealVar*                     getScanVar1();
 		TString													getScanVar1Name();

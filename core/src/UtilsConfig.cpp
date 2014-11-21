@@ -9,6 +9,7 @@
 
 TString Utils::ConfigToTString(config s)
 {
+  if ( s == year2014 )                return "year2014";
   if ( s == babar )                return "babar";
   if ( s == babar2007 )            return "babar2007";
   if ( s == babar2008 )            return "babar2008";

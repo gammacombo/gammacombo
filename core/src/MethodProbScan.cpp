@@ -589,24 +589,6 @@ int MethodProbScan::scan2d()
   return 0;
 }
 
-///
-/// Find the chi2 values at local minima,
-/// helper function for plotParEvolution().
-/// \return vector of the chi2 values of all local minima.
-///
-vector<float> MethodProbScan::getLocalMinChi2()
-{
-  vector<float> chi2;
-  for ( int i=2; i<hChi2min->GetNbinsX()-1; i++ )
-  {
-    if ( hChi2min->GetBinContent(i-1) > hChi2min->GetBinContent(i)
-      && hChi2min->GetBinContent(i) < hChi2min->GetBinContent(i+1) )
-    {
-      chi2.push_back(hChi2min->GetBinContent(i));
-    }
-  }
-  return chi2;
-}
 
 ///
 /// Find the RooFitResults corresponding to all local
@@ -704,102 +686,6 @@ void MethodProbScan::saveSolutions2d()
   sortSolutions();
 }
 
-///
-/// Plot the evolution of best fit nuisance paramters
-/// along the 1-CL curve.
-///
-/// By changing the code at the beginning of the function
-/// one can chose whether all scan results are plotted, or
-/// only those comprising the 1-CL curve.
-///
-void MethodProbScan::plotParEvolution()
-{
-  // vector<RooSlimFitResult*> results = allResults;
-  vector<RooSlimFitResult*> results = curveResults;
-
-  cout << "MethodProbScan::plotParEvolution() : plotting ..." << endl;
-  TCanvas *c2 = new TCanvas("plotParEvolution"+getUniqueRootName(), title, 2000,1600);
-  c2->Divide(7,5);
-  int iPad = 1;
-
-  // get all parameters, loop over them
-  TIterator* it = w->set(parsName)->createIterator();
-  while ( RooRealVar* p = (RooRealVar*)it->Next() )
-  {
-    if ( p->isConstant() && p->GetName()!=scanVar1 ) continue;
-    if ( arg->verbose ) cout << "MethodProbScan::plotParEvolution() : var = " << p->GetName() << endl;
-    TGraph *g = new TGraph(results.size());
-    int iGraph = 0;
-
-    for ( int i=0; i<results.size(); i++ ){
-      assert(results[i]);
-      g->SetPoint(iGraph, iGraph, results[i]->getParVal(p->GetName()));
-      iGraph++;
-    }
-
-    TPad *pad = (TPad*)c2->cd(iPad);
-    pad->SetLeftMargin(0.25);
-    g->SetTitle(p->GetName());
-    g->GetXaxis()->SetTitle("scan step");
-    g->GetYaxis()->SetTitleSize(0.09);
-    g->GetYaxis()->SetLabelSize(0.07);
-    g->GetYaxis()->SetTitleOffset(1.5);
-    g->GetYaxis()->SetTitle(p->GetName());
-    g->Draw("al");
-    c2->Update();
-    iPad += 1;
-  }
-
-  // plot the chi2 to the last pad
-  TPad *pad = (TPad*)c2->cd(iPad++);
-  pad->SetLeftMargin(0.25);
-  TGraph *g = new TGraph(results.size()-1);
-  int iGraph = 0;
-  for ( int i=0; i<results.size(); i++ )
-  {
-    if ( !results[i] ) continue;
-    g->SetPoint(iGraph, iGraph, results[i]->minNll());
-    iGraph++;
-  }
-  g->SetTitle("chi2");
-  g->GetXaxis()->SetTitle("scan step");
-  g->GetYaxis()->SetTitleSize(0.09);
-  g->GetYaxis()->SetLabelSize(0.07);
-  g->GetYaxis()->SetTitleOffset(1.5);
-  g->GetYaxis()->SetTitle("chi2");
-  g->Draw("al");
-  c2->Update();
-
-  // print a red line at the position of the local solutions
-  vector<float> localChi2 = getLocalMinChi2();
-  for ( int i=0; i<localChi2.size(); i++ )
-  {
-    iGraph = 0;
-    for ( int j=0; j<results.size(); j++ )
-    {
-      if ( !results[j] ) continue;
-    	iGraph++;
-      if ( !(fabs(results[j]->minNll() - localChi2[i])<0.001) ) continue;
-
-      for ( int p=1; p<iPad; p++ )
-      {
-      	TPad *pad = (TPad*)c2->cd(p);
-      	float ymin = pad->GetUymin();
-      	float ymax = pad->GetUymax();
-      	float xmin = pad->GetUxmin();
-      	float xmax = pad->GetUxmax();
-
-        TLine* l1 = new TLine(iGraph, ymin, iGraph, ymax);
-        l1->SetLineWidth(1);
-        l1->SetLineColor(kRed);
-        l1->SetLineStyle(kDashed);
-        l1->Draw();
-      }
-    }
-  }
-
-  savePlot(c2, "parEvolution_"+name+"_"+scanVar1);
-}
 
 ///
 /// Get the chi2 value of the profile likelihood at a given
