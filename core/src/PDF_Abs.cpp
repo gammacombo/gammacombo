@@ -182,8 +182,12 @@ TString PDF_Abs::getBaseName()
 }
 
 ///
-/// Uniquify all relevant names. This way we can have mulitple
+/// Uniquify all relevant names by adding a unique ID following
+/// the pattern "UID2". This way we can have mulitple
 /// instances of the same PDF in the same combination.
+/// The pattern is defined in uniquifyThisString().
+///
+/// \param uID	- unique ID
 ///
 void PDF_Abs::uniquify(int uID)
 {
@@ -545,3 +549,58 @@ bool PDF_Abs::test()
   if(!quiet) cout << "pdf->getVal() = " << pdf->getVal() << endl;
   return status;
 }
+
+///
+/// Check if this PDF has an observable of the given name.
+/// \param obsname	- observable name
+/// \return	true if found
+///
+bool PDF_Abs::hasObservable(TString obsname)
+{
+	RooRealVar* obs = (RooRealVar*)observables->find(obsname);
+	if ( obs==0 ) return false;
+	return true;
+}
+
+///
+/// Scale the error of a given observable.
+/// Both stat and syst errors are being scaled by the same factor.
+/// In order to become effective, the PDF needs to be rebuild by
+/// calling buildCov() and buildPdf().
+///
+/// \param obsname	- observable name. It may or may not include a unique ID string, both works.
+/// \param scale	- the scale factor the current error is being multiplied with
+/// \return		- true if successful
+///
+bool PDF_Abs::ScaleError(TString obsname, float scale)
+{
+	// remove unique ID if necessary
+	TString UID = "UID";
+	if ( obsname.Contains(UID) ){
+		obsname.Replace(obsname.Index(UID), obsname.Length(), ""); // delete the unique ID. That should leave just the observable name.
+	}
+	// find the index of the observable - if it exists at all!
+	if ( !hasObservable(obsname) ){
+		cout << "PDF_Abs::ScaleError() : ERROR : observable '" << obsname << "' not found." << endl;
+		return false;
+	}
+	int index = -1;
+	for ( int i=0; i<getNobs(); i++ ){
+		if ( observables->at(i)->GetName()==obsname ){
+			index = i;
+			break;
+		}
+	}
+	if ( index==-1 ){
+		// this should never happen...
+		cout << "PDF_Abs::ScaleError() : ERROR : internal self inconsistency discovered. Exit." << endl;
+		assert(0);
+	}
+	// scale error
+	StatErr[index] *= scale;
+	SystErr[index] *= scale;
+	// update error source string
+	obsErrSource += " (PDF_Abs::ScaleError(): scaled error of " + obsname + ")";	
+	return true;
+}
+

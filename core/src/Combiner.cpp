@@ -174,10 +174,12 @@ void Combiner::combine()
 			exit(1);
 		}
     // uniquify pdf
-    pdfs[i]->uniquify(i); // need to be unique inside this combiner, not globally: it's important
+    pdfs[i]->uniquify(i); // Needs to be unique inside this combiner, not globally: it's important
                           // that same combiner's pdfs are named the same
                           // else we can't save toys from different combiners into
-                          // the same ToyTree in the coverage test
+                          // the same ToyTree in the coverage test.
+                          // Also, the "scan for observable" mechanism relies on the fact
+                          // that the ID coincides with the number of the PDF in this combiner.
     // add PDF to workspace
     RooMsgService::instance().setGlobalKillBelow(WARNING);
 		if ( pdfs[i]->isCrossCorPdf() ){
@@ -287,24 +289,39 @@ vector<string>& Combiner::getParameterNames()
 
 ///
 /// Return a vector of all observables names present
-/// in this combination. This works only after 
-/// combine() was called as this adds the unification strings.
+/// in this combination. 
+/// If being called before combine() was called, a list of
+/// observables contained in all PDFs is returned, without
+/// unification strings. There might be duplicates in that
+/// list, if more than one PDFs contain observables of the
+/// same name.
+/// If it is being called after combine() was called, the
+/// the unification strings are included.
+///
+/// \return	a vector of observable names
 ///
 vector<string>& Combiner::getObservableNames()
 {
-	if ( !_isCombined ){
-		cout << "Combiner::getObservableNames() : ERROR : Combiner needs to be combined first!" << endl;
-		assert(0);
-	}
 	vector<string>* vars = new vector<string>();
-	const RooArgSet* obs = w->set("obs_"+pdfName);
-	if ( !obs ){
-		cout << "Combiner::getObservableNames() : ERROR : Observables set not found in workspace: " << "obs_"+pdfName << endl;
-		assert(0);
+	if ( !_isCombined ){
+		// collect observables from all PDFs
+		for ( int i=0; i<pdfs.size(); i++ ){
+			TIterator* it = pdfs[i]->getObservables()->createIterator();
+			while ( RooRealVar* p = (RooRealVar*)it->Next() ) vars->push_back(p->GetName());
+			delete it;
+		}
 	}
-	TIterator* it = obs->createIterator();
-	while ( RooRealVar* p = (RooRealVar*)it->Next() ) vars->push_back(p->GetName());
-	delete it;
+	else{
+		// get observables from the combined workspace
+		const RooArgSet* obs = w->set("obs_"+pdfName);
+		if ( !obs ){
+			cout << "Combiner::getObservableNames() : ERROR : Observables set not found in workspace: " << "obs_"+pdfName << endl;
+			assert(0);
+		}
+		TIterator* it = obs->createIterator();
+		while ( RooRealVar* p = (RooRealVar*)it->Next() ) vars->push_back(p->GetName());
+		delete it;
+	}
 	return *vars;
 }
 
@@ -493,3 +510,45 @@ void Combiner::setName(TString name)
   }
 	this->name = name;
 }
+
+///
+/// Get the PDF that provides a certain observable.
+/// The observable needs to contain the unique ID, which
+/// corresponds to the number of the PDF in this combiner.
+/// This works before combine() was called. Note that delPdf()
+/// may change the order of the PDFs, and therefore the unique ID.
+///
+/// \param obsname	- name of the observable including the unique string
+/// \return pointer to the PDF
+///
+PDF_Abs* Combiner::getPdfProvidingObservable(TString obsname)
+{
+	// find PDF ID from the unique string
+	TString obsnameparse = obsname;
+	TString UID = "UID";
+	if ( !obsnameparse.Contains(UID) ){
+		cout << "Combiner::getPdfProvidingObservable() : ERROR : observable name doesn't contain the string " << UID << endl;
+		return 0;
+	}
+	obsnameparse.Replace(0, obsnameparse.Index(UID)+UID.Length(), ""); // deleting from beginning of string until end of UID. That should leave only the number.
+	if ( !obsnameparse.IsDigit() ){
+		cout << "Combiner::getPdfProvidingObservable() : ERROR : observable name doesn't end with an integer ID" << endl;
+		return 0;
+	}
+	int id = obsnameparse.Atoi();
+	// get the PDF of given ID
+	if ( id<0 || id>=pdfs.size() ){
+		cout << "Combiner::getPdfProvidingObservable() : ERROR : observable ID not found in Combiner: ID=" << id << endl;
+		return 0;
+	}
+	PDF_Abs* foundpdf = pdfs[id];
+	// check that the observable name exists in the PDF
+	obsnameparse = obsname;
+	obsnameparse.Replace(obsnameparse.Index(UID), obsnameparse.Length(), ""); // delete the unique ID. That should leave just the observable name.
+	if ( !( foundpdf->hasObservable(obsname) || foundpdf->hasObservable(obsnameparse) ) ){
+		cout << "Combiner::getPdfProvidingObservable() : ERROR : observable '" << obsname<< "' not found in PDF '" << foundpdf->getName() << "'" << endl;
+		return 0;
+	}
+	return foundpdf;
+}
+

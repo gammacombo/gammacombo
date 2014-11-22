@@ -41,6 +41,7 @@ public:
   inline OptParser*        getArg(){return arg;};
   const RooArgSet*         getParameters();
   vector<string>&          getParameterNames();
+  PDF_Abs*                 getPdfProvidingObservable(TString obsname);
   const RooArgSet*         getObservables();
   vector<string>&	   getObservableNames();
   inline TString           getTitle() const {return title;};

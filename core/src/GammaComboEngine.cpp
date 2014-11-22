@@ -749,6 +749,7 @@ void GammaComboEngine::scanStrategy1d(MethodProbScan *scanner, ParameterCache *p
 	}
 	// otherwise load each starting value found
 	else {
+		cout << "Scan strategy: Scanning from start points found in file." << endl;
 		cout << "Number of scans to run: " << nStartingPoints << endl;
 		for (int i=0; i<nStartingPoints; i++){
 			pCache->setPoint(scanner,i);
@@ -875,10 +876,11 @@ bool GammaComboEngine::isAsimovCombiner(int i)
 	return i<arg->asimov.size() && arg->asimov[i]>0;
 }
 
-
 ///
 /// Checks if a given variable name is in the list of observables
-/// of a combiner.
+/// of a combiner. The check is slightly sloppy as it ignores the
+/// unique ID.
+///
 /// \param c		- the combiner
 /// \param scanVar 	- the scan variable name
 /// \return	true if included, else false
@@ -887,11 +889,10 @@ bool GammaComboEngine::isScanVarObservable(Combiner *c, TString scanVar)
 {
 	vector<string> obs = c->getObservableNames();
 	for ( int i=0; i<obs.size(); i++ ){
-		if ( TString(obs[i])==scanVar ) return true;
+		if ( scanVar.Contains(obs[i]) ) return true;
 	}
 	return false;
 }
-
 
 ///
 /// scan engine
@@ -916,6 +917,22 @@ void GammaComboEngine::scan()
 			c->setName(c->getName()+Form("Asimov%i",arg->asimov[i]));
 		}
 
+		// configure scans for observables - this is the part only possible before combining
+		if ( isScanVarObservable(c, arg->var[0]) ){
+			cout << "\n--var " << arg->var[0] << ": Setting up a scan for an observable ..." << endl;
+			// 1. tighten the constraint on the observable
+			PDF_Abs* pdf = c->getPdfProvidingObservable(arg->var[0]);
+			if ( pdf==0 ){
+				cout << "GammaComboEngine::scan() : ERROR : no PDF found that contains the observable '" << arg->var[0] << "'. Exit." << endl;
+				exit(1);
+			}
+			float scale = 0.1;
+			cout << "... observable error is multiplied by a factor " << scale << endl;
+			pdf->ScaleError(arg->var[0], scale);
+			pdf->buildCov();
+			pdf->buildPdf();
+		}
+
 		// combine
 		c->combine();
 		if ( !c->isCombined() ) continue; // error during combining
@@ -923,10 +940,8 @@ void GammaComboEngine::scan()
 		// set an asimov toy - only possible after combining
 		if ( isAsimovCombiner(i) ) setAsimovToy(c, i);
 
-		// configure scans for observables
+		// configure scans for observables - this is the part only possible after combining
 		if ( isScanVarObservable(c, arg->var[0]) ){
-			cout << "setting up a scan for an observable ..." << endl;
-			// 1. tighten the constraint on the observable
 			// 2. add observable to the list of parameters
 			c->getWorkspace()->extendSet(c->getParsName(), arg->var[0]);
 		}

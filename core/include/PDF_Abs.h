@@ -69,6 +69,7 @@ public:
   inline RooAbsPdf*   getPdf(){return pdf;};
   inline RooArgList*  getTheory(){return theory;};
   inline TString      getTitle(){return title;};
+  bool 	              hasObservable(TString obsname);
 	inline bool					isCrossCorPdf(){return m_isCrossCorPdf;}
   virtual void        initParameters();
   virtual void        initRelations();
@@ -77,6 +78,7 @@ public:
   void                print() const;
   void                printParameters();
   void                printObservables();
+  bool                ScaleError(TString obsname, float scale);
 	inline void					setErrorSourceString(TString source){obsErrSource=source;};
 	inline void					setGcId(int id){gcId=id;};
   void                setObservable(TString name, float value);
