@@ -402,7 +402,14 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"that connects an observable to the parameters. "
 			"Example: --relation 'x+y'. Default: idendity.", false, "string");
 	TCLAP::MultiArg<string> combidArg("c", "combid", "ID of combination to be computed. "
-			"Use -u to get a list of available combinations.", false, "int");
+			"Use -u to get a list of available combinations. \n"
+			"One can also specify modifications to a given combination by adding "
+			"or removing PDFs. The syntax is \n"
+			" -c 26         # this scans combination number 26\n"
+			" -c 26:+12     # this adds PDF number 12 to combination number 26\n"
+			" -c 26:+12,-13 # this adds PDF 12 and removes PDF 13 from combination number 26\n"
+			"Use -u to get a list of available PDF numbers."
+			, false, "int");
 	TCLAP::MultiArg<int> colorArg("", "color", "ID of color to be used for the combination. "
 			"Default: 0 for first scanner, 1 for second, etc.", false, "int");
 	TCLAP::MultiArg<int> pevidArg("", "pevid", "ID of combination used for the profile likelihood"
