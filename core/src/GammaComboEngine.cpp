@@ -375,7 +375,7 @@ void GammaComboEngine::print()
 ///
 void GammaComboEngine::checkCombinationArg()
 {
-  if ( arg->combid.size()==0 && arg->addpdf.size()==0 && arg->delpdf.size()==0 ){
+  if ( arg->combid.size()==0 ){
     cout << "Please chose a combination ID (-c).\n"
          << "Use the -u option to print a list of available combinations." << endl;
     exit(1);
@@ -464,59 +464,6 @@ void GammaComboEngine::makeAddDelCombinations()
 		cmb.push_back(cNew);
 		arg->combid[i] = cmb.size()-1;
 	}
-}
-
-///
-/// Implement the logic needed for the command line arguments
-/// --addpdf and --delpdf
-///
-void GammaComboEngine::makeAddDelCombinations2(TString mode)
-{
-  if ( !(mode==TString("add") || mode==TString("del")) ) assert(0); // only accept "add" or "del"
-  vector<vector<int> >& addDelVector = mode==TString("add") ? arg->addpdf : arg->delpdf;
-
-  for ( int i=0; i<addDelVector.size(); i++ ) {
-    int combinerId = addDelVector[i][0];
-    cout << (mode==TString("add") ? "--addpdf:" : "--delpdf:");
-    cout << " Making a new combination based on combination " << combinerId << endl;
-    Combiner *cOld = cmb[combinerId];
-    // compute name and title of new combiner
-    TString nameNew = cOld->getName();
-    TString titleNew = cOld->getTitle();
-    for ( int j=1; j<addDelVector[i].size(); j++ ){
-      int pdfId = addDelVector[i][j];
-      if ( ! pdfExists(pdfId) ){
-        cout << "  ERROR: PDF ID not defined: " << pdfId << endl;
-        continue;
-      }
-      if ( mode==TString("add") ){
-        nameNew += Form("_addedPdf%i",pdfId);
-        titleNew += Form(", added PDF%i",pdfId);
-      }
-      else {
-        nameNew += Form("_withoutPdf%i",pdfId);
-        titleNew += Form(", w/o PDF%i",pdfId);
-      }
-    }
-    // make the new combiner
-    Combiner *cNew = cOld->Clone(nameNew, titleNew);
-    // add pdfs
-    for ( int j=1; j<addDelVector[i].size(); j++ ){
-      int pdfId = addDelVector[i][j];
-      if ( ! pdfExists(pdfId) ) continue;
-      if ( mode==TString("add") ){
-        cout << "... adding PDF " << pdfId << endl;
-        cNew->addPdf(pdf[pdfId]);
-      }
-      else {
-        cout << "... deleting PDF " << pdfId << endl;
-        cNew->delPdf(pdf[pdfId]);
-      }
-    }
-    // add to list of combinations to compute this round
-    cmb.push_back(cNew);
-    arg->combid.push_back(cmb.size()-1);
-  }
 }
 
 ///
@@ -1150,8 +1097,6 @@ void GammaComboEngine::run()
 	checkColorArg();
 	if ( arg->isQuickhack(6) ) scaleDownErrors();
 	if ( arg->nosyst ) disableSystematics();
-	//makeAddDelCombinations2("add");
-	//makeAddDelCombinations2("del");
 	makeAddDelCombinations();
 	defineColors();
 	printCombinerStructure();

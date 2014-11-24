@@ -91,7 +91,6 @@ OptParser::OptParser()
 void OptParser::defineOptions()
 {
   availableOptions.push_back("action");
-  availableOptions.push_back("addpdf");
   availableOptions.push_back("asimov");
 	availableOptions.push_back("cacheStartingValues");
   availableOptions.push_back("combid");
@@ -100,7 +99,6 @@ void OptParser::defineOptions()
 	availableOptions.push_back("covCorrect");
 	availableOptions.push_back("covCorrectPoint");
   availableOptions.push_back("debug");
-  availableOptions.push_back("delpdf");
   availableOptions.push_back("digits");
   availableOptions.push_back("evol");
 	availableOptions.push_back("fix");
@@ -240,10 +238,8 @@ void OptParser::bookProbOptions()
 void OptParser::bookFlowcontrolOptions()
 {
 	bookedOptions.push_back("action");
-	bookedOptions.push_back("addpdf");
 	bookedOptions.push_back("combid");
 	bookedOptions.push_back("fix");
-	bookedOptions.push_back("delpdf");
 	bookedOptions.push_back("jobdir");
 	bookedOptions.push_back("nosyst");
 }
@@ -409,16 +405,6 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"Use -u to get a list of available combinations.", false, "int");
 	TCLAP::MultiArg<int> colorArg("", "color", "ID of color to be used for the combination. "
 			"Default: 0 for first scanner, 1 for second, etc.", false, "int");
-	TCLAP::MultiArg<string> addpdfArg("", "addpdf", "Create a new combination by adding PDFs to an existing one. "
-			"Use -u to get a list of available PDFs.\n"
-			"Syntax: --addpdf combinerId:pdfId1,pdfId2,...\n"
-			"Example: -c 10 --addpdf 10:5. This will perform two scans, one for combination "
-			"10, one for combination 10 with added PDF 5.", false, "int");
-	TCLAP::MultiArg<string> delpdfArg("", "delpdf", "PDF ID to be deleted from the selected combination. "
-			"Use -u to get a list of available PDFs.\n"
-			"Syntax: --delpdf combinerId:pdfId1,pdfId2,...\n"
-			"Example: -c 10 --delpdf 10:5. This will perform two scans, one for combination "
-			"10, one for combination 10 without PDF 5.", false, "int");
 	TCLAP::MultiArg<int> pevidArg("", "pevid", "ID of combination used for the profile likelihood"
 			"that determines the parameter evolution for the Plugin toy generation. If not given, "
 			"the --combid will be used. Use -u to get a list of possible choices.", false, "int");
@@ -532,14 +518,12 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "fix" ) ) cmd.add(fixArg);
 	if ( isIn<TString>(bookedOptions, "evol" ) ) cmd.add(parevolArg);
 	if ( isIn<TString>(bookedOptions, "digits" ) ) cmd.add(digitsArg);
-	if ( isIn<TString>(bookedOptions, "delpdf") ) cmd.add(delpdfArg);
 	if ( isIn<TString>(bookedOptions, "debug" ) ) cmd.add(debugArg);
 	if ( isIn<TString>(bookedOptions, "covCorrect" ) ) cmd.add(coverageCorrectionIDArg);
 	if ( isIn<TString>(bookedOptions, "covCorrectPoint" ) ) cmd.add(coverageCorrectionPointArg);
 	if ( isIn<TString>(bookedOptions, "controlplots" ) ) cmd.add(controlplotArg);
 	if ( isIn<TString>(bookedOptions, "color" ) ) cmd.add(colorArg);
 	if ( isIn<TString>(bookedOptions, "combid" ) ) cmd.add(combidArg);
-	if ( isIn<TString>(bookedOptions, "addpdf") ) cmd.add(addpdfArg);
 	if ( isIn<TString>(bookedOptions, "action") ) cmd.add(actionArg);
 	if ( isIn<TString>(bookedOptions, "asimov") ) cmd.add(asimovArg);
 	cmd.parse( argc, argv );
@@ -675,12 +659,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 		savenuisances2dy.push_back(y.Atof());
 	}
 
-	// --addpdf, --delpdf
-	parseCombinerPdfList(addpdfArg, addpdf);
-	parseCombinerPdfList(delpdfArg, delpdf);
-
 	// --jobs
-	if ( jobsArg.getValue().size()>1 && jobsArg.getValue().size()!=(combid.size()+addpdf.size()+delpdf.size()) ){
+	if ( jobsArg.getValue().size()>1 && jobsArg.getValue().size()!=combid.size() ){
 		cout << "Argument error: Please give as many job ranges (-j) as combinations (-c)." << endl;
 		exit(1);
 	}
@@ -833,36 +813,6 @@ bool OptParser::parseAssignment(TString parseMe, TString &name, float &value)
 	name = nameStr;
 	value = valueStr.Atof();
 	return true;
-}
-
-///
-/// Parse --addpdf and --delpdf
-/// the string to parse looks sth like "combinerId:pdfId1,pdfId2"
-/// e.g. "26:12,23"
-///
-void OptParser::parseCombinerPdfList(TCLAP::MultiArg<string> &arg, vector<vector<int> > &output)
-{
-  for ( int i=0; i<arg.getValue().size(); i++ ){
-    TString parseMe = arg.getValue()[i]; // "26:12,23"
-    // parse leading combiner ID
-    TObjArray *array = parseMe.Tokenize(":"); // split string at ":"
-    if ( array->GetEntries()!=2 ){
-      cout << "ERROR: could not parse argument. Required format: 'combinerId:pdfId1,pdfId2,...'" << endl;
-      return;
-    }
-    TString combinerIdStr = ((TObjString*)array->At(0))->GetString();
-    vector<int> outputRow;
-    outputRow.push_back(combinerIdStr.Atoi());
-    // parse list of PDF IDs
-    TString pdfIdsListStr = ((TObjString*)array->At(1))->GetString();
-    TObjArray *array1 = pdfIdsListStr.Tokenize(","); // split string at ","
-    for ( int j=0; j<array1->GetEntries(); j++ ){
-      TString pdfId = ((TObjString*)array1->At(j))->GetString();
-      outputRow.push_back(pdfId.Atoi());
-    }
-    // fill into output
-    output.push_back(outputRow);
-  }
 }
 
 ///

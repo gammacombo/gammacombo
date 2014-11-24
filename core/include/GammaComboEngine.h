@@ -57,7 +57,6 @@ class GammaComboEngine
 	private:
 
 		void			makeAddDelCombinations();
-		void			makeAddDelCombinations2(TString mode);
 		void			checkColorArg();
 		void			checkCombinationArg();
 		bool			combinerExists(int id) const;

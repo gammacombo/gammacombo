@@ -35,7 +35,6 @@ class OptParser
 		bool isQuickhack(int id);
 
 		vector<TString>		action;
-		vector<vector<int> >	addpdf;  // format is addpdf = [0:[combinerId1,pdfId1,pdfId2], 1:[combinerId1,pdfId1,pdfId2]]
 		vector<int>		asimov;
 		bool			cacheStartingValues;
 		vector<int>		color;
@@ -45,7 +44,6 @@ class OptParser
 		int 			coverageCorrectionID;
 		int 			coverageCorrectionPoint;
 		bool            	debug;
-		vector<vector<int> > 	delpdf;
 		int		        digits;
 		bool            	enforcePhysRange;
 		vector<vector<FixPar> >	fixParameters;
@@ -113,14 +111,13 @@ class OptParser
 		bool		        verbose;
 
 	private:
-		int 	convertToDigitWithCheck(TString parseMe, TString usage);
-		int 	convertToIntWithCheck(TString parseMe, TString usage);
-		void	defineOptions();
-		void	parsePosition(TString parseMe, float &x, float &y);
-		void	parseRange(TString parseMe, float &min, float &max);
-		bool	parseAssignment(TString parseMe, TString &name, float &value);
-		void	parseCombinerPdfList(TCLAP::MultiArg<string> &arg, vector<vector<int> > &output);
-		void	parseCombinerString(TString parseMe, int& resultCmbId, vector<int>& resultAddDelPdf);
+		int 		convertToDigitWithCheck(TString parseMe, TString usage);
+		int 		convertToIntWithCheck(TString parseMe, TString usage);
+		void		defineOptions();
+		void		parsePosition(TString parseMe, float &x, float &y);
+		void		parseRange(TString parseMe, float &min, float &max);
+		bool		parseAssignment(TString parseMe, TString &name, float &value);
+		void		parseCombinerString(TString parseMe, int& resultCmbId, vector<int>& resultAddDelPdf);
 		vector<TString> availableOptions;
 		vector<TString> bookedOptions;
 };
