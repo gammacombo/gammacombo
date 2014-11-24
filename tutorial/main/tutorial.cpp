@@ -38,13 +38,14 @@ int main(int argc, char* argv[])
 	///////////////////////////////////////////////////
 
 	gc.newCombiner(0, "empty", "empty");
-	gc.newCombiner(1, "tutorial_1", "Gaus 1",           1);
-	gc.newCombiner(2, "tutorial_2", "Gaus 2",           2);  
-	gc.newCombiner(3, "tutorial_3", "Gaus 1 & Gaus 2",  1,2);
-	gc.newCombiner(4, "tutorial_4", "2D Gaus",          3);
-	gc.newCombiner(5, "tutorial_5", "2D Gaus + Gaus 1", 2,3);
-	gc.newCombiner(6, "tutorial_6", "Circle",           4);
-	gc.newCombiner(7, "tutorial_7", "2D Gaus + Circle", 3,4);
+	gc.newCombiner(1, "tutorial1", "Gaus 1",           1);
+	gc.newCombiner(2, "tutorial2", "Gaus 2",           2);  
+	gc.newCombiner(3, "tutorial3", "Gaus 1 & Gaus 2",  1,2);
+	gc.newCombiner(4, "tutorial4", "2D Gaus",          3);
+	gc.newCombiner(5, "tutorial5", "2D Gaus & Gaus 1", 2,3);
+	gc.newCombiner(6, "tutorial6", "Circle",           4);
+	gc.newCombiner(7, "tutorial7", "2D Gaus & Circle", 3,4);
+	gc.newCombiner(8, "tutorial8", "Gaus 1 & Gaus 2 & 2D Gaus", 1,2,3);
 
 	///////////////////////////////////////////////////
 	//

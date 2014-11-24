@@ -11,7 +11,7 @@
 ###############################################
 
 SET( COMBINER_MODULES
-	#tutorial
+	tutorial
 	#belle2
 	#biggammacombo
 	#bsmumu

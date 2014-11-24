@@ -48,6 +48,8 @@ class GammaComboEngine
 					int pdf6=-1, int pdf7=-1, int pdf8=-1, int pdf9=-1, int pdf10=-1,
 					int pdf11=-1, int pdf12=-1, int pdf13=-1, int pdf14=-1, int pdf15=-1);
 		void			print();
+		void			printPdfs();
+		void			printCombinations();
 		void			run();
 		void			runApplication();
 		static void             scanStrategy1d(MethodProbScan *scanner, ParameterCache *pCache);

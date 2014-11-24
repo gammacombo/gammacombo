@@ -349,25 +349,41 @@ void GammaComboEngine::usage()
 }
 
 ///
+/// Print the available PDFs.
+///
+void GammaComboEngine::printPdfs()
+{
+	cout << endl;
+	cout << "Available PDFs:" << endl;
+	cout << "===============" << endl;
+	for ( int i=0; i<pdf.size(); i++ ){
+		if ( pdf[i]==0 ) continue;
+		printf(" (%2i) %s\n", i, pdf[i]->getTitle().Data());
+	}
+}
+
+///
+/// Print the availabe Combinations.
+///
+void GammaComboEngine::printCombinations()
+{
+	cout << endl;
+	cout << "Available combinations (to be used as -c <n>):" << endl;
+	cout << "==============================================" << endl;
+	for ( int i=0; i<cmb.size(); i++ ){
+		if ( cmb[i]==0 ) continue;
+		printf(" (%i) %s\n", i, cmb[i]->getTitle().Data());
+	}
+	cout << endl;
+}
+
+///
 /// Print the content of this engine.
 ///
 void GammaComboEngine::print()
 {
-	cout << endl;
-  cout << "Available PDFs:" << endl;
-  cout << "===============" << endl;
-  for ( int i=0; i<pdf.size(); i++ ){
-    if ( pdf[i]==0 ) continue;
-    printf(" (%2i) %s\n", i, pdf[i]->getTitle().Data());
-  }
-  cout << endl;
-  cout << "Available combinations (to be used as -c <n>):" << endl;
-  cout << "==============================================" << endl;
-  for ( int i=0; i<cmb.size(); i++ ){
-    if ( cmb[i]==0 ) continue;
-    printf(" (%i) %s\n", i, cmb[i]->getTitle().Data());
-  }
-  cout << endl;
+	printPdfs();
+	printCombinations();
 }
 
 ///
@@ -427,15 +443,17 @@ void GammaComboEngine::makeAddDelCombinations()
 		// see if anything is to be added or subtracted
 		if ( arg->combmodifications[i].size()==0 ) continue;
 		// there are modifications to be done!
-		cout << " Making a new combination based on combination " << arg->combid[i] << endl;
+		cout << "-c : Making a new combination based on combination " << arg->combid[i] << endl;
 		// compute name and title of new combiner
 		TString nameNew = cOld->getName();
 		TString titleNew = cOld->getTitle();
 		for ( int j=0; j<arg->combmodifications[i].size(); j++ ){
 			int pdfId = abs(arg->combmodifications[i][j]);
 			if ( ! pdfExists(pdfId) ){
-				cout << "  ERROR: PDF ID not defined: " << pdfId << endl;
-				continue;
+				cout << "\nERROR: PDF of given ID does not exist: " << pdfId << endl;
+				cout << "       Here is a list of available PDFs:" << endl;
+				printPdfs();
+				exit(1);
 			}
 			if ( arg->combmodifications[i][j]>0 ){
 				nameNew += Form("+%i",pdfId);
