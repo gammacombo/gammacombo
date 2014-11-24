@@ -1034,15 +1034,6 @@ void Utils::setParametersFloating(RooWorkspace* w, std::vector<TString> names){
 };
 
 ///
-/// Print out parameters in C++ code format that can be used
-/// to set this minimum in other places of the source code.
-///
-void Utils::printNuisanceCode(TString par, float val)
-{
-	printf("    setVal(w, \"%s\", %g);\n",TString(par).Data(), val);
-}
-
-///
 /// Debug tools: print the content of a vector to stdout.
 ///
 void Utils::dump_vector(const std::vector<int>& l) {
@@ -1066,3 +1057,4 @@ void Utils::dump_map(const std::map<int, std::vector<int> >& map) {
     dump_vector(it->second);
   }
 }
+

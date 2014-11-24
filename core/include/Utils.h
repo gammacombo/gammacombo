@@ -73,8 +73,7 @@ namespace Utils
     TTree*  convertRooDatasetToTTree(RooDataSet *d);
     
     void mergeNamedSets(RooWorkspace *w, TString mergedSet, TString set1, TString set2);
-		void printNuisanceCode(TString par, float val);
-		void randomizeParameters(RooWorkspace* w, TString setname);
+    void randomizeParameters(RooWorkspace* w, TString setname);
     void setParameters(const RooAbsCollection* setMe, const RooAbsCollection* values);
     void setParameters(RooWorkspace* w, TString parname, const RooAbsCollection* set);
     void setParameters(RooWorkspace* w, TString parname, RooFitResult* r, bool constAndFloat=false);

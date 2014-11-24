@@ -176,19 +176,6 @@ void RooSlimFitResult::Print(bool verbose, bool printcor)
       cout << endl;
     }
   }
-	//   if ( verbose ){
-	//     TDatime date;
-	//     cout << "\n    Code to set this minimum" << endl;
-	//     cout << "  ----------------------------" << endl;
-	//     cout << "    // (" << date.AsString() << ")" << endl;
-	//     cout << "    // chi2=" << minNll() << endl;
-	//     for ( int i=0; i<_parsNames.size(); i++ ){
-	//       if (_parsConst[i]) continue;
-	//       float val = _parsVal[i];
-	// 		// Utils::printNuisanceCode(_parsNames[i], val); // can't use this as it doesn't compile when Utils.h is included
-	// 		printf("    setVal(w, \"%s\", %g);\n",TString(_parsNames[i]).Data(), val);
-	//     }
-	// }
 	if ( printcor ){
     // print correlations
     cout << "\n    Correlation matrix" << endl;

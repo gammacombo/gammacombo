@@ -128,8 +128,6 @@ void OptParser::defineOptions()
   availableOptions.push_back("physrange");
   availableOptions.push_back("plotid");
   availableOptions.push_back("pluginext");
-  availableOptions.push_back("pn");
-  availableOptions.push_back("pn2d");
   availableOptions.push_back("po");
   availableOptions.push_back("prelim");
   availableOptions.push_back("probforce");
@@ -221,8 +219,6 @@ void OptParser::bookProbOptions()
   bookedOptions.push_back("npoints2dx");
   bookedOptions.push_back("npoints2dy");
   bookedOptions.push_back("physrange");
-  bookedOptions.push_back("pn");
-  bookedOptions.push_back("pn2d");
   bookedOptions.push_back("sn");
   bookedOptions.push_back("sn2d");
   bookedOptions.push_back("probforce");
@@ -415,13 +411,6 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::MultiArg<int> pevidArg("", "pevid", "ID of combination used for the profile likelihood"
 			"that determines the parameter evolution for the Plugin toy generation. If not given, "
 			"the --combid will be used. Use -u to get a list of possible choices.", false, "int");
-	TCLAP::MultiArg<float> pnArg("", "pn", "--pn x. Print nuisances at certain points in C++ format after a "
-			"1d scan was performed. This can be used with the force method to obtain suitable start "
-			"parameters for further scans. "
-			"Parameters will be printed for scan point bin that contains x. "
-			"Angles have to be given in radians.", false, "float");
-	TCLAP::MultiArg<string> pn2dArg("", "pn2d", "Print nuisances during 2d scans at the given points. "
-			"Format: x:y", false, "string");
 	TCLAP::MultiArg<int> qhArg("", "qh", "Quick hacks. \n"
 			"1: Move up the printed solutions in 1d log plots such that they don't clash with the 95% clabel. \n"
 			"2: Move the CL labels to the middle of the 1d plots. \n"
@@ -489,8 +478,6 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "probforce" ) ) cmd.add( probforceArg );
 	if ( isIn<TString>(bookedOptions, "prelim" ) ) cmd.add( plotprelimArg );
 	if ( isIn<TString>(bookedOptions, "po" ) ) cmd.add( plotpluginonlyArg );
-	if ( isIn<TString>(bookedOptions, "pn2d" ) ) cmd.add(pn2dArg);
-	if ( isIn<TString>(bookedOptions, "pn" ) ) cmd.add(pnArg);
 	if ( isIn<TString>(bookedOptions, "pluginplotrange" ) ) cmd.add( pluginplotrangeArg );
 	if ( isIn<TString>(bookedOptions, "pluginext" ) ) cmd.add( pluginextArg );
 	if ( isIn<TString>(bookedOptions, "plotnsigmacont" ) ) cmd.add(plotnsigmacontArg);
@@ -577,7 +564,6 @@ void OptParser::parseArguments(int argc, char* argv[])
 	plot2dcl          = plot2dclArg.getValue();
 	plotprelim        = plotprelimArg.getValue();
 	plotunoff         = plotunoffArg.getValue();
-	printnuisances1d  = pnArg.getValue();
 	savenuisances1d   = snArg.getValue();
 	qh                = qhArg.getValue();
 	verbose           = verboseArg.getValue();
@@ -643,17 +629,6 @@ void OptParser::parseArguments(int argc, char* argv[])
 		exit(1);
 	}
 	coverageCorrectionPoint = coverageCorrectionPointArg.getValue();
-
-	// --pn2d
-	for ( int i = 0; i < pn2dArg.getValue().size(); i++ ){
-		TString parseMe = pn2dArg.getValue()[i];
-		TString x = parseMe;
-		TString y = parseMe;
-		x.Replace(x.Index(":"), x.Sizeof(), "");
-		y.Replace(0, y.Index(":")+1, "");
-		printnuisances2dx.push_back(x.Atof());
-		printnuisances2dy.push_back(y.Atof());
-	}
 
 	// --sn2d
 	for ( int i = 0; i < sn2dArg.getValue().size(); i++ ){

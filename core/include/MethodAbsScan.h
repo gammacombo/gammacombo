@@ -99,8 +99,6 @@ public:
     virtual void                    print();
     void                            printCLintervals();
     void                            printLocalMinima();
-    void                            printNuisances(vector<float>& points) const;
-    void                            printNuisances(vector<float>& pointsx, vector<float>& pointsy) const;
     void                            saveScanner(TString fName="");
     virtual int                     scan1d();
     virtual int                     scan2d();

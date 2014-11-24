@@ -667,7 +667,6 @@ void GammaComboEngine::make1dProbScan(MethodProbScan *scanner, int cId)
 			ParameterEvolutionPlotter plotter(scanner);
 			plotter.plotObsScanCheck();
 		}
-		if ( arg->printnuisances1d.size()>0 ) scanner->printNuisances(arg->printnuisances1d);
 		if (!arg->isAction("plugin")){
 			scanner->saveScanner(fb->getFileNameScanner(scanner));
 			pCache->cacheParameters(scanner);
@@ -827,7 +826,6 @@ void GammaComboEngine::make2dProbScan(MethodProbScan *scanner, int cId)
   if (!arg->isAction("pluginbatch")){
 		scanner->plotOn(plot);
 	  scanner->setLineColor(colorsLine[cId]);
-	  if ( arg->printnuisances2dx.size()>0 ) scanner->printNuisances(arg->printnuisances2dx, arg->printnuisances2dy);
 	  plot->Draw();
 	  OneMinusClPlot2d* plotf = new OneMinusClPlot2d(arg, plot->getName()+"_full");
 	  scanner->plotOn(plotf);
