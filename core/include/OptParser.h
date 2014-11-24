@@ -40,13 +40,14 @@ class OptParser
 		bool			cacheStartingValues;
 		vector<int>		color;
 		vector<int>		combid;
+		vector<vector<int> >	combmodifications; // encodes requested modifications to the combiner ID through the -c 26:+12 syntax,format is [cmbid:[+pdf1,-pdf2,...]]
 		bool			controlplot;
-		int 						coverageCorrectionID;
-		int 						coverageCorrectionPoint;
-		bool            debug;
-		vector<vector<int> > delpdf;
-		int		          digits;
-		bool            enforcePhysRange;
+		int 			coverageCorrectionID;
+		int 			coverageCorrectionPoint;
+		bool            	debug;
+		vector<vector<int> > 	delpdf;
+		int		        digits;
+		bool            	enforcePhysRange;
 		vector<vector<FixPar> >	fixParameters;
 		TString	group;
 		TString	groupPos;
@@ -112,13 +113,14 @@ class OptParser
 		bool		        verbose;
 
 	private:
+		int 	convertToDigitWithCheck(TString parseMe, TString usage);
 		int 	convertToIntWithCheck(TString parseMe, TString usage);
-		void defineOptions();
-		void parsePosition(TString parseMe, float &x, float &y);
-		void parseRange(TString parseMe, float &min, float &max);
-		bool parseAssignment(TString parseMe, TString &name, float &value);
-		void parseCombinerPdfList(TCLAP::MultiArg<string> &arg, vector<vector<int> > &output);
-		void parseCombinerString(TString parseMe, int& resultCmbId, vector<int>& resultAddPdf, vector<int>& resultDelPdf);
+		void	defineOptions();
+		void	parsePosition(TString parseMe, float &x, float &y);
+		void	parseRange(TString parseMe, float &min, float &max);
+		bool	parseAssignment(TString parseMe, TString &name, float &value);
+		void	parseCombinerPdfList(TCLAP::MultiArg<string> &arg, vector<vector<int> > &output);
+		void	parseCombinerString(TString parseMe, int& resultCmbId, vector<int>& resultAddDelPdf);
 		vector<TString> availableOptions;
 		vector<TString> bookedOptions;
 };

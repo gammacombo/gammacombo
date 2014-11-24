@@ -408,10 +408,69 @@ void GammaComboEngine::checkColorArg()
 }
 
 ///
+/// Implement the logic needed to create new combinations on the fly
+/// using the -c 26:+12 syntax
+///
+void GammaComboEngine::makeAddDelCombinations()
+{
+	// sanity check: the combid and combmodifications vectors should
+	// be the same size
+	if ( arg->combmodifications.size() != arg->combid.size() ){
+		cout << "GammaComboEngine::makeAddDelCombinations() : ERROR : internal inconsistency. \n"
+		"combid and combmodifications vectors not of same size." << endl;
+		assert(0);
+	}
+	// loop over list of modifications
+	for ( int i=0; i<arg->combmodifications.size(); i++ ) {
+		// get combiner that is to be modified
+		Combiner *cOld = cmb[arg->combid[i]];
+		// see if anything is to be added or subtracted
+		if ( arg->combmodifications[i].size()==0 ) continue;
+		// there are modifications to be done!
+		cout << " Making a new combination based on combination " << arg->combid[i] << endl;
+		// compute name and title of new combiner
+		TString nameNew = cOld->getName();
+		TString titleNew = cOld->getTitle();
+		for ( int j=0; j<arg->combmodifications[i].size(); j++ ){
+			int pdfId = abs(arg->combmodifications[i][j]);
+			if ( ! pdfExists(pdfId) ){
+				cout << "  ERROR: PDF ID not defined: " << pdfId << endl;
+				continue;
+			}
+			if ( arg->combmodifications[i][j]>0 ){
+				nameNew += Form("+%i",pdfId);
+				titleNew += Form(", + PDF%i",pdfId);
+			}
+			else {
+				nameNew += Form("-%i",pdfId);
+				titleNew += Form(", w/o PDF%i",pdfId);
+			}
+		}
+		// make the new combiner
+		Combiner *cNew = cOld->Clone(nameNew, titleNew);
+		// add/delete pdfs
+		for ( int j=0; j<arg->combmodifications[i].size(); j++ ){
+			int pdfId = abs(arg->combmodifications[i][j]);
+			if ( arg->combmodifications[i][j]>0 ){
+				cout << "... adding PDF " << pdfId << endl;
+				cNew->addPdf(pdf[pdfId]);
+			}
+			else {
+				cout << "... deleting PDF " << pdfId << endl;
+				cNew->delPdf(pdf[pdfId]);
+			}
+		}
+		// add to list of combinations to compute this round
+		cmb.push_back(cNew);
+		arg->combid[i] = cmb.size()-1;
+	}
+}
+
+///
 /// Implement the logic needed for the command line arguments
 /// --addpdf and --delpdf
 ///
-void GammaComboEngine::makeAddDelCombinations(TString mode)
+void GammaComboEngine::makeAddDelCombinations2(TString mode)
 {
   if ( !(mode==TString("add") || mode==TString("del")) ) assert(0); // only accept "add" or "del"
   vector<vector<int> >& addDelVector = mode==TString("add") ? arg->addpdf : arg->delpdf;
@@ -1091,8 +1150,9 @@ void GammaComboEngine::run()
 	checkColorArg();
 	if ( arg->isQuickhack(6) ) scaleDownErrors();
 	if ( arg->nosyst ) disableSystematics();
-	makeAddDelCombinations("add");
-	makeAddDelCombinations("del");
+	//makeAddDelCombinations2("add");
+	//makeAddDelCombinations2("del");
+	makeAddDelCombinations();
 	defineColors();
 	printCombinerStructure();
 	customizeCombinerTitles();

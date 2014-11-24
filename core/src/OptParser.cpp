@@ -611,10 +611,10 @@ void OptParser::parseArguments(int argc, char* argv[])
 	vector<string> tmp = combidArg.getValue();
 	for ( int i = 0; i < tmp.size(); i++ ){
 		int resultCmbId = 0;
-		vector<int> resultAddPdf;
-		vector<int> resultDelPdf;
-		parseCombinerString(tmp[i], resultCmbId, resultAddPdf, resultDelPdf);
+		vector<int> resultAddDelPdf;
+		parseCombinerString(tmp[i], resultCmbId, resultAddDelPdf);
 		combid.push_back(resultCmbId);
+		combmodifications.push_back(resultAddDelPdf);
 	}
 
 	// --action
@@ -867,12 +867,26 @@ void OptParser::parseCombinerPdfList(TCLAP::MultiArg<string> &arg, vector<vector
 
 ///
 /// Helper function for parseCombinerString().
-/// Checks if a string is an integer, if not, exits with printing the usage.
+/// Checks if a string is an integer (pos or neg), if not, exits with printing the usage.
 ///
 int OptParser::convertToIntWithCheck(TString parseMe, TString usage)
 {
+	if ( !( !parseMe.Contains(".") && !parseMe.Contains(",") && parseMe.IsFloat() ) ){
+		cout << "ERROR : could not parse argument. This string is not a positive or negative integer: '" << parseMe << "'" << endl;
+		cout << usage << endl;
+		exit(1);
+	}
+	return parseMe.Atoi();	
+}
+
+///
+/// Helper function for parseCombinerString().
+/// Checks if a string is a digit (positive integer), if not, exits with printing the usage.
+///
+int OptParser::convertToDigitWithCheck(TString parseMe, TString usage)
+{
 	if ( !parseMe.IsDigit() ){
-		cout << "ERROR : could not parse argument. This string is not a digit: '" << parseMe << "'" << endl;
+		cout << "ERROR : could not parse argument. This string is not a positive integer: '" << parseMe << "'" << endl;
 		cout << usage << endl;
 		exit(1);
 	}
@@ -887,16 +901,16 @@ int OptParser::convertToIntWithCheck(TString parseMe, TString usage)
 /// -c 26:+12,+23
 /// -c 26:+12,-3
 ///
-/// \param parseMe	- the string provided to -c
-/// \param resultCmbId	- resulting combiner ID
-/// \param resultAddPdf	- vector of all PDF IDs, that are requested to be added to the combiner
-/// \param resultDelPdf	- vector of all PDF IDs, that are requested to be deleted from the combiner
+/// \param parseMe		- the string provided to -c
+/// \param resultCmbId		- resulting combiner ID
+/// \param resultAddDelPdf	- vector of all PDF IDs, that are requested to be added or deleted 
+/// 				 	to/from the combiner. If it is supposed to be added, a positive PDF ID
+///					is stored, if it is supposed to be deleted, a negative PDF ID is stored
 ///
-void OptParser::parseCombinerString(TString parseMe, int& resultCmbId, vector<int>& resultAddPdf, vector<int>& resultDelPdf)
+void OptParser::parseCombinerString(TString parseMe, int& resultCmbId, vector<int>& resultAddDelPdf)
 {
 	resultCmbId = 0;
-	resultAddPdf.clear();
-	resultDelPdf.clear();
+	resultAddDelPdf.clear();
 	TString usage = "";
 	usage += "Required format: '-c combinerId[:+pdfId1[,-pdfId2,...]]'\n";
 	usage += "  Examples:\n";
@@ -905,7 +919,7 @@ void OptParser::parseCombinerString(TString parseMe, int& resultCmbId, vector<in
 	usage += "  -c 26:+12,-3\n";
 	// simplest case, no modification
 	if ( !parseMe.Contains(":") ){ 
-		resultCmbId = convertToIntWithCheck(parseMe, usage);
+		resultCmbId = convertToDigitWithCheck(parseMe, usage);
 		return;
 	}	
 	// advanced case, there are PDF modifications
@@ -916,21 +930,17 @@ void OptParser::parseCombinerString(TString parseMe, int& resultCmbId, vector<in
 		exit(1);
 	}
 	TString combinerIdStr = ((TObjString*)array->At(0))->GetString(); // gets the part before the colon
-	resultCmbId = convertToIntWithCheck(combinerIdStr, usage);
+	resultCmbId = convertToDigitWithCheck(combinerIdStr, usage);
 	// 2. parse list of PDF IDs
 	TString pdfIdsListStr = ((TObjString*)array->At(1))->GetString(); // gets the part after the colon
 	TObjArray *arrayCommaList = pdfIdsListStr.Tokenize(","); // split string at ","
 	for ( int j=0; j<arrayCommaList->GetEntries(); j++ ){
 		TString pdfId = ((TObjString*)arrayCommaList->At(j))->GetString();
-		vector<int>* resultAddDelPdf;
-		if ( pdfId.BeginsWith("+") ) resultAddDelPdf = &resultAddPdf;	
-		else if ( pdfId.BeginsWith("-") ) resultAddDelPdf = &resultDelPdf;	
-		else{
+		if ( ! (pdfId.BeginsWith("+") || pdfId.BeginsWith("-") ) ){
 			cout << "ERROR: could not parse argument, first character not a + or -. " << usage << endl;
 			exit(1);
 		}
-		pdfId.Remove(0,1); // remove first character (+ or -)
-		resultAddDelPdf->push_back(convertToIntWithCheck(pdfId, usage));
+		resultAddDelPdf.push_back(convertToIntWithCheck(pdfId, usage));
 	}
 	delete array;
 	delete arrayCommaList;
