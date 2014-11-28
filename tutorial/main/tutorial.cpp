@@ -26,10 +26,10 @@ int main(int argc, char* argv[])
 	//
 	///////////////////////////////////////////////////
 
-	gc.addPdf(1, new PDF_Gaus(lumi1fb,lumi1fb,lumi1fb),   "1D Gaussian (A)");
-	gc.addPdf(2, new PDF_Gaus(lumi2fb,lumi2fb,lumi2fb),   "1D Gaussian (B)");
-	gc.addPdf(3, new PDF_Gaus2d(lumi1fb,lumi1fb,lumi1fb), "2D Gaussian (A,B)");
-	gc.addPdf(4, new PDF_Circle(lumi1fb,lumi1fb,lumi1fb), "circle (A,B)");
+	gc.addPdf(1, new PDF_Gaus(lumi1fb,lumi1fb,lumi1fb),   "1D Gaussian (a_{obs} = -0.5)");
+	gc.addPdf(2, new PDF_Gaus(lumi2fb,lumi2fb,lumi2fb),   "1D Gaussian (a_{obs} =  1.5)");
+	gc.addPdf(3, new PDF_Gaus2d(lumi1fb,lumi1fb,lumi1fb), "2D Gaussian (a_{obs}, b_{obs})");
+	gc.addPdf(4, new PDF_Circle(lumi1fb,lumi1fb,lumi1fb), "circle (a_{obs}, b_{obs})");
 
 	///////////////////////////////////////////////////
 	//

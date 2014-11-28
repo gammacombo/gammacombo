@@ -560,17 +560,28 @@ void OneMinusClPlot2d::drawContour(TMultiGraph *mg, TList* contour, int linewidt
 }
 
 ///
-/// draw full hCL histogram w/o contours
+/// Draw the full DeltaChi2 histogram of the first scanner.
 ///
 void OneMinusClPlot2d::DrawFull()
 {
-	TPad* p = (TPad*)c1->cd();
-	p->SetRightMargin(0.12);
-  TH2F *hCL = histos[0];
-  hCL->SetContour(95);
-	hCL->GetZaxis()->SetRangeUser(hCL->GetMinimum(),hCL->GetMinimum()+36);
-  hCL->Draw("colz");
-  c1->Update();
+	c1->cd();
+	c1->SetMargin(0.1,0.15,0.1,0.1);
+	TH2F *hChi2 = histos[0];
+	//hChi2->SetTitle(Form("#Delta#chi^{2} for %s",scanners[0]->getTitle().Data()));
+	hChi2->SetContour(95);
+	hChi2->GetXaxis()->SetTitle(xTitle!="" ? xTitle : (TString)scanners[0]->getScanVar1()->GetTitle());
+	hChi2->GetYaxis()->SetTitle(yTitle!="" ? yTitle : (TString)scanners[0]->getScanVar2()->GetTitle());
+	hChi2->GetZaxis()->SetRangeUser(hChi2->GetMinimum(),hChi2->GetMinimum()+36);
+	hChi2->GetZaxis()->SetTitle("#Delta#chi^{2}");
+	hChi2->Draw("colz");
+	TPaveText *title = new TPaveText(.10,.92,.90,.99,"BRNDC");
+	title->AddText(Form("#Delta#chi^{2} for %s",scanners[0]->getTitle().Data()));
+	title->SetBorderSize(0);
+	title->SetFillStyle(0);
+	title->SetTextFont(133);
+	title->SetTextSize(35);
+	title->Draw();
+	c1->Update();
 }
 
 ///
@@ -692,7 +703,7 @@ void OneMinusClPlot2d::Draw()
 	float xmax = gPad->GetUxmax();
 
   // Draw new axes.
-  haxes->GetXaxis()->SetNdivisions(0);  ///< disable old axis
+  haxes->GetXaxis()->SetNdivisions(0);  // disable old axis
   haxes->GetYaxis()->SetNdivisions(0);
 	// configure axis draw options
   TString xtchopt = "-U"; // - = downward ticks, U = unlabeled, http://root.cern.ch/root/html534/TGaxis.html

@@ -375,218 +375,227 @@ void MethodProbScan::sanityChecks()
 ///
 int MethodProbScan::scan2d()
 {
-  cout << "MethodProbScan::scan2d() : starting ..." << endl;
+	if ( arg->debug ) cout << "MethodProbScan::scan2d() : starting ..." << endl;
 	nScansDone++;
-  sanityChecks();
-  if ( startPars ) delete startPars;
+	sanityChecks();
+	if ( startPars ) delete startPars;
 
-  // Define whether the 2d contours in hCL are "1D sigma" (ndof=1) or "2D sigma" (ndof=2).
-  // Leave this at 1 for now, as the "2D sigma" contours are computed from hChi2min2d, not hCL.
-  int ndof = 1;
+	// Define whether the 2d contours in hCL are "1D sigma" (ndof=1) or "2D sigma" (ndof=2).
+	// Leave this at 1 for now, as the "2D sigma" contours are computed from hChi2min2d, not hCL.
+	int ndof = 1;
 
-  // Set up storage for fit results of this particular
-  // scan. This is used for the drag start parameters.
-  // We cannot use the curveResults2d member because that
-  // only holds better results.
-  vector<vector<RooSlimFitResult*> > mycurveResults2d;
-  for ( int i=0; i<nPoints2dx; i++ ){
-    vector<RooSlimFitResult*> tmp;
-    for ( int j=0; j<nPoints2dy; j++ ) tmp.push_back(0);
-    mycurveResults2d.push_back(tmp);
-  }
+	// Set up storage for fit results of this particular
+	// scan. This is used for the drag start parameters.
+	// We cannot use the curveResults2d member because that
+	// only holds better results.
+	vector<vector<RooSlimFitResult*> > mycurveResults2d;
+	for ( int i=0; i<nPoints2dx; i++ ){
+		vector<RooSlimFitResult*> tmp;
+		for ( int j=0; j<nPoints2dy; j++ ) tmp.push_back(0);
+		mycurveResults2d.push_back(tmp);
+	}
 
-  // store start parameters so we can reset them later
-  startPars = new RooDataSet("startPars", "startPars", *w->set(parsName));
+	// store start parameters so we can reset them later
+	startPars = new RooDataSet("startPars", "startPars", *w->set(parsName));
 	startPars->add(*w->set(parsName));
 
-  // // start scan from global minimum (not always a good idea as we need to set from other places as well)
-  // setParameters(w, parsName, globalMin);
+	// // start scan from global minimum (not always a good idea as we need to set from other places as well)
+	// setParameters(w, parsName, globalMin);
 
 	// Define scan parameters and scan range:
-  RooRealVar *par1 = w->var(scanVar1);
-  RooRealVar *par2 = w->var(scanVar2);
+	RooRealVar *par1 = w->var(scanVar1);
+	RooRealVar *par2 = w->var(scanVar2);
 
 	// Set limit to all parameters.
-  combiner->loadParameterLimits();
+	combiner->loadParameterLimits();
 
-  // fix scan parameters
-  par1->setConstant(true);
-  par2->setConstant(true);
+	// fix scan parameters
+	par1->setConstant(true);
+	par2->setConstant(true);
 
-  // Report on the smallest new minimum we come across while scanning.
-  // Sometimes the scan doesn't find the minimum
-  // that was found before. Warn if this happens.
-  double bestMinOld = chi2minGlobal;
-  double bestMinFoundInScan = 100.;
+	// Report on the smallest new minimum we come across while scanning.
+	// Sometimes the scan doesn't find the minimum
+	// that was found before. Warn if this happens.
+	double bestMinOld = chi2minGlobal;
+	double bestMinFoundInScan = 100.;
 
-  // for the status bar
-  int nSteps = 0;
-  float nTotalSteps = nPoints2dx*nPoints2dy;
-  float printFreq = nTotalSteps>100 && !arg->probforce ? 100 : nTotalSteps; ///< number of messages
+	// for the status bar
+	int nSteps = 0;
+	float nTotalSteps = nPoints2dx*nPoints2dy;
+	float printFreq = nTotalSteps>100 && !arg->probforce ? 100 : nTotalSteps; ///< number of messages
 
-  // initialize some control plots
-  TCanvas *cDbg = new TCanvas(getUniqueRootName(), Form("chi2 for 2D scan %i",nScansDone));
+	// initialize some control plots
+	gStyle->SetOptTitle(1);
+	TCanvas *cDbg = new TCanvas(getUniqueRootName(), Form("DeltaChi2 for 2D scan %i",nScansDone));
+	cDbg->SetMargin(0.1,0.15,0.1,0.1);
 	float hChi2min2dMin = hChi2min2d->GetMinimum();
 	bool firstScan = hChi2min2dMin<1e5;
 	TH2F *hDbgChi2min2d = histHardCopy(hChi2min2d, firstScan);
-  TH2F *hDbgStart = histHardCopy(hChi2min2d, false);
-  if ( firstScan ) hDbgChi2min2d->GetZaxis()->SetRangeUser(hChi2min2dMin,hChi2min2dMin+36);
+	hDbgChi2min2d->SetTitle(Form("#Delta#chi^{2} for scan %i, %s",nScansDone,title.Data()));
+	if ( firstScan ) hDbgChi2min2d->GetZaxis()->SetRangeUser(hChi2min2dMin,hChi2min2dMin+36);
+	hDbgChi2min2d->GetXaxis()->SetTitle(par1->GetTitle());
+	hDbgChi2min2d->GetYaxis()->SetTitle(par2->GetTitle());
+	hDbgChi2min2d->GetZaxis()->SetTitle("#Delta#chi^{2}");
+	TH2F *hDbgStart = histHardCopy(hChi2min2d, false);
 
-  // start coordinates
-  // don't allow the under/overflow bins
-  int iStart = min(hCL2d->GetXaxis()->FindBin(par1->getVal()), hCL2d->GetNbinsX());
-  int jStart = min(hCL2d->GetYaxis()->FindBin(par2->getVal()), hCL2d->GetNbinsY());
-  iStart = max(iStart, 1);
-  jStart = max(jStart, 1);
-  hDbgStart->SetBinContent(iStart, jStart, 500.);
+	// start coordinates
+	// don't allow the under/overflow bins
+	int iStart = min(hCL2d->GetXaxis()->FindBin(par1->getVal()), hCL2d->GetNbinsX());
+	int jStart = min(hCL2d->GetYaxis()->FindBin(par2->getVal()), hCL2d->GetNbinsY());
+	iStart = max(iStart, 1);
+	jStart = max(jStart, 1);
+	hDbgStart->SetBinContent(iStart, jStart, 500.);
 	TMarker *startpointmark = new TMarker(par1->getVal(),par2->getVal(),3);
 
 	// timer
-  TStopwatch tFit;
-  TStopwatch tSlimResult;
-  TStopwatch tScan;
-  TStopwatch tMemory;
+	TStopwatch tFit;
+	TStopwatch tSlimResult;
+	TStopwatch tScan;
+	TStopwatch tMemory;
 
-  // set up the scan spiral
-  int X = 2*nPoints2dx;
-  int Y = 2*nPoints2dy;
-  int x,y,dx,dy;
-  x = y = dx = 0;
-  dy = -1;
-  int t = std::max(X,Y);
-  int maxI = t*t;
-  for ( int spiralstep=0; spiralstep<maxI; spiralstep++ )
-  {
-    if ((-X/2 <= x) && (x <= X/2) && (-Y/2 <= y) && (y <= Y/2))
-    {
-      int i = x+iStart;
-      int j = y+jStart;
-      if ( i>0 && i<=nPoints2dx && j>0 && j<=nPoints2dy )
-      {
-        tScan.Start(false);
+	// set up the scan spiral
+	int X = 2*nPoints2dx;
+	int Y = 2*nPoints2dy;
+	int x,y,dx,dy;
+	x = y = dx = 0;
+	dy = -1;
+	int t = std::max(X,Y);
+	int maxI = t*t;
+	for ( int spiralstep=0; spiralstep<maxI; spiralstep++ )
+	{
+		if ((-X/2 <= x) && (x <= X/2) && (-Y/2 <= y) && (y <= Y/2))
+		{
+			int i = x+iStart;
+			int j = y+jStart;
+			if ( i>0 && i<=nPoints2dx && j>0 && j<=nPoints2dy )
+			{
+				tScan.Start(false);
 
-        // status bar
-        if (((int)nSteps % (int)(nTotalSteps/printFreq)) == 0){
-          cout << Form("MethodProbScan::scan2d() : scanning %3.0f%%", (float)nSteps/(float)nTotalSteps*100.)
-          << "       \r" << flush;
-        }
-        nSteps++;
+				// status bar
+				if (((int)nSteps % (int)(nTotalSteps/printFreq)) == 0){
+					cout << Form("MethodProbScan::scan2d() : scanning %3.0f%%", (float)nSteps/(float)nTotalSteps*100.)
+										 << "       \r" << flush;
+				}
+				nSteps++;
 
-        // status histogram
-        if ( spiralstep>0 ) hDbgStart->SetBinContent(i, j, 500./*firstScan ? 1. : hChi2min2dMin+36*/);
+				// status histogram
+				if ( spiralstep>0 ) hDbgStart->SetBinContent(i, j, 500./*firstScan ? 1. : hChi2min2dMin+36*/);
 
-    		// set start parameters from inner turn of the spiral
-        int xStartPars, yStartPars;
-    		computeInnerTurnCoords(iStart, jStart, i, j, xStartPars, yStartPars, 1);
-        RooSlimFitResult *rStartPars = mycurveResults2d[xStartPars-1][yStartPars-1];
-        if ( rStartPars ) setParameters(w, parsName, rStartPars);
+				// set start parameters from inner turn of the spiral
+				int xStartPars, yStartPars;
+				computeInnerTurnCoords(iStart, jStart, i, j, xStartPars, yStartPars, 1);
+				RooSlimFitResult *rStartPars = mycurveResults2d[xStartPars-1][yStartPars-1];
+				if ( rStartPars ) setParameters(w, parsName, rStartPars);
 
-        // memory management:
-        tMemory.Start(false);
-        // delete old, inner fit results, that we don't need for start parameters anymore
-        // for this we take the second-inner-most turn.
-        int iOld, jOld;
-        bool innerTurnExists = computeInnerTurnCoords(iStart, jStart, i, j, iOld, jOld, 2);
-        if ( innerTurnExists ){
-          deleteIfNotInCurveResults2d(mycurveResults2d[iOld-1][jOld-1]);
-          mycurveResults2d[iOld-1][jOld-1] = 0;
-        }
-        tMemory.Stop();
+				// memory management:
+				tMemory.Start(false);
+				// delete old, inner fit results, that we don't need for start parameters anymore
+				// for this we take the second-inner-most turn.
+				int iOld, jOld;
+				bool innerTurnExists = computeInnerTurnCoords(iStart, jStart, i, j, iOld, jOld, 2);
+				if ( innerTurnExists ){
+					deleteIfNotInCurveResults2d(mycurveResults2d[iOld-1][jOld-1]);
+					mycurveResults2d[iOld-1][jOld-1] = 0;
+				}
+				tMemory.Stop();
 
-        // alternative choice for start parameters: always from what we found at function call
-        // setParameters(w, parsName, startPars->get(0));
+				// alternative choice for start parameters: always from what we found at function call
+				// setParameters(w, parsName, startPars->get(0));
 
-        // set scan point
-        float scanvalue1 = hCL2d->GetXaxis()->GetBinCenter(i);
-        float scanvalue2 = hCL2d->GetYaxis()->GetBinCenter(j);
-    		par1->setVal(scanvalue1);
-    		par2->setVal(scanvalue2);
+				// set scan point
+				float scanvalue1 = hCL2d->GetXaxis()->GetBinCenter(i);
+				float scanvalue2 = hCL2d->GetYaxis()->GetBinCenter(j);
+				par1->setVal(scanvalue1);
+				par2->setVal(scanvalue2);
 
-        // fit!
-        tFit.Start(false);
-        RooFitResult *fr;
-        if ( !arg->probforce ) fr = fitToMinBringBackAngles(w->pdf(pdfName), false, -1);
-        else                   fr = fitToMinForce(w, combiner->getPdfName());
-        double chi2minScan = fr->minNll();
-        tFit.Stop();
-        tSlimResult.Start(false);
-        RooSlimFitResult *r = new RooSlimFitResult(fr); // try to save memory by using the slim fit result
-        tSlimResult.Stop();
-        delete fr;
-        allResults.push_back(r);
-        bestMinFoundInScan = TMath::Min((double)chi2minScan, (double)bestMinFoundInScan);
-        mycurveResults2d[i-1][j-1] = r;
+				// fit!
+				tFit.Start(false);
+				RooFitResult *fr;
+				if ( !arg->probforce ) fr = fitToMinBringBackAngles(w->pdf(pdfName), false, -1);
+				else                   fr = fitToMinForce(w, combiner->getPdfName());
+				double chi2minScan = fr->minNll();
+				tFit.Stop();
+				tSlimResult.Start(false);
+				RooSlimFitResult *r = new RooSlimFitResult(fr); // try to save memory by using the slim fit result
+				tSlimResult.Stop();
+				delete fr;
+				allResults.push_back(r);
+				bestMinFoundInScan = TMath::Min((double)chi2minScan, (double)bestMinFoundInScan);
+				mycurveResults2d[i-1][j-1] = r;
 
-        // If we find a new global minumum, this means that all
-        // previous 1-CL values are too high. We'll save the new possible solution, adjust the global
-        // minimum, return a status code, and stop.
-        if ( chi2minScan > -500 && chi2minScan<chi2minGlobal ){
-          cout << "MethodProbScan::scan2d() : WARNING : " << title << " new global minimum found! chi2minGlobal="
-               << chi2minGlobal << " chi2minScan=" << chi2minScan << endl;
-          chi2minGlobal = chi2minScan;
-          // recompute previous 1-CL values
-          for ( int k=1; k<=hCL2d->GetNbinsX(); k++ )
-          for ( int l=1; l<=hCL2d->GetNbinsY(); l++ ){
-            hCL2d->SetBinContent(k, l, TMath::Prob(hChi2min2d->GetBinContent(k,l)-chi2minGlobal, ndof));
-          }
-        }
+				// If we find a new global minumum, this means that all
+				// previous 1-CL values are too high. We'll save the new possible solution, adjust the global
+				// minimum, return a status code, and stop.
+				if ( chi2minScan > -500 && chi2minScan<chi2minGlobal ){
+					// warn only if there was a significant improvement
+					if ( arg->debug || chi2minScan<chi2minGlobal-1e-2 ){
+						cout << "MethodProbScan::scan2d() : WARNING : " << title << " new global minimum found! chi2minGlobal="
+										    << chi2minGlobal << " chi2minScan=" << chi2minScan << endl;
+					}
+					chi2minGlobal = chi2minScan;
+					// recompute previous 1-CL values
+					for ( int k=1; k<=hCL2d->GetNbinsX(); k++ )
+						for ( int l=1; l<=hCL2d->GetNbinsY(); l++ ){
+							hCL2d->SetBinContent(k, l, TMath::Prob(hChi2min2d->GetBinContent(k,l)-chi2minGlobal, ndof));
+						}
+				}
 
-        double deltaChi2 = chi2minScan - chi2minGlobal;
-        double oneMinusCL = TMath::Prob(deltaChi2, ndof);
+				double deltaChi2 = chi2minScan - chi2minGlobal;
+				double oneMinusCL = TMath::Prob(deltaChi2, ndof);
 
-        // Save the 1-CL value. But only if better than before!
-        if ( hCL2d->GetBinContent(i, j) < oneMinusCL ){
-          hCL2d->SetBinContent(i, j, oneMinusCL);
-          hChi2min2d->SetBinContent(i, j, chi2minScan);
-          hDbgChi2min2d->SetBinContent(i, j, chi2minScan);
-          curveResults2d[i-1][j-1] = r;
-        }
+				// Save the 1-CL value. But only if better than before!
+				if ( hCL2d->GetBinContent(i, j) < oneMinusCL ){
+					hCL2d->SetBinContent(i, j, oneMinusCL);
+					hChi2min2d->SetBinContent(i, j, chi2minScan);
+					hDbgChi2min2d->SetBinContent(i, j, chi2minScan);
+					curveResults2d[i-1][j-1] = r;
+				}
 
-        // draw/update histograms - doing only every 10th update saves
-        // a lot of time for small combinations
-        if ( ( arg->interactive && ((int)nSteps % 10 == 0) ) || nSteps==nTotalSteps ){
-          hDbgChi2min2d->Draw("colz");
-          hDbgStart->Draw("boxsame");
-				  startpointmark->Draw();
-          cDbg->Update();
-        }
-        tScan.Stop();
-      }
-    }
-    // spiral stuff:
-    if( (x == y) || ((x < 0) && (x == -y)) || ((x > 0) && (x == 1-y)))
-    {
-        t = dx;
-        dx = -dy;
-        dy = t;
-    }
-    x += dx;
-    y += dy;
-  }
-  cout << "MethodProbScan::scan2d() : scan done.            " << endl;
-  if ( arg->debug ){
-    cout << "MethodProbScan::scan2d() : scan time:     " << endl; tScan.Print();
-    cout << "MethodProbScan::scan2d() : - fit time:    " << endl; tFit.Print();
-    cout << "MethodProbScan::scan2d() : - fit results: " << endl; tSlimResult.Print();
-    cout << "MethodProbScan::scan2d() : - memory:      " << endl; tMemory.Print();
-  }
-  setParameters(w, parsName, startPars->get(0));
-  saveSolutions2d();
-  confirmSolutions();
+				// draw/update histograms - doing only every 10th update saves
+				// a lot of time for small combinations
+				if ( ( arg->interactive && ((int)nSteps % 10 == 0) ) || nSteps==nTotalSteps ){
+					hDbgChi2min2d->Draw("colz");
+					hDbgStart->Draw("boxsame");
+					startpointmark->Draw();
+					cDbg->Update();
+				}
+				tScan.Stop();
+			}
+		}
+		// spiral stuff:
+		if( (x == y) || ((x < 0) && (x == -y)) || ((x > 0) && (x == 1-y)))
+		{
+			t = dx;
+			dx = -dy;
+			dy = t;
+		}
+		x += dx;
+		y += dy;
+	}
+	cout << "MethodProbScan::scan2d() : scan done.            " << endl;
+	if ( arg->debug ){
+		cout << "MethodProbScan::scan2d() : scan time:     " << endl; tScan.Print();
+		cout << "MethodProbScan::scan2d() : - fit time:    " << endl; tFit.Print();
+		cout << "MethodProbScan::scan2d() : - fit results: " << endl; tSlimResult.Print();
+		cout << "MethodProbScan::scan2d() : - memory:      " << endl; tMemory.Print();
+	}
+	setParameters(w, parsName, startPars->get(0));
+	saveSolutions2d();
+	confirmSolutions();
 
 	// clean all fit results that didn't make it into the final result
-  for ( int i=0; i<allResults.size(); i++ ){
-    deleteIfNotInCurveResults2d(allResults[i]);
-  }
+	for ( int i=0; i<allResults.size(); i++ ){
+		deleteIfNotInCurveResults2d(allResults[i]);
+	}
 
-	if ( (bestMinFoundInScan-bestMinOld)/bestMinOld > 0.01 )
-  {
-    cout << "MethodProbScan::scan2d() : WARNING: Scan didn't find minimum that was found before!" << endl;
-    cout << "MethodProbScan::scan2d() :          Too strict parameter limits?" << endl;
-    cout << "MethodProbScan::scan2d() :          chi2 bestMinFoundInScan=" << bestMinFoundInScan << ", bestMinOld=" << bestMinOld << endl;
-    return 1;
-  }
-  return 0;
+	if ( bestMinFoundInScan-bestMinOld > 0.1 )
+	{
+		cout << "MethodProbScan::scan2d() : WARNING: Scan didn't find minimum that was found before!" << endl;
+		cout << "MethodProbScan::scan2d() :          Are you using too strict parameter limits?" << endl;
+		cout << "MethodProbScan::scan2d() :          min chi2 found in scan: " << bestMinFoundInScan << ", old min chi2: " << bestMinOld << endl;
+		return 1;
+	}
+	return 0;
 }
 
 

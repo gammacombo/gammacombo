@@ -90,7 +90,7 @@ void PDF_Gaus::setUncertainties(config c)
     case lumi2fb:{
       obsErrSource = "lumi2fb";
       StatErr[0] = 0.5; // a_gaus
-      SystErr[0] = 0.1; // a_gaus
+      SystErr[0] = 0.15; // a_gaus
       break;
     }
     default:{
