@@ -220,9 +220,9 @@ int MethodProbScan::scan1d(bool fast, bool reverse)
       allResults.push_back(r);
       bestMinFoundInScan = TMath::Min((double)chi2minScan, (double)bestMinFoundInScan);
 
-      if ( chi2minScan < 1e-10 ){
-        cout << "MethodProbScan::scan1d() : WARNING : " << title << " chi2min smaller than 1e-10! Setting to 0. "
-             << " chi2minScan=" << chi2minScan << endl;
+      if ( chi2minScan < 0 ){
+        cout << "MethodProbScan::scan1d() : WARNING : " << title << " chi2 negative! Setting to 0."
+             << " chi2 found: " << chi2minScan << endl;
         chi2minScan = 0.0;
       }
 
