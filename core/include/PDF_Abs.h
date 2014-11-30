@@ -82,13 +82,13 @@ public:
 	inline void					setErrorSourceString(TString source){obsErrSource=source;};
 	inline void					setGcId(int id){gcId=id;};
   void                setObservable(TString name, float value);
-  virtual void        setObservables(config c);
+  virtual void        setObservables(TString c);
   void                setObservablesTruth();
   void                setObservablesToy();
 	inline void					setObservableSourceString(TString source){obsValSource=source;};
   inline void         setTitle(TString t){title=t;};
-  virtual void        setUncertainties(config c);
-  virtual void        setCorrelations(config c);
+  virtual void        setUncertainties(TString c);
+  virtual void        setCorrelations(TString c);
   void                setSystCorrelation(TMatrixDSym &corSystMatrix);
   void                storeErrorsInObs();
   void                resetCorrelations();

@@ -1,7 +1,7 @@
 /**
  * Gamma Combination
  * Author: Till Moritz Karbach, moritz.karbach@cern.ch
- * Date: August 2012
+ * Date: November 2014
  *
  **/
 
@@ -17,16 +17,17 @@ using namespace Utils;
 
 class PDF_Gaus2d : public PDF_Abs
 {
-public:
-  PDF_Gaus2d(config cObs=lumi1fb, config cErr=lumi1fb, config cCor=lumi1fb);
-  ~PDF_Gaus2d();
-  void          buildPdf();
-  void          initObservables();
-  virtual void  initParameters();
-  virtual void  initRelations();
-  void          setCorrelations(config c);
-  void          setObservables(config c);
-  void          setUncertainties(config c);
+	public:
+		PDF_Gaus2d(TString cObs="year2013", TString cErr="year2013", TString cCor="year2013");
+		~PDF_Gaus2d();
+		void          buildPdf();
+		void          initObservables();
+		virtual void  initParameters();
+		virtual void  initRelations();
+		void          setCorrelations(TString c);
+		void          setObservables(TString c);
+		void          setUncertainties(TString c);
 };
 
 #endif
+

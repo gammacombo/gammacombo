@@ -1,13 +1,13 @@
 /**
  * Gamma Combination
  * Author: Till Moritz Karbach, moritz.karbach@cern.ch
- * Date: August 2012
+ * Date: November 2014
  *
  **/
 
 #include "PDF_Gaus2d.h"
 
-PDF_Gaus2d::PDF_Gaus2d(config cObs, config cErr, config cCor)
+PDF_Gaus2d::PDF_Gaus2d(TString cObs, TString cErr, TString cCor)
 : PDF_Abs(2)
 {
   name = "gaus2d";
@@ -51,68 +51,54 @@ void PDF_Gaus2d::initObservables()
 }
 
 
-void PDF_Gaus2d::setObservables(config c)
+void PDF_Gaus2d::setObservables(TString c)
 {
-  switch(c)
-  {
-    case truth:{
-      setObservablesTruth();
-      break;
-    }
-    case toy:{ 
-      setObservablesToy();
-      break;
-    }
-    case lumi1fb:{
-      obsValSource = "1fb-1 just some values";
-      setObservable("a_gaus_obs", 0.1);
-      setObservable("b_gaus_obs", 1.5);
-      break;
-    }
-    default:{
-      cout << "PDF_Gaus2d::setObservables() : ERROR : config "+ConfigToTString(c)+" not found." << endl;
-      exit(1);
-    }
-  }
+	if ( c.EqualTo("truth") ){
+		setObservablesTruth();
+	}
+	else if ( c.EqualTo("toy") ){
+		setObservablesToy();
+	}
+	else if ( c.EqualTo("year2013") ){
+		obsValSource = "1fb-1 just some values";
+		setObservable("a_gaus_obs", 0.1);
+		setObservable("b_gaus_obs", 1.5);
+	}
+	else{
+		cout << "PDF_Gaus2d::setObservables() : ERROR : config "+c+" not found." << endl;
+		exit(1);
+	}
 }
 
 
-void PDF_Gaus2d::setUncertainties(config c)
+void PDF_Gaus2d::setUncertainties(TString c)
 {
-  switch(c)
-  {
-    case lumi1fb:{
-      obsErrSource = "1fb-1 jsut some errors";
-      StatErr[0] = 1; // a
-      StatErr[1] = 1; // b
-      SystErr[0] = 0; // a
-      SystErr[1] = 0; // b
-      break;
-    }
-    default:{
-      cout << "PDF_Gaus2d::setUncertainties() : ERROR : config "+ConfigToTString(c)+" not found." << endl;
-      exit(1);
-    }
-  }
+	if ( c.EqualTo("year2013") ){
+		obsErrSource = "1fb-1 just some errors";
+		StatErr[0] = 1; // a
+		StatErr[1] = 1; // b
+		SystErr[0] = 0; // a
+		SystErr[1] = 0; // b
+	}
+	else{
+		cout << "PDF_Gaus2d::setUncertainties() : ERROR : config "+c+" not found." << endl;
+		exit(1);
+	}
 }
 
 
-void PDF_Gaus2d::setCorrelations(config c)
+void PDF_Gaus2d::setCorrelations(TString c)
 {
-  resetCorrelations();
-  switch(c)
-  {
-    case lumi1fb:{
-      corSource = "1fb-1 just some correlations";
-      corStatMatrix[1][0] = 0.6; // a, b
-      corSystMatrix[1][0] = 0.0; // a, b
-      break;
-    }
-    default:{
-      cout << "PDF_Gaus2d::setCorrelations() : ERROR : config "+ConfigToTString(c)+" not found." << endl;
-      exit(1);
-    }
-  }
+	resetCorrelations();
+	if ( c.EqualTo("year2013") ){
+		corSource = "1fb-1 just some correlations";
+		corStatMatrix[1][0] = 0.6; // a, b
+		corSystMatrix[1][0] = 0.0; // a, b
+	}
+	else{
+		cout << "PDF_Gaus2d::setCorrelations() : ERROR : config "+c+" not found." << endl;
+		exit(1);
+	}
 }  
 
 
@@ -120,3 +106,4 @@ void PDF_Gaus2d::buildPdf()
 {
   pdf = new RooMultiVarGaussian("pdf_"+name, "pdf_"+name, *(RooArgSet*)observables, *(RooArgSet*)theory, covMatrix);
 }
+

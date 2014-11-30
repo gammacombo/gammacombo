@@ -84,9 +84,9 @@ void PDF_Abs::initParameters(){assert(0);};
 void PDF_Abs::initRelations(){assert(0);};
 void PDF_Abs::initObservables(){assert(0);};
 void PDF_Abs::buildPdf(){assert(0);};
-void PDF_Abs::setObservables(config c){assert(0);};
-void PDF_Abs::setUncertainties(config c){assert(0);};
-void PDF_Abs::setCorrelations(config c){assert(0);};
+void PDF_Abs::setObservables(TString c){assert(0);};
+void PDF_Abs::setUncertainties(TString c){assert(0);};
+void PDF_Abs::setCorrelations(TString c){assert(0);};
 
 ///
 /// Shortcut for buildCov() and buildPdf().
