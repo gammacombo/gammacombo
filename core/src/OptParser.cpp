@@ -341,8 +341,10 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::ValueArg<int> npointstoyArg("", "npointstoy", "Number of scan points used by the plugin method. Default: 100", false, 100, "int");
 	TCLAP::MultiArg<string> jobsArg("j", "jobs", "Range of toy job ids to be considered. "
 			"To be used with --action plugin. "
-			"Can be given multiple times when plotting more than one combinations. Give in same "
-			"order as the -c options. Format: -j min-max", false, "string");
+			"Can be given multiple times when plotting more than one combinations. In that case, they need to be given in same "
+			"order as the -c options. \n"
+			"Format (range):  -j min-max \n"
+			"Format (single): -j n", false, "string");
 	TCLAP::ValueArg<string> jobdirArg("", "jobdir", "Give absolute job-directory if working on batch systems.", false, "default", "string");
 
 	// --------------- switch arguments
@@ -647,23 +649,39 @@ void OptParser::parseArguments(int argc, char* argv[])
 		exit(1);
 	}
 	if ( jobsArg.getValue().size()==0 ){
+		// default: job 1
 		jmin.push_back(1);
 		jmax.push_back(1);
 	}
 	for ( int i=0; i<jobsArg.getValue().size(); i++ ){
+		TString usage = "";
+		usage += "Required format: '-j N | -j A-B'\n";
+		usage += "  Examples:\n";
+		usage += "  -j 10\n";
+		usage += "  -j 10-20\n";
 		TString parseMe = jobsArg.getValue()[i];
-		TString x = parseMe;
-		TString y = parseMe;
-		x.Replace(x.Index("-"), x.Sizeof(), "");
-		y.Replace(0, y.Index("-")+1, "");
-		int min = x.Atoi();
-		int max = y.Atoi();
-		if ( min>max ){
-			cout << "Argument error: job range min>max." << endl;
-			exit(1);
+		TRegexp range("^[0-9]+\-[0-9]+$");
+		if ( parseMe.Contains(range) ){
+			// range found
+			TString x = parseMe;
+			TString y = parseMe;
+			x.Replace(x.Index("-"), x.Sizeof(), "");
+			y.Replace(0, y.Index("-")+1, "");
+			int min = convertToDigitWithCheck(x,usage);
+			int max = convertToDigitWithCheck(y,usage);
+			if ( min>max ){
+				cout << "Argument error: job range min>max." << endl;
+				exit(1);
+			}
+			jmin.push_back(min);
+			jmax.push_back(max);
 		}
-		jmin.push_back(min);
-		jmax.push_back(max);
+		else{
+			// single number found
+			int n = convertToDigitWithCheck(parseMe,usage);
+			jmin.push_back(n);
+			jmax.push_back(n);
+		}
 	}
 
 	// --leg
