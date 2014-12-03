@@ -44,7 +44,7 @@ void CLIntervalMaker::provideMorePreciseMaximum(float value, TString method)
 /// maxima that are not similar to existing ones, that were, e.g.,
 /// set by addMaximum().
 /// \param pValueThreshold - ignore maxima under this pvalue threshold 
-/// 												 to reject low statistics plugin crap
+/// 				to reject low statistics plugin crap
 ///
 void CLIntervalMaker::findMaxima(float pValueThreshold)
 {

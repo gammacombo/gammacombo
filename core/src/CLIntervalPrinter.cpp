@@ -50,14 +50,21 @@ void CLIntervalPrinter::print()
 				d, myRounder.errNeg(), d, myRounder.errPos(),
 				1.-i.pvalue);
 		if ( _unit!="" ) cout << ", ["<<_unit<<"]";
-		if ( !i.closed ){
-			cout << " (not closed)";
+		// \todo remove the following code from quickhack stage once we have switched
+		// to the CLIntervalMaker mechanism to get more useful information
+		// on the CL intervals
+		if ( _arg->isQuickhack(8) ){
+			if ( !i.closed ){
+				cout << " (not closed)";
+			}
 		}
 		cout << ", " << _method;
-		if ( _arg->verbose ){
-			cout << ", central: " << i.centralmethod;
-			cout << ", interval: [" << i.minmethod << ", " << i.maxmethod << "]";
-			cout << ", p(central): " << i.pvalueAtCentral;		
+		if ( _arg->isQuickhack(8) ){
+			if ( _arg->verbose ){
+				cout << ", central: " << i.centralmethod;
+				cout << ", interval: [" << i.minmethod << ", " << i.maxmethod << "]";
+				cout << ", p(central): " << i.pvalueAtCentral;		
+			}
 		}
 		cout << endl;
 	}

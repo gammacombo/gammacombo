@@ -660,7 +660,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 		usage += "  -j 10\n";
 		usage += "  -j 10-20\n";
 		TString parseMe = jobsArg.getValue()[i];
-		TRegexp range("^[0-9]+\-[0-9]+$");
+		TRegexp range("^[0-9]+-[0-9]+$");
 		if ( parseMe.Contains(range) ){
 			// range found
 			TString x = parseMe;

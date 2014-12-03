@@ -500,6 +500,8 @@ bool MethodAbsScan::interpolate(TH1F* h, int i, float y, float central, bool upp
 void MethodAbsScan::calcCLintervals()
 {
 	if ( arg->isQuickhack(8) ){
+		// \todo Switch to the new CLIntervalMaker mechanism. It can be activated
+		// already using --qh 8, but it really is in beta stage still
 		cout << "\nMethodAbsScan::calcCLintervals() : NEW : " << name << endl << endl;
 		CLIntervalMaker clm(arg, *hCL);
 		clm.findMaxima(0.04); // ignore maxima under pvalue=0.04
@@ -669,30 +671,30 @@ void MethodAbsScan::calcCLintervals()
 ///
 void MethodAbsScan::printCLintervals()
 {
-  TString unit = w->var(scanVar1)->getUnit();
+	TString unit = w->var(scanVar1)->getUnit();
 	CLIntervalPrinter clp(arg, name, scanVar1, unit, methodName);
 	clp.setDegrees(isAngle(w->var(scanVar1)));
 	clp.addIntervals(clintervals1sigma);
 	clp.addIntervals(clintervals2sigma);
 	clp.print();
 	clp.savePython();
-  cout << endl;
+	cout << endl;
 
-  // print solutions not contained in the 1sigma and 2sigma intervals
-  for ( int i=0; i<getNSolutions(); i++ )
-  {
-    float sol = getScanVar1Solution(i);
-    bool cont=false;
-    for ( int j=0; j<clintervals1sigma.size(); j++ ) if ( clintervals1sigma[j].min<sol && sol<clintervals1sigma[j].max ) cont=true;
-    for ( int j=0; j<clintervals2sigma.size(); j++ ) if ( clintervals2sigma[j].min<sol && sol<clintervals2sigma[j].max ) cont=true;
-    if ( cont==true ) continue;
-    if ( w->var(scanVar1)->getUnit()==TString("Rad") ) sol = RadToDeg(sol);
-    int d = arg->digits;
-    if ( d<=0 ) d = 3;
-    printf("%s = %7.*f", w->var(scanVar1)->GetName(), d, sol);
-    if ( unit!="" ) cout << " ["<<unit<<"]";
-    cout << endl;
-  }
+	// print solutions not contained in the 1sigma and 2sigma intervals
+	for ( int i=0; i<getNSolutions(); i++ )
+	{
+		float sol = getScanVar1Solution(i);
+		bool cont=false;
+		for ( int j=0; j<clintervals1sigma.size(); j++ ) if ( clintervals1sigma[j].min<sol && sol<clintervals1sigma[j].max ) cont=true;
+		for ( int j=0; j<clintervals2sigma.size(); j++ ) if ( clintervals2sigma[j].min<sol && sol<clintervals2sigma[j].max ) cont=true;
+		if ( cont==true ) continue;
+		if ( w->var(scanVar1)->getUnit()==TString("Rad") ) sol = RadToDeg(sol);
+		int d = arg->digits;
+		if ( d<=0 ) d = 3;
+		printf("%s = %7.*f", w->var(scanVar1)->GetName(), d, sol);
+		if ( unit!="" ) cout << " ["<<unit<<"]";
+		cout << endl;
+	}
 }
 
 ///

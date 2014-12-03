@@ -72,197 +72,196 @@ MethodProbScan::~MethodProbScan()
 ///
 int MethodProbScan::scan1d(bool fast, bool reverse)
 {
-  if ( arg->debug ) cout << "MethodProbScan::scan1d() : starting ... " << endl;
+	if ( arg->debug ) cout << "MethodProbScan::scan1d() : starting ... " << endl;
 	nScansDone++;
 
-  // The "improve" method doesn't need multiple scans.
-  if ( arg->probforce || arg->probimprove ) fast = true;
-  if ( arg->probforce ) scanDisableDragMode = true;
+	// The "improve" method doesn't need multiple scans.
+	if ( arg->probforce || arg->probimprove ) fast = true;
+	if ( arg->probforce ) scanDisableDragMode = true;
 
 	// Save parameter values that were active at function call.
-  if ( startPars ) delete startPars;
+	if ( startPars ) delete startPars;
 	startPars = new RooDataSet("startPars", "startPars", *w->set(parsName));
 	startPars->add(*w->set(parsName));
 
-  // // start scan from global minimum (not always a good idea as we need to set from other places as well)
-  // setParameters(w, parsName, globalMin);
+	// // start scan from global minimum (not always a good idea as we need to set from other places as well)
+	// setParameters(w, parsName, globalMin);
 
 	// load scan parameter and scan range
 	setLimit(w, scanVar1, "scan");
-  RooRealVar *par = w->var(scanVar1);
-  assert(par);
-  float min = hCL->GetXaxis()->GetXmin();
-  float max = hCL->GetXaxis()->GetXmax();
-  if ( fabs(par->getMin()-min)>1e-6 || fabs(par->getMax()-max)>1e-6 ){
-    cout << "MethodProbScan::scan1d() : WARNING : Scan range was changed after initScan()" << endl;
-    cout << "                           was called so the old range will be used." << endl;
-  }
+	RooRealVar *par = w->var(scanVar1);
+	assert(par);
+	float min = hCL->GetXaxis()->GetXmin();
+	float max = hCL->GetXaxis()->GetXmax();
+	if ( fabs(par->getMin()-min)>1e-6 || fabs(par->getMax()-max)>1e-6 ){
+		cout << "MethodProbScan::scan1d() : WARNING : Scan range was changed after initScan()" << endl;
+		cout << "                           was called so the old range will be used." << endl;
+	}
 	if ( arg->verbose ){
-    cout << "\nProb configuration:" << endl;
-    cout << "  combination : " << title << endl;
-    cout << "  scan variable : " << scanVar1 << endl;
-    cout << "  scan range : " << min << " ... " << max << endl;
-    cout << "  scan steps : " << nPoints1d << endl;
-    cout << "  fast mode : " << fast << endl;
-    cout << endl;
-  }
+		cout << "\nProb configuration:" << endl;
+		cout << "  combination : " << title << endl;
+		cout << "  scan variable : " << scanVar1 << endl;
+		cout << "  scan range : " << min << " ... " << max << endl;
+		cout << "  scan steps : " << nPoints1d << endl;
+		cout << "  fast mode : " << fast << endl;
+		cout << endl;
+	}
 
 	// Set limit to all parameters.
-  combiner->loadParameterLimits();
+	combiner->loadParameterLimits();
 
-  // fix scan parameter
-  par->setConstant(true);
+	// fix scan parameter
+	par->setConstant(true);
 
-  // j =
-  // 0 : start value -> upper limit
-  // 1 : upper limit -> start value
-  // 2 : start value -> lower limit
-  // 3 : lower limit -> start value
-  float startValue = par->getVal();
-  bool scanUp;
+	// j =
+	// 0 : start value -> upper limit
+	// 1 : upper limit -> start value
+	// 2 : start value -> lower limit
+	// 3 : lower limit -> start value
+	float startValue = par->getVal();
+	bool scanUp;
 
-  // for the status bar
-  float nTotalSteps = nPoints1d;
-  nTotalSteps *= fast ? 1 : 2;
-  float nStep = 0;
-  float printFreq = nTotalSteps>15 ? 10 : nTotalSteps;
+	// for the status bar
+	float nTotalSteps = nPoints1d;
+	nTotalSteps *= fast ? 1 : 2;
+	float nStep = 0;
+	float printFreq = nTotalSteps>15 ? 10 : nTotalSteps;
 
-  // Report on the smallest new minimum we come across while scanning.
-  // Sometimes the scan doesn't find the minimum
-  // that was found before. Warn if this happens.
-  double bestMinOld = chi2minGlobal;
-  double bestMinFoundInScan = 100.;
+	// Report on the smallest new minimum we come across while scanning.
+	// Sometimes the scan doesn't find the minimum
+	// that was found before. Warn if this happens.
+	double bestMinOld = chi2minGlobal;
+	double bestMinFoundInScan = 100.;
 
-  for ( int jj=0; jj<4; jj++ )
-  {
-    int j = jj;
-    if ( reverse ) switch(jj)
-  	{
-      case 0: j = 2; break;
-      case 1: j = 3; break;
-      case 2: j = 0; break;
-      case 3: j = 1; break;
-    }
+	for ( int jj=0; jj<4; jj++ )
+	{
+		int j = jj;
+		if ( reverse ) switch(jj)
+		{
+			case 0: j = 2; break;
+			case 1: j = 3; break;
+			case 2: j = 0; break;
+			case 3: j = 1; break;
+		}
 
-    float scanStart, scanStop;
-  	switch(j)
-  	{
-      case 0:
-        // UP
-        setParameters(w, parsName, startPars->get(0));
-        scanStart = startValue;
-        scanStop  = par->getMax();
-        scanUp = true;
-        break;
-      case 1:
-        // DOWN
-        scanStart = par->getMax();
-        scanStop  = startValue;
-        scanUp = false;
-        break;
-      case 2:
-        // DOWN
-        setParameters(w, parsName, startPars->get(0));
-        scanStart = startValue;
-        scanStop  = par->getMin();
-        scanUp = false;
-        break;
-      case 3:
-        // UP
-        scanStart = par->getMin();
-        scanStop  = startValue;
-        scanUp = true;
-        break;
-  	}
+		float scanStart, scanStop;
+		switch(j)
+		{
+			case 0:
+				// UP
+				setParameters(w, parsName, startPars->get(0));
+				scanStart = startValue;
+				scanStop  = par->getMax();
+				scanUp = true;
+				break;
+			case 1:
+				// DOWN
+				scanStart = par->getMax();
+				scanStop  = startValue;
+				scanUp = false;
+				break;
+			case 2:
+				// DOWN
+				setParameters(w, parsName, startPars->get(0));
+				scanStart = startValue;
+				scanStop  = par->getMin();
+				scanUp = false;
+				break;
+			case 3:
+				// UP
+				scanStart = par->getMin();
+				scanStop  = startValue;
+				scanUp = true;
+				break;
+		}
 
-    if ( fast && ( j==1 || j==3 ) ) continue;
+		if ( fast && ( j==1 || j==3 ) ) continue;
 
-  	for ( int i=0; i<nPoints1d; i++ )
-  	{
-      float scanvalue;
-      if ( scanUp )
-      {
-        scanvalue = min + (max-min)*(double)i/(double)nPoints1d + hCL->GetBinWidth(1)/2.;
-        if ( scanvalue < scanStart ) continue;
-        if ( scanvalue > scanStop ) break;
-      }
-      else
-      {
-        scanvalue = max - (max-min)*(double)(i+1)/(double)nPoints1d + hCL->GetBinWidth(1)/2.;
-        if ( scanvalue > scanStart ) continue;
-        if ( scanvalue < scanStop ) break;
-      }
+		for ( int i=0; i<nPoints1d; i++ )
+		{
+			float scanvalue;
+			if ( scanUp )
+			{
+				scanvalue = min + (max-min)*(double)i/(double)nPoints1d + hCL->GetBinWidth(1)/2.;
+				if ( scanvalue < scanStart ) continue;
+				if ( scanvalue > scanStop ) break;
+			}
+			else
+			{
+				scanvalue = max - (max-min)*(double)(i+1)/(double)nPoints1d + hCL->GetBinWidth(1)/2.;
+				if ( scanvalue > scanStart ) continue;
+				if ( scanvalue < scanStop ) break;
+			}
 
-      // disable drag mode
-      // (the improve method doesn't work with drag mode as parameter run
-      // at their limits)
-      if ( scanDisableDragMode ) setParameters(w, parsName, startPars->get(0));
+			// disable drag mode
+			// (the improve method doesn't work with drag mode as parameter run
+			// at their limits)
+			if ( scanDisableDragMode ) setParameters(w, parsName, startPars->get(0));
 
-      // set the parameter of interest to the scan point
-  		par->setVal(scanvalue);
+			// set the parameter of interest to the scan point
+			par->setVal(scanvalue);
 
-      // don't scan in unphysical region
-      if ( scanvalue < par->getMin() || scanvalue > par->getMax() ) continue;
+			// don't scan in unphysical region
+			if ( scanvalue < par->getMin() || scanvalue > par->getMax() ) continue;
 
-      // status bar
-      if ( (((int)nStep % (int)(nTotalSteps/printFreq)) == 0))
-        cout << "MethodProbScan::scan1d() : scanning " << (float)nStep/(float)nTotalSteps*100. << "%   \r" << flush;
+			// status bar
+			if ( (((int)nStep % (int)(nTotalSteps/printFreq)) == 0))
+				cout << "MethodProbScan::scan1d() : scanning " << (float)nStep/(float)nTotalSteps*100. << "%   \r" << flush;
 
-      // fit!
-      RooFitResult *fr = 0;
-      if ( arg->probforce )         fr = fitToMinForce(w, combiner->getPdfName());
-      else if ( arg->probimprove )  fr = fitToMinImprove(w, combiner->getPdfName());
-      else                          fr = fitToMinBringBackAngles(w->pdf(pdfName), false, -1);
-      double chi2minScan = fr->minNll();
-      if ( std::isinf(chi2minScan) ) chi2minScan=1e4; // else the toys in PDF_testConstraint don't work
-      RooSlimFitResult *r = new RooSlimFitResult(fr); // try to save memory by using the slim fit result
-      delete fr;
-      allResults.push_back(r);
-      bestMinFoundInScan = TMath::Min((double)chi2minScan, (double)bestMinFoundInScan);
+			// fit!
+			RooFitResult *fr = 0;
+			if ( arg->probforce )         fr = fitToMinForce(w, combiner->getPdfName());
+			else if ( arg->probimprove )  fr = fitToMinImprove(w, combiner->getPdfName());
+			else                          fr = fitToMinBringBackAngles(w->pdf(pdfName), false, -1);
+			double chi2minScan = fr->minNll();
+			if ( std::isinf(chi2minScan) ) chi2minScan=1e4; // else the toys in PDF_testConstraint don't work
+			RooSlimFitResult *r = new RooSlimFitResult(fr); // try to save memory by using the slim fit result
+			delete fr;
+			allResults.push_back(r);
+			bestMinFoundInScan = TMath::Min((double)chi2minScan, (double)bestMinFoundInScan);
 
-      if ( chi2minScan < 0 ){
-        cout << "MethodProbScan::scan1d() : WARNING : " << title << " chi2 negative! Setting to 0."
-             << " chi2 found: " << chi2minScan << endl;
-        chi2minScan = 0.0;
-      }
+			if ( chi2minScan < 0 ){
+				cout << "MethodProbScan::scan1d() : WARNING : " << title << " chi2 negative! Setting to 0."
+								    << " chi2 found: " << chi2minScan << endl;
+				chi2minScan = 0.0;
+			}
 
-      // If we find a minimum smaller than the old "global" minimum, this means that all
-      // previous 1-CL values are too high.
-      if ( chi2minScan<chi2minGlobal ){
-        if ( arg->verbose ) cout << "MethodProbScan::scan1d() : WARNING : " << title << " new global minimum found! "
-             << " chi2minScan=" << chi2minScan << endl;
-        chi2minGlobal = chi2minScan;
-        // recompute previous 1-CL values
-        for ( int k=1; k<=hCL->GetNbinsX(); k++ ){
-          hCL->SetBinContent(k, TMath::Prob(hChi2min->GetBinContent(k)-chi2minGlobal, 1));
-        }
-      }
+			// If we find a minimum smaller than the old "global" minimum, this means that all
+			// previous 1-CL values are too high.
+			if ( chi2minScan<chi2minGlobal ){
+				if ( arg->verbose ) cout << "MethodProbScan::scan1d() : WARNING : " << title << " new global minimum found! "
+											<< " chi2minScan=" << chi2minScan << endl;
+				chi2minGlobal = chi2minScan;
+				// recompute previous 1-CL values
+				for ( int k=1; k<=hCL->GetNbinsX(); k++ ){
+					hCL->SetBinContent(k, TMath::Prob(hChi2min->GetBinContent(k)-chi2minGlobal, 1));
+				}
+			}
 
-      double deltaChi2 = chi2minScan - chi2minGlobal;
-      double oneMinusCL = TMath::Prob(deltaChi2, 1);
+			double deltaChi2 = chi2minScan - chi2minGlobal;
+			double oneMinusCL = TMath::Prob(deltaChi2, 1);
 
-      // Save the 1-CL value and the corresponding fit result.
-      // But only if better than before!
-      if ( hCL->GetBinContent(hCL->FindBin(scanvalue)) <= oneMinusCL ){
-        hCL->SetBinContent(hCL->FindBin(scanvalue), oneMinusCL);
-        hChi2min->SetBinContent(hCL->FindBin(scanvalue), chi2minScan);
-        int iRes = hCL->FindBin(scanvalue)-1;
-        curveResults[iRes] = r;
-      }
+			// Save the 1-CL value and the corresponding fit result.
+			// But only if better than before!
+			if ( hCL->GetBinContent(hCL->FindBin(scanvalue)) <= oneMinusCL ){
+				hCL->SetBinContent(hCL->FindBin(scanvalue), oneMinusCL);
+				hChi2min->SetBinContent(hCL->FindBin(scanvalue), chi2minScan);
+				int iRes = hCL->FindBin(scanvalue)-1;
+				curveResults[iRes] = r;
+			}
 
-      nStep++;
-	  }
+			nStep++;
+		}
 	}
 	cout << "MethodProbScan::scan1d() : scan done.           " << endl;
 
-  if ( bestMinFoundInScan-bestMinOld > 0.01 ){
-    cout << "MethodProbScan::scan1d() : WARNING: Scan didn't find similar minimum to what was found before!" << endl;
-    cout << "MethodProbScan::scan1d() :          Too strict parameter limits? Too coarse scan steps? Didn't load global minimum?" << endl;
-    cout << "MethodProbScan::scan1d() :          chi2 bestMinFoundInScan=" << bestMinFoundInScan << ", bestMinOld=" << bestMinOld << endl;
-  }
+	if ( bestMinFoundInScan-bestMinOld > 0.01 ){
+		cout << "MethodProbScan::scan1d() : WARNING: Scan didn't find similar minimum to what was found before!" << endl;
+		cout << "MethodProbScan::scan1d() :          Too strict parameter limits? Too coarse scan steps? Didn't load global minimum?" << endl;
+		cout << "MethodProbScan::scan1d() :          chi2 bestMinFoundInScan=" << bestMinFoundInScan << ", bestMinOld=" << bestMinOld << endl;
+	}
 
-	// // attempt to correct for undercoverage
-
+	// attempt to correct for undercoverage
 	if (pvalueCorrectorSet) {
 		for ( int k=1; k<=hCL->GetNbinsX(); k++ ){
 			double pvalueProb = hCL->GetBinContent(k);
@@ -275,8 +274,8 @@ int MethodProbScan::scan1d(bool fast, bool reverse)
 	saveSolutions();
 	confirmSolutions();
 
-  if ( (bestMinFoundInScan-bestMinOld)/bestMinOld > 0.01 ) return 1;
-  return 0;
+	if ( (bestMinFoundInScan-bestMinOld)/bestMinOld > 0.01 ) return 1;
+	return 0;
 }
 
 ///
@@ -627,7 +626,7 @@ void MethodProbScan::saveSolutions()
     // loop over fit results to find those that produced it
     for ( int j=0; j<curveResults.size(); j++ ){
       if ( !curveResults[j] ){
-        cout << "MethodProbScan::saveSolutions() : WARNING : empty solution at index " << j << endl;
+        if ( arg->debug ) cout << "MethodProbScan::saveSolutions() : WARNING : empty solution at index " << j << endl;
         continue;
       }
 
