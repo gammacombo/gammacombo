@@ -71,7 +71,7 @@ OptParser::OptParser()
   plotunoff = false;
   pluginPlotRangeMax = -99;
   pluginPlotRangeMin = -99;
-  pluginext = false;
+  intprob = false;
   probforce = false;
   probimprove = false;
 	printcor = false;
@@ -105,7 +105,7 @@ void OptParser::defineOptions()
   availableOptions.push_back("id");
   availableOptions.push_back("importance");
   availableOptions.push_back("interactive");
-  availableOptions.push_back("jobdir");
+  //availableOptions.push_back("jobdir");
   availableOptions.push_back("jobs");
   availableOptions.push_back("largest");
   availableOptions.push_back("leg");
@@ -114,24 +114,23 @@ void OptParser::defineOptions()
 	availableOptions.push_back("loadParamsFile");
   availableOptions.push_back("log");
   availableOptions.push_back("magnetic");
-  availableOptions.push_back("nBBpoints");
+  //availableOptions.push_back("nBBpoints");
   availableOptions.push_back("nosyst");
   availableOptions.push_back("npoints");
-  availableOptions.push_back("npoints2d");
   availableOptions.push_back("npoints2dx");
   availableOptions.push_back("npoints2dy");
   availableOptions.push_back("npointstoy");
   availableOptions.push_back("nrun");
   availableOptions.push_back("ntoys");
 	availableOptions.push_back("parsavefile");
-  availableOptions.push_back("pevid");
+  //availableOptions.push_back("pevid");
   availableOptions.push_back("physrange");
   availableOptions.push_back("plotid");
-  availableOptions.push_back("pluginext");
+  availableOptions.push_back("intprob");
   availableOptions.push_back("po");
   availableOptions.push_back("prelim");
   availableOptions.push_back("probforce");
-  availableOptions.push_back("probimprove");
+  //availableOptions.push_back("probimprove");
   availableOptions.push_back("ps");
   availableOptions.push_back("pulls");
   availableOptions.push_back("qh");
@@ -145,7 +144,7 @@ void OptParser::defineOptions()
   availableOptions.push_back("unoff");
   availableOptions.push_back("var");
   availableOptions.push_back("verbose");
-  availableOptions.push_back("relation");
+  //availableOptions.push_back("relation");
   availableOptions.push_back("pluginplotrange");
   availableOptions.push_back("plotnsigmacont");
   availableOptions.push_back("plot2dcl");
@@ -196,13 +195,13 @@ void OptParser::bookPluginOptions()
   bookedOptions.push_back("importance");
   bookedOptions.push_back("jobs");
   bookedOptions.push_back("lightfiles");
-  bookedOptions.push_back("nBBpoints");
+  //bookedOptions.push_back("nBBpoints");
   bookedOptions.push_back("npointstoy");
   bookedOptions.push_back("nrun");
   bookedOptions.push_back("ntoys");
-  bookedOptions.push_back("pevid");
+  //bookedOptions.push_back("pevid");
   bookedOptions.push_back("physrange");
-  bookedOptions.push_back("pluginext");
+  bookedOptions.push_back("intprob");
   bookedOptions.push_back("po");
   bookedOptions.push_back("pluginplotrange");
 }
@@ -215,14 +214,13 @@ void OptParser::bookProbOptions()
   bookedOptions.push_back("asimov");
   bookedOptions.push_back("evol");
   bookedOptions.push_back("npoints");
-  bookedOptions.push_back("npoints2d");
   bookedOptions.push_back("npoints2dx");
   bookedOptions.push_back("npoints2dy");
   bookedOptions.push_back("physrange");
   bookedOptions.push_back("sn");
   bookedOptions.push_back("sn2d");
   bookedOptions.push_back("probforce");
-  bookedOptions.push_back("probimprove");
+  //bookedOptions.push_back("probimprove");
   bookedOptions.push_back("pulls");
   bookedOptions.push_back("scanforce");
 	bookedOptions.push_back("scanforce");
@@ -236,7 +234,7 @@ void OptParser::bookFlowcontrolOptions()
 	bookedOptions.push_back("action");
 	bookedOptions.push_back("combid");
 	bookedOptions.push_back("fix");
-	bookedOptions.push_back("jobdir");
+	//bookedOptions.push_back("jobdir");
 	bookedOptions.push_back("nosyst");
 }
 
@@ -277,7 +275,7 @@ bool OptParser::isQuickhack(int id)
 ///
 void OptParser::parseArguments(int argc, char* argv[])
 {
-	CmdLine cmd("Calculate CL intervals.", ' ', "v2");
+	CmdLine cmd("", ' ', "");
 
 	// --------------- arguments that take a value
 	TCLAP::ValueArg<string> scanrangeArg("", "scanrange", "Restrict the scan range to a given range. "
@@ -301,8 +299,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"ndivy=N1 + 100*N2 + 10000*N3, "
 			"N1 = number of 1st divisions (N2 = 2nd, N3 = 3rd). Default is 407. To enable bin optimization, pre-pend "
 			"a '-'.", false, -1, "int");
-	TCLAP::ValueArg<int> plotidArg("p", "plotid", "Make plot with given ID. When plotting control plots "
-			"(--controlplots), the IDs 1-6 are available. If not given, all control plots are made.", false, 0, "int");
+	TCLAP::ValueArg<int> plotidArg("p", "plotid", "Make control plot with given ID (see --controlplots). "
+			"Available IDs are 1-6. If not given, all control plots are made.", false, 0, "int");
 	TCLAP::ValueArg<int> digitsArg("s", "digits", "Set the number of printed"
 			" digits right of the decimal point. Default is automatic.", false, -1, "int");
 	TCLAP::ValueArg<int> plotsolutionsArg("", "ps", "Include solutions in the plots.\n"
@@ -329,15 +327,16 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"for one coordinate use -1: -1:y. Use '--group off' to disable the logo.", false, "default", "string");
 	TCLAP::ValueArg<int> nBBpointsArg("", "nBBpoints", "number of BergerBoos points per scanpoint", false, 1, "int");
 	TCLAP::ValueArg<int> idArg("", "id", "When making controlplots (--controlplots), only consider the "
-			"point with this ID. This can be used to plot a certain Berger-Boos point only, "
-			"or to plot a certain coverage test toy only.", false, -1, "int");
+			"scan point with this ID, that is a specific value of the scan parameter. "
+			, false, -1, "int");
 	TCLAP::ValueArg<int> ntoysArg("", "ntoys", "number of toy experiments per job. Default: 25", false, 25, "int");
 	TCLAP::ValueArg<int> nrunArg("", "nrun", "Number of toy run. To be used with --action pluginbatch.", false, 1, "int");
-	TCLAP::ValueArg<int> npointsArg("", "npoints", "Number of scan points used by the 1d prob method. Default: 100", false, 100, "int");
-	TCLAP::ValueArg<int> npoints2dArg("", "npoints2d", "Number of scan points used by the 2d prob method. "
-			"Uses same number for both dimensions. See also --npoints2dx, --npoints2dy.", false, -1, "int");
-	TCLAP::ValueArg<int> npoints2dxArg("", "npoints2dx", "Number of 2D scan points, x axis. Default: 50", false, 50, "int");
-	TCLAP::ValueArg<int> npoints2dyArg("", "npoints2dy", "Number of 2D scan points, y axis. Default: 50", false, 50, "int");
+	TCLAP::ValueArg<int> npointsArg("", "npoints", "Number of scan points used by the Prob method. \n"
+		"1D plots: Default 100 points. \n"
+		"2D plots: Default 50 points per axis. In the 2D case, equal number of points "
+		"for both axes are set. See also --npoints2dx and --npoints2dy.", false, -1, "int");
+	TCLAP::ValueArg<int> npoints2dxArg("", "npoints2dx", "Number of 2D scan points, x axis. Default: 50", false, -1, "int");
+	TCLAP::ValueArg<int> npoints2dyArg("", "npoints2dy", "Number of 2D scan points, y axis. Default: 50", false, -1, "int");
 	TCLAP::ValueArg<int> npointstoyArg("", "npointstoy", "Number of scan points used by the plugin method. Default: 100", false, 100, "int");
 	TCLAP::MultiArg<string> jobsArg("j", "jobs", "Range of toy job ids to be considered. "
 			"To be used with --action plugin. "
@@ -349,9 +348,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 
 	// --------------- switch arguments
 	TCLAP::SwitchArg plotpluginonlyArg("", "po", "Make a 1-CL plot just showing the plugin curves.", false);
-	TCLAP::SwitchArg interactiveArg("i", "interactive", "Enables interactive mode (requires X11 session).", false);
-	TCLAP::SwitchArg pluginextArg("", "pluginext", "Use the external (=Prob) chi2min histogram"
-			" instead of chi2min from the toys", false);
+	TCLAP::SwitchArg interactiveArg("i", "interactive", "Enables interactive mode (requires X11 session). Exit with Ctrl+c.", false);
+	TCLAP::SwitchArg intprobArg("", "intprob", "Use the internal (=Prob) chi2min histogram"
+			" instead of the chi2min from the toy files to evaluate 1-CL of the plugin method.", false);
 	TCLAP::SwitchArg parevolArg("e", "evol", "Plots the parameter evolution of the profile likelihood.", false);
 	TCLAP::SwitchArg controlplotArg("", "controlplots", "Make controlplots analysing the generated toys.", false);
 	TCLAP::SwitchArg plotmagneticArg("", "magnetic", "In 2d plots, enable magnetic plot borders which will "
@@ -359,8 +358,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::SwitchArg verboseArg("v", "verbose", "Enables verbose output.", false);
 	TCLAP::SwitchArg debugArg("d", "debug", "Enables debug level output.", false);
 	TCLAP::SwitchArg usageArg("u", "usage", "Prints usage information and exits.", false);
-	TCLAP::SwitchArg scanforceArg("f", "scanforce", "Use stronger minimum finding for the Plugin method.", false);
-	TCLAP::SwitchArg probforceArg("", "probforce", "Use stronger minimum finding for the Prob method.", false);
+	TCLAP::SwitchArg scanforceArg("f", "scanforce", "Use a stronger minimum finding method for the Plugin method.", false);
+	TCLAP::SwitchArg probforceArg("", "probforce", "Use a stronger minimum finding method for the Prob method.", false);
 	TCLAP::SwitchArg probimproveArg("", "probimprove", "Use IMPROVE minimum finding for the Prob method.", false);
 	TCLAP::SwitchArg largestArg("", "largest", "Report largest CL interval: lowest boundary of "
 			"all intervals to highest boundary of all intervals. Useful if two intervals are very "
@@ -378,19 +377,19 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"'phys' limit. However, toy generation of observables is not affected.", false);
 	TCLAP::SwitchArg importanceArg("", "importance", "Enable importance sampling for plugin toys.", false);
 	TCLAP::SwitchArg nosystArg("", "nosyst", "Sets all systematic errors to zero.", false);
-	TCLAP::SwitchArg printcorArg("", "printcor", "Print correlations of each solution found.", false);
+	TCLAP::SwitchArg printcorArg("", "printcor", "Print the correlation matrix of each solution found.", false);
 
 	// --------------- aruments that can be given multiple times
 	vector<string> vAction;
-	vAction.push_back("bb");
-	vAction.push_back("bbbatch");
+	//vAction.push_back("bb");
+	//vAction.push_back("bbbatch");
 	vAction.push_back("plot");
-	vAction.push_back("plot2d");
+	//vAction.push_back("plot2d");
 	vAction.push_back("plugin");
 	vAction.push_back("pluginbatch");
-	vAction.push_back("prob");
+	//vAction.push_back("prob");
 	vAction.push_back("runtoys");
-	vAction.push_back("scantree");
+	//vAction.push_back("scantree");
 	vAction.push_back("test");
 	ValuesConstraint<string> cAction(vAction);
 	TCLAP::MultiArg<string> actionArg("a", "action", "Perform action", false, &cAction);
@@ -414,14 +413,12 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"that determines the parameter evolution for the Plugin toy generation. If not given, "
 			"the --combid will be used. Use -u to get a list of possible choices.", false, "int");
 	TCLAP::MultiArg<int> qhArg("", "qh", "Quick hacks. \n"
-			"1: Move up the printed solutions in 1d log plots such that they don't clash with the 95% clabel. \n"
-			"2: Move the CL labels to the middle of the 1d plots. \n"
-			"3: add 180 deg to the d_dpi axis and solution in the 1d plot. \n"
-			"4: move plotted numbers a bit to the left to not cover 1d plot axis. \n"
+			"1: Move up the printed solutions in 1d log plots such that they don't clash with the 95% clabel.\n"
+			"2: Move the CL labels to the middle of the 1d plots.\n"
+			"3: add 180 deg to the d_dpi axis and solution in the 1d plot.\n"
+			"4: move plotted numbers a bit to the left to not cover 1d plot axis.\n"
 			"5: Test toy generation in the 1d plugin method. At each scan point, 10 toys are printed out- but nothing is fit.\n"
-			"6: Scale down LHCb errors in the full and robust combinations by a factor 10.\n"
-			"7: Remove 'addedPdf' and 'delPdf' strings from plot file name to get shorter filenames.\n"
-			"8: Switch on the new CL interval maker output.\n"
+			"8: Switch on new CL interval maker output.\n"
 			, false, "int");
 	TCLAP::MultiArg<string> titleArg("", "title", "Override the title of a combination. "
 			"If 'default' is given, the default title for that combination is used. "
@@ -469,8 +466,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "title" ) ) cmd.add( titleArg );
 	if ( isIn<TString>(bookedOptions, "sn2d" ) ) cmd.add(sn2dArg);
 	if ( isIn<TString>(bookedOptions, "sn" ) ) cmd.add(snArg);
-	if ( isIn<TString>(bookedOptions, "scanrange" ) ) cmd.add( scanrangeArg );
 	if ( isIn<TString>(bookedOptions, "scanrangey" ) ) cmd.add( scanrangeyArg );
+	if ( isIn<TString>(bookedOptions, "scanrange" ) ) cmd.add( scanrangeArg );
 	if ( isIn<TString>(bookedOptions, "scanforce" ) ) cmd.add( scanforceArg );
 	if ( isIn<TString>(bookedOptions, "relation" ) ) cmd.add(relationArg);
 	if ( isIn<TString>(bookedOptions, "qh" ) ) cmd.add(qhArg);
@@ -478,32 +475,30 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "ps" ) ) cmd.add( plotsolutionsArg );
 	if ( isIn<TString>(bookedOptions, "probimprove" ) ) cmd.add( probimproveArg );
 	if ( isIn<TString>(bookedOptions, "probforce" ) ) cmd.add( probforceArg );
+	if ( isIn<TString>(bookedOptions, "printcor" ) ) cmd.add( printcorArg );
 	if ( isIn<TString>(bookedOptions, "prelim" ) ) cmd.add( plotprelimArg );
 	if ( isIn<TString>(bookedOptions, "po" ) ) cmd.add( plotpluginonlyArg );
 	if ( isIn<TString>(bookedOptions, "pluginplotrange" ) ) cmd.add( pluginplotrangeArg );
-	if ( isIn<TString>(bookedOptions, "pluginext" ) ) cmd.add( pluginextArg );
+	if ( isIn<TString>(bookedOptions, "intprob" ) ) cmd.add( intprobArg );
 	if ( isIn<TString>(bookedOptions, "plotnsigmacont" ) ) cmd.add(plotnsigmacontArg);
 	if ( isIn<TString>(bookedOptions, "plotid" ) ) cmd.add(plotidArg);
 	if ( isIn<TString>(bookedOptions, "plot2dcl" ) ) cmd.add( plot2dclArg );
 	if ( isIn<TString>(bookedOptions, "physrange" ) ) cmd.add( physrangeArg );
 	if ( isIn<TString>(bookedOptions, "pevid" ) ) cmd.add( pevidArg );
-	if ( isIn<TString>(bookedOptions, "printcor" ) ) cmd.add( printcorArg );
 	if ( isIn<TString>(bookedOptions, "ntoys" ) ) cmd.add(ntoysArg);
 	if ( isIn<TString>(bookedOptions, "nrun" ) ) cmd.add(nrunArg);
 	if ( isIn<TString>(bookedOptions, "npointstoy" ) ) cmd.add(npointstoyArg);
 	if ( isIn<TString>(bookedOptions, "npoints2dy" ) ) cmd.add(npoints2dyArg);
 	if ( isIn<TString>(bookedOptions, "npoints2dx" ) ) cmd.add(npoints2dxArg);
-	if ( isIn<TString>(bookedOptions, "npoints2d" ) ) cmd.add(npoints2dArg);
 	if ( isIn<TString>(bookedOptions, "npoints" ) ) cmd.add(npointsArg);
 	if ( isIn<TString>(bookedOptions, "nosyst" ) ) cmd.add( nosystArg );
-	if ( isIn<TString>(bookedOptions, "ndiv" ) ) cmd.add(ndivArg);
 	if ( isIn<TString>(bookedOptions, "ndivy" ) ) cmd.add(ndivyArg);
+	if ( isIn<TString>(bookedOptions, "ndiv" ) ) cmd.add(ndivArg);
 	if ( isIn<TString>(bookedOptions, "nBBpoints" ) ) cmd.add(nBBpointsArg);
 	if ( isIn<TString>(bookedOptions, "magnetic" ) ) cmd.add( plotmagneticArg );
 	if ( isIn<TString>(bookedOptions, "log" ) ) cmd.add( plotlogArg );
 	if ( isIn<TString>(bookedOptions, "loadParamsFile" ) ) cmd.add( loadParamsFileArg );
 	if ( isIn<TString>(bookedOptions, "lightfiles" ) ) cmd.add( lightfilesArg );
-	if ( isIn<TString>(bookedOptions, "group" ) ) cmd.add( plotgroupArg );
 	if ( isIn<TString>(bookedOptions, "leg" ) ) cmd.add( plotlegArg );
 	if ( isIn<TString>(bookedOptions, "largest" ) ) cmd.add( largestArg );
 	if ( isIn<TString>(bookedOptions, "jobs" ) ) cmd.add(jobsArg);
@@ -511,17 +506,18 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "interactive" ) ) cmd.add( interactiveArg );
 	if ( isIn<TString>(bookedOptions, "importance" ) ) cmd.add( importanceArg );
 	if ( isIn<TString>(bookedOptions, "id" ) ) cmd.add(idArg);
+	if ( isIn<TString>(bookedOptions, "group" ) ) cmd.add( plotgroupArg );
 	if ( isIn<TString>(bookedOptions, "fix" ) ) cmd.add(fixArg);
 	if ( isIn<TString>(bookedOptions, "evol" ) ) cmd.add(parevolArg);
 	if ( isIn<TString>(bookedOptions, "digits" ) ) cmd.add(digitsArg);
 	if ( isIn<TString>(bookedOptions, "debug" ) ) cmd.add(debugArg);
-	if ( isIn<TString>(bookedOptions, "covCorrect" ) ) cmd.add(coverageCorrectionIDArg);
 	if ( isIn<TString>(bookedOptions, "covCorrectPoint" ) ) cmd.add(coverageCorrectionPointArg);
+	if ( isIn<TString>(bookedOptions, "covCorrect" ) ) cmd.add(coverageCorrectionIDArg);
 	if ( isIn<TString>(bookedOptions, "controlplots" ) ) cmd.add(controlplotArg);
-	if ( isIn<TString>(bookedOptions, "color" ) ) cmd.add(colorArg);
 	if ( isIn<TString>(bookedOptions, "combid" ) ) cmd.add(combidArg);
-	if ( isIn<TString>(bookedOptions, "action") ) cmd.add(actionArg);
+	if ( isIn<TString>(bookedOptions, "color" ) ) cmd.add(colorArg);
 	if ( isIn<TString>(bookedOptions, "asimov") ) cmd.add(asimovArg);
+	if ( isIn<TString>(bookedOptions, "action") ) cmd.add(actionArg);
 	cmd.parse( argc, argv );
 
 	//
@@ -532,9 +528,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 	digits            = digitsArg.getValue();
 	enforcePhysRange  = physrangeArg.getValue();
 	interactive       = interactiveArg.getValue();
-	npoints1d         = npointsArg.getValue();
-	npoints2dx        = npoints2dArg.getValue()==-1 ? npoints2dxArg.getValue() : npoints2dArg.getValue();
-	npoints2dy        = npoints2dArg.getValue()==-1 ? npoints2dyArg.getValue() : npoints2dArg.getValue();
+	npoints1d         = npointsArg.getValue()==-1 ? 100 : npointsArg.getValue();
+	npoints2dx        = npoints2dxArg.getValue()==-1 ? (npointsArg.getValue()==-1 ? 50 : npointsArg.getValue()) : npoints2dxArg.getValue();
+	npoints2dy        = npoints2dyArg.getValue()==-1 ? (npointsArg.getValue()==-1 ? 50 : npointsArg.getValue()) : npoints2dyArg.getValue();
 	npointstoy        = npointstoyArg.getValue();
 	nrun	          = nrunArg.getValue();
 	ntoys	          = ntoysArg.getValue();
@@ -547,7 +543,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	plotpluginonly    = plotpluginonlyArg.getValue();
 	plotpulls         = plotpullsArg.getValue();
 	plotsolutions     = plotsolutionsArg.getValue();
-	pluginext         = pluginextArg.getValue();
+	intprob           = intprobArg.getValue();
 	probforce         = probforceArg.getValue();
 	probimprove       = probimproveArg.getValue();
 	printcor          = printcorArg.getValue();
@@ -602,6 +598,10 @@ void OptParser::parseArguments(int argc, char* argv[])
 
 	// --var
 	tmp = varArg.getValue();
+	if ( tmp.size()>2 ){
+		cout << "Argument error --var: please give two instances at maximum." << endl;
+		exit(1);
+	}
 	for ( int i = 0; i < tmp.size(); i++ ) var.push_back(tmp[i]);
 	if ( tmp.size()==0 ) var.push_back("g");
 

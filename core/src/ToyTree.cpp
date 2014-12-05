@@ -397,7 +397,7 @@ void ToyTree::computeMinMaxN()
   {
     if ( points[i] != pointsPrev )
     {
-      _n+=1;  ///< count number of different scan points
+      _n+=1;  //  count number of different scan points
       if ( binWidth==-1 ) binWidth = fabs(points[i]-pointsPrev); // save first bin width so we can compare to others
     }
     if ( binWidth>-1 && fabs(points[i]-pointsPrev)>1e-6 
@@ -490,7 +490,8 @@ void ToyTree::ctrlPlotSummary()
   TH1D* hAll = ((TH2F*)(gPad->GetPrimitive("htemp")))->ProjectionX("hAll",1,1);
   // failed toys
   TCut myCtrlPlotCuts = !ctrlPlotCuts;
-  if ( arg->id!=-1 ) myCtrlPlotCuts = myCtrlPlotCuts && Form("BergerBoos_id==%i", arg->id);
+  if ( arg->id!=-1 ) myCtrlPlotCuts = myCtrlPlotCuts && Form("id==%i", arg->id); // add the id cut back in as it got lost through the inversion
+  //if ( arg->id!=-1 ) myCtrlPlotCuts = myCtrlPlotCuts && Form("BergerBoos_id==%i", arg->id);
   t->Draw(Form("1:scanpoint>>htemp(%i,%f,%f,1,0.5,1.5)", 
     getScanpointN(), getScanpointMin(), getScanpointMax()), 
     myCtrlPlotCuts, "colz");  
@@ -504,7 +505,7 @@ void ToyTree::ctrlPlotSummary()
   // construct background 1-CL histogram
   TH1D* hOmclBg = (TH1D*)hBg->Clone("hOmclBg");
   hOmclBg->Divide(hAll);
-  hOmclBg->Scale(hOmclScale); ///< use same scale as hOmcl
+  hOmclBg->Scale(hOmclScale); //  use same scale as hOmcl
   // plot histos
   hAll->GetYaxis()->SetRangeUser(1.,hAll->GetMaximum()); // start from 1 so we can set the plot to log scale
   hAll->GetXaxis()->SetTitle("scanpoint");
@@ -607,7 +608,7 @@ void ToyTree::ctrlPlotSummary()
   hChi2free->GetYaxis()->SetTitle("toys");
   hChi2free->Draw();
   // move first stat box a little
-  gPad->Update(); ///< needed else FindObject() returns a null pointer
+  gPad->Update(); //  needed else FindObject() returns a null pointer
   TPaveStats *st = (TPaveStats*)hChi2free->FindObject("stats");
   st->SetName("hChi2freeStats");
   st->SetX1NDC(0.7778305); st->SetY1NDC(0.4562937);
@@ -650,7 +651,7 @@ void ToyTree::ctrlPlotSummary()
   // h4bkg->Draw("same");
   pad->SetLogy();
   // move first stat box a little
-  gPad->Update(); ///< needed else FindObject() returns a null pointer
+  gPad->Update(); //  needed else FindObject() returns a null pointer
   st = (TPaveStats*)h4sig->FindObject("stats");
   st->SetX1NDC(0.7778305); st->SetY1NDC(0.4562937);
   st->SetX2NDC(0.9772986); st->SetY2NDC(0.6056235);
@@ -697,48 +698,22 @@ void ToyTree::ctrlPlotNuisances()
     TString varFree = bBaseName+"_free";
     TString varStart = bBaseName+"_start";
     
-    float customRangeLo = 0.0; ///< Customize histogram range. Default will be the Draw() automatic
-    float customRangeHi = 0.0; ///< range. Anything outside this range will show in the overflow bins.
+    float customRangeLo = 0.0; //  Customize histogram range. Default will be the Draw() automatic
+    float customRangeHi = 0.0; //  range. Anything outside this range will show in the overflow bins.
 
-    if ( ( bName.BeginsWith("d_") || bName.BeginsWith("g") ) ///< pi symmetry is only in the B strong phases!
+    if ( ( bName.BeginsWith("d_") || bName.BeginsWith("g") ) //  pi symmetry is only in the B strong phases!
      && !( bName.BeginsWith("dD")) )
     {
+    	cout << "\nToyTree::ctrlPlotNuisances() : WARNING : folding everything into the range [0,pi]. This is a remnant of the LHCb gamma combination.\n" << endl;
       varScan = "fmod("+varScan+",3.14152)";
       varFree = "fmod("+varFree+",3.14152)";
       varStart = "fmod("+varStart+",3.14152)";
       customRangeLo = 0.0;  customRangeHi = 3.14152;
     }
     
-    // manually adjust some of the ranges, but don't do it
-    // for Berger-Boos controlplots
-    if ( bName.BeginsWith("kD_k3pi") && arg->id==-1 )
-    {
-      customRangeLo = -0.5;  customRangeHi = 1.25;
-    }
-    if ( bName.BeginsWith("dD_k3pi") && arg->id==-1 )
-    {
-      customRangeLo = 0.0;  customRangeHi = 2*3.14152;
-    }
-    if ( bName.BeginsWith("rD_k3pi") && arg->id==-1 )
-    {
-      customRangeLo = 0.045;  customRangeHi = 0.07;
-    }
-    if ( bName.BeginsWith("rD_kpi") && arg->id==-1 )
-    {
-      customRangeLo = 0.05;  customRangeHi = 0.065;
-    }
-    if ( bName.BeginsWith("r_dpi") && arg->id==-1 )
-    {
-      customRangeLo = 0.0;  customRangeHi = 0.1;
-    }
-    if ( bName.BeginsWith("r_dk") && arg->id==-1 )
-    {
-      customRangeLo = 0.04;  customRangeHi = 0.14;
-    }
-    
-    gStyle->SetOptStat(10000); ///< print overflow bins!
-    float spmin = getScanpointMin() - 0.01*(getScanpointMax()-getScanpointMin()); ///< add some offset so that
-    float spmax = getScanpointMax() + 0.01*(getScanpointMax()-getScanpointMin()); ///< the first/last scanpoint is also plotted
+    gStyle->SetOptStat(10000); //  print overflow bins!
+    float spmin = getScanpointMin() - 0.01*(getScanpointMax()-getScanpointMin()); //  add some offset so that
+    float spmax = getScanpointMax() + 0.01*(getScanpointMax()-getScanpointMin()); //  the first/last scanpoint is also plotted
     
     {
       selectNewPad();
@@ -876,7 +851,7 @@ void ToyTree::ctrlPlotChi2Distribution()
 ///
 void ToyTree::ctrlPlotChi2Parabola()
 {
-  int nBins = 12;       ///< this many chi2 plots we want
+  int nBins = 12;       //  this many chi2 plots we want
   selectNewCanvas("Chi2Parabola 1");
   float scanpointMin = getScanpointMin();
   float scanpointMax = getScanpointMax();
@@ -923,7 +898,7 @@ void ToyTree::ctrlPlotMore(MethodProbScan* profileLH)
   // create a new TTree that contains the profile likelihood
   // chi2 so we can compare
   if ( arg->debug ) cout << "ToyTree::ctrlPlotMore() : creating a new TTree that also contains the pll chi2 ..." << endl;
-  TFile *fDummy = new TFile("/tmp/"+getUniqueRootName(),"recreate"); ///< dummy file so the new tree is not memory resident
+  TFile *fDummy = new TFile("/tmp/"+getUniqueRootName(),"recreate"); //  dummy file so the new tree is not memory resident
   TTree *tNew = new TTree("tNew", "tNew");
   float tNew_scanpoint = 0.;
   float tNew_chi2min = 0.;

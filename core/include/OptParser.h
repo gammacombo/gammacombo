@@ -87,7 +87,7 @@ class OptParser
 		bool            plotprelim;
 		int             plotsolutions;
 		bool            plotunoff;
-		bool            pluginext;
+		bool            intprob;
 		float           pluginPlotRangeMin;
 		float           pluginPlotRangeMax;
 		bool		probforce;

@@ -12,6 +12,7 @@
 
 SET( COMBINER_MODULES
 	tutorial
+	#cartesian
 	#belle2
 	#biggammacombo
 	#bsmumu

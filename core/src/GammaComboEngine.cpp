@@ -185,6 +185,8 @@ void GammaComboEngine::newCombiner(int id, TString name, TString title,
 
 ///
 /// scale down errors
+/// \todo implement a more generic version of this function. As it is,
+/// it is only useful for the LHCb gamma combination.
 ///
 void GammaComboEngine::scaleDownErrors()
 {
@@ -411,14 +413,28 @@ void GammaComboEngine::checkCombinationArg()
 }
 
 ///
-/// Check color argument. See also defineColors().
+/// Check color argument and exit if a non-existing color was requested through
+/// the --color argument. Colors for one-dimensional plots are defined in
+/// GammaComboEngine::defineColors(). Colors for two-dimensional pltos are
+/// defined in OneMinusClPlot2d::OneMinusClPlot2d().
 ///
 void GammaComboEngine::checkColorArg()
 {
 	for ( int i=0; i<arg->color.size(); i++ ){
-		if ( colorsLine.size()<=arg->color[i] ){
-			cout << "No such color. Please choose a color between 0 and " << colorsLine.size()-1 << endl;
-			exit(1);
+		// colors for one-dimensional plots
+		if ( arg->var.size()==1 ){
+			if ( colorsLine.size()<=arg->color[i] ){
+				cout << "Argument error --color: No such color for one-dimensional plots. Please choose a color between 0 and " << colorsLine.size()-1 << endl;
+				exit(1);
+			}
+		}
+		// colors for two-dimensional plots
+		else if ( arg->var.size()==2 ){
+			int nMaxColors = 4;
+			if ( nMaxColors<=arg->color[i] ){
+				cout << "Argument error --color: No such color for two-dimensional plots. Please choose a color between 0 and " << nMaxColors-1 << endl;
+				exit(1);
+			}
 		}
 	}
 }
@@ -575,6 +591,7 @@ void GammaComboEngine::savePlot()
 ///
 void GammaComboEngine::defineColors()
 {
+	// no --color option was given on the command line
 	if ( arg->color.size()==0 )
 	{
 	  // define line colors for 1-CL curves
@@ -1123,7 +1140,6 @@ void GammaComboEngine::run()
 	defineColors();
 	checkCombinationArg();
 	checkColorArg();
-	if ( arg->isQuickhack(6) ) scaleDownErrors();
 	if ( arg->nosyst ) disableSystematics();
 	makeAddDelCombinations();
 	defineColors();

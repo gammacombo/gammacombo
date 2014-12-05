@@ -57,11 +57,7 @@ void OneMinusClPlotAbs::addScanner(MethodAbsScan* s)
 void OneMinusClPlotAbs::save()
 {
 	TString saveName = name;
-	if ( arg->isQuickhack(7) ){
-		saveName.ReplaceAll("_addedPdf","+");
-		saveName.ReplaceAll("_delPdf","-");
-	}
-  savePlot(c1, saveName);
+	savePlot(c1, saveName);
 }
 
 ///

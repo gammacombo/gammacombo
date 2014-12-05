@@ -796,7 +796,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
       && t->scanpoint<arg->pluginPlotRangeMax) ) continue;
 
     // use profile likelihood from internal scan, not the one found in the root files
-    if ( arg->pluginext ){
+    if ( arg->intprob ){
       t->chi2min = profileLH->getChi2min(t->scanpoint);
     }
 
@@ -1034,8 +1034,7 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
     }
 
     // use external chi2, not the one from the root files
-    if ( arg && arg->pluginext )
-    {
+    if ( arg->intprob ){
       int iBin = profileLH->getHchisq2d()->FindBin(scanpoint1,scanpoint2);
       chi2min = profileLH->getHchisq2d()->GetBinContent(iBin);
     }
