@@ -110,6 +110,7 @@ void OptParser::defineOptions()
   availableOptions.push_back("largest");
   availableOptions.push_back("leg");
   availableOptions.push_back("group");
+  availableOptions.push_back("grouppos");
   availableOptions.push_back("lightfiles");
 	availableOptions.push_back("loadParamsFile");
   availableOptions.push_back("log");
@@ -171,6 +172,7 @@ void OptParser::bookPlottingOptions()
   bookedOptions.push_back("digits");
   bookedOptions.push_back("leg");
   bookedOptions.push_back("group");
+  bookedOptions.push_back("grouppos");
   bookedOptions.push_back("log");
   bookedOptions.push_back("magnetic");
   bookedOptions.push_back("prelim");
@@ -322,9 +324,11 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::ValueArg<string> pluginplotrangeArg("", "pluginplotrange", "Restrict the Plugin plot to a given range to "
 			"rejcet low-statistics outliers. Format: --pluginplotrange min-max.", false, "default", "string");
 	TCLAP::ValueArg<int> plotnsigmacontArg("", "ncontours", "plot this many sigma contours in 2d plots (max 5)", false, 2, "int");
-	TCLAP::ValueArg<string> plotgroupArg("", "group", "Set the position of the group logo. "
-			"Format: --group xmin:ymin in normalized coordinates [0,1]. To use default values "
-			"for one coordinate use -1: -1:y. Use '--group off' to disable the logo.", false, "default", "string");
+	TCLAP::ValueArg<string> plotgroupArg("", "group", "Set the group logo. Use '--group off' to disable the logo. "
+			"See also --grouppos. Default: GammaCombo", false, "GammaCombo", "string");
+	TCLAP::ValueArg<string> plotgroupposArg("", "grouppos", "Set the position of the group logo. "
+			"Format: --grouppos xmin:ymin in normalized coordinates [0,1]. To use default values "
+			"for one coordinate, use 'def': --grouppos def:y.", false, "default", "string");
 	TCLAP::ValueArg<int> nBBpointsArg("", "nBBpoints", "number of BergerBoos points per scanpoint", false, 1, "int");
 	TCLAP::ValueArg<int> idArg("", "id", "When making controlplots (--controlplots), only consider the "
 			"scan point with this ID, that is a specific value of the scan parameter. "
@@ -507,6 +511,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "importance" ) ) cmd.add( importanceArg );
 	if ( isIn<TString>(bookedOptions, "id" ) ) cmd.add(idArg);
 	if ( isIn<TString>(bookedOptions, "group" ) ) cmd.add( plotgroupArg );
+	if ( isIn<TString>(bookedOptions, "grouppos" ) ) cmd.add( plotgroupposArg );
 	if ( isIn<TString>(bookedOptions, "fix" ) ) cmd.add(fixArg);
 	if ( isIn<TString>(bookedOptions, "evol" ) ) cmd.add(parevolArg);
 	if ( isIn<TString>(bookedOptions, "digits" ) ) cmd.add(digitsArg);
@@ -524,10 +529,22 @@ void OptParser::parseArguments(int argc, char* argv[])
 	// copy over parsed values into data members
 	//
 	asimov            = asimovArg.getValue();
+	color             = colorArg.getValue();
 	controlplot       = controlplotArg.getValue();
 	digits            = digitsArg.getValue();
 	enforcePhysRange  = physrangeArg.getValue();
+	group             = plotgroupArg.getValue();
+	id                = idArg.getValue();
+	importance        = importanceArg.getValue();
 	interactive       = interactiveArg.getValue();
+	intprob           = intprobArg.getValue();
+	jobdir            = TString(jobdirArg.getValue());
+	largest           = largestArg.getValue();
+	lightfiles        = lightfilesArg.getValue();
+	nBBpoints         = nBBpointsArg.getValue();
+	ndiv              = ndivArg.getValue();
+	ndivy             = ndivyArg.getValue();
+	nosyst            = nosystArg.getValue();
 	npoints1d         = npointsArg.getValue()==-1 ? 100 : npointsArg.getValue();
 	npoints2dx        = npoints2dxArg.getValue()==-1 ? (npointsArg.getValue()==-1 ? 50 : npointsArg.getValue()) : npoints2dxArg.getValue();
 	npoints2dy        = npoints2dyArg.getValue()==-1 ? (npointsArg.getValue()==-1 ? 50 : npointsArg.getValue()) : npoints2dyArg.getValue();
@@ -536,34 +553,23 @@ void OptParser::parseArguments(int argc, char* argv[])
 	ntoys	          = ntoysArg.getValue();
 	parevol           = parevolArg.getValue();
 	pevid             = pevidArg.getValue();
+	plot2dcl          = plot2dclArg.getValue();
 	plotid            = plotidArg.getValue();
 	plotlog           = plotlogArg.getValue();
 	plotmagnetic      = plotmagneticArg.getValue();
 	plotnsigmacont    = plotnsigmacontArg.getValue();
 	plotpluginonly    = plotpluginonlyArg.getValue();
+	plotprelim        = plotprelimArg.getValue();
 	plotpulls         = plotpullsArg.getValue();
 	plotsolutions     = plotsolutionsArg.getValue();
-	intprob           = intprobArg.getValue();
+	plotunoff         = plotunoffArg.getValue();
+	printcor          = printcorArg.getValue();
 	probforce         = probforceArg.getValue();
 	probimprove       = probimproveArg.getValue();
-	printcor          = printcorArg.getValue();
+	qh                = qhArg.getValue();
+	savenuisances1d   = snArg.getValue();
 	scanforce         = scanforceArg.getValue();
 	usage             = usageArg.getValue();
-	color             = colorArg.getValue();
-	id                = idArg.getValue();
-	importance        = importanceArg.getValue();
-	jobdir            = TString(jobdirArg.getValue());
-	largest           = largestArg.getValue();
-	lightfiles        = lightfilesArg.getValue();
-	nBBpoints         = nBBpointsArg.getValue();
-	ndiv              = ndivArg.getValue();
-	ndivy             = ndivyArg.getValue();
-	nosyst            = nosystArg.getValue();
-	plot2dcl          = plot2dclArg.getValue();
-	plotprelim        = plotprelimArg.getValue();
-	plotunoff         = plotunoffArg.getValue();
-	savenuisances1d   = snArg.getValue();
-	qh                = qhArg.getValue();
 	verbose           = verboseArg.getValue();
 
 	//
@@ -685,17 +691,28 @@ void OptParser::parseArguments(int argc, char* argv[])
 	}
 
 	// --leg
+	TString usage = "";
+	usage += "Required format: '--leg 0.a:0.b'\n";
+	usage += "  Examples:\n";
+	usage += "  --leg 0.5:0.75\n";
+	usage += "  --leg 0.5:def\n";
+	usage += "  --leg off\n";
 	if ( TString(plotlegArg.getValue())==TString("off") ){
 		plotlegend = false;
 	}
 	else{
 		plotlegend = true;
-		parsePosition(plotlegArg.getValue(), plotlegx, plotlegy);
+		parsePosition(plotlegArg.getValue(), plotlegx, plotlegy, usage);
 	}
 
-	// --group
-	groupPos = plotgroupArg.getValue();
-	parsePosition(groupPos, plotgroupx, plotgroupy);
+	// --grouppos
+	usage = "";
+	usage += "Required format: '--grouppos 0.a:0.b'\n";
+	usage += "  Examples:\n";
+	usage += "  --grouppos 0.5:0.75\n";
+	usage += "  --grouppos 0.5:def\n";
+	groupPos = plotgroupposArg.getValue();
+	parsePosition(groupPos, plotgroupx, plotgroupy, usage);
 
 	// --pluginplotrange
 	parseRange(pluginplotrangeArg.getValue(), pluginPlotRangeMin, pluginPlotRangeMax);
@@ -745,30 +762,57 @@ void OptParser::parseArguments(int argc, char* argv[])
 
 ///
 /// Parse the position arguments, which define the position of
-/// the legend and logo in the plots.
+/// the legend and logo in the plots. The position needs to be
+/// given as x:y, where x and y are floating point numbers between
+/// 0.0 and 1.0. To use the default position for either one, use
+/// "def".
+/// \param parseMe	- parse this string. Example formats:
+///                       0.1:0.5, .1:.5, def:0.6, .75:def
+/// \param x		- return value x
+/// \param y		- return value y
+/// \param usage	- string containing some usage information which is
+///			  printed when there is an error.
 ///
-void OptParser::parsePosition(TString parseMe, float &x, float &y)
+void OptParser::parsePosition(TString parseMe, float &x, float &y, TString usage)
 {
-  if ( parseMe==TString("default") ){
-    x = -1.;
-    y = -1.;
-    return;
-  }
-  if ( parseMe==TString("off") ){
-    return;
-  }
-  TString xStr = parseMe;
-  TString yStr = parseMe;
-  xStr.Replace(xStr.Index(":"), xStr.Sizeof(), "");
-  yStr.Replace(0, yStr.Index(":")+1, "");
-  x = xStr.Atof();
-  y = yStr.Atof();
-  if ( ! ( (x==-1 || (0.0<=x && x<=1.0))
-        && (y==-1 || (0.0<=y && y<=1.0)) )){
-    cout << "Argument error: coordinates out of range: x=" << x << ", y=" << y << endl;
-    cout << "They need to be in  [0,1], or equal to -1 to set the default value." << endl;
-    exit(1);
-  }
+	if ( parseMe==TString("default") ){
+		x = -1.;
+		y = -1.;
+		return;
+	}
+	if ( parseMe==TString("off") ){
+		return;
+	}
+	TRegexp format1("^0?\\.[0-9]+:0?\\.[0-9]+$");
+	TRegexp format2("^def:0?\\.[0-9]+$");
+	TRegexp format3("^0?\\.[0-9]+:def$");
+	if ( !( parseMe.Contains(format1) || parseMe.Contains(format2) || parseMe.Contains(format3) ) ){
+		cout << "position parse error: could not parse " << parseMe << endl;
+		cout << usage << endl;
+		exit(1);
+	}
+	TString xStr = parseMe;
+	TString yStr = parseMe;
+	xStr.Replace(xStr.Index(":"), xStr.Sizeof(), "");
+	yStr.Replace(0, yStr.Index(":")+1, "");
+	if ( xStr.EqualTo("def") ){
+		x = -1;
+	}
+	else {
+		x = xStr.Atof();
+	}
+	if ( yStr.EqualTo("def") ){
+		y = -1;
+	}
+	else {
+		y = yStr.Atof();
+	}
+	if ( ! ( (x==-1 || (0.0<=x && x<=1.0)) && (y==-1 || (0.0<=y && y<=1.0)) )){
+		// should never be reached
+		cout << "Argument error: coordinates out of range: x=" << x << ", y=" << y << endl;
+		cout << "They need to be in  [0,1], or equal to -1 to set the default value." << endl;
+		exit(1);
+	}
 }
 
 ///
@@ -876,7 +920,7 @@ void OptParser::parseCombinerString(TString parseMe, int& resultCmbId, vector<in
 	// 1. parse leading combiner ID
 	TObjArray *array = parseMe.Tokenize(":"); // split string at ":"
 	if ( array->GetEntries()!=2 ){
-		cout << "ERROR: could not parse argument, too many ':'. " << usage << endl;
+		cout << "-c parse error: too many ':'. " << usage << endl;
 		exit(1);
 	}
 	TString combinerIdStr = ((TObjString*)array->At(0))->GetString(); // gets the part before the colon
@@ -887,7 +931,7 @@ void OptParser::parseCombinerString(TString parseMe, int& resultCmbId, vector<in
 	for ( int j=0; j<arrayCommaList->GetEntries(); j++ ){
 		TString pdfId = ((TObjString*)arrayCommaList->At(j))->GetString();
 		if ( ! (pdfId.BeginsWith("+") || pdfId.BeginsWith("-") ) ){
-			cout << "ERROR: could not parse argument, first character not a + or -. " << usage << endl;
+			cout << "-c parse error: first character not a + or -. " << usage << endl;
 			exit(1);
 		}
 		resultAddDelPdf.push_back(convertToIntWithCheck(pdfId, usage));

@@ -660,38 +660,38 @@ void MethodProbScan::saveSolutions()
 ///
 void MethodProbScan::saveSolutions2d()
 {
-  if ( arg->debug ) cout << "MethodProbScan::saveSolutions2d() : searching for minima in hChi2min2d ..." << endl;
+	if ( arg->debug ) cout << "MethodProbScan::saveSolutions2d() : searching for minima in hChi2min2d ..." << endl;
 
-  // delete old solutions if any
-  for ( int j=0; j<solutions.size(); j++ ) if ( solutions[j] ) delete solutions[j];
-  solutions.clear();
+	// delete old solutions if any
+	for ( int j=0; j<solutions.size(); j++ ) if ( solutions[j] ) delete solutions[j];
+	solutions.clear();
 
-  // loop over chi2 histogram to locate local minima
-  for ( int i=2; i<hChi2min2d->GetNbinsX(); i++ )
-  for ( int j=2; j<hChi2min2d->GetNbinsY(); j++ )
-  {
-    if ( !(hChi2min2d->GetBinContent(i-1,   j) > hChi2min2d->GetBinContent(i, j)
-        && hChi2min2d->GetBinContent(i+1,   j) > hChi2min2d->GetBinContent(i, j)
-        && hChi2min2d->GetBinContent(i,   j-1) > hChi2min2d->GetBinContent(i, j)
-        && hChi2min2d->GetBinContent(i,   j+1) > hChi2min2d->GetBinContent(i, j)
-        && hChi2min2d->GetBinContent(i-1, j-1) > hChi2min2d->GetBinContent(i, j)
-        && hChi2min2d->GetBinContent(i+1, j+1) > hChi2min2d->GetBinContent(i, j)
-        && hChi2min2d->GetBinContent(i+1, j-1) > hChi2min2d->GetBinContent(i, j)
-        && hChi2min2d->GetBinContent(i-1, j+1) > hChi2min2d->GetBinContent(i, j)
-        )) continue;
+	// loop over chi2 histogram to locate local minima
+	for ( int i=2; i<hChi2min2d->GetNbinsX(); i++ )
+	for ( int j=2; j<hChi2min2d->GetNbinsY(); j++ )
+	{
+		if ( !(hChi2min2d->GetBinContent(i-1,   j) > hChi2min2d->GetBinContent(i, j)
+					&& hChi2min2d->GetBinContent(i+1,   j) > hChi2min2d->GetBinContent(i, j)
+					&& hChi2min2d->GetBinContent(i,   j-1) > hChi2min2d->GetBinContent(i, j)
+					&& hChi2min2d->GetBinContent(i,   j+1) > hChi2min2d->GetBinContent(i, j)
+					&& hChi2min2d->GetBinContent(i-1, j-1) > hChi2min2d->GetBinContent(i, j)
+					&& hChi2min2d->GetBinContent(i+1, j+1) > hChi2min2d->GetBinContent(i, j)
+					&& hChi2min2d->GetBinContent(i+1, j-1) > hChi2min2d->GetBinContent(i, j)
+					&& hChi2min2d->GetBinContent(i-1, j+1) > hChi2min2d->GetBinContent(i, j)
+		      )) continue;
 
-    RooSlimFitResult *r = curveResults2d[i-1][j-1]; // -1 because it starts counting at 0, but histograms at 1
-    if (!r){
-      cout << "MethodProbScan::saveSolutions2d() : ERROR : No corresponding RooFitResult found! Skipping (i,j)="
-        << Form("(%ii,%i)",i,j) << endl;
-      continue;
-    }
-    if ( arg->debug ) cout << "MethodProbScan::saveSolutions2d() : saving ..." << endl;
-    solutions.push_back((RooSlimFitResult*)curveResults2d[i-1][j-1]->Clone());
-  }
+		RooSlimFitResult *r = curveResults2d[i-1][j-1]; // -1 because it starts counting at 0, but histograms at 1
+		if (!r){
+			cout << "MethodProbScan::saveSolutions2d() : ERROR : No corresponding RooFitResult found! Skipping (i,j)="
+								     << Form("(%ii,%i)",i,j) << endl;
+			continue;
+		}
+		if ( arg->debug ) cout << "MethodProbScan::saveSolutions2d() : saving ..." << endl;
+		solutions.push_back((RooSlimFitResult*)curveResults2d[i-1][j-1]->Clone());
+	}
 
-  if ( solutions.size()==0 ) cout << "MethodProbScan::saveSolutions2d() : ERROR : No solutions found!" << endl;
-  sortSolutions();
+	if ( solutions.size()==0 ) cout << "MethodProbScan::saveSolutions2d() : ERROR : No solutions found!" << endl;
+	sortSolutions();
 }
 
 

@@ -112,7 +112,7 @@ class OptParser
 		int 		convertToDigitWithCheck(TString parseMe, TString usage);
 		int 		convertToIntWithCheck(TString parseMe, TString usage);
 		void		defineOptions();
-		void		parsePosition(TString parseMe, float &x, float &y);
+		void		parsePosition(TString parseMe, float &x, float &y, TString usage);
 		void		parseRange(TString parseMe, float &min, float &max);
 		bool		parseAssignment(TString parseMe, TString &name, float &value);
 		void		parseCombinerString(TString parseMe, int& resultCmbId, vector<int>& resultAddDelPdf);

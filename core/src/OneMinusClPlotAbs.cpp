@@ -61,13 +61,17 @@ void OneMinusClPlotAbs::save()
 }
 
 ///
-/// Draw the group (preliminary) label on plots.
+/// Draw the group label on plots.
+/// The label can be configured through the --group command line
+/// argument.
 /// It is possible to configure the position of the label through
-/// the --lhcb command line argument.
+/// the --groupPos command line argument.
+/// The command line arguments --prelim and --unoff add "Preliminary"
+/// and "Unofficial" strings, respectively.
 ///
 void OneMinusClPlotAbs::drawGroup(float yPos)
 {
-  if ( arg->groupPos==TString("off") ) return;
+  if ( arg->group==TString("off") ) return;
   // determine x position from the length of the group string
   float groupLength = arg->group.Length();
   float charsPerFullWidth = 28.; // true for font and size configured below
