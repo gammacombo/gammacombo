@@ -690,7 +690,17 @@ void MethodProbScan::saveSolutions2d()
 		solutions.push_back((RooSlimFitResult*)curveResults2d[i-1][j-1]->Clone());
 	}
 
-	if ( solutions.size()==0 ) cout << "MethodProbScan::saveSolutions2d() : ERROR : No solutions found!" << endl;
+	if ( solutions.size()==0 ){
+		cout << "MethodProbScan::saveSolutions2d() : WARNING : No solutions found in 2D scan!" << endl;
+		cout << endl;
+		cout << "  This can happen when a solution is too close" << endl;
+		cout << "  to the plot boundary. In this case, either change" << endl;
+		cout << "  the scan range using --scanrange and --scanrangey," << endl;
+		cout << "  or increase the number of scan points, using" << endl;
+		cout << "  --npoints or --npoints2dx, --npoints2dy" << endl;
+		cout << endl;
+		return;
+	}
 	sortSolutions();
 }
 
