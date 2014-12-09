@@ -71,25 +71,21 @@ void OneMinusClPlotAbs::save()
 ///
 void OneMinusClPlotAbs::drawGroup(float yPos)
 {
-  if ( arg->group==TString("off") ) return;
-  // determine x position from the length of the group string
-  float groupLength = arg->group.Length();
-  float charsPerFullWidth = 28.; // true for font and size configured below
-  float xPos = 0.15 + 0.70 * (1. - groupLength/charsPerFullWidth);
-  // override positions if being set on the command line
-  float xLow, yLow;
-  if ( arg->plotgroupx==-1 ) xLow = xPos; else xLow = arg->plotgroupx;
-  if ( arg->plotgroupy==-1 ) yLow = yPos; else yLow = arg->plotgroupy;
-  TPaveText *t1 = new TPaveText(xLow, yLow, xLow+0.20, yLow+0.125, "BRNDC");
-  t1->SetBorderSize(0);
-  t1->SetFillStyle(0);
-  t1->SetTextAlign(12);
-  t1->SetTextFont(font);
-  t1->SetTextSize(titlesize*1.0);
-  t1->AddText(arg->group);
-  if ( arg->plotprelim ) t1->AddText("Preliminary")->SetTextSize(titlesize*0.525);
-  else if ( arg->plotunoff ) t1->AddText("Unofficial")->SetTextSize(titlesize*0.525);
-  t1->Draw();
+	if ( arg->group==TString("off") ) return;
+	float xPos = 0.5;
+	float xLow, yLow;
+	if ( arg->plotgroupx==-1 ) xLow = xPos; else xLow = arg->plotgroupx;
+	if ( arg->plotgroupy==-1 ) yLow = yPos; else yLow = arg->plotgroupy;
+	TPaveText *t1 = new TPaveText(xLow, yLow, 0.925, yLow+0.125, "BRNDC");
+	t1->SetBorderSize(0);
+	t1->SetFillStyle(0);
+	t1->SetTextAlign(32);
+	t1->SetTextFont(font);
+	t1->SetTextSize(titlesize*1.0);
+	t1->AddText(arg->group);
+	if ( arg->plotprelim ) t1->AddText("Preliminary")->SetTextSize(titlesize*0.525);
+	if ( arg->plotunoff ) t1->AddText("Unofficial")->SetTextSize(titlesize*0.525);
+	t1->Draw();
 }
 
 
