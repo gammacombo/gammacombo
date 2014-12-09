@@ -614,13 +614,13 @@ void GammaComboEngine::defineColors()
 		colorsLine.push_back(TColor::GetColor("#e7298a"));
 		colorsLine.push_back(TColor::GetColor("#66a61e"));
 		colorsLine.push_back(TColor::GetColor("#e6ab02"));
-	
+
 		ColorBuilder cb;
 		for ( int i=0; i<colorsLine.size(); i++ ){
 			colorsText.push_back(cb.darklightcolor(colorsLine[i], 0.5));
 		}
 	}
-	
+
 	// default for any additional scanner
 	for ( int i=colorsLine.size(); i<arg->combid.size(); i++ ){
 		colorsLine.push_back(kBlue-8 + i);
@@ -655,7 +655,7 @@ void GammaComboEngine::scanStrategy2d(MethodProbScan *scanner, ParameterCache *p
 		scanStrategy1d(s2,pCache);
 		if ( arg->verbose ) s2->printLocalMinima();
 
-		cout << "\n2D scan for " + scanner->getScanVar2Name() + " and " + scanner->getScanVar2Name() + ":\n" << endl;
+		cout << "\n2D scan for " + scanner->getScanVar1Name() + " and " + scanner->getScanVar2Name() + ":\n" << endl;
 		vector<RooSlimFitResult*> solutions;
 		for ( int i=0; i<s1->getNSolutions(); i++ ) solutions.push_back(s1->getSolution(i));
 		for ( int i=0; i<s2->getNSolutions(); i++ ) solutions.push_back(s2->getSolution(i));
