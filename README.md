@@ -46,3 +46,8 @@ the doc/html subdirectory, do:
 
     make doc
 
+Follow the tutorial in the [manual](https://github.com/mkarbach/gammacombo/blob/master/manual/GammaComboManual.pdf):
+
+    cd tutorial
+    bin/tutorial
+
