@@ -19,6 +19,11 @@ Installation
 
 To build GammaCombo cmake is needed in version 3.0 or higher.
 
+Get the source code from GitHub:
+
+    git clone https://github.com/mkarbach/gammacombo.git
+    cd gammacombo
+
 To create the library, create a build directory and change into it. E.g.
 
     mkdir build; cd build
