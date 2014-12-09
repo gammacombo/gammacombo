@@ -625,48 +625,48 @@ void GammaComboEngine::defineColors()
 ///
 void GammaComboEngine::scanStrategy2d(MethodProbScan *scanner, ParameterCache *pCache)
 {
-	int nStartingPoints = pCache->getNPoints();
-	// if no starting values loaded do the default thing
-	if ( nStartingPoints==0 ){
-		cout << "\nPerforming default 2D scan:\n"
-		        " 1. scan in first variable:  " + scanner->getScanVar1Name() + "\n"
-			" 2. scan in second variable: " + scanner->getScanVar2Name() + "\n"
-			" 3. scan starting from each solution found in 1. and 2." << endl;
-		Combiner *c = scanner->getCombiner();
-		cout << "\n1D scan for " + scanner->getScanVar1Name() + ":\n" << endl;
-		MethodProbScan *s1 = new MethodProbScan(c);
-		s1->setScanVar1(scanner->getScanVar1Name());
-		s1->initScan();
-		scanStrategy1d(s1,pCache);
-		if ( arg->verbose ) s1->printLocalMinima();
+  int nStartingPoints = pCache->getNPoints();
+  // if no starting values loaded do the default thing
+  if ( nStartingPoints==0 ){
+    cout << "\nPerforming default 2D scan:\n"
+      " 1. scan in first variable:  " + scanner->getScanVar1Name() + "\n"
+      " 2. scan in second variable: " + scanner->getScanVar2Name() + "\n"
+      " 3. scan starting from each solution found in 1. and 2." << endl;
+    Combiner *c = scanner->getCombiner();
+    cout << "\n1D scan for " + scanner->getScanVar1Name() + ":\n" << endl;
+    MethodProbScan *s1 = new MethodProbScan(c);
+    s1->setScanVar1(scanner->getScanVar1Name());
+    s1->initScan();
+    scanStrategy1d(s1,pCache);
+    if ( arg->verbose ) s1->printLocalMinima();
 
-		cout << "\n1D scan for " + scanner->getScanVar2Name() + ":\n" << endl;
-		MethodProbScan *s2 = new MethodProbScan(c);
-		s2->setScanVar1(scanner->getScanVar2Name());
-		s2->initScan();
-		scanStrategy1d(s2,pCache);
-		if ( arg->verbose ) s2->printLocalMinima();
+    cout << "\n1D scan for " + scanner->getScanVar2Name() + ":\n" << endl;
+    MethodProbScan *s2 = new MethodProbScan(c);
+    s2->setScanVar1(scanner->getScanVar2Name());
+    s2->initScan();
+    scanStrategy1d(s2,pCache);
+    if ( arg->verbose ) s2->printLocalMinima();
 
-		cout << "\n2D scan for " + scanner->getScanVar1Name() + " and " + scanner->getScanVar2Name() + ":\n" << endl;
-		vector<RooSlimFitResult*> solutions;
-		for ( int i=0; i<s1->getNSolutions(); i++ ) solutions.push_back(s1->getSolution(i));
-		for ( int i=0; i<s2->getNSolutions(); i++ ) solutions.push_back(s2->getSolution(i));
-		// \todo remove similar solutions from list
-		for ( int j=0; j<solutions.size(); j++ ){
-			cout << "2D scan " << j+1 << " of " << solutions.size() << " ..." << endl;
-			scanner->loadParameters(solutions[j]);
-			scanner->scan2d();
-		}
-	}
-	// otherwise load each starting value found
-	else {
-		cout << "\nPerforming 2D scan from provided starting points." << endl;
-		cout << "Number of scans to run: " << nStartingPoints << endl;
-		for (int i=0; i<nStartingPoints; i++){
-			pCache->setPoint(scanner,i);
-			scanner->scan2d();
-		}
-	}
+    cout << "\n2D scan for " + scanner->getScanVar1Name() + " and " + scanner->getScanVar2Name() + ":\n" << endl;
+    vector<RooSlimFitResult*> solutions;
+    for ( int i=0; i<s1->getNSolutions(); i++ ) solutions.push_back(s1->getSolution(i));
+    for ( int i=0; i<s2->getNSolutions(); i++ ) solutions.push_back(s2->getSolution(i));
+    // \todo remove similar solutions from list
+    for ( int j=0; j<solutions.size(); j++ ){
+      cout << "2D scan " << j+1 << " of " << solutions.size() << " ..." << endl;
+      scanner->loadParameters(solutions[j]);
+      scanner->scan2d();
+    }
+  }
+  // otherwise load each starting value found
+  else {
+    cout << "\nPerforming 2D scan from provided starting points." << endl;
+    cout << "Number of scans to run: " << nStartingPoints << endl;
+    for (int i=0; i<nStartingPoints; i++){
+      pCache->setPoint(scanner,i);
+      scanner->scan2d();
+    }
+  }
 }
 
 ///
