@@ -20,19 +20,24 @@ Installation
 To build GammaCombo cmake is needed in version 3.0 or higher.
 
 To create the library, create a build directory and change into it. E.g.
- mkdir build; cd build
+
+    mkdir build; cd build
  
 Now create the Makefiles:
- cmake ..
+
+    cmake ..
 
 And build:
- make
+
+    make
 
 To install the libraries and copy all header files into the directories lib/ and
 include/ in the root directory of the project:
- make install
+
+    make install
  
 To build the Doxygen documentation, which will create an HTML class documentation in
 the doc/html subdirectory, do:
- make doc
+
+    make doc
 
