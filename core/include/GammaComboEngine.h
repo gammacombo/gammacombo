@@ -80,6 +80,7 @@ class GammaComboEngine
 		void			make2dProbPlot(MethodProbScan *scanner, int cId);
 		void			make2dProbScan(MethodProbScan *scanner, int cId);
 		void			printCombinerStructure();
+		void			printBanner();
 		bool			pdfExists(int id);
 		void			savePlot();
 		void			scaleDownErrors();
@@ -100,6 +101,7 @@ class GammaComboEngine
 		vector<int> 		colorsLine;
 		vector<int> 		colorsText;
 		TString 		basename;
+		TString 		execname;
 };
 
 #endif

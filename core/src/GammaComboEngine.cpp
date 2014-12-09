@@ -5,17 +5,21 @@ GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[])
 	// time the program
 	t.Start();
 
+	// print the copyright banner
+	printBanner();
+
 	// parse the command line options
-  arg = new OptParser();
-  arg->bookAllOptions();
-  arg->parseArguments(argc, argv);
+	arg = new OptParser();
+	arg->bookAllOptions();
+	arg->parseArguments(argc, argv);
 
 	// configure names
+	execname = argv[0];
 	basename = name;
 	fb = new FileNameBuilder(arg, basename);
 
 	// run ROOT in interactive mode, if requested (-i)
-  if ( arg->interactive ) theApp = new TApplication("App", &argc, argv);
+	if ( arg->interactive ) theApp = new TApplication("App", &argc, argv);
 
 	// initialize members
 	plot = 0;
@@ -313,41 +317,30 @@ void GammaComboEngine::setAsimovToy(Combiner* c, int cId)
 ///
 void GammaComboEngine::usage()
 {
-	cout << "GammaComboEngine USAGE\n\n" << endl;
-  cout << "Examples:\n"
-          "=========\n\n";
-  cout << "Select full combination (-c 4), make a 1d Prob scan for r_dk:\n\n"
-          "  bin/GammaComboEngine -c 4 -i --var r_dk\n" << endl;
-  cout << "Use the --npoints argument to reduce the number of scan points in the Prob method:\n\n"
-          "  bin/GammaComboEngine -c 4 -i --var r_dk --npoints 30\n" << endl;
-  cout << "Make a 2d Prob scan for r_dk and g. Reverse the order of the --var arguments\n"
-          "to swap the axes. Use the --npoints2d argument to increase/reduce the number\n"
-          "of scan points.\n\n"
-          "  bin/GammaComboEngine -c 4 -i --var r_dk --var g\n" << endl;
-  cout << "Compute two cmb and overlay them in the same plot:\n\n"
-          "  bin/GammaComboEngine -c 4 -c 5 -i\n" << endl;
-  cout << "2d Plot Examples:\n"
-          "=================\n"
-          "\n"
-          "The strategy for 2d scans is to first perform a 1d scan that finds all\n"
-          "local minima. Then, a 2d scan is done starting from each of these lcoal\n"
-          "minima. The 1d scan is performed in the variable given first.\n\n"
-          "Also for 2d plots you can use the --ps option to print the best fit points\n"
-          "onto the plot.\n\n"
-          "  bin/GammaComboEngine -c 4 -i --var g --var r_dk --npoints2d 40 --ps\n";
-  cout << "Available plugin toy control plots:\n"
-          "===================================\n"
-          "\n"
-          "All control plots are produced when option --controlplots is given.\n"
-          "If, in addition, -p <n> is given, only one specific plot is produced.\n"
-          " (1) technical overview\n"
-          " (2) summary\n"
-          " (3) nuisances\n"
-          " (4) observables\n"
-          " (5) chi2 distributions\n"
-          " (6) chi2 parabolas\n" << endl;
+	cout << "USAGE\n\n"
+	        "  # Compute combination 1, make a 1D Prob scan for variable a_gaus:\n"
+		"  " << execname << " -c 1 -i --var a_gaus --ps 1\n\n"
+	        "  # Add combinations 1, 2, 3, add to the same plot:\n"
+		"  " << execname << " -c 1 -c 2 -c 3 -i --var a_gaus --ps 1\n\n"
+		"  # Add or remove PDFs to/from existing cominers:\n"
+		"  " << execname << " -i --var a_gaus -c 3:+1,+2,-3\n\n"
+		"  # Make a 2D Prob scan\n"
+		"  " << execname << " -c 4 --var a_gaus --var b_gaus -i\n\n"
+		"  # Re-plot a previous 2D Prob scan with 2D CL and best fit points\n"
+		"  " << execname << " -c 4 --var a_gaus --var b_gaus -i -a plot --2dcl --ps 1\n" << endl;
+	//cout << "Available plugin toy control plots:\n"
+		//"===================================\n"
+		//"\n"
+		//"All control plots are produced when option --controlplots is given.\n"
+		//"If, in addition, -p <n> is given, only one specific plot is produced.\n"
+		//" (1) technical overview\n"
+		//" (2) summary\n"
+		//" (3) nuisances\n"
+		//" (4) observables\n"
+		//" (5) chi2 distributions\n"
+		//" (6) chi2 parabolas\n" << endl;
 	print();
-  exit(0);
+	exit(0);
 }
 
 ///
@@ -355,13 +348,13 @@ void GammaComboEngine::usage()
 ///
 void GammaComboEngine::printPdfs()
 {
+	cout << "AVAILABLE PDFS" << endl;
 	cout << endl;
-	cout << "Available PDFs:" << endl;
-	cout << "===============" << endl;
 	for ( int i=0; i<pdf.size(); i++ ){
 		if ( pdf[i]==0 ) continue;
 		printf(" (%2i) %s\n", i, pdf[i]->getTitle().Data());
 	}
+	cout << endl;
 }
 
 ///
@@ -369,9 +362,8 @@ void GammaComboEngine::printPdfs()
 ///
 void GammaComboEngine::printCombinations()
 {
+	cout << "AVAILABLE COMBINATIONS" << endl;
 	cout << endl;
-	cout << "Available combinations (to be used as -c <n>):" << endl;
-	cout << "==============================================" << endl;
 	for ( int i=0; i<cmb.size(); i++ ){
 		if ( cmb[i]==0 ) continue;
 		printf(" (%i) %s\n", i, cmb[i]->getTitle().Data());
@@ -393,23 +385,23 @@ void GammaComboEngine::print()
 ///
 void GammaComboEngine::checkCombinationArg()
 {
-  if ( arg->combid.size()==0 ){
-    cout << "Please chose a combination ID (-c).\n"
-         << "Use the -u option to print a list of available combinations." << endl;
-    exit(1);
-  }
-  for ( int i=0; i<arg->combid.size(); i++ ){
-    if ( arg->combid[i] >= cmb.size() ){
-      cout << "Please chose a combination ID (-c) less than " << cmb.size()
-           << ".\nUse the -u option to print a list of available combinations." << endl;
-      exit(1);
-    }
-    if ( cmb[arg->combid[i]]==0 ){
-      cout << "You selected an empty combination.\n"
-           << "Use the -u option to print a list of available combinations." << endl;
-      exit(1);
-    }
-  }
+	if ( arg->combid.size()==0 ){
+		cout << "Please chose a combination ID (-c).\n" << endl;
+		printCombinations();
+		exit(1);
+	}
+	for ( int i=0; i<arg->combid.size(); i++ ){
+		if ( arg->combid[i] >= cmb.size() ){
+			cout << "Please chose a combination ID (-c) less than " << cmb.size()
+				<< ".\nUse the -u option to print a list of available combinations." << endl;
+			exit(1);
+		}
+		if ( cmb[arg->combid[i]]==0 ){
+			cout << "You selected an empty combination.\n"
+				<< "Use the -u option to print a list of available combinations." << endl;
+			exit(1);
+		}
+	}
 }
 
 ///
@@ -1129,6 +1121,18 @@ void GammaComboEngine::scan()
 void GammaComboEngine::runApplication()
 {
 	if ( arg->interactive ) theApp->Run();
+}
+
+///
+/// print the initial banner
+///
+void GammaComboEngine::printBanner()
+{
+	const char* VTAG="0.9";
+	cout << endl
+		<< "\033[1mGammaCombo v" << VTAG << " -- Developed by Till Moritz Karbach\033[0m " << endl
+		<< "                   Copyright (C) 2014, moritz.karbach@gmail.com" << endl
+		<< "                   All rights reserved under GPLv3, http://www.gnu.org/licenses/gpl.txt" << endl << endl ;	
 }
 
 ///
