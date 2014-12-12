@@ -38,268 +38,243 @@ OneMinusClPlot::OneMinusClPlot(OptParser *arg, TString name, TString title)
 TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool filled)
 {
 	if ( arg->debug ) cout << "OneMinusClPlot::scan1dPlot() : plotting " 
-	  << s->getName() << " (" << s->getMethodName() << ")" << endl;
-  bool plotPoints = ( s->getMethodName()=="Plugin" || s->getMethodName()=="BergerBoos" || s->getMethodName()=="GenericPlugin" ) && plotPluginMarkers;
-  TH1F *hCL = (TH1F*)s->getHCL()->Clone(getUniqueRootName());
-  // fix inf and nan entries
-  for ( int i=1; i<=s->getHCL()->GetNbinsX(); i++ ){
-    if ( s->getHCL()->GetBinContent(i)!=s->getHCL()->GetBinContent(i) 
-      || std::isinf(s->getHCL()->GetBinContent(i)) ) s->getHCL()->SetBinContent(i, 0.0);
-  }
-  
-  // remove errors the hard way, else root ALWAYS plots them
-  if ( !plotPoints ) hCL = histHardCopy(hCL, true, true);
-	
-	// disable any statistics box
-  hCL->SetStats(0);
-  
-  // Convert the histogram into a TGraph so we can add the solution.
-  // Also, the lf2 drawing option is broken in latest root versions.
-  TGraph *g;
-  if ( plotPoints ) g = new TGraphErrors(hCL->GetNbinsX());
-  else              g = new TGraph(hCL->GetNbinsX());
-  g->SetName(getUniqueRootName());
-  for ( int i=0; i<hCL->GetNbinsX(); i++ ){
-    g->SetPoint(i, hCL->GetBinCenter(i+1), hCL->GetBinContent(i+1));
-    if ( plotPoints ) ((TGraphErrors*)g)->SetPointError(i, 0.0, hCL->GetBinError(i+1));
-  }  
-  
-  if ( plotSolution ){
-    // add solution
-    TGraph *gNew;
-    if ( plotPoints ) gNew = new TGraphErrors(g->GetN()+1);
-    else              gNew = new TGraph(g->GetN()+1);
-    gNew->SetName(getUniqueRootName());
-    Double_t pointx0, pointx1, pointy0, pointy1, err0, err1;
-    for ( int i=0; i<g->GetN()-1; i++)
-    {
-      g->GetPoint(i, pointx0, pointy0);
-      g->GetPoint(i+1, pointx1, pointy1);
-      if ( plotPoints )
-      {
-        err0 = g->GetErrorY(i);
-        err1 = g->GetErrorY(i+1);
-      }
-    
-      if ( pointx0 < s->getScanVar1Solution(0) )
-      {
-        gNew->SetPoint(i, pointx0, pointy0);
-        if ( plotPoints ) ((TGraphErrors*)gNew)->SetPointError(i, 0.0, err0);
-      }  
-      if ( pointx0 < s->getScanVar1Solution(0) && s->getScanVar1Solution(0) < pointx1 )
-      {
-        gNew->SetPoint(i+1, s->getScanVar1Solution(0), 1.001);  ///< put the point slightly above 1 to avoid Root a drawing artifact
-        if ( plotPoints ) ((TGraphErrors*)gNew)->SetPointError(i+1, 0.0, 0.0);
-      }
-      if ( s->getScanVar1Solution(0) < pointx0 )
-      {
-        gNew->SetPoint(i+1, pointx0, pointy0);
-        if ( plotPoints ) ((TGraphErrors*)gNew)->SetPointError(i+1, 0.0, err0);
-      }
-    }
-    gNew->SetPoint(gNew->GetN()-1, pointx1, pointy1);
-    if ( plotPoints ) ((TGraphErrors*)gNew)->SetPointError(gNew->GetN()-1, 0.0, err1);
-    g = gNew;
-  }
+								  << s->getName() << " (" << s->getMethodName() << ")" << endl;
+	bool plotPoints = ( s->getMethodName()=="Plugin" || s->getMethodName()=="BergerBoos" || s->getMethodName()=="GenericPlugin" ) && plotPluginMarkers;
+	TH1F *hCL = (TH1F*)s->getHCL()->Clone(getUniqueRootName());
+	// fix inf and nan entries
+	for ( int i=1; i<=s->getHCL()->GetNbinsX(); i++ ){
+		if ( s->getHCL()->GetBinContent(i)!=s->getHCL()->GetBinContent(i) 
+				|| std::isinf(s->getHCL()->GetBinContent(i)) ) s->getHCL()->SetBinContent(i, 0.0);
+	}
 
-  // // set last point to the same p-value as first point by hand
-  // // some angle plots sometimes don't manage to do it by themselves...
-  // if ( arg->isQuickhack(XX) )
-  // {
-  //   Double_t pointx0, pointy0, err0;
-  //   Double_t pointx1, pointy1, err1;
-  //   g->GetPoint(0, pointx0, pointy0);
-  //   g->GetPoint(g->GetN()-1, pointx1, pointy1);
-  //   g->SetPoint(g->GetN()-1, pointx1, pointy0);
-  //   if ( plotPoints ) err0 = ((TGraphErrors*)g)->GetErrorY(0);
-  //   if ( plotPoints ) ((TGraphErrors*)g)->SetPointError(g->GetN()-1, 0.0, err0);
-  // }
-  
-  // add end points of scan range
-  if ( !plotPoints )
-  {
-    Double_t pointx0, pointy0;
-    TGraph *gNew = new TGraph(g->GetN()+4);
-    gNew->SetName(getUniqueRootName());
-    for ( int i=0; i<g->GetN(); i++)
-    {
-      g->GetPoint(i, pointx0, pointy0);
-      gNew->SetPoint(i+2, pointx0, pointy0);
-    }
-    
-    // add origin
-    gNew->SetPoint(0, hCL->GetXaxis()->GetXmin(), 0); 
-    
-    // add a point at first y height but at x=origin.
-    g->GetPoint(0, pointx0, pointy0);
-    gNew->SetPoint(1, hCL->GetXaxis()->GetXmin(), pointy0);
-    
-    // add a point at last y height but at x=xmax.
-    g->GetPoint(g->GetN()-1, pointx0, pointy0);
-    gNew->SetPoint(gNew->GetN()-2, hCL->GetXaxis()->GetXmax(), pointy0);
-    
-    // add a point at xmax, 0  
-    gNew->SetPoint(gNew->GetN()-1, hCL->GetXaxis()->GetXmax(), 0);
-    g = gNew;
-  }
-  
-  int color = s->getLineColor();
-  g->SetLineColor(color);
-  	
+	// remove errors the hard way, else root ALWAYS plots them
+	if ( !plotPoints ) hCL = histHardCopy(hCL, true, true);
+
+	// disable any statistics box
+	hCL->SetStats(0);
+
+	// Convert the histogram into a TGraph so we can add the solution.
+	// Also, the lf2 drawing option is broken in latest root versions.
+	TGraph *g;
+	if ( plotPoints ) g = new TGraphErrors(hCL->GetNbinsX());
+	else              g = new TGraph(hCL->GetNbinsX());
+	g->SetName(getUniqueRootName());
+	for ( int i=0; i<hCL->GetNbinsX(); i++ ){
+		g->SetPoint(i, hCL->GetBinCenter(i+1), hCL->GetBinContent(i+1));
+		if ( plotPoints ) ((TGraphErrors*)g)->SetPointError(i, 0.0, hCL->GetBinError(i+1));
+	}  
+
+	if ( plotSolution ){
+		// add solution
+		TGraph *gNew;
+		if ( plotPoints ) gNew = new TGraphErrors(g->GetN()+1);
+		else              gNew = new TGraph(g->GetN()+1);
+		gNew->SetName(getUniqueRootName());
+		Double_t pointx0, pointx1, pointy0, pointy1, err0, err1;
+		for ( int i=0; i<g->GetN()-1; i++)
+		{
+			g->GetPoint(i, pointx0, pointy0);
+			g->GetPoint(i+1, pointx1, pointy1);
+			if ( plotPoints )
+			{
+				err0 = g->GetErrorY(i);
+				err1 = g->GetErrorY(i+1);
+			}
+
+			if ( pointx0 < s->getScanVar1Solution(0) )
+			{
+				gNew->SetPoint(i, pointx0, pointy0);
+				if ( plotPoints ) ((TGraphErrors*)gNew)->SetPointError(i, 0.0, err0);
+			}  
+			if ( pointx0 < s->getScanVar1Solution(0) && s->getScanVar1Solution(0) < pointx1 )
+			{
+				gNew->SetPoint(i+1, s->getScanVar1Solution(0), 1.001);  ///< put the point slightly above 1 to avoid Root a drawing artifact
+				if ( plotPoints ) ((TGraphErrors*)gNew)->SetPointError(i+1, 0.0, 0.0);
+			}
+			if ( s->getScanVar1Solution(0) < pointx0 )
+			{
+				gNew->SetPoint(i+1, pointx0, pointy0);
+				if ( plotPoints ) ((TGraphErrors*)gNew)->SetPointError(i+1, 0.0, err0);
+			}
+		}
+		gNew->SetPoint(gNew->GetN()-1, pointx1, pointy1);
+		if ( plotPoints ) ((TGraphErrors*)gNew)->SetPointError(gNew->GetN()-1, 0.0, err1);
+		g = gNew;
+	}
+
+	// // set last point to the same p-value as first point by hand
+	// // some angle plots sometimes don't manage to do it by themselves...
+	// if ( arg->isQuickhack(XX) )
+	// {
+	//   Double_t pointx0, pointy0, err0;
+	//   Double_t pointx1, pointy1, err1;
+	//   g->GetPoint(0, pointx0, pointy0);
+	//   g->GetPoint(g->GetN()-1, pointx1, pointy1);
+	//   g->SetPoint(g->GetN()-1, pointx1, pointy0);
+	//   if ( plotPoints ) err0 = ((TGraphErrors*)g)->GetErrorY(0);
+	//   if ( plotPoints ) ((TGraphErrors*)g)->SetPointError(g->GetN()-1, 0.0, err0);
+	// }
+
+	// add end points of scan range
+	if ( !plotPoints )
+	{
+		Double_t pointx0, pointy0;
+		TGraph *gNew = new TGraph(g->GetN()+4);
+		gNew->SetName(getUniqueRootName());
+		for ( int i=0; i<g->GetN(); i++)
+		{
+			g->GetPoint(i, pointx0, pointy0);
+			gNew->SetPoint(i+2, pointx0, pointy0);
+		}
+
+		// add origin
+		gNew->SetPoint(0, hCL->GetXaxis()->GetXmin(), 0); 
+
+		// add a point at first y height but at x=origin.
+		g->GetPoint(0, pointx0, pointy0);
+		gNew->SetPoint(1, hCL->GetXaxis()->GetXmin(), pointy0);
+
+		// add a point at last y height but at x=xmax.
+		g->GetPoint(g->GetN()-1, pointx0, pointy0);
+		gNew->SetPoint(gNew->GetN()-2, hCL->GetXaxis()->GetXmax(), pointy0);
+
+		// add a point at xmax, 0  
+		gNew->SetPoint(gNew->GetN()-1, hCL->GetXaxis()->GetXmax(), 0);
+		g = gNew;
+	}
+
+	int color = s->getLineColor();
+	g->SetLineColor(color);
+
 	if ( filled ){
-	  g->SetLineWidth(2);
-	  g->SetFillColor(color);
-	  g->SetLineStyle(1);
+		g->SetLineWidth(2);
+		g->SetFillColor(color);
+		g->SetLineStyle(1);
 	}
 	else{
-	  g->SetLineWidth(2);
-  	g->SetLineStyle(s->getLineStyle());
-  }	
-	
+		g->SetLineWidth(2);
+		g->SetLineStyle(s->getLineStyle());
+	}	
+
 	if ( plotPoints ){
-	  g->SetLineWidth(1);
-	  g->SetMarkerColor(color);
-	  g->SetMarkerStyle(8);
-	  g->SetMarkerSize(0.6);
+		g->SetLineWidth(1);
+		g->SetMarkerColor(color);
+		g->SetMarkerStyle(8);
+		g->SetMarkerSize(0.6);
 	}
-	
-	//   int xndiv = arg->ndiv==-1 ? 407 : abs(arg->ndiv);
-	//   bool optimizeNdiv = arg->ndiv<0 ? true : false;
-	// hCL->GetXaxis()->SetNdivisions(xndiv, optimizeNdiv);
-	//   hCL->GetYaxis()->SetNdivisions(407, true);
-	// hCL->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
-	// hCL->GetYaxis()->SetTitle("1-CL");
-	// hCL->GetXaxis()->SetLabelFont(font);
-	// hCL->GetYaxis()->SetLabelFont(font);	
-	// hCL->GetXaxis()->SetTitleFont(font);
-	// hCL->GetYaxis()->SetTitleFont(font);
-	// hCL->GetXaxis()->SetTitleOffset(0.9);
-	// hCL->GetYaxis()->SetTitleOffset(0.85);
-	// hCL->GetXaxis()->SetLabelSize(labelsize);
-	// hCL->GetYaxis()->SetLabelSize(labelsize);
-	// hCL->GetXaxis()->SetTitleSize(titlesize);
-	// hCL->GetYaxis()->SetTitleSize(titlesize);
-	//   if ( plotLegend ){
-	//     if ( arg->plotlog ) hCL->GetYaxis()->SetRangeUser(1e-3,10);
-	//     else                hCL->GetYaxis()->SetRangeUser(0.0,1.3);
-	//   }
-	//   else{
-	//     if ( arg->plotlog ) hCL->GetYaxis()->SetRangeUser(plotLogYMin,plotLogYMax);
-	//     else                hCL->GetYaxis()->SetRangeUser(0.0,1.0);
-	//   }
-	//   g->SetHistogram(hCL);
-  
+
 	// build a histogram which holds the axes
 	float min = arg->scanrangeMin == arg->scanrangeMax ? hCL->GetXaxis()->GetXmin() : arg->scanrangeMin;
-  float max = arg->scanrangeMin == arg->scanrangeMax ? hCL->GetXaxis()->GetXmax() : arg->scanrangeMax;
-  TH1F *haxes = new TH1F("haxes"+getUniqueRootName(), "haxes", 100, min, max);
-  haxes->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
-  haxes->GetYaxis()->SetTitle("1-CL");
-  haxes->GetXaxis()->SetLabelFont(font);
-  haxes->GetYaxis()->SetLabelFont(font);
-  haxes->GetXaxis()->SetTitleFont(font);
-  haxes->GetYaxis()->SetTitleFont(font);
+	float max = arg->scanrangeMin == arg->scanrangeMax ? hCL->GetXaxis()->GetXmax() : arg->scanrangeMax;
+	TH1F *haxes = new TH1F("haxes"+getUniqueRootName(), "haxes", 100, min, max);
+	haxes->SetStats(0);
+	haxes->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
+	haxes->GetYaxis()->SetTitle("1-CL");
+	haxes->GetXaxis()->SetLabelFont(font);
+	haxes->GetYaxis()->SetLabelFont(font);
+	haxes->GetXaxis()->SetTitleFont(font);
+	haxes->GetYaxis()->SetTitleFont(font);
 	haxes->GetXaxis()->SetTitleOffset(0.9);
 	haxes->GetYaxis()->SetTitleOffset(0.85);
-  haxes->GetXaxis()->SetLabelSize(labelsize);
-  haxes->GetYaxis()->SetLabelSize(labelsize);
-  haxes->GetXaxis()->SetTitleSize(titlesize);
-  haxes->GetYaxis()->SetTitleSize(titlesize);
-  int xndiv = arg->ndiv==-1 ? 407 : abs(arg->ndiv);
-  bool optimizeNdiv = arg->ndiv<0 ? true : false;
+	haxes->GetXaxis()->SetLabelSize(labelsize);
+	haxes->GetYaxis()->SetLabelSize(labelsize);
+	haxes->GetXaxis()->SetTitleSize(titlesize);
+	haxes->GetYaxis()->SetTitleSize(titlesize);
+	int xndiv = arg->ndiv==-1 ? 407 : abs(arg->ndiv);
+	bool optimizeNdiv = arg->ndiv<0 ? true : false;
 	haxes->GetXaxis()->SetNdivisions(xndiv, optimizeNdiv);
 	haxes->GetYaxis()->SetNdivisions(407, true);
-  if ( plotLegend ){
-    if ( arg->plotlog ) haxes->GetYaxis()->SetRangeUser(1e-3,10);
-    else                haxes->GetYaxis()->SetRangeUser(0.0,1.3);
-  }
-  else{
-    if ( arg->plotlog ) haxes->GetYaxis()->SetRangeUser(plotLogYMin,plotLogYMax);
-    else                haxes->GetYaxis()->SetRangeUser(0.0,1.0);
-  }
+	if ( plotLegend ){
+		if ( arg->plotlog ) haxes->GetYaxis()->SetRangeUser(1e-3,10);
+		else                haxes->GetYaxis()->SetRangeUser(0.0,1.3);
+	}
+	else{
+		if ( arg->plotlog ) haxes->GetYaxis()->SetRangeUser(plotLogYMin,plotLogYMax);
+		else                haxes->GetYaxis()->SetRangeUser(0.0,1.0);
+	}
 	haxes->Draw("axissame");
-  g->SetHistogram(haxes);
+	g->SetHistogram(haxes);
 
-  TString drawOption = "";
-  if ( plotPoints )   drawOption += " pe";
-  else if ( filled )  drawOption += " F";
-  else                drawOption += " L";
-  if ( first )        drawOption += " A";
+	TString drawOption = "";
+	if ( plotPoints )   drawOption += " pe";
+	else if ( filled )  drawOption += " F";
+	else                drawOption += " L";
+	if ( first )        drawOption += " A";
 	g->Draw(drawOption);
-  if ( drawOption.Contains("F") ) ((TGraph*)g->Clone())->Draw("L");
-  
-  gPad->Update();
+	if ( drawOption.Contains("F") ) ((TGraph*)g->Clone())->Draw("L");
+
+	gPad->Update();
 	float ymin = gPad->GetUymin();
 	float ymax = gPad->GetUymax();
 	float xmin = gPad->GetUxmin();
 	float xmax = gPad->GetUxmax();
-	  
+
 	// for the angles, draw a new axis in units of degrees
-  if ( isAngle(s->getScanVar1()) ){
-    haxes->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle() + TString(" [#circ]"));
-    haxes->GetXaxis()->SetNdivisions(0);  // disable old axis
-    if ( last ){
-      // new top axis
-      TString chopt = "-U"; // - = downward ticks, U = unlabeled, http://root.cern.ch/root/html534/TGaxis.html
-      if ( !optimizeNdiv ) chopt += "N"; // n = no bin optimization
-      TGaxis *axist = new TGaxis(xmin, 1, xmax, 1, RadToDeg(xmin), RadToDeg(xmax), xndiv, chopt);
-      axist->SetName("axist");
-      axist->Draw();
+	if ( isAngle(s->getScanVar1()) ){
+		haxes->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle() + TString(" [#circ]"));
+		haxes->GetXaxis()->SetNdivisions(0);  // disable old axis
+		if ( last ){
+			// new top axis
+			TString chopt = "-U"; // - = downward ticks, U = unlabeled, http://root.cern.ch/root/html534/TGaxis.html
+			if ( !optimizeNdiv ) chopt += "N"; // n = no bin optimization
+			TGaxis *axist = new TGaxis(xmin, 1, xmax, 1, RadToDeg(xmin), RadToDeg(xmax), xndiv, chopt);
+			axist->SetName("axist");
+			axist->Draw();
 
-      // new bottom axis
-      float axisbMin = RadToDeg(xmin);
-      float axisbMax = RadToDeg(xmax);
-      if ( arg->isQuickhack(3) ){ ///< see documentation of --qh option in OptParser.cpp
-        axisbMin += 180.;
-        axisbMax += 180.;
-      }
-      chopt = ""; // - = downward ticks, U = unlabeled, http://root.cern.ch/root/html534/TGaxis.html
-      if ( !optimizeNdiv ) chopt += "N"; // n = no bin optimization
-      TGaxis *axisb = new TGaxis(xmin, ymin, xmax, ymin, axisbMin, axisbMax, xndiv, chopt);
-      axisb->SetName("axisb");
-      axisb->SetLabelFont(font);
-      axisb->SetLabelSize(labelsize);
-      axisb->Draw();
-    }
-  }
-  else
-  {
-    if ( last ){
-      // add top axis
-      TString chopt = "-U"; // - = downward ticks, U = unlabeled, http://root.cern.ch/root/html534/TGaxis.html
-      if ( !optimizeNdiv ) chopt += "N"; // n = no bin optimization
-      TGaxis *axist = new TGaxis(xmin, 1.0, xmax, 1.0, xmin, xmax, xndiv, chopt);
-      axist->SetName("axist");
-      axist->SetLineWidth(1);
-      axist->Draw();
-    }
-  }
+			// new bottom axis
+			float axisbMin = RadToDeg(xmin);
+			float axisbMax = RadToDeg(xmax);
+			if ( arg->isQuickhack(3) ){ ///< see documentation of --qh option in OptParser.cpp
+				axisbMin += 180.;
+				axisbMax += 180.;
+			}
+			chopt = ""; // - = downward ticks, U = unlabeled, http://root.cern.ch/root/html534/TGaxis.html
+			if ( !optimizeNdiv ) chopt += "N"; // n = no bin optimization
+			TGaxis *axisb = new TGaxis(xmin, ymin, xmax, ymin, axisbMin, axisbMax, xndiv, chopt);
+			axisb->SetName("axisb");
+			axisb->SetLabelFont(font);
+			axisb->SetLabelSize(labelsize);
+			axisb->Draw();
+		}
+	}
+	else
+	{
+		if ( last ){
+			// add top axis
+			TString chopt = "-U"; // - = downward ticks, U = unlabeled, http://root.cern.ch/root/html534/TGaxis.html
+			if ( !optimizeNdiv ) chopt += "N"; // n = no bin optimization
+			TGaxis *axist = new TGaxis(xmin, 1.0, xmax, 1.0, xmin, xmax, xndiv, chopt);
+			axist->SetName("axist");
+			axist->SetLineWidth(1);
+			axist->Draw();
+		}
+	}
 
-  if ( last )
-  {
-    // add right axis
-    TGaxis *axisr = 0;
-    if ( arg->plotlog ){
-      float f3min = 1e-3;
-      float f3max = plotLegend ? 10. : 1.;
-      TF1 *f3 = new TF1("f3","log10(x)",f3min,f3max);
-      axisr = new TGaxis(xmax, f3min, xmax, f3max, "f3", 510, "G+");
-    }
-    else{
-      axisr = new TGaxis(xmax, ymin, xmax, ymax, 0, plotLegend ? 1.3 : 1.0, 407, "+");
-    }
-    axisr->SetLabelSize(0);
-    axisr->SetLineWidth(1);
-    axisr->SetName("axisr");
-    axisr->SetLabelColor(kWhite);
-    axisr->SetTitleColor(kWhite);
-    axisr->Draw();
+	if ( last )
+	{
+		// add right axis
+		TGaxis *axisr = 0;
+		if ( arg->plotlog ){
+			float f3min = 1e-3;
+			float f3max = plotLegend ? 10. : 1.;
+			TF1 *f3 = new TF1("f3","log10(x)",f3min,f3max);
+			axisr = new TGaxis(xmax, f3min, xmax, f3max, "f3", 510, "G+");
+		}
+		else{
+			axisr = new TGaxis(xmax, ymin, xmax, ymax, 0, plotLegend ? 1.3 : 1.0, 407, "+");
+		}
+		axisr->SetLabelSize(0);
+		axisr->SetLineWidth(1);
+		axisr->SetName("axisr");
+		axisr->SetLabelColor(kWhite);
+		axisr->SetTitleColor(kWhite);
+		axisr->Draw();
 
 		// redraw right axis as well because the 1-CL graph can cover the old one
 		haxes->Draw("axissame");
-  }
-  
-  return g;
+	}
+
+	return g;
 }
 
 ///
@@ -518,67 +493,67 @@ void OneMinusClPlot::drawCLguideLines()
 
 void OneMinusClPlot::Draw()
 {
-  bool plotSimple = false;//arg->debug; ///< set to true to use a simpler plot function 
-                                ///< which directly plots the 1-CL histograms without beautification
-  c1->cd();
+	bool plotSimple = false;//arg->debug; ///< set to true to use a simpler plot function 
+	///< which directly plots the 1-CL histograms without beautification
+	c1->cd();
 
-  // Legend:
-  // make the legend short, the text will extend over the boundary, but the symbol will be shorter
-  TLegend* leg = new TLegend(0.19,0.78,0.5,0.9440559);
-  leg->SetFillColor(kWhite);
-  leg->SetFillStyle(0);
-  leg->SetLineColor(kWhite);
-  leg->SetBorderSize(0);
-  leg->SetTextFont(font);
-  leg->SetTextSize(legendsize*0.75);
-  for ( int i = 0; i < scanners.size(); i++ )
+	// Legend:
+	// make the legend short, the text will extend over the boundary, but the symbol will be shorter
+	TLegend* leg = new TLegend(0.19,0.78,0.5,0.9440559);
+	leg->SetFillColor(kWhite);
+	leg->SetFillStyle(0);
+	leg->SetLineColor(kWhite);
+	leg->SetBorderSize(0);
+	leg->SetTextFont(font);
+	leg->SetTextSize(legendsize*0.75);
+	for ( int i = 0; i < scanners.size(); i++ )
 	{
-    TString legDrawOption = "l";
-    if ( plotPluginMarkers 
-      && ( scanners[i]->getMethodName()=="Plugin" 
-           || scanners[i]->getMethodName()=="BergerBoos" 
-           || scanners[i]->getMethodName()=="GenericPlugin" ) )
-    {
-      legDrawOption = "p";
-    }
+		TString legDrawOption = "l";
+		if ( plotPluginMarkers 
+				&& ( scanners[i]->getMethodName()=="Plugin" 
+					|| scanners[i]->getMethodName()=="BergerBoos" 
+					|| scanners[i]->getMethodName()=="GenericPlugin" ) )
+		{
+			legDrawOption = "p";
+		}
 
-    if ( plotSimple )
-    {
-      scan1dPlotSimple(scanners[i], i==0);
-      leg->AddEntry(scanners[i]->getHCL(), scanners[i]->getTitle() + " (" + scanners[i]->getMethodName() + ")", legDrawOption);
-    }
-    else
-    {
-      TGraph* g = scan1dPlot(scanners[i], i==0, false, scanners[i]->getFilled());  
-      leg->AddEntry(g, scanners[i]->getTitle(), legDrawOption);
-    }
-  }
+		if ( plotSimple )
+		{
+			scan1dPlotSimple(scanners[i], i==0);
+			leg->AddEntry(scanners[i]->getHCL(), scanners[i]->getTitle() + " (" + scanners[i]->getMethodName() + ")", legDrawOption);
+		}
+		else
+		{
+			TGraph* g = scan1dPlot(scanners[i], i==0, false, scanners[i]->getFilled());  
+			leg->AddEntry(g, scanners[i]->getTitle(), legDrawOption);
+		}
+	}
 
-  // lines only
-  if ( !plotSimple )
-  for ( int i = 0; i < scanners.size(); i++ )
-  {
-    bool last = i==scanners.size()-1;
-    scan1dPlot(scanners[i], false, last, false);
-  }
-  drawSolutions();
-  if ( plotLegend ) leg->Draw();
-  c1->Update();
-  drawCLguideLines();
-  
-  // draw the logo
-  float yGroup = 0.6;
-  if ( plotLegend ){
-    // we have a legend
-    if ( arg->plotlog )   yGroup = 0.775;
-    else                  yGroup = 0.60;
-  }
-  else{
-    // no legend
-    if ( arg->plotlog )   yGroup = 0.3;
-    else                  yGroup = 0.775;
-  }
-  drawGroup(yGroup);
-  
-  c1->Update();
+	// lines only
+	if ( !plotSimple )
+		for ( int i = 0; i < scanners.size(); i++ )
+		{
+			bool last = i==scanners.size()-1;
+			scan1dPlot(scanners[i], false, last, false);
+		}
+	drawSolutions();
+	if ( plotLegend ) leg->Draw();
+	c1->Update();
+	drawCLguideLines();
+
+	// draw the logo
+	float yGroup = 0.6;
+	if ( plotLegend ){
+		// we have a legend
+		if ( arg->plotlog )   yGroup = 0.775;
+		else                  yGroup = 0.60;
+	}
+	else{
+		// no legend
+		if ( arg->plotlog )   yGroup = 0.3;
+		else                  yGroup = 0.775;
+	}
+	drawGroup(yGroup);
+
+	c1->Update();
 }
