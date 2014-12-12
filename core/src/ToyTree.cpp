@@ -79,7 +79,7 @@ void ToyTree::setCombiner(Combiner* c)
   pdfName  = "pdf_"+c->getPdfName();
   obsName  = "obs_"+c->getPdfName();
   parsName = "par_"+c->getPdfName();
-  thName   = "th_"+c->getPdfName();  
+  thName   = "th_"+c->getPdfName();
 }
 
 ///
@@ -172,7 +172,7 @@ void ToyTree::init()
       while ( RooAbsPdf* gau = (RooAbsPdf*)it->Next() )
       {
         std::vector<TString> pars = Utils::getParsWithName("ean", *gau->getVariables());
- 
+
         constraintMeans.insert(pair<TString,float>(pars[0],w->var(pars[0])->getVal()));
         t->Branch(TString(pars[0]), &constraintMeans[w->var(pars[0])->GetName()], TString(pars[0])+"/F");
       }
@@ -285,7 +285,7 @@ void ToyTree::storeParsPll()
 /// free fit result.
 ///
 void ToyTree::storeParsFree()
-{  
+{
   TIterator* it = w->set(parsName)->createIterator();
   while ( RooRealVar* p = (RooRealVar*)it->Next() ){
    parametersFree[p->GetName()] = p->getVal();
@@ -381,7 +381,7 @@ void ToyTree::computeMinMaxN()
       cout << "ToyTree::computeMinMaxN() : reading toys " << Form("%.0f",(float)i/(float)nentries*100.) << "%   \r" << flush;
     t->GetEntry(i);
     // Cut away toys outside a certain range. Also check line 1167 in MethodPluginScan.cpp.
-    if ( arg->pluginPlotRangeMin!=arg->pluginPlotRangeMax 
+    if ( arg->pluginPlotRangeMin!=arg->pluginPlotRangeMax
       && !(arg->pluginPlotRangeMin<scanpoint && scanpoint<arg->pluginPlotRangeMax) ) continue;
     _min = TMath::Min(_min, scanpoint);
     _max = TMath::Max(_max, scanpoint);
@@ -400,7 +400,7 @@ void ToyTree::computeMinMaxN()
       _n+=1;  //  count number of different scan points
       if ( binWidth==-1 ) binWidth = fabs(points[i]-pointsPrev); // save first bin width so we can compare to others
     }
-    if ( binWidth>-1 && fabs(points[i]-pointsPrev)>1e-6 
+    if ( binWidth>-1 && fabs(points[i]-pointsPrev)>1e-6
     && fabs(binWidth-fabs(points[i]-pointsPrev))>1e-6 ) foundDifferentBinWidths = true;
     pointsPrev = points[i];
   }
@@ -414,7 +414,7 @@ void ToyTree::computeMinMaxN()
   scanpointMax = _max;
   scanpointN = _n;
   t->SetBranchStatus("*", 1);
-  open(); // this is a workaround to fix an issue where the branches get somehow disconnected by reconnecting them 
+  open(); // this is a workaround to fix an issue where the branches get somehow disconnected by reconnecting them
 }
 
 ///
@@ -454,13 +454,13 @@ void ToyTree::ctrlPlotSummary()
   c2->Divide(3,2);
   int ip = 1;
   TPad *pad;
-  
+
   // get maximum chi2 to be plotted
   pad = (TPad*)c2->cd(ip);
   t->Draw("chi2minToy", ctrlPlotCuts && "abs(chi2minToy)<1000");
   float maxPlottedChi2 = ((TH1F*)(gPad->GetPrimitive("htemp")))->GetXaxis()->GetXmax();
   maxPlottedChi2 = TMath::Min(maxPlottedChi2, (float)75.);
-  
+
   // plot 1
   pad = (TPad*)c2->cd(ip++);
   t->Draw(Form("chi2minToy:chi2minGlobalToy>>htemp1(75,0,%f,75,0,%f)",
@@ -474,27 +474,27 @@ void ToyTree::ctrlPlotSummary()
   // plot 2: individual Better, Bg, All histograms
   pad = (TPad*)c2->cd(ip++);
   // better toys
-  t->Draw(Form("chi2minToy-chi2minGlobalToy > (chi2min-chi2minGlobal):scanpoint>>htemp(%i,%f,%f,1,0.5,1.5)", 
-    getScanpointN(), getScanpointMin(), getScanpointMax()), 
+  t->Draw(Form("chi2minToy-chi2minGlobalToy > (chi2min-chi2minGlobal):scanpoint>>htemp(%i,%f,%f,1,0.5,1.5)",
+    getScanpointN(), getScanpointMin(), getScanpointMax()),
     ctrlPlotCuts, "colz");
   TH1D* hBetter = ((TH2F*)(gPad->GetPrimitive("htemp")))->ProjectionX("hBetter",1,1);
   // background toys
-  t->Draw(Form("chi2minToy-chi2minGlobalToy < -(chi2min-chi2minGlobal):scanpoint>>htemp(%i,%f,%f,1,0.5,1.5)", 
+  t->Draw(Form("chi2minToy-chi2minGlobalToy < -(chi2min-chi2minGlobal):scanpoint>>htemp(%i,%f,%f,1,0.5,1.5)",
     getScanpointN(), getScanpointMin(), getScanpointMax()),
     ctrlPlotCuts, "colz");
   TH1D* hBg = ((TH2F*)(gPad->GetPrimitive("htemp")))->ProjectionX("hBg",1,1);
   // all toys
-  t->Draw(Form("1:scanpoint>>htemp(%i,%f,%f,1,0.5,1.5)", 
-    getScanpointN(), getScanpointMin(), getScanpointMax()), 
+  t->Draw(Form("1:scanpoint>>htemp(%i,%f,%f,1,0.5,1.5)",
+    getScanpointN(), getScanpointMin(), getScanpointMax()),
     ctrlPlotCuts, "colz");
   TH1D* hAll = ((TH2F*)(gPad->GetPrimitive("htemp")))->ProjectionX("hAll",1,1);
   // failed toys
   TCut myCtrlPlotCuts = !ctrlPlotCuts;
   if ( arg->id!=-1 ) myCtrlPlotCuts = myCtrlPlotCuts && Form("id==%i", arg->id); // add the id cut back in as it got lost through the inversion
   //if ( arg->id!=-1 ) myCtrlPlotCuts = myCtrlPlotCuts && Form("BergerBoos_id==%i", arg->id);
-  t->Draw(Form("1:scanpoint>>htemp(%i,%f,%f,1,0.5,1.5)", 
-    getScanpointN(), getScanpointMin(), getScanpointMax()), 
-    myCtrlPlotCuts, "colz");  
+  t->Draw(Form("1:scanpoint>>htemp(%i,%f,%f,1,0.5,1.5)",
+    getScanpointN(), getScanpointMin(), getScanpointMax()),
+    myCtrlPlotCuts, "colz");
   TH1D* hFailed = ((TH2F*)(gPad->GetPrimitive("htemp")))->ProjectionX("hFailed",1,1);
   // construct nominal 1-CL histogram
   TH1D* hOmcl = (TH1D*)hBetter->Clone("hOmcl");
@@ -530,7 +530,7 @@ void ToyTree::ctrlPlotSummary()
   leg->SetFillStyle(0);
   leg->Draw();
   c2->Update();
-  
+
   // // plot 6: log version of bg subtracted 1-CL plot
   // pad = (TPad*)c2->cd(ip++);
   // hBetter = (TH1D*)hBetter->Clone("hBetter2");
@@ -545,19 +545,19 @@ void ToyTree::ctrlPlotSummary()
   // oneMinusCl->Draw();
   // pad->SetLogy();
   // c2->Update();
-  
+
   // plot 3: fit probability
   // This plot is nonsense. The fit probability is not defined
   // at any other point than the best fit point: It is based on
   // the global minima!
-  pad = (TPad*)c2->cd(ip++);
+  //pad = (TPad*)c2->cd(ip++);
   // // better (worse) toys
   // t->Draw(Form("chi2minGlobalToy > chi2minGlobal:scanpoint>>htemp(%i,%f,%f,1,0.5,1.5)",
   //   getScanpointN(), getScanpointMin(), getScanpointMax()),
   //   ctrlPlotCuts && TCut("chi2minToy-chi2minGlobalToy>0"), "colz");
   // TH1D* hGof = ((TH2F*)(gPad->GetPrimitive("htemp")))->ProjectionX("hGof",1,1);
   // // "signal" toys
-  // t->Draw(Form("1:scanpoint>>htemp(%i,%f,%f,1,0.5,1.5)", 
+  // t->Draw(Form("1:scanpoint>>htemp(%i,%f,%f,1,0.5,1.5)",
   //   getScanpointN(), getScanpointMin(), getScanpointMax()),
   //   ctrlPlotCuts && TCut("chi2minToy-chi2minGlobalToy>0"), "colz");
   // TH1D* hSig = ((TH2F*)(gPad->GetPrimitive("htemp")))->ProjectionX("hSig",1,1);
@@ -582,7 +582,7 @@ void ToyTree::ctrlPlotSummary()
   // txt->AddText(Form("P = %.1f%%",hGof->GetBinContent(hOmcl->GetMaximumBin())*100.));
   // txt->Draw();
   // c2->Update();
-  
+
   // plot 4:  chi2 distribution of the SCAN fit
   pad = (TPad*)c2->cd(ip++);
   t->Draw("chi2minToy", ctrlPlotCuts && Form("chi2minToy-chi2minGlobalToy>0 && chi2minToy<%f",maxPlottedChi2));
@@ -590,16 +590,16 @@ void ToyTree::ctrlPlotSummary()
   ((TH1F*)(gPad->GetPrimitive("htemp")))->GetYaxis()->SetTitle("toys");
   makePlotsNice();
   c2->Update();
-  
+
   // plot 5: chi2 distribution of the FREE fit
   pad = (TPad*)c2->cd(ip++);
-  t->Draw("chi2minGlobalToy>>hChi2free", ctrlPlotCuts 
+  t->Draw("chi2minGlobalToy>>hChi2free", ctrlPlotCuts
     && Form("chi2minToy-chi2minGlobalToy>0 && chi2minGlobalToy<%f",maxPlottedChi2));
   TH1F* hChi2free = (TH1F*)(gPad->GetPrimitive("hChi2free"));
   // add the chi2 distribtion at the best fit value
-  t->Draw("chi2minGlobalToy>>hChi2BestFit", ctrlPlotCuts 
+  t->Draw("chi2minGlobalToy>>hChi2BestFit", ctrlPlotCuts
     && Form("chi2minToy-chi2minGlobalToy>0 && chi2minGlobalToy<%f",maxPlottedChi2)
-    && Form("%f<scanpoint && scanpoint<%f", 
+    && Form("%f<scanpoint && scanpoint<%f",
       hBetter->GetBinCenter(hBetter->GetMaximumBin()-1),
       hBetter->GetBinCenter(hBetter->GetMaximumBin()+1)));
   TH1F* hChi2BestFit = (TH1F*)(gPad->GetPrimitive("hChi2BestFit"));
@@ -635,11 +635,11 @@ void ToyTree::ctrlPlotSummary()
   // plot 6: delta chi2
   pad = (TPad*)c2->cd(ip++);
   // good toys
-  t->Draw("chi2minToy-chi2minGlobalToy", 
+  t->Draw("chi2minToy-chi2minGlobalToy",
     ctrlPlotCuts && Form("chi2minToy-chi2minGlobalToy>=0 && chi2minToy<%f && chi2minGlobalToy<%f", maxPlottedChi2, maxPlottedChi2));
   TH1F* h4sig = (TH1F*)(gPad->GetPrimitive("htemp"))->Clone("h4sig");
   // possibly background
-  int nBkg = t->Draw("-(chi2minToy-chi2minGlobalToy)", 
+  int nBkg = t->Draw("-(chi2minToy-chi2minGlobalToy)",
     ctrlPlotCuts && Form("chi2minToy-chi2minGlobalToy<0 && chi2minToy<%f && chi2minGlobalToy<%f", maxPlottedChi2, maxPlottedChi2));
   TH1F* h4bkg = (TH1F*)(gPad->GetPrimitive("htemp"))->Clone("h4bkg");
   if ( nBkg==0 ) h4bkg->Scale(0); // if no bkg events the htemp from the signal Draw gets cloned again!
@@ -662,12 +662,30 @@ void ToyTree::ctrlPlotSummary()
   leg6->SetFillStyle(0);
   leg6->Draw();
   c2->Update();
-    
+
+  // plot 7
+  // chi2 p-value distribution
+  pad = (TPad*)c2->cd(ip++);
+  // good toys
+  t->Draw("TMath::Prob(chi2minToy-chi2minGlobalToy,1)",
+    ctrlPlotCuts && Form("chi2minToy-chi2minGlobalToy>=0 && chi2minToy<%f && chi2minGlobalToy<%f", maxPlottedChi2, maxPlottedChi2));
+  TH1F* h5sig = (TH1F*)(gPad->GetPrimitive("htemp"))->Clone("h5sig");
+  h5sig->Draw();
+  h5sig->GetXaxis()->SetTitle("p(#Delta#chi^{2} scan-free)");
+  h5sig->GetYaxis()->SetTitle("toys");
+  makePlotsNice("h5sig");
+  // move stat box a little
+  gPad->Update(); //  needed else FindObject() returns a null pointer
+  st = (TPaveStats*)h5sig->FindObject("stats");
+  st->SetX1NDC(0.7778305); st->SetY1NDC(0.4562937);
+  st->SetX2NDC(0.9772986); st->SetY2NDC(0.6056235);
+  c2->Update();
+
   ctrlPlotCanvases.push_back(c2);
 }
 
 ///
-/// Plot all fit results of the nuisances against 
+/// Plot all fit results of the nuisances against
 /// the scan variable.
 /// Cuts are defined in the constructor (ctrlPlotCuts).
 ///
@@ -678,26 +696,26 @@ void ToyTree::ctrlPlotNuisances()
 
   int nBinsX = 50;
   int nBinsY = getScanpointN()/2;
-  
+
   for ( int j=0; j<t->GetListOfBranches()->GetEntries(); j++)
   {
     TString bName = ((TBranch*)t->GetListOfBranches()[0][j])->GetName();
     if ( ! (bName.EndsWith("_start")||bName.EndsWith("_scan")||bName.EndsWith("_free")) ) continue;
-    
+
     TString bBaseName = bName;
     bBaseName.ReplaceAll("_start","");
     bBaseName.ReplaceAll("_scan","");
     bBaseName.ReplaceAll("_free","");
-        
+
     bool nameWasUsed = false;
     for ( unsigned int i=0; i<usedVariableNames.size(); i++ ) if ( usedVariableNames[i]==bBaseName ) nameWasUsed = true;
     if ( nameWasUsed ) continue;
     usedVariableNames.push_back(bBaseName);
-    
+
     TString varScan = bBaseName+"_scan";
     TString varFree = bBaseName+"_free";
     TString varStart = bBaseName+"_start";
-    
+
     float customRangeLo = 0.0; //  Customize histogram range. Default will be the Draw() automatic
     float customRangeHi = 0.0; //  range. Anything outside this range will show in the overflow bins.
 
@@ -710,11 +728,11 @@ void ToyTree::ctrlPlotNuisances()
       varStart = "fmod("+varStart+",3.14152)";
       customRangeLo = 0.0;  customRangeHi = 3.14152;
     }
-    
+
     gStyle->SetOptStat(10000); //  print overflow bins!
     float spmin = getScanpointMin() - 0.01*(getScanpointMax()-getScanpointMin()); //  add some offset so that
     float spmax = getScanpointMax() + 0.01*(getScanpointMax()-getScanpointMin()); //  the first/last scanpoint is also plotted
-    
+
     {
       selectNewPad();
       if (arg->debug) cout << "ToyTree::ctrlPlotNuisances() : plotting " << varScan << endl;
@@ -781,7 +799,7 @@ void ToyTree::ctrlPlotObservables()
     int nBinsX = 50;
     int nBinsY = getScanpointN()/2;
     selectNewPad();
-    
+
     // observables
     t->Draw("scanpoint:"+bName,  ctrlPlotCuts, "colz");  // first test plot to get the automatic x axis range
     float xmin = ((TH1F*)(gPad->GetPrimitive("htemp")))->GetXaxis()->GetXmin();
@@ -790,7 +808,7 @@ void ToyTree::ctrlPlotObservables()
       +Form("hObs%i(%i,%f,%f,%i,%f,%f)",j,nBinsX,xmin,xmax,nBinsY,getScanpointMin(),getScanpointMax()),
       ctrlPlotCuts, "colz");
     TH2F *hObs = ((TH2F*)(gPad->GetPrimitive(Form("hObs%i",j))));
-    
+
     // overlay theory (the branches have the same name but with th instead of obs)
     TString thName = bName;
     thName.ReplaceAll("_obs","_th");
@@ -858,7 +876,7 @@ void ToyTree::ctrlPlotChi2Parabola()
   if ( scanpointMin==scanpointMax ) nBins=1;  // else we get 12x the same bin
   gEnv->SetValue("Hist.Binning.2D.x",75);
   gEnv->SetValue("Hist.Binning.2D.y",75);
-  
+
   TString plotExpression = "chi2minToy-chi2minGlobalToy:";
   if ( isAngle(w->var(arg->var[0])) ){
     plotExpression += "fmod(scanbest-scanpoint,3.142)";
@@ -885,7 +903,7 @@ void ToyTree::ctrlPlotChi2Parabola()
     txt->Draw();
     makePlotsNice();
     updateCurrentCanvas();
-  }  
+  }
 }
 
 ///
@@ -894,7 +912,7 @@ void ToyTree::ctrlPlotChi2Parabola()
 void ToyTree::ctrlPlotMore(MethodProbScan* profileLH)
 {
   selectNewCanvas("MorePlots 1");
-  
+
   // create a new TTree that contains the profile likelihood
   // chi2 so we can compare
   if ( arg->debug ) cout << "ToyTree::ctrlPlotMore() : creating a new TTree that also contains the pll chi2 ..." << endl;
@@ -924,21 +942,21 @@ void ToyTree::ctrlPlotMore(MethodProbScan* profileLH)
   }
   t->SetBranchStatus("*", 1); // perhaps we need ".*" in certain root versions?
   if ( arg->debug ) cout << "ToyTree::ctrlPlotMore() : creating new TTree done.                      " << endl; // extra spaces for the above \r
-  
+
   // make control plots
   // selectNewPad();
   // t->Draw("scanpoint:chi2minToy", "abs(chi2minToy)<25");
   // makePlotsNice("htemp", "");
-  
+
   if ( arg->debug ) cout << "ToyTree::ctrlPlotMore() : making plot 1 ...\r" << flush;
   selectNewPad();
   t->Draw("scanpoint:chi2minToy", "abs(chi2minToy)<25", "colz");
   makePlotsNice();
-  
+
   // selectNewPad();
   // t->Draw("scanbest:chi2minToy", "abs(chi2minToy)<25");
   // makePlotsNice("htemp", "");
-  
+
   if ( arg->debug ) cout << "ToyTree::ctrlPlotMore() : making plot 2 ...\r" << flush;
   selectNewPad();
   RooRealVar *scanvar = profileLH->getScanVar1();
@@ -946,28 +964,28 @@ void ToyTree::ctrlPlotMore(MethodProbScan* profileLH)
   float svmax = scanvar->getMax("scan");
   t->Draw("scanbest:chi2minToy", Form("abs(chi2minToy)<25 && %f<scanbest && scanbest<%f",svmin,svmax), "colz");
   makePlotsNice();
-  
+
   if ( arg->debug ) cout << "ToyTree::ctrlPlotMore() : making plot 3 ...\r" << flush;
   selectNewPad();
   tNew->Draw("scanpoint:chi2min", "", "colz");
   makePlotsNice();
   tNew->Draw("scanpoint:chi2minPLH", "", "boxsame");
   if (gPad->GetPrimitive("Graph")) ((TGraph*)(gPad->GetPrimitive("Graph")))->SetMarkerColor(kRed);
-  
+
   // selectNewPad();
   // t->Draw("scanpoint:chi2min", "", "colz");
   // makePlotsNice();
-  
+
   if ( arg->debug ) cout << "ToyTree::ctrlPlotMore() : making plot 4 ...\r" << flush;
   selectNewPad();
   t->Draw("chi2min:nrun", "", "colz");
   makePlotsNice();
-  
+
   if ( arg->debug ) cout << "ToyTree::ctrlPlotMore() : making plot 5 ...\r" << flush;
   selectNewPad()->SetRightMargin(0.1);;
   tNew->Draw("scanpoint:chi2min-chi2minPLH", "", "colz");
   makePlotsNice();
-  
+
   if ( arg->debug ) cout << "ToyTree::ctrlPlotMore() : making plot 6 ...\r" << flush;
   selectNewPad();
   t->Draw("chi2minGlobal:nrun", "", "colz");
@@ -978,7 +996,7 @@ void ToyTree::ctrlPlotMore(MethodProbScan* profileLH)
   TLine *l = new TLine(xmin,profileLH->getChi2minGlobal(),xmax,profileLH->getChi2minGlobal());
   l->SetLineColor(kRed);
   l->Draw();
-  
+
   if ( arg->debug ) cout << "ToyTree::ctrlPlotMore() : making plots done.        " << endl;
   delete tNew;
 }
@@ -998,7 +1016,7 @@ TCanvas* ToyTree::selectNewCanvas(TString title)
 TVirtualPad* ToyTree::selectNewPad()
 {
   TCanvas* c1 = ctrlPlotCanvases[ctrlPlotCanvases.size()-1];
-    
+
   if ( ctrlPadId>=12 )
   {
     // Create a new canvas that has the old title "foo 3" but with
@@ -1052,14 +1070,14 @@ void ToyTree::makePlotsNice(TString htemp, TString Graph)
     ((TH1F*)(gPad->GetPrimitive(htemp)))->GetXaxis()->SetTitleOffset(2.5);
     ((TH1F*)(gPad->GetPrimitive(htemp)))->GetXaxis()->SetLabelFont(133);
     ((TH1F*)(gPad->GetPrimitive(htemp)))->GetXaxis()->SetLabelSize(12);
-                                     
+
     ((TH1F*)(gPad->GetPrimitive(htemp)))->GetYaxis()->SetTitleFont(133);
     ((TH1F*)(gPad->GetPrimitive(htemp)))->GetYaxis()->SetTitleSize(15);
     ((TH1F*)(gPad->GetPrimitive(htemp)))->GetYaxis()->SetTitleOffset(2.25);
     ((TH1F*)(gPad->GetPrimitive(htemp)))->GetYaxis()->SetLabelFont(133);
     ((TH1F*)(gPad->GetPrimitive(htemp)))->GetYaxis()->SetLabelSize(12);
   }
-  
+
   if ( gPad->GetPrimitive(Graph) )
   {
     ((TH1F*)(gPad->GetPrimitive(Graph)))->SetMarkerStyle(7);
