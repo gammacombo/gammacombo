@@ -713,41 +713,48 @@ void GammaComboEngine::make1dProbScan(MethodProbScan *scanner, int cId)
 }
 
 ///
-/// Perform the 1d plugin scan. Runs toys in batch mode, and
+/// Perform the 1D plugin scan. Runs toys in batch mode, and
 /// reads them back in.
+///
 /// \param scannerPlugin - the scanner to run the scan with
 /// \param cId - the id of this combination on the command line
 ///
 void GammaComboEngine::make1dPluginScan(MethodPluginScan *scannerPlugin, int cId)
 {
 	scannerPlugin->initScan();
-  if ( arg->isAction("pluginbatch") ){
-    scannerPlugin->scan1d(arg->nrun);
-  }
-  else {
+	if ( arg->isAction("pluginbatch") ){
+		scannerPlugin->scan1d(arg->nrun);
+	}
+	else {
 		scannerPlugin->readScan1dTrees(arg->jmin[cId],arg->jmax[cId]);
 	}
-  scannerPlugin->calcCLintervals();
+	scannerPlugin->calcCLintervals();
 	if ( !arg->isAction("pluginbatch") ){
 		scannerPlugin->saveScanner(fb->getFileNameScanner(scannerPlugin));
 	}
 }
 
 ///
-/// Perform the 2d plugin scan. Runs toys in batch mode, and
+/// Perform the 2D plugin scan. Runs toys in batch mode, and
 /// reads them back in.
+/// 
 /// \param scannerPlugin - the scanner to run the scan with
 /// \param cId - the id of this combination on the command line
 ///
 void GammaComboEngine::make2dPluginScan(MethodPluginScan *scannerPlugin, int cId)
 {
 	scannerPlugin->initScan();
-  if ( arg->isAction("pluginbatch") ){
-    scannerPlugin->scan2d(arg->nrun);
-  }
-  else {
+	if ( arg->isAction("pluginbatch") ){
+		scannerPlugin->scan2d(arg->nrun);
+	}
+	else {
 		scannerPlugin->readScan2dTrees(arg->jmin[cId],arg->jmax[cId]);
 		scannerPlugin->saveScanner(fb->getFileNameScanner(scannerPlugin));
+		// plot chi2
+		OneMinusClPlot2d* plotf = new OneMinusClPlot2d(arg, plot->getName()+"_plugin_full");
+		scannerPlugin->plotOn(plotf);
+		plotf->DrawFull();
+		plotf->save();
 	}
 }
 
@@ -802,8 +809,10 @@ void GammaComboEngine::scanStrategy1d(MethodProbScan *scanner, ParameterCache *p
 }
 
 ///
-/// Make the default 1d plugin plot that shows both the prob and the plugin
-/// as points with error bars.
+/// Make the default 1D plugin plot:
+///  - curve for the prob scan
+///  - points with error bars for the plugin scan
+///
 /// \param sPlugin - the plugin scanner
 /// \param sProb - the prob scanner
 /// \param cId - the id of this combination on the command line
@@ -812,27 +821,31 @@ void GammaComboEngine::make1dPluginPlot(MethodPluginScan *sPlugin, MethodProbSca
 {
 	make1dProbPlot(sProb, cId);
 	sPlugin->setLineColor(kBlack);
-  sPlugin->plotOn(plot);
+	sPlugin->plotOn(plot);
 	plot->Draw();
 }
 
 ///
-/// Make the default 2d plugin plot.
-/// \param sPlugin - the plugin scanner
+/// Make the default 2D plugin plot:
+///  - contours for the the prob scan
+///  - contours for the the plugin scan
 ///
-void GammaComboEngine::make2dPluginPlot(MethodPluginScan *sPlugin)
+/// \param sPlugin - the plugin scanner
+/// \param sProb - the prob scanner
+/// \param cId - the id of this combination on the command line
+///
+void GammaComboEngine::make2dPluginPlot(MethodPluginScan *sPlugin, MethodProbScan *sProb, int cId)
 {
+	sProb->plotOn(plot);
+	sProb->setLineColor(colorsLine[cId]);
 	sPlugin->plotOn(plot);
-	// also save the full chi2 histogram
-	// OneMinusClPlot2d* plotf = new OneMinusClPlot2d(arg, getFileBaseName(c)+"_plugin_full");
-	// sPlugin->plotOn(plotf);
-	// plotf->DrawFull();
-	// plotf->save();
+	plot->Draw();
 }
 
 ///
 /// Make the plugin-only plot that only shows the plugin
 /// as continuous lines.
+///
 /// \param sPlugin - the plugin scanner
 /// \param cId - the id of this combination on the command line
 ///
@@ -843,6 +856,17 @@ void GammaComboEngine::make1dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId)
 	if ( arg->color.size()>cId ) colorId = arg->color[cId];
 	sPlugin->setLineColor(colorsLine[colorId]);
 	sPlugin->setTextColor(colorsText[colorId]);
+	sPlugin->plotOn(plot);
+	plot->Draw();
+}
+
+///
+/// Make the plugin-only 2D plot.
+///
+/// \param sPlugin - the plugin scanner
+///
+void GammaComboEngine::make2dPluginOnlyPlot(MethodPluginScan *sPlugin)
+{
 	sPlugin->plotOn(plot);
 	plot->Draw();
 }
@@ -861,6 +885,9 @@ void GammaComboEngine::make2dProbScan(MethodProbScan *scanner, int cId)
 	scanStrategy2d(scanner,pCache);
 	cout << endl;
 	scanner->printLocalMinima();
+	// save
+	scanner->saveScanner(fb->getFileNameScanner(scanner));
+	pCache->cacheParameters(scanner);
 	// plot
 	if (!arg->isAction("pluginbatch")){
 		scanner->plotOn(plot);
@@ -870,22 +897,17 @@ void GammaComboEngine::make2dProbScan(MethodProbScan *scanner, int cId)
 		scanner->plotOn(plotf);
 		plotf->DrawFull();
 		plotf->save();
-		scanner->saveScanner(fb->getFileNameScanner(scanner));
-		pCache->cacheParameters(scanner);
 	}
 }
 
 ///
-/// Remake a 2D plot from a saved scanner.
-/// If we did the scan before and just want to recreate the plot,
-/// we can do so using the hCL histograms that were saved in plots/hCL.
+/// Make the 2D plot for a prob scanner.
 ///
 void GammaComboEngine::make2dProbPlot(MethodProbScan *scanner, int cId)
 {
-  scanner->loadScanner(fb->getFileNameScanner(scanner));
-  scanner->plotOn(plot);
-  scanner->setLineColor(colorsLine[cId]);
-  plot->Draw();
+	scanner->plotOn(plot);
+	scanner->setLineColor(colorsLine[cId]);
+	plot->Draw();
 }
 
 ///
@@ -1003,9 +1025,8 @@ void GammaComboEngine::scan()
 		{
 			MethodProbScan *scannerProb = new MethodProbScan(c);
 			// pvalue corrector
-			PValueCorrection *pvalueCorrector;
-			if (arg->coverageCorrectionID>0) {
-				pvalueCorrector = new PValueCorrection(arg->coverageCorrectionID, arg->verbose);
+			if ( arg->coverageCorrectionID>0 ) {
+				PValueCorrection *pvalueCorrector = new PValueCorrection(arg->coverageCorrectionID, arg->verbose);
 				pvalueCorrector->readFiles(getFileBaseName(c),arg->coverageCorrectionPoint,false); // false means for prob
 				pvalueCorrector->write("root/pvalueCorrection_prob.root");
 				scannerProb->setPValueCorrector(pvalueCorrector);
@@ -1026,6 +1047,7 @@ void GammaComboEngine::scan()
 			else if ( arg->var.size()==2 )
 			{
 				if ( arg->isAction("plot") ){
+					scannerProb->loadScanner(fb->getFileNameScanner(scannerProb));
 					make2dProbPlot(scannerProb, i);
 				}
 				else{
@@ -1042,66 +1064,83 @@ void GammaComboEngine::scan()
 
 		if ( arg->isAction("plugin") || arg->isAction("pluginbatch") )
 		{
-			MethodProbScan *scannerProb = new MethodProbScan(c);
-			if ( arg->isAction("plot") ){
-				scannerProb->loadScanner(fb->getFileNameScanner(scannerProb));
-			}
-			else{
-				make1dProbScan(scannerProb, i);
-			}
-			MethodPluginScan *scannerPlugin = new MethodPluginScan(scannerProb);
-			PValueCorrection *pvalueCorrector2;
-			if (arg->coverageCorrectionID>0) {
-				pvalueCorrector2 = new PValueCorrection(arg->coverageCorrectionID, arg->verbose);
-				pvalueCorrector2->readFiles(getFileBaseName(c),arg->coverageCorrectionPoint,true); // true means for plugin
-				pvalueCorrector2->write("root/pvalueCorrection_plugin.root");
-				scannerPlugin->setPValueCorrector(pvalueCorrector2);
-			}
-
-			//       // Hybrid Plugin: compute a second profile likelihood to define the parameter evolution
-			//       if ( arg->pevid.size()==1 )
-			//       {
-			//         cout << "HYBRID PLUGIN: preparing profile likelihood to be used for parameter evolution:" << endl;
-			// // load start parameters
-			// ParameterCache *pCache = new ParameterCache(arg, getFileBaseName(cmb[arg->pevid[0]]));
-			// pCache->loadPoints();
-			//         MethodProbScan *scanner3 = new MethodProbScan(cmb[arg->pevid[0]]);
-			//         scanner3->initScan();
-			// scanStrategy1d(scanner3,pCache);
-			//         scanner3->confirmSolutions();
-			//         scanner3->printLocalMinima();
-			//         scanner2->setParevolPLH(scanner3);
-			//       }
-
 			// 1D SCANS
 			if ( arg->var.size()==1 )
 			{
-				if ( arg->isAction("plot") ){
-					scannerPlugin->loadScanner(fb->getFileNameScanner(scannerPlugin));
-				}
-				else {
+				if ( arg->isAction("pluginbatch") ){
+					MethodProbScan *scannerProb = new MethodProbScan(c);
+					make1dProbScan(scannerProb, i);
+					MethodPluginScan *scannerPlugin = new MethodPluginScan(scannerProb);
 					make1dPluginScan(scannerPlugin, i);
 				}
-				if ( !arg->isAction("pluginbatch") ){
+				//if ( arg->isAction("pluginhybridbatch") ){
+					//// Hybrid Plugin: compute a second profile likelihood to define the parameter evolution
+					//cout << "HYBRID PLUGIN: preparing profile likelihood to be used for parameter evolution:" << endl;
+					//ParameterCache *pCache = new ParameterCache(arg, getFileBaseName(cmb[arg->pevid[0]]));
+					//pCache->loadPoints();
+					//MethodProbScan *scanner3 = new MethodProbScan(cmb[arg->pevid[0]]);
+					//scanner3->initScan();
+					//scanStrategy1d(scanner3,pCache);
+					//scanner3->confirmSolutions();
+					//scanner3->printLocalMinima();
+					//scanner2->setParevolPLH(scanner3);
+				//}
+				else if ( arg->isAction("plugin") ){
+					MethodProbScan *scannerProb = new MethodProbScan(c);
+					if ( ! ( arg->isAction("plot") && arg->plotpluginonly ) ){
+						// we don't need the prob scanner if we just want to replot the plugin only
+						scannerProb->loadScanner(fb->getFileNameScanner(scannerProb));	
+					}
+					MethodPluginScan *scannerPlugin = new MethodPluginScan(scannerProb);
+					if ( arg->isAction("plot") ){
+						scannerPlugin->loadScanner(fb->getFileNameScanner(scannerPlugin));	
+					}
+					else {
+						if ( arg->coverageCorrectionID>0 ) {
+							PValueCorrection *pvalueCorrector= new PValueCorrection(arg->coverageCorrectionID, arg->verbose);
+							pvalueCorrector->readFiles(getFileBaseName(c),arg->coverageCorrectionPoint,true); // true means for plugin
+							pvalueCorrector->write("root/pvalueCorrection_plugin.root");
+							scannerPlugin->setPValueCorrector(pvalueCorrector);
+						}
+						make1dPluginScan(scannerPlugin, i);
+					}
 					if ( arg->plotpluginonly ){
 						make1dPluginOnlyPlot(scannerPlugin, i);
 					}
-					else{
+					else {
 						make1dPluginPlot(scannerPlugin, scannerProb, i);
 					}
 				}
+
+
 			}
 			// 2D SCANS
-			else if ( arg->var.size()==2 )
-			{
-				if ( arg->isAction("plot") ){
-					scannerPlugin->loadScanner(fb->getFileNameScanner(scannerPlugin));
-				}
-				else {
+			else if ( arg->var.size()==2 ) {
+				if ( arg->isAction("pluginbatch") ){
+					MethodProbScan *scannerProb = new MethodProbScan(c);
+					make2dProbScan(scannerProb, i);
+					MethodPluginScan *scannerPlugin = new MethodPluginScan(scannerProb);
 					make2dPluginScan(scannerPlugin, i);
 				}
-				if ( !arg->isAction("pluginbatch") ){
-					make2dPluginPlot(scannerPlugin);
+				else if ( arg->isAction("plugin") ){
+					MethodProbScan *scannerProb = new MethodProbScan(c);
+					if ( ! ( arg->isAction("plot") && arg->plotpluginonly ) ){
+						// we don't need the prob scanner if we just want to replot the plugin only
+						scannerProb->loadScanner(fb->getFileNameScanner(scannerProb));	
+					}
+					MethodPluginScan *scannerPlugin = new MethodPluginScan(scannerProb);
+					if ( arg->isAction("plot") ){
+						scannerPlugin->loadScanner(fb->getFileNameScanner(scannerPlugin));	
+					}
+					else {
+						make2dPluginScan(scannerPlugin, i);
+					}
+					if ( arg->plotpluginonly ){
+						make2dPluginOnlyPlot(scannerPlugin);
+					}
+					else {
+						make2dPluginPlot(scannerPlugin, scannerProb, i);
+					}
 				}
 			}
 		}

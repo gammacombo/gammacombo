@@ -452,7 +452,6 @@ int MethodPluginScan::scan1d(int nRun)
 	t.writeToFile(Form(dirname+"/scan1dPlugin_"+name+"_"+scanVar1+"_run%i.root", nRun));
 	delete myFit;
 	delete pb;
-	if (!(arg->isAction("pluginbatch"))) readScan1dTrees(nRun, nRun);
 	return 0;
 }
 
@@ -572,8 +571,10 @@ void MethodPluginScan::scan2d(int nRun)
 				}
 				else
 				{
-					printf("MethodPluginScan::scan2d() : loading start parameters from external 1-CL curve: "
-							"id=[%i,%i], val=[%f,%f]\n", iCurveRes1, iCurveRes2, scanpoint1, scanpoint2);
+					if ( arg->debug ){
+						printf("MethodPluginScan::scan2d() : loading start parameters from external 1-CL curve: "
+								"id=[%i,%i], val=[%f,%f]\n", iCurveRes1, iCurveRes2, scanpoint1, scanpoint2);
+					}
 					extCurveResult = new RooArgList(profileLH->curveResults2d[iCurveRes1][iCurveRes2]->floatParsFinal());
 					setParameters(w, parsName, extCurveResult);
 
@@ -656,7 +657,7 @@ void MethodPluginScan::scan2d(int nRun)
 					// status bar
 					if (((int)nStep % (int)(nTotalSteps/printFreq)) == 0)
 					{
-						cout << scanpoint1 << " " << scanpoint2 << " " << ((float)nStep/(float)nTotalSteps*100.) << "%" << endl;
+						cout << ((float)nStep/(float)nTotalSteps*100.) << "%" << endl;
 					}
 					nStep+=1;
 
@@ -725,9 +726,6 @@ void MethodPluginScan::scan2d(int nRun)
 	TFile *f = new TFile(Form("root/scan2dPlugin_"+name+"_"+scanVar1+"_"+scanVar2+"_run%i.root", nRun), "recreate");
 	t->Write();
 	f->Close();
-
-	// read back in to plot
-	readScan2dTrees(nRun, nRun);
 }
 
 ///
@@ -1013,7 +1011,8 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
 		// apply cuts
 		if ( ! (chi2minToy > -1e10 && chi2minGlobalToy > -1e10
 					&& chi2minToy-chi2minGlobalToy>0
-					&& fabs((chi2minGlobal_t-chi2minGlobal)/(chi2minGlobal_t+chi2minGlobal))<0.01 // reject files from other runs
+					// \todo uncomment this line once chi2minGlobal gets stored in the saved scanner
+					//&& fabs((chi2minGlobal_t-chi2minGlobal)/(chi2minGlobal_t+chi2minGlobal))<0.01 // reject files from other runs
 					&& chi2minToy<100
 					// && aNuisance < 0.95
 		       ))
@@ -1022,7 +1021,7 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
 			continue;
 		}
 
-		if ( arg && arg->controlplot )
+		if ( arg->controlplot )
 		{
 			TString filename = t->GetCurrentFile()->GetName();
 			filename.ReplaceAll(fileNameBase, "");
@@ -1048,8 +1047,7 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
 	cout << "MethodPluginScan::readScan2dTrees() : read an average of " << (nentries-nfailed)/nPoints2dx/nPoints2dy << " toys per scan point." << endl;
 	cout << "MethodPluginScan::readScan2dTrees() : fraction of failed toys: " << (double)nfailed/(double)nentries*100. << "%." << endl;
 
-	if ( arg && arg->controlplot )
-	{
+	if ( arg->controlplot ){
 		// make control plots
 		TCanvas *c1 = new TCanvas(getUniqueRootName(), "Plugin Control Plots", 1200, 900);
 		c1->Divide(4,3);
@@ -1071,9 +1069,8 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
 	}
 
 	// compute 1-CL
-	for (int i=1; i<=h_better->GetNbinsX(); i++)
-		for (int j=1; j<=h_better->GetNbinsY(); j++)
-		{
+	for (int i=1; i<=h_better->GetNbinsX(); i++){
+		for (int j=1; j<=h_better->GetNbinsY(); j++){
 			float nbetter = h_better->GetBinContent(i,j);
 			float nall = h_all->GetBinContent(i,j);
 			if ( nall == 0. ) continue;
@@ -1081,6 +1078,7 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
 			hCL2d->SetBinContent(i, j, f);
 			hCL2d->SetBinError(i, j, sqrt(f * (1.-f)/nall));
 		}
+	}
 }
 
 ///
@@ -1103,3 +1101,4 @@ double MethodPluginScan::importance(double pvalue)
 	if ( f<f1 ) return f1;
 	return f;
 }
+
