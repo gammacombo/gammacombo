@@ -477,6 +477,19 @@ void MethodPluginScan::scan2d(int nRun)
 	float min2 = hCL2d->GetYaxis()->GetXmin();
 	float max2 = hCL2d->GetYaxis()->GetXmax();
 
+	if ( arg->verbose ){
+		cout << endl;
+		cout << "Plugin configuration:" << endl;
+		cout << "  combination:           " << title << endl;
+		cout << "  scan variables:        x=" << scanVar1 << ", y=" << scanVar2 << endl;
+		cout << "  scan range:            x=[" << min1 << ", " << max1 << "], y=[" << min2 << ", " << max2 << "]" << endl;
+		cout << "  scan steps:            x=" << nPoints2dx << ", y=" << nPoints2dy << endl;
+		cout << "  par. evolution:        " << (parevolPLH!=profileLH?parevolPLH->getTitle():"same as combination") << endl;
+		cout << "  par. evol. scan steps: x=" << profileLH->curveResults2d[1].size() << ", y=" << profileLH->curveResults2d.size() << endl;
+		cout << "  nToys :                " << nToys << endl;
+		cout << endl;
+	}
+
 	RooRandom::randomGenerator()->SetSeed(0);
 
 	// Set up root tree.
@@ -532,16 +545,19 @@ void MethodPluginScan::scan2d(int nRun)
 	parsFunctionCall->add(*w->set(parsName));
 
 	// for the status bar
-	float nTotalSteps = nPoints2dx*nPoints2dy*nToys;
-	float nStep = 0;
-	float printFreq = nTotalSteps>150 ? 100 : nTotalSteps;
+	int allSteps = nPoints2dx*nPoints2dy*nToys;
+	ProgressBar *pb = new ProgressBar(arg, allSteps);
+
+	// limit number of warnings
+	int nWarnExtPointDiffer = 0;
+	int nWarnExtPointDifferMax = 10;
 
 	//
 	// 1. assume we have already the global minimum
 	//
 
 	// start scan
-	for ( int i1=0; i1<nPoints2dx; i1++ )
+	for ( int i1=0; i1<nPoints2dx; i1++ ) {
 		for ( int i2=0; i2<nPoints2dy; i2++ )
 		{
 			scanpoint1 = min1 + (max1-min1)*(double)i1/(double)nPoints2dx + hCL2d->GetXaxis()->GetBinWidth(1)/2.;
@@ -562,15 +578,13 @@ void MethodPluginScan::scan2d(int nRun)
 			// values.
 			RooArgList *extCurveResult = 0;
 			{
-				int iCurveRes1 = hCL2d->GetXaxis()->FindBin(scanpoint1)-1;
-				int iCurveRes2 = hCL2d->GetYaxis()->FindBin(scanpoint2)-1;
-				if ( !profileLH->curveResults2d[iCurveRes1][iCurveRes2] )
-				{
+				int iCurveRes1 = profileLH->getHCL2d()->GetXaxis()->FindBin(scanpoint1)-1;
+				int iCurveRes2 = profileLH->getHCL2d()->GetYaxis()->FindBin(scanpoint2)-1;
+				if ( !profileLH->curveResults2d[iCurveRes1][iCurveRes2] ) {
 					printf("MethodPluginScan::scan2d() : WARNING : curve result not found, "
 							"id=[%i,%i], val=[%f,%f]\n", iCurveRes1, iCurveRes2, scanpoint1, scanpoint2);
 				}
-				else
-				{
+				else {
 					if ( arg->debug ){
 						printf("MethodPluginScan::scan2d() : loading start parameters from external 1-CL curve: "
 								"id=[%i,%i], val=[%f,%f]\n", iCurveRes1, iCurveRes2, scanpoint1, scanpoint2);
@@ -584,17 +598,30 @@ void MethodPluginScan::scan2d(int nRun)
 					list.add(profileLH->curveResults2d[iCurveRes1][iCurveRes2]->constPars());
 					RooRealVar* var1 = (RooRealVar*)list.find(scanVar1);
 					RooRealVar* var2 = (RooRealVar*)list.find(scanVar2);
-					if ( var1 && var2 )
-					{
-						if ( fabs((scanpoint1-var1->getVal())/scanpoint1) > 0.01 )
-							cout << "MethodPluginScan::scan2d() : WARNING : scanpoint1 and external point differ by more than 1%: "
-											      << "scanpoint1=" << scanpoint1 << " var1=" << var1->getVal() << endl;
-						if ( fabs((scanpoint2-var2->getVal())/scanpoint2) > 0.01 )
-							cout << "MethodPluginScan::scan2d() : WARNING : scanpoint2 and external point differ by more than 1%: "
-											      << "scanpoint2=" << scanpoint2 << " var2=" << var2->getVal() << endl;
+					if ( var1 && var2 ) {
+						// print warnings
+						if ( fabs((scanpoint1-var1->getVal())/scanpoint1) > 0.01 || fabs((scanpoint2-var2->getVal())/scanpoint2) > 0.01 ) {
+								if ( nWarnExtPointDiffer<nWarnExtPointDifferMax || arg->debug ) {
+										if ( fabs((scanpoint1-var1->getVal())/scanpoint1) > 0.01 )
+												cout << "MethodPluginScan::scan2d() : WARNING : scanpoint1 and external point differ by more than 1%: "
+																					  << "scanpoint1=" << scanpoint1 << " var1=" << var1->getVal() << endl;
+										if ( fabs((scanpoint2-var2->getVal())/scanpoint2) > 0.01 )
+												cout << "MethodPluginScan::scan2d() : WARNING : scanpoint2 and external point differ by more than 1%: "
+																					  << "scanpoint2=" << scanpoint2 << " var2=" << var2->getVal() << endl;
+								}
+								if ( nWarnExtPointDiffer==0 ) {
+										cout << endl;
+										cout << "                                       Try using the same number of scan points for both Plugin and Prob." << endl;
+										cout << "                                       See --npoints, --npoints2dx, --npoints2dy, --npointstoy" << endl;
+										cout << endl;
+								}
+								if ( nWarnExtPointDiffer==nWarnExtPointDifferMax ) {
+										cout << "MethodPluginScan::scan2d() : WARNING : scanpoint1 and external point differ by more than 1%: [further warnings suppressed.]" << endl;
+								}
+								nWarnExtPointDiffer++;
+						}
 					}
-					else
-					{
+					else {
 						cout << "MethodPluginScan::scan2d() : WARNING : variable 1 or 2 not found"
 										      ", var1=" << scanVar1 << ", var2=" << scanVar1 << endl;
 						cout << "MethodPluginScan::scan2d() : Printout follows:" << endl;
@@ -627,99 +654,96 @@ void MethodPluginScan::scan2d(int nRun)
 
 			// save for root tree
 			TIterator* it6 = w->set(parsName)->createIterator();
-			while ( RooRealVar* p = (RooRealVar*)it6->Next() ) parametersPll[p->GetName()] = p->getVal();
-				delete it6;
+			while ( RooRealVar* p = (RooRealVar*)it6->Next() ) {
+				parametersPll[p->GetName()] = p->getVal();
+			}
+			delete it6;
 
-				// check if the external minimum was found correctly
-				if ( extCurveResult )
+			// check if the external minimum was found correctly
+			if ( extCurveResult ) {
+				TIterator* it = parsGlobalMinScanPoint->get(0)->createIterator();
+				while ( RooRealVar* p = (RooRealVar*)it->Next() )
 				{
-					TIterator* it = parsGlobalMinScanPoint->get(0)->createIterator();
-					while ( RooRealVar* p = (RooRealVar*)it->Next() )
-					{
-						if ( p->GetName()==scanVar1 ) continue; // not in extCurveResult
-						if ( p->GetName()==scanVar2 ) continue;
-						float extVal = ((RooRealVar*)extCurveResult->find(p->GetName()))->getVal();
-						float intVal = p->getVal();
-						if ( fabs(extVal-intVal)/intVal>0.02 )
-						{
-							cout << "MethodPluginScan::scan2d() : WARNING : External and refitted minimum differ by more than 2%:" << endl;
-							cout << p->GetName() << " ext=" << extVal << " int=" << intVal << endl;
-						}
+					if ( p->GetName()==scanVar1 ) continue; // not in extCurveResult
+					if ( p->GetName()==scanVar2 ) continue;
+					float extVal = ((RooRealVar*)extCurveResult->find(p->GetName()))->getVal();
+					float intVal = p->getVal();
+					if ( fabs(extVal-intVal)/intVal>0.02 ) {
+						cout << "MethodPluginScan::scan2d() : WARNING : External and refitted minimum differ by more than 2%:" << endl;
+						cout << p->GetName() << " ext=" << extVal << " int=" << intVal << endl;
 					}
-					delete it;
 				}
+				delete it;
+			}
 
-				// Draw toy datasets in advance. This is much faster.
-				RooDataSet *toyDataSet = w->pdf(pdfName)->generate(*w->set(obsName), nToys, AutoBinned(false));
+			// Draw toy datasets in advance. This is much faster.
+			RooDataSet *toyDataSet = w->pdf(pdfName)->generate(*w->set(obsName), nToys, AutoBinned(false));
 
-				for ( int j=0; j<nToys; j++ )
-				{
-					// status bar
-					if (((int)nStep % (int)(nTotalSteps/printFreq)) == 0)
-					{
-						cout << ((float)nStep/(float)nTotalSteps*100.) << "%" << endl;
-					}
-					nStep+=1;
+			for ( int j=0; j<nToys; j++ )
+			{
+				// status bar
+				pb->progress();
 
-					//
-					// 1. Load toy dataset
-					//
-					const RooArgSet* toyData = toyDataSet->get(j);
-					setParameters(w, obsName, toyData);
+				//
+				// 1. Load toy dataset
+				//
+				const RooArgSet* toyData = toyDataSet->get(j);
+				setParameters(w, obsName, toyData);
 
-					// save for root tree
-					TIterator* it4 = w->set(obsName)->createIterator();
-					while ( RooRealVar* p = (RooRealVar*)it4->Next() ) observablesTree[p->GetName()] = p->getVal();
-					delete it4;
+				// save for root tree
+				TIterator* it4 = w->set(obsName)->createIterator();
+				while ( RooRealVar* p = (RooRealVar*)it4->Next() ) observablesTree[p->GetName()] = p->getVal();
+				delete it4;
 
-					//
-					// 4. Fit the toy dataset to global minimum, varying all parameters.
-					//
-					par1->setConstant(false);
-					par2->setConstant(false);
-					par1->setVal(scanpoint1);
-					par2->setVal(scanpoint2);
-					RooFitResult *r;
-					if ( !arg->scanforce ) r = fitToMinBringBackAngles(w->pdf(pdfName), false, -1);
-					else                   r = fitToMinForce(w, name);
-					chi2minGlobalToy = r->minNll();
-					delete r;
+				//
+				// 4. Fit the toy dataset to global minimum, varying all parameters.
+				//
+				par1->setConstant(false);
+				par2->setConstant(false);
+				par1->setVal(scanpoint1);
+				par2->setVal(scanpoint2);
+				RooFitResult *r;
+				if ( !arg->scanforce ) r = fitToMinBringBackAngles(w->pdf(pdfName), false, -1);
+				else                   r = fitToMinForce(w, name);
+				chi2minGlobalToy = r->minNll();
+				delete r;
 
-					// save for root tree
-					scanbest1 = par1->getVal();
-					scanbest2 = par2->getVal();
-					TIterator* it3 = w->set(parsName)->createIterator();
-					while ( RooRealVar* p = (RooRealVar*)it3->Next() ) parametersFree[p->GetName()] = p->getVal();
-					delete it3;
+				// save for root tree
+				scanbest1 = par1->getVal();
+				scanbest2 = par2->getVal();
+				TIterator* it3 = w->set(parsName)->createIterator();
+				while ( RooRealVar* p = (RooRealVar*)it3->Next() ) parametersFree[p->GetName()] = p->getVal();
+				delete it3;
 
-					//
-					// 5. Fit the toy dataset to minimum, with par fixed to the scan value.
-					//
-					par1->setConstant(true);
-					par2->setConstant(true);
-					par1->setVal(scanpoint1);
-					par2->setVal(scanpoint2);
-					if ( !arg->scanforce ) r = fitToMinBringBackAngles(w->pdf(pdfName), false, -1);
-					else                   r = fitToMinForce(w, name);
-					chi2minToy = r->minNll();
-					delete r;
+				//
+				// 5. Fit the toy dataset to minimum, with par fixed to the scan value.
+				//
+				par1->setConstant(true);
+				par2->setConstant(true);
+				par1->setVal(scanpoint1);
+				par2->setVal(scanpoint2);
+				if ( !arg->scanforce ) r = fitToMinBringBackAngles(w->pdf(pdfName), false, -1);
+				else                   r = fitToMinForce(w, name);
+				chi2minToy = r->minNll();
+				delete r;
 
-					// save for tree
-					TIterator* it5 = w->set(parsName)->createIterator();
-					while ( RooRealVar* p = (RooRealVar*)it5->Next() ) parametersScan[p->GetName()] = p->getVal();
-					delete it5;
+				// save for tree
+				TIterator* it5 = w->set(parsName)->createIterator();
+				while ( RooRealVar* p = (RooRealVar*)it5->Next() ) parametersScan[p->GetName()] = p->getVal();
+				delete it5;
 
-					//
-					// 6. store
-					//
-					t->Fill();
-				}
+				//
+				// 6. store
+				//
+				t->Fill();
+			}
 
-				// reset
-				setParameters(w, parsName, parsFunctionCall->get(0));
-				setParameters(w, obsName, obsDataset->get(0));
-				delete toyDataSet;
+			// reset
+			setParameters(w, parsName, parsFunctionCall->get(0));
+			setParameters(w, obsName, obsDataset->get(0));
+			delete toyDataSet;
 		}
+	}
 
 	// save tree
 	cout << "MethodPluginScan::scan2d() : saving root tree ..." << endl;
