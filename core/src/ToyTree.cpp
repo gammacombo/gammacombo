@@ -372,52 +372,68 @@ void ToyTree::computeMinMaxN()
 {
 	if ( scanpointN!=-1 ) return;
 	assert(t);
-	vector<float> points;
-	float _min = 1e6;
-	float _max = -1e6;
+	vector<float> pointsx;
+	vector<float> pointsy;
+	float _minx =  1e6;
+	float _maxx = -1e6;
+	float _miny =  1e6;
+	float _maxy = -1e6;
 	t->SetBranchStatus("*", 0);
 	t->SetBranchStatus("scanpoint", 1);
+	t->SetBranchStatus("scanpointy", 1);
 	Long64_t nentries = t->GetEntries();
 	if ( nentries==0 ) return;
-	float printFreq = nentries>101 ? 100 : nentries;  // for the status bar
+	ProgressBar pb(arg, nentries);
+	cout << "ToyTree::computeMinMaxN() : reading toys ..." << endl;
 	for (Long64_t i = 0; i < nentries; i++){
 		// status bar
-		if ( (((int)i % (int)(nentries/printFreq)) == 0))
-			cout << "ToyTree::computeMinMaxN() : reading toys " << Form("%.0f",(float)i/(float)nentries*100.) << "%   \r" << flush;
+		pb.progress();
 		t->GetEntry(i);
 		// Cut away toys outside a certain range. Also check line 1167 in MethodPluginScan.cpp.
 		if ( arg->pluginPlotRangeMin!=arg->pluginPlotRangeMax
 				&& !(arg->pluginPlotRangeMin<scanpoint && scanpoint<arg->pluginPlotRangeMax) ) continue;
-		_min = TMath::Min(_min, scanpoint);
-		_max = TMath::Max(_max, scanpoint);
-		points.push_back(scanpoint);
+		_minx = TMath::Min(_minx, scanpoint);
+		_maxx = TMath::Max(_maxx, scanpoint);
+		_miny = TMath::Min(_miny, scanpointy);
+		_maxy = TMath::Max(_maxy, scanpointy);
+		pointsx.push_back(scanpoint);
+		pointsy.push_back(scanpointy);
 	}
-	cout << "ToyTree::computeMinMaxN() : reading toys done.      " << endl;
-	sort(points.begin(), points.end());
-	float binWidth = -1;
+	sort(pointsx.begin(), pointsx.end());
+	sort(pointsy.begin(), pointsy.end());
+	float binWidthx = -1;
+	float binWidthy = -1;
 	bool foundDifferentBinWidths = false;
-	float pointsPrev = points[0];
-	int _n = 1;
-	for ( unsigned int i=1; i<points.size(); i++ )
-	{
-		if ( points[i] != pointsPrev )
-		{
-			_n+=1;  //  count number of different scan points
-			if ( binWidth==-1 ) binWidth = fabs(points[i]-pointsPrev); // save first bin width so we can compare to others
+	float pointsPrevx = pointsx[0];
+	float pointsPrevy = pointsy[0];
+	int _nDifferentScanPointsx = 1;
+	int _nDifferentScanPointsy = 1;
+	for ( unsigned int i=1; i<pointsx.size(); i++ ) {
+		if ( pointsx[i] != pointsPrevx ) {
+			_nDifferentScanPointsx += 1;
+			if ( binWidthx == -1 ) binWidthx = fabs(pointsx[i]-pointsPrevx); // save first bin width so we can compare to others
 		}
-		if ( binWidth>-1 && fabs(points[i]-pointsPrev)>1e-6
-				&& fabs(binWidth-fabs(points[i]-pointsPrev))>1e-6 ) foundDifferentBinWidths = true;
-		pointsPrev = points[i];
+		if ( pointsy[i] != pointsPrevy ) {
+			_nDifferentScanPointsy += 1;
+			if ( binWidthy == -1 ) binWidthy = fabs(pointsy[i]-pointsPrevy); // save first bin width so we can compare to others
+		}
+		if ( binWidthx>-1 && fabs(pointsx[i]-pointsPrevx)>1e-6 && fabs(binWidthx-fabs(pointsx[i]-pointsPrevx))>1e-6 ) foundDifferentBinWidths = true;
+		if ( binWidthy>-1 && fabs(pointsy[i]-pointsPrevy)>1e-6 && fabs(binWidthy-fabs(pointsy[i]-pointsPrevy))>1e-6 ) foundDifferentBinWidths = true;
+		pointsPrevx = pointsx[i];
+		pointsPrevy = pointsy[i];
 	}
-	if ( arg->debug ) printf("ToyTree::computeMinMaxN() : min=%f, max=%f, n=%i\n", _min, _max, _n);
-	if ( foundDifferentBinWidths )
-	{
+	if ( arg->debug ) printf("ToyTree::computeMinMaxN() : min(x)=%f, max(x)=%f, n(x)=%i\n", _minx, _maxx, _nDifferentScanPointsx);
+	if ( arg->debug && arg->var.size()==2 ) printf("ToyTree::computeMinMaxN() : min(y)=%f, max(y)=%f, n(y)=%i\n", _miny, _maxy, _nDifferentScanPointsy);
+	if ( foundDifferentBinWidths ) {
 		cout << "\nToyTree::computeMinMaxN() : WARNING : Different bin widths found in the toys!" << endl;
-		cout <<   "ToyTree::computeMinMaxN() : WARNING : The 1-CL histogram will have binning problems.\n" << endl;
+		cout <<   "                                      The p-value histogram will have binning problems.\n" << endl;
 	}
-	scanpointMin = _min;
-	scanpointMax = _max;
-	scanpointN = _n;
+	scanpointMin = _minx;
+	scanpointMax = _maxx;
+	scanpointN = _nDifferentScanPointsx;
+	scanpointyMin = _miny;
+	scanpointyMax = _maxy;
+	scanpointyN = _nDifferentScanPointsy;
 	t->SetBranchStatus("*", 1);
 	open(); // this is a workaround to fix an issue where the branches get somehow disconnected by reconnecting them
 }
@@ -447,6 +463,33 @@ int ToyTree::getScanpointN()
 {
 	computeMinMaxN();
 	return scanpointN;
+}
+
+///
+/// Get minimum of scanpointy variable found in the TTree.
+///
+float ToyTree::getScanpointyMin()
+{
+	computeMinMaxN();
+	return scanpointyMin;
+}
+
+///
+/// Get maximum of scanpointy variable found in the TTree.
+///
+float ToyTree::getScanpointyMax()
+{
+	computeMinMaxN();
+	return scanpointyMax;
+}
+
+///
+/// Get number of different values of the scanpointy variable found in the TTree.
+///
+int ToyTree::getScanpointyN()
+{
+	computeMinMaxN();
+	return scanpointyN;
 }
 
 ///

@@ -19,6 +19,7 @@
 #include "Utils.h"
 #include "TPaveStats.h"
 #include "PDF_Generic_Abs.h"
+#include "ProgressBar.h"
 
 #include "MethodProbScan.h"
 
@@ -49,6 +50,9 @@ class ToyTree
 		float                   getScanpointMin();
 		float                   getScanpointMax();
 		int                     getScanpointN();
+		float                   getScanpointyMin();
+		float                   getScanpointyMax();
+		int                     getScanpointyN();
 		TTree*                  getTree(){return t;};
 		bool					isWsVarAngle(TString var);
 		void                    open();

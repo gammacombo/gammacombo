@@ -923,8 +923,16 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
 		cp.saveCtrlPlots();
 	}
 
+	float halfBinWidthx = (t.getScanpointMax()-t.getScanpointMin())/(float)t.getScanpointN()/2;
+	float halfBinWidthy = (t.getScanpointyMax()-t.getScanpointyMin())/(float)t.getScanpointyN()/2;
+	if ( t.getScanpointN()==1 )  halfBinWidthx = 1.;
+	if ( t.getScanpointyN()==1 ) halfBinWidthy = 1.;
+	if ( hCL2d ) delete hCL2d;
+	hCL2d          = new TH2F(getUniqueRootName(), "hCL2d", t.getScanpointN(), t.getScanpointMin()-halfBinWidthx, t.getScanpointMax()+halfBinWidthx,
+	                                                        t.getScanpointyN(), t.getScanpointyMin()-halfBinWidthx, t.getScanpointyMax()+halfBinWidthx);
 	TH2F *h_better = (TH2F*)hCL2d->Clone("h_better");
-	TH2F *h_all = (TH2F*)hCL2d->Clone("h_all");
+	TH2F *h_all    = (TH2F*)hCL2d->Clone("h_all");
+
 	Long64_t nentries = t.GetEntries();
 	Long64_t nfailed = 0;
 	Long64_t nwrongrun = 0;
