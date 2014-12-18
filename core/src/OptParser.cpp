@@ -17,71 +17,71 @@
 ///
 OptParser::OptParser()
 {
-  defineOptions();
+	defineOptions();
 
-  // always book these options
-  bookedOptions.push_back("debug");
-  bookedOptions.push_back("interactive");
-  bookedOptions.push_back("usage");
-  bookedOptions.push_back("var");
-  bookedOptions.push_back("verbose");
+	// always book these options
+	bookedOptions.push_back("debug");
+	bookedOptions.push_back("interactive");
+	bookedOptions.push_back("usage");
+	bookedOptions.push_back("var");
+	bookedOptions.push_back("verbose");
 
-  // Initialize the variables.
+	// Initialize the variables.
 	// For more complex arguments these are also the default values.
 	cacheStartingValues = false;
-  controlplot = false;
+	controlplot = false;
 	coverageCorrectionID = 0;
 	coverageCorrectionPoint = 0;
-  debug = false;
-  digits = -99;
-  enforcePhysRange = false;
-  group = "GammaCombo";
-  groupPos = "";
-  id = -99;
-  importance = false;
-  interactive = false;
-  jobdir = ".";
-  largest = false;
-  lightfiles = false;
-  nBBpoints = -99;
-  ndiv = 407;
-  ndivy = 407;
-  nosyst = false;
-  npoints1d = -99;
-  npoints2dx = -99;
-  npoints2dy = -99;
-  npointstoy = -99;
-  nrun = -99;
-  ntoys = -99;
+	debug = false;
+	digits = -99;
+	enforcePhysRange = false;
+	group = "GammaCombo";
+	groupPos = "";
+	id = -99;
+	importance = false;
+	interactive = false;
+	jobdir = ".";
+	largest = false;
+	lightfiles = false;
+	nBBpoints = -99;
+	ndiv = 407;
+	ndivy = 407;
+	nosyst = false;
+	npoints1d = -99;
+	npoints2dx = -99;
+	npoints2dy = -99;
+	npointstoy = -99;
+	nrun = -99;
+	ntoys = -99;
 	parsavefile = "";
-  parevol = false;
-  plotid = -99;
+	parevol = false;
+	plotid = -99;
 	plotlegend = true;
-  plotlegx = -99;
-  plotlegy = -99;
-  plotgroupx = -99;
-  plotgroupy = -99;
-  plotlog = false;
-  plotmagnetic = false;
-  plotnsigmacont = 2;
-  plotpluginonly = false;
-  plotprelim = false;
-  plotpulls = false;
-  plotsolutions = -99;
-  plotunoff = false;
-  pluginPlotRangeMax = -99;
-  pluginPlotRangeMin = -99;
-  intprob = false;
-  probforce = false;
-  probimprove = false;
+	plotlegx = -99;
+	plotlegy = -99;
+	plotgroupx = -99;
+	plotgroupy = -99;
+	plotlog = false;
+	plotmagnetic = false;
+	plotnsigmacont = 2;
+	plotpluginonly = false;
+	plotprelim = false;
+	plotpulls = false;
+	plotsolutions = -99;
+	plotunoff = false;
+	pluginPlotRangeMax = -99;
+	pluginPlotRangeMin = -99;
+	intprob = false;
+	probforce = false;
+	probimprove = false;
 	printcor = false;
-  scanforce = false;
-  scanrangeMax = -99;
-  scanrangeMin = -99;
-  scanrangeyMax = -99;
-  scanrangeyMin = -99;
-  usage = false;
-  verbose = false;
+	scanforce = false;
+	scanrangeMax = -99;
+	scanrangeMin = -99;
+	scanrangeyMax = -99;
+	scanrangeyMin = -99;
+	usage = false;
+	verbose = false;
 }
 
 ///
@@ -90,67 +90,67 @@ OptParser::OptParser()
 ///
 void OptParser::defineOptions()
 {
-  availableOptions.push_back("action");
-  availableOptions.push_back("asimov");
+	availableOptions.push_back("action");
+	availableOptions.push_back("asimov");
 	availableOptions.push_back("cacheStartingValues");
-  availableOptions.push_back("combid");
+	availableOptions.push_back("combid");
 	availableOptions.push_back("color");
-  availableOptions.push_back("controlplots");
+	availableOptions.push_back("controlplots");
 	availableOptions.push_back("covCorrect");
 	availableOptions.push_back("covCorrectPoint");
-  availableOptions.push_back("debug");
-  availableOptions.push_back("digits");
-  availableOptions.push_back("evol");
+	availableOptions.push_back("debug");
+	availableOptions.push_back("digits");
+	availableOptions.push_back("evol");
 	availableOptions.push_back("fix");
-  availableOptions.push_back("id");
-  availableOptions.push_back("importance");
-  availableOptions.push_back("interactive");
-  //availableOptions.push_back("jobdir");
-  availableOptions.push_back("jobs");
-  availableOptions.push_back("largest");
-  availableOptions.push_back("leg");
-  availableOptions.push_back("group");
-  availableOptions.push_back("grouppos");
-  availableOptions.push_back("lightfiles");
+	availableOptions.push_back("id");
+	availableOptions.push_back("importance");
+	availableOptions.push_back("interactive");
+	//availableOptions.push_back("jobdir");
+	availableOptions.push_back("jobs");
+	availableOptions.push_back("largest");
+	availableOptions.push_back("leg");
+	availableOptions.push_back("group");
+	availableOptions.push_back("grouppos");
+	availableOptions.push_back("lightfiles");
 	availableOptions.push_back("loadParamsFile");
-  availableOptions.push_back("log");
-  availableOptions.push_back("magnetic");
-  //availableOptions.push_back("nBBpoints");
-  availableOptions.push_back("nosyst");
-  availableOptions.push_back("npoints");
-  availableOptions.push_back("npoints2dx");
-  availableOptions.push_back("npoints2dy");
-  availableOptions.push_back("npointstoy");
-  availableOptions.push_back("nrun");
-  availableOptions.push_back("ntoys");
+	availableOptions.push_back("log");
+	availableOptions.push_back("magnetic");
+	//availableOptions.push_back("nBBpoints");
+	availableOptions.push_back("nosyst");
+	availableOptions.push_back("npoints");
+	availableOptions.push_back("npoints2dx");
+	availableOptions.push_back("npoints2dy");
+	availableOptions.push_back("npointstoy");
+	availableOptions.push_back("nrun");
+	availableOptions.push_back("ntoys");
 	availableOptions.push_back("parsavefile");
-  //availableOptions.push_back("pevid");
-  availableOptions.push_back("physrange");
-  availableOptions.push_back("plotid");
-  availableOptions.push_back("intprob");
-  availableOptions.push_back("po");
-  availableOptions.push_back("prelim");
-  availableOptions.push_back("probforce");
-  //availableOptions.push_back("probimprove");
-  availableOptions.push_back("ps");
-  availableOptions.push_back("pulls");
-  availableOptions.push_back("qh");
+	//availableOptions.push_back("pevid");
+	availableOptions.push_back("physrange");
+	availableOptions.push_back("plotid");
+	availableOptions.push_back("intprob");
+	availableOptions.push_back("po");
+	availableOptions.push_back("prelim");
+	availableOptions.push_back("probforce");
+	//availableOptions.push_back("probimprove");
+	availableOptions.push_back("ps");
+	availableOptions.push_back("pulls");
+	availableOptions.push_back("qh");
 	availableOptions.push_back("sn");
 	availableOptions.push_back("sn2d");
-  availableOptions.push_back("scanforce");
-  availableOptions.push_back("scanrange");
-  availableOptions.push_back("scanrangey");
-  availableOptions.push_back("title");
-  availableOptions.push_back("usage");
-  availableOptions.push_back("unoff");
-  availableOptions.push_back("var");
-  availableOptions.push_back("verbose");
-  //availableOptions.push_back("relation");
-  availableOptions.push_back("pluginplotrange");
-  availableOptions.push_back("plotnsigmacont");
-  availableOptions.push_back("plot2dcl");
-  availableOptions.push_back("ndiv");
-  availableOptions.push_back("ndivy");
+	availableOptions.push_back("scanforce");
+	availableOptions.push_back("scanrange");
+	availableOptions.push_back("scanrangey");
+	availableOptions.push_back("title");
+	availableOptions.push_back("usage");
+	availableOptions.push_back("unoff");
+	availableOptions.push_back("var");
+	availableOptions.push_back("verbose");
+	//availableOptions.push_back("relation");
+	availableOptions.push_back("pluginplotrange");
+	availableOptions.push_back("plotnsigmacont");
+	availableOptions.push_back("plot2dcl");
+	availableOptions.push_back("ndiv");
+	availableOptions.push_back("ndivy");
 	availableOptions.push_back("printcor");
 }
 
@@ -159,8 +159,8 @@ void OptParser::defineOptions()
 ///
 void OptParser::bookAllOptions()
 {
-  for ( int i=0; i<availableOptions.size(); i++ )
-    bookedOptions.push_back(availableOptions[i]);
+	for ( int i=0; i<availableOptions.size(); i++ )
+		bookedOptions.push_back(availableOptions[i]);
 }
 
 ///
@@ -169,20 +169,20 @@ void OptParser::bookAllOptions()
 void OptParser::bookPlottingOptions()
 {
 	bookedOptions.push_back("color");
-  bookedOptions.push_back("digits");
-  bookedOptions.push_back("leg");
-  bookedOptions.push_back("group");
-  bookedOptions.push_back("grouppos");
-  bookedOptions.push_back("log");
-  bookedOptions.push_back("magnetic");
-  bookedOptions.push_back("prelim");
-  bookedOptions.push_back("ps");
-  bookedOptions.push_back("plotnsigmacont");
-  bookedOptions.push_back("plot2dcl");
-  bookedOptions.push_back("ndiv");
-  bookedOptions.push_back("ndivy");
-  bookedOptions.push_back("title");
-  bookedOptions.push_back("unoff");
+	bookedOptions.push_back("digits");
+	bookedOptions.push_back("leg");
+	bookedOptions.push_back("group");
+	bookedOptions.push_back("grouppos");
+	bookedOptions.push_back("log");
+	bookedOptions.push_back("magnetic");
+	bookedOptions.push_back("prelim");
+	bookedOptions.push_back("ps");
+	bookedOptions.push_back("plotnsigmacont");
+	bookedOptions.push_back("plot2dcl");
+	bookedOptions.push_back("ndiv");
+	bookedOptions.push_back("ndivy");
+	bookedOptions.push_back("title");
+	bookedOptions.push_back("unoff");
 }
 
 ///
@@ -192,20 +192,20 @@ void OptParser::bookPlottingOptions()
 ///
 void OptParser::bookPluginOptions()
 {
-  bookedOptions.push_back("controlplots");
-  bookedOptions.push_back("id");
-  bookedOptions.push_back("importance");
-  bookedOptions.push_back("jobs");
-  bookedOptions.push_back("lightfiles");
-  //bookedOptions.push_back("nBBpoints");
-  bookedOptions.push_back("npointstoy");
-  bookedOptions.push_back("nrun");
-  bookedOptions.push_back("ntoys");
-  //bookedOptions.push_back("pevid");
-  bookedOptions.push_back("physrange");
-  bookedOptions.push_back("intprob");
-  bookedOptions.push_back("po");
-  bookedOptions.push_back("pluginplotrange");
+	bookedOptions.push_back("controlplots");
+	bookedOptions.push_back("id");
+	bookedOptions.push_back("importance");
+	bookedOptions.push_back("jobs");
+	bookedOptions.push_back("lightfiles");
+	//bookedOptions.push_back("nBBpoints");
+	bookedOptions.push_back("npointstoy");
+	bookedOptions.push_back("nrun");
+	bookedOptions.push_back("ntoys");
+	//bookedOptions.push_back("pevid");
+	bookedOptions.push_back("physrange");
+	bookedOptions.push_back("intprob");
+	bookedOptions.push_back("po");
+	bookedOptions.push_back("pluginplotrange");
 }
 
 ///
@@ -213,18 +213,18 @@ void OptParser::bookPluginOptions()
 ///
 void OptParser::bookProbOptions()
 {
-  bookedOptions.push_back("asimov");
-  bookedOptions.push_back("evol");
-  bookedOptions.push_back("npoints");
-  bookedOptions.push_back("npoints2dx");
-  bookedOptions.push_back("npoints2dy");
-  bookedOptions.push_back("physrange");
-  bookedOptions.push_back("sn");
-  bookedOptions.push_back("sn2d");
-  bookedOptions.push_back("probforce");
-  //bookedOptions.push_back("probimprove");
-  bookedOptions.push_back("pulls");
-  bookedOptions.push_back("scanforce");
+	bookedOptions.push_back("asimov");
+	bookedOptions.push_back("evol");
+	bookedOptions.push_back("npoints");
+	bookedOptions.push_back("npoints2dx");
+	bookedOptions.push_back("npoints2dy");
+	bookedOptions.push_back("physrange");
+	bookedOptions.push_back("sn");
+	bookedOptions.push_back("sn2d");
+	bookedOptions.push_back("probforce");
+	//bookedOptions.push_back("probimprove");
+	bookedOptions.push_back("pulls");
+	bookedOptions.push_back("scanforce");
 	bookedOptions.push_back("scanforce");
 }
 
@@ -246,11 +246,11 @@ void OptParser::bookFlowcontrolOptions()
 ///
 void OptParser::bookOption(TString opt)
 {
-  if ( !isIn<TString>(availableOptions, opt) ){
-    cout << "OptParser::bookOption() : ERROR : No such option! Check OptParser::defineOptions()." << endl;
-    return;
-  }
-  bookedOptions.push_back(opt);
+	if ( !isIn<TString>(availableOptions, opt) ){
+		cout << "OptParser::bookOption() : ERROR : No such option! Check OptParser::defineOptions()." << endl;
+		return;
+	}
+	bookedOptions.push_back(opt);
 }
 
 ///
@@ -258,7 +258,7 @@ void OptParser::bookOption(TString opt)
 ///
 bool OptParser::isAction(TString s)
 {
-  return isIn<TString>(action, s);
+	return isIn<TString>(action, s);
 }
 
 ///
@@ -266,7 +266,7 @@ bool OptParser::isAction(TString s)
 ///
 bool OptParser::isQuickhack(int id)
 {
-  return isIn<int>(qh, id);
+	return isIn<int>(qh, id);
 }
 
 ///
@@ -336,9 +336,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::ValueArg<int> ntoysArg("", "ntoys", "number of toy experiments per job. Default: 25", false, 25, "int");
 	TCLAP::ValueArg<int> nrunArg("", "nrun", "Number of toy run. To be used with --action pluginbatch.", false, 1, "int");
 	TCLAP::ValueArg<int> npointsArg("", "npoints", "Number of scan points used by the Prob method. \n"
-		"1D plots: Default 100 points. \n"
-		"2D plots: Default 50 points per axis. In the 2D case, equal number of points "
-		"for both axes are set. See also --npoints2dx and --npoints2dy.", false, -1, "int");
+			"1D plots: Default 100 points. \n"
+			"2D plots: Default 50 points per axis. In the 2D case, equal number of points "
+			"for both axes are set. See also --npoints2dx and --npoints2dy.", false, -1, "int");
 	TCLAP::ValueArg<int> npoints2dxArg("", "npoints2dx", "Number of 2D scan points, x axis. Default: 50", false, -1, "int");
 	TCLAP::ValueArg<int> npoints2dyArg("", "npoints2dy", "Number of 2D scan points, y axis. Default: 50", false, -1, "int");
 	TCLAP::ValueArg<int> npointstoyArg("", "npointstoy", "Number of scan points used by the plugin method. Default: 100", false, 100, "int");
@@ -823,22 +823,22 @@ void OptParser::parsePosition(TString parseMe, float &x, float &y, TString usage
 ///
 void OptParser::parseRange(TString parseMe, float &min, float &max)
 {
-  if ( parseMe==TString("default") ){
-    min = -99;
-    max = -99;
-  }
-  else {
-    TString minStr = parseMe;
-    TString maxStr = parseMe;
-    minStr.Replace(minStr.Index(":"), minStr.Sizeof(), "");
-    maxStr.Replace(0, maxStr.Index(":")+1, "");
-    min = minStr.Atof();
-    max = maxStr.Atof();
-  }
-  if ( min>max ){
-    cout << "Argument error: plugin plot range min>max." << endl;
-    exit(1);
-  }
+	if ( parseMe==TString("default") ){
+		min = -99;
+		max = -99;
+	}
+	else {
+		TString minStr = parseMe;
+		TString maxStr = parseMe;
+		minStr.Replace(minStr.Index(":"), minStr.Sizeof(), "");
+		maxStr.Replace(0, maxStr.Index(":")+1, "");
+		min = minStr.Atof();
+		max = maxStr.Atof();
+	}
+	if ( min>max ){
+		cout << "Argument error: plugin plot range min>max." << endl;
+		exit(1);
+	}
 }
 
 ///
