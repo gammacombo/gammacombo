@@ -7,11 +7,11 @@
 
 #include "OneMinusClPlot.h"
 
-OneMinusClPlot::OneMinusClPlot(OptParser *arg, TString name, TString title)
+	OneMinusClPlot::OneMinusClPlot(OptParser *arg, TString name, TString title)
 : OneMinusClPlotAbs(arg, name, title)
 {
-  plotPluginMarkers = true;
-  plotSolution      = true;
+	plotPluginMarkers = true;
+	plotSolution      = true;
 }
 
 ///
@@ -38,7 +38,7 @@ OneMinusClPlot::OneMinusClPlot(OptParser *arg, TString name, TString title)
 TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool filled)
 {
 	if ( arg->debug ) cout << "OneMinusClPlot::scan1dPlot() : plotting " 
-								  << s->getName() << " (" << s->getMethodName() << ")" << endl;
+															  << s->getName() << " (" << s->getMethodName() << ")" << endl;
 	bool plotPoints = ( s->getMethodName()=="Plugin" || s->getMethodName()=="BergerBoos" || s->getMethodName()=="GenericPlugin" ) && plotPluginMarkers;
 	TH1F *hCL = (TH1F*)s->getHCL()->Clone(getUniqueRootName());
 	// fix inf and nan entries
@@ -287,23 +287,23 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 void OneMinusClPlot::scan1dPlotSimple(MethodAbsScan* s, bool first)
 {
 	if ( arg->debug ) cout << "OneMinusClPlot::scan1dPlotSimple() : plotting " 
-	  << s->getName() << " (" << s->getMethodName() << ")" << endl;
-	
-  for ( int i=1; i<=s->getHCL()->GetNbinsX(); i++ ){
-    if ( s->getHCL()->GetBinContent(i)!=s->getHCL()->GetBinContent(i) 
-      || std::isinf(s->getHCL()->GetBinContent(i)) ) s->getHCL()->SetBinContent(i, 0.0);
-  }
-	
-  int color = s->getLineColor();
-  s->getHCL()->SetStats(0);
-  s->getHCL()->SetLineColor(color);
-  s->getHCL()->SetMarkerColor(color);
-  s->getHCL()->SetLineWidth(2);
-  s->getHCL()->SetLineStyle(s->getLineStyle());
-  s->getHCL()->SetMarkerColor(color);
+																	<< s->getName() << " (" << s->getMethodName() << ")" << endl;
+
+	for ( int i=1; i<=s->getHCL()->GetNbinsX(); i++ ){
+		if ( s->getHCL()->GetBinContent(i)!=s->getHCL()->GetBinContent(i) 
+				|| std::isinf(s->getHCL()->GetBinContent(i)) ) s->getHCL()->SetBinContent(i, 0.0);
+	}
+
+	int color = s->getLineColor();
+	s->getHCL()->SetStats(0);
+	s->getHCL()->SetLineColor(color);
+	s->getHCL()->SetMarkerColor(color);
+	s->getHCL()->SetLineWidth(2);
+	s->getHCL()->SetLineStyle(s->getLineStyle());
+	s->getHCL()->SetMarkerColor(color);
 	s->getHCL()->SetMarkerStyle(8);
 	s->getHCL()->SetMarkerSize(0.6);
-  s->getHCL()->GetYaxis()->SetNdivisions(407, true);
+	s->getHCL()->GetYaxis()->SetNdivisions(407, true);
 	s->getHCL()->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
 	s->getHCL()->GetYaxis()->SetTitle("1-CL");
 	s->getHCL()->GetXaxis()->SetLabelFont(font);
@@ -316,24 +316,24 @@ void OneMinusClPlot::scan1dPlotSimple(MethodAbsScan* s, bool first)
 	s->getHCL()->GetYaxis()->SetLabelSize(labelsize);
 	s->getHCL()->GetXaxis()->SetTitleSize(titlesize);
 	s->getHCL()->GetYaxis()->SetTitleSize(titlesize);
-  if ( plotLegend ){
-    if ( arg->plotlog ) s->getHCL()->GetYaxis()->SetRangeUser(1e-3,10);
-    else                s->getHCL()->GetYaxis()->SetRangeUser(0.0,1.3);
-  }
-  else{
-    if ( arg->plotlog ) s->getHCL()->GetYaxis()->SetRangeUser(1e-3,1);
-    else                s->getHCL()->GetYaxis()->SetRangeUser(0.0,1.0);
-  }
+	if ( plotLegend ){
+		if ( arg->plotlog ) s->getHCL()->GetYaxis()->SetRangeUser(1e-3,10);
+		else                s->getHCL()->GetYaxis()->SetRangeUser(0.0,1.3);
+	}
+	else{
+		if ( arg->plotlog ) s->getHCL()->GetYaxis()->SetRangeUser(1e-3,1);
+		else                s->getHCL()->GetYaxis()->SetRangeUser(0.0,1.0);
+	}
 	s->getHCL()->Draw(first?"":"same");
 }
 
 void OneMinusClPlot::drawVerticalLine(float x, int color, int style)
 {
-  TLine* l1 = new TLine(x, 0., x, 1.);
-  l1->SetLineWidth(1);
-  l1->SetLineColor(color);
-  l1->SetLineStyle(style);
-  l1->Draw();
+	TLine* l1 = new TLine(x, 0., x, 1.);
+	l1->SetLineWidth(1);
+	l1->SetLineColor(color);
+	l1->SetLineStyle(style);
+	l1->Draw();
 }
 
 ///
@@ -343,95 +343,95 @@ void OneMinusClPlot::drawVerticalLine(float x, int color, int style)
 ///
 void OneMinusClPlot::drawSolutions()
 {
-  c1->cd();
-  c1->Update();
+	c1->cd();
+	c1->Update();
 	float ymin = gPad->GetUymin();
 	float ymax = gPad->GetUymax();
 	float xmin = gPad->GetUxmin();
 	float xmax = gPad->GetUxmax();
 	int iDrawn = 0;
-	
-  for ( int i = 0; i < scanners.size(); i++ )
-  {
-    if ( scanners[i]->getDrawSolution()==0 ) continue;
-    if ( arg->debug ) cout << "OneMinusClPlot::drawSolutions() : adding solution for scanner " << i << " ..." << endl;
-    float xCentral = scanners[i]->getScanVar1Solution();
-    float xCLmin = scanners[i]->getCLintervalCentral().min;
-    float xCLmax = scanners[i]->getCLintervalCentral().max;
-    int color = scanners[i]->getTextColor();
-    
-    // draw vertical lines at central value and
-  	// upper/lower errors
-    drawVerticalLine(xCentral, color, kSolid);
-    drawVerticalLine(xCLmin, color, kDashed);
-    drawVerticalLine(xCLmax, color, kDashed);
 
-    // draw text box with numerical values after the lines,
-    // so that it doesn't get covered
-    
-  	// compute y position of the printed central value
-    float yNumberMin = 0.6 - 0.13*(float)iDrawn;
-    float yNumberMax = yNumberMin+0.1;
-    if ( arg->plotlog ) {
-      float yNumberMinFirst = 0.1;
-      if ( arg->isQuickhack(1) ) yNumberMinFirst = 0.175;
-      yNumberMin = yNumberMinFirst / pow(3.0, iDrawn); // move down by a constant shift on log scale
-      yNumberMax = yNumberMin*2.;
-    }
-    
-    // compute x position of the printed central value
-    float xNumberMin, xNumberMax;
-    if ( scanners[i]->getDrawSolution()==1 ) {
-      xNumberMin = xCentral+(xmax-xmin)*0.20; // draw at central value
-      xNumberMax = xCentral+(xmax-xmin)*0.0;
-    }
-    else if ( scanners[i]->getDrawSolution()==2 ) {
-      xNumberMin = xCLmin+(xmax-xmin)*0.0; // draw at left CL boundary
-      xNumberMax = xCLmin+(xmax-xmin)*0.25;
-    }
-    else if ( scanners[i]->getDrawSolution()==3 ) {
-      xNumberMin = xCLmax+(xmax-xmin)*0.0; // draw at right CL boundary
-      xNumberMax = xCLmax+(xmax-xmin)*0.25;
-    }
-    else if ( scanners[i]->getDrawSolution()==4 ) {
-      xNumberMin = xCLmin+(xmax-xmin)*-0.20; // draw a little left of the left CL boundary
-      xNumberMax = xCLmin+(xmax-xmin)*0.0;
-    }
-    else {
-      cout << "OneMinusClPlot::drawSolutions() : ERROR : --ps code " 
-				<< scanners[i]->getDrawSolution() << " not found! Use [0,1,2,3]." << endl;
-      continue;
-    }
-    
-    // move number a bit to the left so it doesn't cover the right plot border anymore
-    if ( arg->isQuickhack(4) )
-    {
-      xNumberMin -= (xmax-xmin)*0.225;
-      xNumberMax -= (xmax-xmin)*0.225;
-    }
-    
-  	TPaveText *t1 = new TPaveText(xNumberMin, yNumberMin, xNumberMax, yNumberMax, "BR");
-    t1->SetBorderSize(0);
-    t1->SetFillStyle(0);
-    t1->SetTextAlign(13);
-    t1->SetTextFont(font);
-    t1->SetTextColor(color);
-    if ( isAngle(scanners[i]->getScanVar1()) ){
-      xCentral = RadToDeg(xCentral);
-      xCLmin = RadToDeg(xCLmin);
-      xCLmax = RadToDeg(xCLmax);
-    }
-    Rounder myRounder(arg, xCLmin, xCLmax, xCentral);
-    int d = myRounder.getNsubdigits();
-    float xCentralRd = myRounder.central();
-    if ( arg->isQuickhack(3) ) xCentralRd += 180.; ///< see documentation of --qh option in OptParser.cpp
-    t1->AddText(Form("%.*f^{+%.*f}_{#font[122]{-}%.*f}", 
-      d, xCentralRd, 
-      d, myRounder.errPos(), 
-      d, myRounder.errNeg()))->SetTextSize(labelsize);
-    t1->Draw();
-    iDrawn += 1;
-  }  
+	for ( int i = 0; i < scanners.size(); i++ )
+	{
+		if ( scanners[i]->getDrawSolution()==0 ) continue;
+		if ( arg->debug ) cout << "OneMinusClPlot::drawSolutions() : adding solution for scanner " << i << " ..." << endl;
+		float xCentral = scanners[i]->getScanVar1Solution();
+		float xCLmin = scanners[i]->getCLintervalCentral().min;
+		float xCLmax = scanners[i]->getCLintervalCentral().max;
+		int color = scanners[i]->getTextColor();
+
+		// draw vertical lines at central value and
+		// upper/lower errors
+		drawVerticalLine(xCentral, color, kSolid);
+		drawVerticalLine(xCLmin, color, kDashed);
+		drawVerticalLine(xCLmax, color, kDashed);
+
+		// draw text box with numerical values after the lines,
+		// so that it doesn't get covered
+
+		// compute y position of the printed central value
+		float yNumberMin = 0.6 - 0.13*(float)iDrawn;
+		float yNumberMax = yNumberMin+0.1;
+		if ( arg->plotlog ) {
+			float yNumberMinFirst = 0.1;
+			if ( arg->isQuickhack(1) ) yNumberMinFirst = 0.175;
+			yNumberMin = yNumberMinFirst / pow(3.0, iDrawn); // move down by a constant shift on log scale
+			yNumberMax = yNumberMin*2.;
+		}
+
+		// compute x position of the printed central value
+		float xNumberMin, xNumberMax;
+		if ( scanners[i]->getDrawSolution()==1 ) {
+			xNumberMin = xCentral+(xmax-xmin)*0.20; // draw at central value
+			xNumberMax = xCentral+(xmax-xmin)*0.0;
+		}
+		else if ( scanners[i]->getDrawSolution()==2 ) {
+			xNumberMin = xCLmin+(xmax-xmin)*0.0; // draw at left CL boundary
+			xNumberMax = xCLmin+(xmax-xmin)*0.25;
+		}
+		else if ( scanners[i]->getDrawSolution()==3 ) {
+			xNumberMin = xCLmax+(xmax-xmin)*0.0; // draw at right CL boundary
+			xNumberMax = xCLmax+(xmax-xmin)*0.25;
+		}
+		else if ( scanners[i]->getDrawSolution()==4 ) {
+			xNumberMin = xCLmin+(xmax-xmin)*-0.20; // draw a little left of the left CL boundary
+			xNumberMax = xCLmin+(xmax-xmin)*0.0;
+		}
+		else {
+			cout << "OneMinusClPlot::drawSolutions() : ERROR : --ps code " 
+													   << scanners[i]->getDrawSolution() << " not found! Use [0,1,2,3]." << endl;
+			continue;
+		}
+
+		// move number a bit to the left so it doesn't cover the right plot border anymore
+		if ( arg->isQuickhack(4) )
+		{
+			xNumberMin -= (xmax-xmin)*0.225;
+			xNumberMax -= (xmax-xmin)*0.225;
+		}
+
+		TPaveText *t1 = new TPaveText(xNumberMin, yNumberMin, xNumberMax, yNumberMax, "BR");
+		t1->SetBorderSize(0);
+		t1->SetFillStyle(0);
+		t1->SetTextAlign(13);
+		t1->SetTextFont(font);
+		t1->SetTextColor(color);
+		if ( isAngle(scanners[i]->getScanVar1()) ){
+			xCentral = RadToDeg(xCentral);
+			xCLmin = RadToDeg(xCLmin);
+			xCLmax = RadToDeg(xCLmax);
+		}
+		Rounder myRounder(arg, xCLmin, xCLmax, xCentral);
+		int d = myRounder.getNsubdigits();
+		float xCentralRd = myRounder.central();
+		if ( arg->isQuickhack(3) ) xCentralRd += 180.; ///< see documentation of --qh option in OptParser.cpp
+		t1->AddText(Form("%.*f^{+%.*f}_{#font[122]{-}%.*f}", 
+					d, xCentralRd, 
+					d, myRounder.errPos(), 
+					d, myRounder.errNeg()))->SetTextSize(labelsize);
+		t1->Draw();
+		iDrawn += 1;
+	}  
 }
 
 ///
@@ -440,35 +440,35 @@ void OneMinusClPlot::drawSolutions()
 ///
 void OneMinusClPlot::drawCLguideLine(float pvalue)
 {
-  c1->cd();
-  c1->Update();
+	c1->cd();
+	c1->Update();
 	float ymin = gPad->GetUymin();
 	float ymax = gPad->GetUymax();
 	float xmin = gPad->GetUxmin();
 	float xmax = gPad->GetUxmax();
-	
-  float labelPos = xmin+(xmax-xmin)*0.10;
-  if ( arg->isQuickhack(2) ) labelPos = xmin+(xmax-xmin)*0.55;
-  float labelPosYmin = 0;
-  float labelPosYmax = 0;
-  
-  if ( arg->plotlog ) {
-    labelPosYmin = pvalue;
-    labelPosYmax = labelPosYmin * 2.;
-  }
-  else {
-    labelPosYmin = pvalue + 0.02;
-    labelPosYmax = labelPosYmin + 0.05;
-  }
-  
-  TPaveText *t = new TPaveText(labelPos, labelPosYmin, labelPos+(xmax-xmin)*0.5, labelPosYmax, "BR");
-  t->SetBorderSize(0);
-  t->SetFillStyle(0);
-  t->SetTextAlign(12);
-  t->SetTextFont(font);
-  t->SetTextSize(labelsize);
-  t->AddText(Form("%.1f%%",(1.-pvalue)*100.));
-  t->Draw();
+
+	float labelPos = xmin+(xmax-xmin)*0.10;
+	if ( arg->isQuickhack(2) ) labelPos = xmin+(xmax-xmin)*0.55;
+	float labelPosYmin = 0;
+	float labelPosYmax = 0;
+
+	if ( arg->plotlog ) {
+		labelPosYmin = pvalue;
+		labelPosYmax = labelPosYmin * 2.;
+	}
+	else {
+		labelPosYmin = pvalue + 0.02;
+		labelPosYmax = labelPosYmin + 0.05;
+	}
+
+	TPaveText *t = new TPaveText(labelPos, labelPosYmin, labelPos+(xmax-xmin)*0.5, labelPosYmax, "BR");
+	t->SetBorderSize(0);
+	t->SetFillStyle(0);
+	t->SetTextAlign(12);
+	t->SetTextFont(font);
+	t->SetTextSize(labelsize);
+	t->AddText(Form("%.1f%%",(1.-pvalue)*100.));
+	t->Draw();
 
 	TLine* l = new TLine(xmin, pvalue, xmax, pvalue);
 	l->SetLineWidth(1);
@@ -484,10 +484,10 @@ void OneMinusClPlot::drawCLguideLines()
 {
 	drawCLguideLine(0.3173);
 	drawCLguideLine(4.55e-2);
-  if ( arg->plotlog ){
-    drawCLguideLine(2.7e-3);
-    // drawCLguideLine(6.3e-5);
-  }
+	if ( arg->plotlog ){
+		drawCLguideLine(2.7e-3);
+		// drawCLguideLine(6.3e-5);
+	}
 }
 
 
