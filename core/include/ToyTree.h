@@ -1,7 +1,7 @@
 /*
  * Gamma Combination
  * Author: Till Moritz Karbach, moritz.karbach@cern.ch
- * Date: August 2012
+ * Date: Dec 2014
  *
  */
 
@@ -27,8 +27,7 @@ using namespace Utils;
 
 ///
 /// Interface class for the root trees that are written
-/// by the Plugin method and related functions. Also makes
-/// control plots for the plugin toys.
+/// by the Plugin method and related functions.
 ///
 class ToyTree
 {
@@ -43,20 +42,16 @@ class ToyTree
 		void                    activateBranch(const TString& bName);
 		void                    fill();
 		void                    init();
-		void                    ctrlPlotChi2Distribution();
-		void                    ctrlPlotChi2Parabola();
-		void                    ctrlPlotNuisances();
-		void                    ctrlPlotObservables();
-		void                    ctrlPlotSummary();
-		void                    ctrlPlotMore(MethodProbScan* profileLH);
+		OptParser*              getArg(){return arg;};
 		Long64_t                GetEntries();
 		void                    GetEntry(Long64_t i);
+		inline TString          getName(){return name;};
 		float                   getScanpointMin();
 		float                   getScanpointMax();
 		int                     getScanpointN();
 		TTree*                  getTree(){return t;};
+		bool					isWsVarAngle(TString var);
 		void                    open();
-		void                    saveCtrlPlots();
 		void                    setCombiner(Combiner* c);
 		void                    storeParsPll();
 		void                    storeParsFree();
@@ -96,10 +91,6 @@ class ToyTree
 	private:
 
 		void         computeMinMaxN();
-		void         makePlotsNice(TString htemp="htemp", TString Graph="Graph");
-		TCanvas*     selectNewCanvas(TString title);
-		TVirtualPad* selectNewPad();
-		void         updateCurrentCanvas();
 		void         initMembers(TChain* t=0);
 		Combiner *comb;         ///< combination bringing in the arg, workspace, and names
 		OptParser *arg;         ///< command line arguments
@@ -121,9 +112,6 @@ class ToyTree
 		float scanpointMax;     ///< maximum of the scanpoint, computed by computeMinMaxN().
 		int   scanpointN;       ///< number of different values of the scanpoint, computed by computeMinMaxN().
 
-		vector<TCanvas*> ctrlPlotCanvases;  ///< Pointers to the canvases of the control plots, see selectNewCanvas().
-		int ctrlPadId;                      ///< ID of currently selected pad, see selectNewPad().
-		TCut ctrlPlotCuts;                  ///< Cuts that are applied to all control plots.
 		bool storeObs;                      ///< Boolean flag to control storing ToyTree observables, can't store these for GenericScans
 		bool storeTh;                       ///< Boolean flag to control storing ToyTree theory parameters. Not needed in GenericScans 
 };

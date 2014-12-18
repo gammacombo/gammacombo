@@ -210,15 +210,15 @@ void MethodBergerBoosScan::readScan1dTrees(int runMin, int runMax){
 	}
 	ToyTree t(combiner, c);
 	t.open();
-	if ( arg->controlplot )
-	{
-		if ( arg->plotid==0 || arg->plotid==1 ) t.ctrlPlotMore(profileLH);
-		if ( arg->plotid==0 || arg->plotid==2 ) t.ctrlPlotSummary();
-		if ( arg->plotid==0 || arg->plotid==3 ) t.ctrlPlotNuisances();
-		if ( arg->plotid==0 || arg->plotid==4 ) t.ctrlPlotObservables();
-		if ( arg->plotid==0 || arg->plotid==5 ) t.ctrlPlotChi2Distribution();
-		if ( arg->plotid==0 || arg->plotid==6 ) t.ctrlPlotChi2Parabola();
-		t.saveCtrlPlots();
+	if ( arg->controlplot ) {
+		ControlPlots cp(&t);
+		if ( arg->plotid==0 || arg->plotid==1 ) cp.ctrlPlotMore(profileLH);
+		if ( arg->plotid==0 || arg->plotid==2 ) cp.ctrlPlotSummary();
+		if ( arg->plotid==0 || arg->plotid==3 ) cp.ctrlPlotNuisances();
+		if ( arg->plotid==0 || arg->plotid==4 ) cp.ctrlPlotObservables();
+		if ( arg->plotid==0 || arg->plotid==5 ) cp.ctrlPlotChi2Distribution();
+		if ( arg->plotid==0 || arg->plotid==6 ) cp.ctrlPlotChi2Parabola();
+		cp.saveCtrlPlots();
 	}
 
 	delete hCL;
