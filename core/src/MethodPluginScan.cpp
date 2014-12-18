@@ -283,6 +283,7 @@ void MethodPluginScan::computePvalue1d(RooSlimFitResult* plhScan, double chi2min
 
 	for ( int j = 0; j<nActualToys; j++ )
 	{
+		// status bar
 		pb->progress();
 
 		//
@@ -363,7 +364,7 @@ double MethodPluginScan::getPvalue1d(RooSlimFitResult* plhScan, double chi2minGl
 	// compute p-value
 	if ( arg->controlplot ) {
 		ControlPlots cp(myTree);
-		cp.ctrlPlotSummary();
+		cp.ctrlPlotChi2();
 	}
 	TH1F *h = analyseToys(myTree, id);
 	float scanpoint = plhScan->getParVal(scanVar1);
@@ -398,6 +399,7 @@ int MethodPluginScan::scan1d(int nRun)
 
 	// Define scan parameter and scan range.
 	RooRealVar *par = w->var(scanVar1);
+	assert(par);
 	float min = hCL->GetXaxis()->GetXmin();
 	float max = hCL->GetXaxis()->GetXmax();
 
@@ -466,7 +468,7 @@ int MethodPluginScan::scan1d(int nRun)
 ///
 void MethodPluginScan::scan2d(int nRun)
 {
-	cout << "MethodPluginScan::scan2d() : starting ..." << endl;
+	RooRandom::randomGenerator()->SetSeed(0);
 
 	// Set limit to all parameters.
 	combiner->loadParameterLimits();
@@ -494,59 +496,16 @@ void MethodPluginScan::scan2d(int nRun)
 		cout << endl;
 	}
 
-	RooRandom::randomGenerator()->SetSeed(0);
-
 	// Set up root tree.
-	TTree *t = new TTree("plugin", "plugin");
-	float scanpoint1;
-	float scanpoint2;
-	float chi2min;
-	float chi2minGlobal_t = chi2minGlobal;
-	float chi2minToy;
-	float chi2minGlobalToy;
-	float scanbest1;
-	float scanbest2;
-
-	t->Branch("scanpoint1", &scanpoint1, "scanpoint1/F");
-	t->Branch("scanpoint2", &scanpoint2, "scanpoint2/F");
-	t->Branch("chi2minGlobal", &chi2minGlobal_t, "chi2minGlobal/F");
-	t->Branch("chi2min", &chi2min, "chi2min/F");
-	t->Branch("chi2minToy", &chi2minToy, "chi2minToy/F");
-	t->Branch("chi2minGlobalToy", &chi2minGlobalToy, "chi2minGlobalToy/F");
-	t->Branch("scanbest1", &scanbest1, "scanbest1/F");
-	t->Branch("scanbest2", &scanbest2, "scanbest2/F");
-	t->Branch("nrun", &nRun, "nrun/F");
-
-	map<string,float> parametersScan;
-	map<string,float> parametersFree;
-	map<string,float> parametersPll;
-	TIterator* it2 = w->set(parsName)->createIterator();
-	while ( RooRealVar* p = (RooRealVar*)it2->Next() )
-	{
-		parametersScan.insert(pair<string,float>(p->GetName(),p->getVal()));
-		t->Branch(TString(p->GetName())+"_scan", &parametersScan[p->GetName()], TString(p->GetName())+"_scan/F");
-		parametersFree.insert(pair<string,float>(p->GetName(),p->getVal()));
-		t->Branch(TString(p->GetName())+"_free", &parametersFree[p->GetName()], TString(p->GetName())+"_free/F");
-		parametersPll.insert(pair<string,float>(p->GetName(),p->getVal()));
-		t->Branch(TString(p->GetName())+"_start", &parametersPll[p->GetName()], TString(p->GetName())+"_start/F");
-	}
-	delete it2;
-
-	// add observables (toys) to ttree
-	map<string,float> observablesTree;
-	TIterator* it3 = w->set(obsName)->createIterator();
-	while ( RooRealVar* p = (RooRealVar*)it3->Next() )
-	{
-		observablesTree.insert(pair<string,float>(p->GetName(),p->getVal()));
-		t->Branch(TString(p->GetName()), &observablesTree[p->GetName()], TString(p->GetName())+"/F");
-	}
-	delete it3;
+	ToyTree t(combiner);
+	t.init();
+	t.nrun = nRun;
 
 	// Save parameter values that were active at function
 	// call. We'll reset them at the end to be transparent
 	// to the outside.
-	RooDataSet* parsFunctionCall = new RooDataSet("parsFunctionCall", "parsFunctionCall", *w->set(parsName));
-	parsFunctionCall->add(*w->set(parsName));
+	FitResultCache frCache(arg);
+	frCache.storeParsAtFunctionCall(w->set(parsName));
 
 	// for the status bar
 	int allSteps = nPoints2dx*nPoints2dy*nToys;
@@ -561,25 +520,24 @@ void MethodPluginScan::scan2d(int nRun)
 	//
 
 	// start scan
+	cout << "MethodPluginScan::scan2d() : starting ..." << endl;
 	for ( int i1=0; i1<nPoints2dx; i1++ ) {
 		for ( int i2=0; i2<nPoints2dy; i2++ )
 		{
-			scanpoint1 = min1 + (max1-min1)*(double)i1/(double)nPoints2dx + hCL2d->GetXaxis()->GetBinWidth(1)/2.;
-			scanpoint2 = min2 + (max2-min2)*(double)i2/(double)nPoints2dy + hCL2d->GetYaxis()->GetBinWidth(1)/2.;
+			float scanpoint1 = min1 + (max1-min1)*(double)i1/(double)nPoints2dx + hCL2d->GetXaxis()->GetBinWidth(1)/2.;
+			float scanpoint2 = min2 + (max2-min2)*(double)i2/(double)nPoints2dy + hCL2d->GetYaxis()->GetBinWidth(1)/2.;
+			t.scanpoint = scanpoint1;
+			t.scanpointy = scanpoint2;
 
 			// don't scan in unphysical region
 			if ( scanpoint1 < par1->getMin() || scanpoint1 > par1->getMax() ) continue;
 			if ( scanpoint2 < par2->getMin() || scanpoint2 > par2->getMax() ) continue;
 
-			//
-			// 2. for each value of par, find best values
-			//    for the remaining nuisance parameters, and the according minimal
-			//    chi2. Calculate the difference to the minimum obtained in step 1.
-			//
+			// Get the global chi2 minimum from the fit to data.
+			t.chi2minGlobal = profileLH->getChi2minGlobal();
 
-			// If we have the externally provided results for each
-			// point of the profile likelihood curve, we'll use those as start
-			// values.
+			// Get nuisances. This is the point in parameter space where
+			// the toys need to be generated.
 			RooArgList *extCurveResult = 0;
 			{
 				int iCurveRes1 = profileLH->getHCL2d()->GetXaxis()->FindBin(scanpoint1)-1;
@@ -595,6 +553,7 @@ void MethodPluginScan::scan2d(int nRun)
 					}
 					extCurveResult = new RooArgList(profileLH->curveResults2d[iCurveRes1][iCurveRes2]->floatParsFinal());
 					setParameters(w, parsName, extCurveResult);
+					t.chi2min = profileLH->curveResults2d[iCurveRes1][iCurveRes2]->minNll();
 
 					// check if the scan variable here differs from that of
 					// the external curve
@@ -636,52 +595,17 @@ void MethodPluginScan::scan2d(int nRun)
 			}
 
 			// set and fix scan point
-			par1->setConstant(true);
-			par2->setConstant(true);
 			par1->setVal(scanpoint1);
 			par2->setVal(scanpoint2);
+			par1->setConstant(true);
+			par2->setConstant(true);
 
-			//
-			// Get global minimum at scan point. This is the point in parameter space where
-			// the toys need to be generated. We just fit to the minimum: If the minimum is
-			// provided externally (see above) it will confirm it. If not, it will (hopefully)
-			// find the global minimum on its own (dangerous!).
-			//
-			RooFitResult *r;
-			if ( !arg->scanforce ) r = fitToMinBringBackAngles(w->pdf(pdfName), false, -1);
-			else                   r = fitToMinForce(w, name);
-			chi2min = r->minNll();
-			delete r;
-
-			RooDataSet* parsGlobalMinScanPoint = new RooDataSet("parsGlobalMinScanPoint", "parsGlobalMinScanPoint", *w->set(parsName));
-			parsGlobalMinScanPoint->add(*w->set(parsName));
-
-			// save for root tree
-			TIterator* it6 = w->set(parsName)->createIterator();
-			while ( RooRealVar* p = (RooRealVar*)it6->Next() ) {
-				parametersPll[p->GetName()] = p->getVal();
-			}
-			delete it6;
-
-			// check if the external minimum was found correctly
-			if ( extCurveResult ) {
-				TIterator* it = parsGlobalMinScanPoint->get(0)->createIterator();
-				while ( RooRealVar* p = (RooRealVar*)it->Next() )
-				{
-					if ( p->GetName()==scanVar1 ) continue; // not in extCurveResult
-					if ( p->GetName()==scanVar2 ) continue;
-					float extVal = ((RooRealVar*)extCurveResult->find(p->GetName()))->getVal();
-					float intVal = p->getVal();
-					if ( fabs(extVal-intVal)/intVal>0.02 ) {
-						cout << "MethodPluginScan::scan2d() : WARNING : External and refitted minimum differ by more than 2%:" << endl;
-						cout << p->GetName() << " ext=" << extVal << " int=" << intVal << endl;
-					}
-				}
-				delete it;
-			}
+			// save nuisances to ToyTree tree
+			t.storeParsPll();
+			t.storeTheory();
 
 			// Draw toy datasets in advance. This is much faster.
-			RooDataSet *toyDataSet = w->pdf(pdfName)->generate(*w->set(obsName), nToys, AutoBinned(false));
+			RooDataSet *toyDataSet = generateToys(nToys);
 
 			for ( int j=0; j<nToys; j++ )
 			{
@@ -693,67 +617,57 @@ void MethodPluginScan::scan2d(int nRun)
 				//
 				const RooArgSet* toyData = toyDataSet->get(j);
 				setParameters(w, obsName, toyData);
-
-				// save for root tree
-				TIterator* it4 = w->set(obsName)->createIterator();
-				while ( RooRealVar* p = (RooRealVar*)it4->Next() ) observablesTree[p->GetName()] = p->getVal();
-				delete it4;
+				t.storeObservables();
 
 				//
-				// 4. Fit the toy dataset to global minimum, varying all parameters.
+				// 2. scan fit
 				//
-				par1->setConstant(false);
-				par2->setConstant(false);
 				par1->setVal(scanpoint1);
 				par2->setVal(scanpoint2);
+				par1->setConstant(true);
+				par2->setConstant(true);
 				RooFitResult *r;
 				if ( !arg->scanforce ) r = fitToMinBringBackAngles(w->pdf(pdfName), false, -1);
 				else                   r = fitToMinForce(w, name);
-				chi2minGlobalToy = r->minNll();
+				t.chi2minToy = r->minNll();
+				t.statusScan = 0;
+				t.storeParsScan();
 				delete r;
 
-				// save for root tree
-				scanbest1 = par1->getVal();
-				scanbest2 = par2->getVal();
-				TIterator* it3 = w->set(parsName)->createIterator();
-				while ( RooRealVar* p = (RooRealVar*)it3->Next() ) parametersFree[p->GetName()] = p->getVal();
-				delete it3;
-
 				//
-				// 5. Fit the toy dataset to minimum, with par fixed to the scan value.
+				// 3. free fit
 				//
-				par1->setConstant(true);
-				par2->setConstant(true);
 				par1->setVal(scanpoint1);
 				par2->setVal(scanpoint2);
+				par1->setConstant(false);
+				par2->setConstant(false);
 				if ( !arg->scanforce ) r = fitToMinBringBackAngles(w->pdf(pdfName), false, -1);
 				else                   r = fitToMinForce(w, name);
-				chi2minToy = r->minNll();
+				t.chi2minGlobalToy = r->minNll();
+				t.statusFree = 0;
+				t.scanbest = ((RooRealVar*)w->set(parsName)->find(scanVar1))->getVal();
+				t.scanbesty = ((RooRealVar*)w->set(parsName)->find(scanVar2))->getVal();
+				t.storeParsFree();
 				delete r;
 
-				// save for tree
-				TIterator* it5 = w->set(parsName)->createIterator();
-				while ( RooRealVar* p = (RooRealVar*)it5->Next() ) parametersScan[p->GetName()] = p->getVal();
-				delete it5;
-
 				//
-				// 6. store
+				// 4. store
 				//
-				t->Fill();
+				t.fill();
 			}
 
 			// reset
-			setParameters(w, parsName, parsFunctionCall->get(0));
+			setParameters(w, parsName, frCache.getParsAtFunctionCall());
 			setParameters(w, obsName, obsDataset->get(0));
 			delete toyDataSet;
 		}
 	}
 
 	// save tree
-	cout << "MethodPluginScan::scan2d() : saving root tree ..." << endl;
-	TFile *f = new TFile(Form("root/scan2dPlugin_"+name+"_"+scanVar1+"_"+scanVar2+"_run%i.root", nRun), "recreate");
-	t->Write();
-	f->Close();
+	TString dirname = "root/scan2dPlugin_"+name+"_"+scanVar1+"_"+scanVar2;
+	system("mkdir -p "+dirname);
+	t.writeToFile(Form(dirname+"/scan2dPlugin_"+name+"_"+scanVar1+"_"+scanVar2+"_run%i.root", nRun));
+	delete pb;
 }
 
 ///
@@ -854,12 +768,12 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
 	}
 
 	if ( id==-1 ){
-		cout << "MethodPluginScan::analyseToys() : read an average of "
-							   << (nentries-nfailed)/nPoints1d << " toys per scan point." << endl;
+		cout << "MethodPluginScan::analyseToys() : read an average of ";
+		cout << (nentries-nfailed)/nPoints1d << " toys per scan point." << endl;
 	}
 	else{
-		cout << "MethodPluginScan::analyseToys() : read "
-							   << ntoysid << " toys at ID " << id << endl;
+		cout << "MethodPluginScan::analyseToys() : read ";
+		cout << ntoysid << " toys at ID " << id << endl;
 	}
 	cout << "MethodPluginScan::analyseToys() : fraction of failed toys: " << (double)nfailed/(double)nentries*100. << "%." << endl;
 	cout << "MethodPluginScan::analyseToys() : fraction of background toys: " << h_background->GetEntries()/(double)nentries*100. << "%." << endl;
@@ -913,6 +827,9 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
 /// Read in the TTrees that were produced by scan1d().
 /// Fills the 1-CL histogram.
 ///
+/// \param runMin Number of first root file to read.
+/// \param runMax Number of lase root file to read.
+///
 void MethodPluginScan::readScan1dTrees(int runMin, int runMax)
 {
 	TChain *c = new TChain("plugin");
@@ -932,9 +849,7 @@ void MethodPluginScan::readScan1dTrees(int runMin, int runMax)
 		nFilesRead += 1;
 	}
 	cout << "MethodPluginScan::readScan1dTrees() : read files: " << nFilesRead;
-	cout << ", missing files: " << nFilesMissing;
-	cout << "                                                               ";
-	cout << "                    " << endl; // many spaces to overwrite the above \r
+	cout << ", missing files: " << nFilesMissing << endl;
 	cout << "MethodPluginScan::readScan1dTrees() : " << fileNameBase+"*.root" << endl;
 	if ( nFilesRead==0 ){
 		cout << "MethodPluginScan::readScan1dTrees() : no files read!" << endl;
@@ -947,11 +862,12 @@ void MethodPluginScan::readScan1dTrees(int runMin, int runMax)
 	if ( arg->controlplot ) {
 		ControlPlots cp(&t);
 		if ( arg->plotid==0 || arg->plotid==1 ) cp.ctrlPlotMore(profileLH);
-		if ( arg->plotid==0 || arg->plotid==2 ) cp.ctrlPlotSummary();
+		if ( arg->plotid==0 || arg->plotid==2 ) cp.ctrlPlotChi2();
 		if ( arg->plotid==0 || arg->plotid==3 ) cp.ctrlPlotNuisances();
 		if ( arg->plotid==0 || arg->plotid==4 ) cp.ctrlPlotObservables();
 		if ( arg->plotid==0 || arg->plotid==5 ) cp.ctrlPlotChi2Distribution();
 		if ( arg->plotid==0 || arg->plotid==6 ) cp.ctrlPlotChi2Parabola();
+		if ( arg->plotid==0 || arg->plotid==7 ) cp.ctrlPlotPvalue();
 		cp.saveCtrlPlots();
 	}
 
@@ -962,139 +878,114 @@ void MethodPluginScan::readScan1dTrees(int runMin, int runMax)
 ///
 /// Read in the TTrees that were produced by scan2d().
 /// Fills the 1-CL histogram.
-/// \todo This is very outdated. Use Fitter and ToyTree classes at least!
+/// 
 /// \param runMin Number of first root file to read.
 /// \param runMax Number of lase root file to read.
 ///
 void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
 {
-	TChain *t = new TChain("plugin");
+	TChain *chain = new TChain("plugin");
 	int nFilesMissing = 0;
 	int nFilesRead = 0;
-	TString fileNameBase = "root/scan2dPlugin_"+name+"_"+scanVar1+"_"+scanVar2+"_run";
-	for (int i=runMin; i<=runMax; i++)
-	{
+	TString dirname = "root/scan2dPlugin_"+name+"_"+scanVar1+"_"+scanVar2;
+	TString fileNameBase = dirname+"/scan2dPlugin_"+name+"_"+scanVar1+"_"+scanVar2+"_run";
+	for (int i=runMin; i<=runMax; i++) {
 		TString file = Form(fileNameBase+"%i.root", i);
-		if ( !FileExists(file) )
-		{
+		if ( !FileExists(file) ) {
 			if ( arg->verbose ) cout << "MethodPluginScan::readScan2dTrees() : ERROR : File not found: " + file + " ..." << endl;
 			nFilesMissing += 1;
 			continue;
 		}
 		if ( arg->verbose ) cout << "MethodPluginScan::readScan2dTrees() : reading " + file + " ..." << endl;
-		t->Add(file);
+		chain->Add(file);
 		nFilesRead += 1;
 	}
-	cout << "MethodPluginScan::readScan2dTrees() : read files: " << nFilesRead << ", missing files: " << nFilesMissing << endl;
+	cout << "MethodPluginScan::readScan2dTrees() : read files: " << nFilesRead;
+	cout << ", missing files: " << nFilesMissing << endl;
 	cout << "MethodPluginScan::readScan2dTrees() : " << fileNameBase+"*.root" << endl;
-
-	float scanpoint1;
-	float scanpoint2;
-	float chi2min;
-	float chi2minGlobal_t;
-	float chi2minToy;
-	float chi2minGlobalToy;
-	float scanbest1;
-	float scanbest2;
-	float aNuisance;
-
-	t->SetBranchAddress("scanpoint1",        &scanpoint1);
-	t->SetBranchAddress("scanpoint2",        &scanpoint2);
-	t->SetBranchAddress("scanbest1",         &scanbest1);
-	t->SetBranchAddress("scanbest2",         &scanbest2);
-	t->SetBranchAddress("chi2min",          &chi2min);
-	t->SetBranchAddress("chi2minGlobal",    &chi2minGlobal_t);
-	t->SetBranchAddress("chi2minToy",       &chi2minToy);
-	t->SetBranchAddress("chi2minGlobalToy", &chi2minGlobalToy);
-	// t->SetBranchAddress("kD_k3pi_free",      &aNuisance);
-
-	// new tree that has file number as leaf and all cuts applied
-	TTree *tNew = 0;
-	float nfile;
-	float chi2minExt;
-	if ( arg->controlplot )
-	{
-		tNew = new TTree("plugin", "plugin");
-		tNew->Branch("scanpoint1",        &scanpoint1,        "scanpoint1/F");
-		tNew->Branch("scanpoint2",        &scanpoint2,        "scanpoint2/F");
-		tNew->Branch("scanbest1",         &scanbest1,         "scanbest1/F");
-		tNew->Branch("scanbest2",         &scanbest2,         "scanbest2/F");
-		tNew->Branch("chi2min",          &chi2min,          "chi2min/F");
-		tNew->Branch("chi2minGlobal",    &chi2minGlobal_t,  "chi2minGlobal/F");
-		tNew->Branch("chi2minToy",       &chi2minToy,       "chi2minToy/F");
-		tNew->Branch("chi2minGlobalToy", &chi2minGlobalToy, "chi2minGlobalToy/F");
-		tNew->Branch("nfile",            &nfile,            "nfile/F");
-		tNew->Branch("chi2minExt",       &chi2minExt,       "chi2minExt/F");
+	if ( nFilesRead==0 ){
+		cout << "MethodPluginScan::readScan2dTrees() : no files read!" << endl;
+		exit(1);
 	}
 
-	cout << "hCL2d nx=" << hCL2d->GetNbinsX() << " ny=" << hCL2d->GetNbinsY() << endl;
+	ToyTree t(combiner, chain);
+	t.open();
+
+	if ( arg->controlplot ) {
+		ControlPlots cp(&t);
+		//if ( arg->plotid==0 || arg->plotid==1 ) cp.ctrlPlotMore(profileLH);
+		if ( arg->plotid==0 || arg->plotid==2 ) cp.ctrlPlotChi2();
+		if ( arg->plotid==0 || arg->plotid==3 ) cp.ctrlPlotNuisances();
+		if ( arg->plotid==0 || arg->plotid==4 ) cp.ctrlPlotObservables();
+		if ( arg->plotid==0 || arg->plotid==5 ) cp.ctrlPlotChi2Distribution();
+		if ( arg->plotid==0 || arg->plotid==6 ) cp.ctrlPlotChi2Parabola();
+		if ( arg->plotid==0 || arg->plotid==7 ) cp.ctrlPlotPvalue();
+		cp.saveCtrlPlots();
+	}
+
 	TH2F *h_better = (TH2F*)hCL2d->Clone("h_better");
 	TH2F *h_all = (TH2F*)hCL2d->Clone("h_all");
-	Long64_t nentries = t->GetEntries();
+	Long64_t nentries = t.GetEntries();
 	Long64_t nfailed = 0;
+	Long64_t nwrongrun = 0;
+	Long64_t ntoysid   = 0; // if id is not -1, this will count the number of toys with that id
+
+	t.activateCoreBranchesOnly(); // speeds up the event loop
+	ProgressBar pb(arg, nentries);
+	cout << "MethodPluginScan::readScan2dTrees() : reading toys ..." << endl;
 
 	for (Long64_t i = 0; i < nentries; i++)
 	{
-		t->GetEntry(i);
+		pb.progress();
+		t.GetEntry(i);
+		if ( arg->id!=-1 && fabs(t.id-arg->id)>0.001 ) continue; ///< only select entries with given id (unless id==-1)
+		ntoysid++;
 
 		// apply cuts
-		if ( ! (chi2minToy > -1e10 && chi2minGlobalToy > -1e10
-					&& chi2minToy-chi2minGlobalToy>0
+		if ( ! (t.chi2minToy > -1e10 && t.chi2minGlobalToy > -1e10
+					&& t.chi2minToy-t.chi2minGlobalToy>0
 					// \todo uncomment this line once chi2minGlobal gets stored in the saved scanner
 					//&& fabs((chi2minGlobal_t-chi2minGlobal)/(chi2minGlobal_t+chi2minGlobal))<0.01 // reject files from other runs
-					&& chi2minToy<100
-					// && aNuisance < 0.95
+					&& t.chi2minToy<1000
 		       ))
 		{
 			nfailed++;
 			continue;
 		}
 
-		if ( arg->controlplot ) {
-			TString filename = t->GetCurrentFile()->GetName();
-			filename.ReplaceAll(fileNameBase, "");
-			filename.ReplaceAll(".root", "");
-			nfile = filename.Atof();    // add file number
-			int iBin = profileLH->getHchisq2d()->FindBin(scanpoint1,scanpoint2);
-			chi2minExt = profileLH->getHchisq2d()->GetBinContent(iBin);   // add chi2min from Prob
-			tNew->Fill();
+		// toys from a wrong run
+		if ( arg->id!=-1 && ! (fabs(t.chi2minGlobal-chi2minGlobal)<0.2) ){
+			nwrongrun++;
 		}
-
-		// use external chi2, not the one from the root files
+		
+		// use profile likelihood from internal scan, not the one found in the root files
 		if ( arg->intprob ){
-			int iBin = profileLH->getHchisq2d()->FindBin(scanpoint1,scanpoint2);
-			chi2min = profileLH->getHchisq2d()->GetBinContent(iBin);
+			int iBin = profileLH->getHchisq2d()->FindBin(t.scanpoint,t.scanpointy);
+			t.chi2min = profileLH->getHchisq2d()->GetBinContent(iBin);
 		}
 
-		int scanBin = h_all->Fill(scanpoint1,scanpoint2);
+		// Check if toys are in physical region.
+		bool inPhysicalRegion = t.chi2minToy-t.chi2minGlobalToy>0;
 
-		if ( chi2minToy-chi2minGlobalToy > chi2min-chi2minGlobal_t )
-			h_better->SetBinContent(scanBin, h_better->GetBinContent(scanBin)+1);
+		// build test statistic
+		if ( inPhysicalRegion && t.chi2minToy-t.chi2minGlobalToy > t.chi2min-t.chi2minGlobal ) {
+			h_better->Fill(t.scanpoint,t.scanpointy);
+		}
+
+		// all toys
+		if ( inPhysicalRegion ){
+			h_all->Fill(t.scanpoint,t.scanpointy);
+		}
 	}
 
-	cout << "MethodPluginScan::readScan2dTrees() : read an average of " << (nentries-nfailed)/nPoints2dx/nPoints2dy << " toys per scan point." << endl;
+	if ( arg->id==-1 ){
+		cout << "MethodPluginScan::readScan2dTrees() : read an average of " << (nentries-nfailed)/nPoints2dx/nPoints2dy << " toys per scan point." << endl;
+	}
+	else{
+		cout << "MethodPluginScan::readScan2dTrees() : read ";
+		cout << ntoysid << " toys at ID " << arg->id << endl;
+	}
 	cout << "MethodPluginScan::readScan2dTrees() : fraction of failed toys: " << (double)nfailed/(double)nentries*100. << "%." << endl;
-
-	if ( arg->controlplot ){
-		// make control plots
-		TCanvas *c1 = new TCanvas(getUniqueRootName(), "Plugin Control Plots", 1200, 900);
-		c1->Divide(4,3);
-		int iPad = 1;
-		c1->cd(iPad++); tNew->Draw("scanpoint1:scanbest1");
-		c1->cd(iPad++); tNew->Draw("scanpoint1:scanbest1", "", "colz");
-		c1->cd(iPad++); tNew->Draw("scanpoint1:chi2minToy");
-		c1->cd(iPad++); tNew->Draw("scanpoint1:chi2minToy", "", "colz");
-		c1->cd(iPad++); tNew->Draw("scanbest1:chi2minToy");
-		c1->cd(iPad++); tNew->Draw("scanbest1:chi2minToy", "", "colz");
-		c1->cd(iPad++); tNew->Draw("scanpoint:chi2min");
-		tNew->Draw("scanpoint1:chi2minExt", "", "same");
-		((TGraph*)(gPad->GetPrimitive("Graph")))->SetMarkerColor(kRed);
-		c1->cd(iPad++); tNew->Draw("scanpoint1:chi2min", "", "colz");
-		c1->cd(iPad++)->SetLogy(); tNew->Draw("chi2minToy-chi2minGlobalToy");
-		c1->cd(iPad++); tNew->Draw("chi2min:nfile");
-		c1->cd(iPad++); tNew->Draw("scanpoint1:chi2min-chi2minExt", "");
-		c1->cd(iPad++); tNew->Draw("chi2minGlobal:nfile");
-	}
 
 	// compute 1-CL
 	for (int i=1; i<=h_better->GetNbinsX(); i++){
@@ -1102,12 +993,13 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
 			float nbetter = h_better->GetBinContent(i,j);
 			float nall = h_all->GetBinContent(i,j);
 			if ( nall == 0. ) continue;
-			float f = nbetter/nall;
-			hCL2d->SetBinContent(i, j, f);
-			hCL2d->SetBinError(i, j, sqrt(f * (1.-f)/nall));
+			float p = nbetter/nall;
+			hCL2d->SetBinContent(i, j, p);
+			hCL2d->SetBinError(i, j, sqrt(p * (1.-p)/nall));
 		}
 	}
 
+	t.activateAllBranches();
 	delete h_better;
 	delete h_all;
 }

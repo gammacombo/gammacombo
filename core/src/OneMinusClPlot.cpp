@@ -556,4 +556,5 @@ void OneMinusClPlot::Draw()
 	drawGroup(yGroup);
 
 	c1->Update();
+	c1->Show();
 }

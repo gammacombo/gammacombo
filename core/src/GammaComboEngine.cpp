@@ -560,10 +560,10 @@ void GammaComboEngine::setUpPlot(TString name)
 {
 	if ( arg->plotpluginonly ) name += "_pluginOnly";
   if ( arg->var.size()==1 ){
-		plot = new OneMinusClPlot(arg, name);
+		plot = new OneMinusClPlot(arg, name, "p-value curves");
 	}
   else{
-		plot = new OneMinusClPlot2d(arg, name);
+		plot = new OneMinusClPlot2d(arg, name, "p-value contours");
 	}
 	plot->disableLegend(arg->plotlegend);
 }
@@ -751,7 +751,7 @@ void GammaComboEngine::make2dPluginScan(MethodPluginScan *scannerPlugin, int cId
 		scannerPlugin->readScan2dTrees(arg->jmin[cId],arg->jmax[cId]);
 		scannerPlugin->saveScanner(fb->getFileNameScanner(scannerPlugin));
 		// plot chi2
-		OneMinusClPlot2d* plotf = new OneMinusClPlot2d(arg, plot->getName()+"_plugin_full");
+		OneMinusClPlot2d* plotf = new OneMinusClPlot2d(arg, plot->getName()+"_plugin_full", "p-value histogram: "+scannerPlugin->getTitle());
 		scannerPlugin->plotOn(plotf);
 		plotf->DrawFull();
 		plotf->save();
@@ -893,7 +893,7 @@ void GammaComboEngine::make2dProbScan(MethodProbScan *scanner, int cId)
 		scanner->plotOn(plot);
 		scanner->setLineColor(colorsLine[cId]);
 		plot->Draw();
-		OneMinusClPlot2d* plotf = new OneMinusClPlot2d(arg, plot->getName()+"_full");
+		OneMinusClPlot2d* plotf = new OneMinusClPlot2d(arg, plot->getName()+"_full", "p-value histogram: "+scanner->getTitle());
 		scanner->plotOn(plotf);
 		plotf->DrawFull();
 		plotf->save();

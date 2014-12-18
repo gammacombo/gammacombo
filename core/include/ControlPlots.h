@@ -38,7 +38,8 @@ class ControlPlots
         void             ctrlPlotChi2Parabola();
         void             ctrlPlotNuisances();
         void             ctrlPlotObservables();
-        void             ctrlPlotSummary();
+        void             ctrlPlotChi2();
+		void             ctrlPlotPvalue();
         void             ctrlPlotMore(MethodProbScan* profileLH);
         void             saveCtrlPlots();
 

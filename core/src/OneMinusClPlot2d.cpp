@@ -846,6 +846,7 @@ void OneMinusClPlot2d::Draw()
 	drawGroup();
 	drawCLcontent();
 	c1->Update();
+	c1->Show();
 }
 
 

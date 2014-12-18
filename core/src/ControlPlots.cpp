@@ -16,32 +16,17 @@ ControlPlots::ControlPlots(ToyTree *tt)
 ControlPlots::~ControlPlots()
 {}
 
+
 ///
-/// Make chi2 summary control plots.
+/// Make p-value control plots.
 ///
-void ControlPlots::ctrlPlotSummary()
+void ControlPlots::ctrlPlotPvalue()
 {
 	gStyle->SetOptStat(1111);
-	TCanvas *c2 = new TCanvas(getUniqueRootName(), name + " Summary Plots", 900, 600);
-	c2->Divide(3,2);
+	TCanvas *c2 = new TCanvas(getUniqueRootName(), name + " P-value Plots", 900, 600);
+	c2->Divide(1,1);
 	int ip = 1;
 	TPad *pad;
-
-	// get maximum chi2 to be plotted
-	pad = (TPad*)c2->cd(ip);
-	t->Draw("chi2minToy", ctrlPlotCuts && "abs(chi2minToy)<1000");
-	float maxPlottedChi2 = ((TH1F*)(gPad->GetPrimitive("htemp")))->GetXaxis()->GetXmax();
-	maxPlottedChi2 = TMath::Min(maxPlottedChi2, (float)75.);
-
-	// plot 1
-	pad = (TPad*)c2->cd(ip++);
-	t->Draw(Form("chi2minToy:chi2minGlobalToy>>htemp1(75,0,%f,75,0,%f)",
-				maxPlottedChi2,maxPlottedChi2), ctrlPlotCuts, "colz");
-	((TH2F*)(gPad->GetPrimitive("htemp1")))->GetYaxis()->SetTitle("#chi^{2} scan");
-	((TH2F*)(gPad->GetPrimitive("htemp1")))->GetXaxis()->SetTitle("#chi^{2} free");
-	makePlotsNice("htemp1");
-	pad->SetLogz();
-	c2->Update();
 
 	// plot 2: individual Better, Bg, All histograms
 	pad = (TPad*)c2->cd(ip++);
@@ -98,7 +83,7 @@ void ControlPlots::ctrlPlotSummary()
 	leg->SetFillStyle(0);
 	leg->Draw();
 	c2->Update();
-
+	
 	// // plot 6: log version of bg subtracted 1-CL plot
 	// pad = (TPad*)c2->cd(ip++);
 	// hBetter = (TH1D*)hBetter->Clone("hBetter2");
@@ -113,45 +98,36 @@ void ControlPlots::ctrlPlotSummary()
 	// oneMinusCl->Draw();
 	// pad->SetLogy();
 	// c2->Update();
+}
 
-	// plot 3: fit probability
-	// This plot is nonsense. The fit probability is not defined
-	// at any other point than the best fit point: It is based on
-	// the global minima!
-	//pad = (TPad*)c2->cd(ip++);
-	// // better (worse) toys
-	// t->Draw(Form("chi2minGlobalToy > chi2minGlobal:scanpoint>>htemp(%i,%f,%f,1,0.5,1.5)",
-	//   tt->getScanpointN(), tt->getScanpointMin(), getScanpointMax()),
-	//   ctrlPlotCuts && TCut("chi2minToy-chi2minGlobalToy>0"), "colz");
-	// TH1D* hGof = ((TH2F*)(gPad->GetPrimitive("htemp")))->ProjectionX("hGof",1,1);
-	// // "signal" toys
-	// t->Draw(Form("1:scanpoint>>htemp(%i,%f,%f,1,0.5,1.5)",
-	//   getScanpointN(), getScanpointMin(), tt->getScanpointMax()),
-	//   ctrlPlotCuts && TCut("chi2minToy-chi2minGlobalToy>0"), "colz");
-	// TH1D* hSig = ((TH2F*)(gPad->GetPrimitive("htemp")))->ProjectionX("hSig",1,1);
-	// hGof->Divide(hSig);
-	// hGof->GetYaxis()->SetRangeUser(0,1);
-	// hGof->GetXaxis()->SetTitle("scanpoint");
-	// hGof->GetYaxis()->SetTitle("fit probability");
-	// hGof->Draw();
-	// makePlotsNice("hGof");
-	// // draw a red line at the best solution (where 1-CL is max)
-	// float xSolution = hOmcl->GetBinCenter(hOmcl->GetMaximumBin());
-	// TLine *l = new TLine(xSolution,0,xSolution,1);
-	// l->SetLineColor(kRed);
-	// l->Draw();
-	// // draw a text box stating the fit prob of best fit point
-	// TPaveText *txt = new TPaveText(0.5546162,0.7768065,0.7042173,0.8678613,"brNDC");
-	// txt->SetBorderSize(0);
-	// txt->SetFillStyle(0);
-	// txt->SetTextAlign(12);
-	// txt->SetTextFont(133);
-	// txt->SetTextSize(12);
-	// txt->AddText(Form("P = %.1f%%",hGof->GetBinContent(hOmcl->GetMaximumBin())*100.));
-	// txt->Draw();
-	// c2->Update();
+///
+/// Make chi2 summary control plots.
+///
+void ControlPlots::ctrlPlotChi2()
+{
+	gStyle->SetOptStat(1111);
+	TCanvas *c2 = new TCanvas(getUniqueRootName(), name + " Chi2 Plots", 900, 600);
+	c2->Divide(3,2);
+	int ip = 1;
+	TPad *pad;
 
-	// plot 4:  chi2 distribution of the SCAN fit
+	// get maximum chi2 to be plotted
+	pad = (TPad*)c2->cd(ip);
+	t->Draw("chi2minToy", ctrlPlotCuts && "abs(chi2minToy)<1000");
+	float maxPlottedChi2 = ((TH1F*)(gPad->GetPrimitive("htemp")))->GetXaxis()->GetXmax();
+	maxPlottedChi2 = TMath::Min(maxPlottedChi2, (float)75.);
+
+	// plot 1: 2D plot of chi scan vs. chi2 global
+	pad = (TPad*)c2->cd(ip++);
+	t->Draw(Form("chi2minToy:chi2minGlobalToy>>htemp1(75,0,%f,75,0,%f)",
+				maxPlottedChi2,maxPlottedChi2), ctrlPlotCuts, "colz");
+	((TH2F*)(gPad->GetPrimitive("htemp1")))->GetYaxis()->SetTitle("#chi^{2} scan");
+	((TH2F*)(gPad->GetPrimitive("htemp1")))->GetXaxis()->SetTitle("#chi^{2} free");
+	makePlotsNice("htemp1");
+	pad->SetLogz();
+	c2->Update();
+
+	// plot 2:  chi2 distribution of the SCAN fit
 	pad = (TPad*)c2->cd(ip++);
 	t->Draw("chi2minToy", ctrlPlotCuts && Form("chi2minToy-chi2minGlobalToy>0 && chi2minToy<%f",maxPlottedChi2));
 	((TH1F*)(gPad->GetPrimitive("htemp")))->GetXaxis()->SetTitle("#chi^{2} scan");
@@ -159,11 +135,18 @@ void ControlPlots::ctrlPlotSummary()
 	makePlotsNice();
 	c2->Update();
 
-	// plot 5: chi2 distribution of the FREE fit
+	// plot 3: empty
+	pad = (TPad*)c2->cd(ip++);
+
+	// plot 4: chi2 distribution of the FREE fit
 	pad = (TPad*)c2->cd(ip++);
 	t->Draw("chi2minGlobalToy>>hChi2free", ctrlPlotCuts
 			&& Form("chi2minToy-chi2minGlobalToy>0 && chi2minGlobalToy<%f",maxPlottedChi2));
 	TH1F* hChi2free = (TH1F*)(gPad->GetPrimitive("hChi2free"));
+	// better toys
+	t->Draw(Form("chi2minToy-chi2minGlobalToy > (chi2min-chi2minGlobal):scanpoint>>htemp(%i,%f,%f,1,0.5,1.5)",
+				tt->getScanpointN(), tt->getScanpointMin(), tt->getScanpointMax()), ctrlPlotCuts, "colz");
+	TH1D* hBetter = ((TH2F*)(gPad->GetPrimitive("htemp")))->ProjectionX("hBetter",1,1);
 	// add the chi2 distribtion at the best fit value
 	t->Draw("chi2minGlobalToy>>hChi2BestFit", ctrlPlotCuts
 			&& Form("chi2minToy-chi2minGlobalToy>0 && chi2minGlobalToy<%f",maxPlottedChi2)
@@ -193,14 +176,14 @@ void ControlPlots::ctrlPlotSummary()
 	st->SetLineColor(kRed);
 	makePlotsNice("hChi2free");
 	// add legend
-	TLegend *leg5 = new TLegend(0.5,0.8023019,0.9772986,0.9370629);
-	leg5->AddEntry(hChi2free,    "#chi^{2} (all scan var values)");
-	leg5->AddEntry(hChi2BestFit, "#chi^{2} (at best fit value)");
-	leg5->SetFillStyle(0);
-	leg5->Draw();
+	TLegend *leg4 = new TLegend(0.5,0.8023019,0.9772986,0.9370629);
+	leg4->AddEntry(hChi2free,    "#chi^{2} (all scan var values)");
+	leg4->AddEntry(hChi2BestFit, "#chi^{2} (at best fit value)");
+	leg4->SetFillStyle(1001);
+	leg4->Draw();
 	c2->Update();
 
-	// plot 6: delta chi2
+	// plot 5: delta chi2
 	pad = (TPad*)c2->cd(ip++);
 	// good toys
 	t->Draw("chi2minToy-chi2minGlobalToy",
@@ -224,20 +207,21 @@ void ControlPlots::ctrlPlotSummary()
 	st->SetX1NDC(0.7778305); st->SetY1NDC(0.4562937);
 	st->SetX2NDC(0.9772986); st->SetY2NDC(0.6056235);
 	// add legend
-	TLegend *leg6 = new TLegend(0.5,0.8023019,0.9772986,0.9370629);
-	leg6->AddEntry(h4sig, "#Delta#chi^{2} of 'signal' toys");
-	leg6->AddEntry(h4bkg, "#Delta#chi^{2} of 'bg' toys");
-	leg6->SetFillStyle(0);
-	leg6->Draw();
+	TLegend *leg5 = new TLegend(0.5,0.8023019,0.9772986,0.9370629);
+	leg5->AddEntry(h4sig, "#Delta#chi^{2} of 'signal' toys");
+	leg5->AddEntry(h4bkg, "#Delta#chi^{2} of 'bg' toys");
+	leg5->SetFillStyle(1001);
+	leg5->Draw();
 	c2->Update();
 
-	// plot 7
-	// chi2 p-value distribution
+	// plot 6: chi2 p-value distribution
 	pad = (TPad*)c2->cd(ip++);
 	// good toys
-	t->Draw("TMath::Prob(chi2minToy-chi2minGlobalToy,1)",
+	int ndof = arg->var.size();
+	t->Draw(Form("TMath::Prob(chi2minToy-chi2minGlobalToy,%i)", ndof),
 			ctrlPlotCuts && Form("chi2minToy-chi2minGlobalToy>=0 && chi2minToy<%f && chi2minGlobalToy<%f", maxPlottedChi2, maxPlottedChi2));
 	TH1F* h5sig = (TH1F*)(gPad->GetPrimitive("htemp"))->Clone("h5sig");
+	h5sig->SetMaximum(h5sig->GetMaximum()*1.3);
 	h5sig->Draw();
 	h5sig->GetXaxis()->SetTitle("p(#Delta#chi^{2} scan-free)");
 	h5sig->GetYaxis()->SetTitle("toys");
@@ -248,6 +232,11 @@ void ControlPlots::ctrlPlotSummary()
 	st->SetX1NDC(0.7778305); st->SetY1NDC(0.4562937);
 	st->SetX2NDC(0.9772986); st->SetY2NDC(0.6056235);
 	c2->Update();
+	// add legend
+	TLegend *leg6 = new TLegend(0.5,0.8023019,0.9772986,0.9370629);
+	leg6->AddEntry(h5sig, Form("Prob(#Delta#chi^{2}, ndof=%i)",ndof));
+	leg6->SetFillStyle(1001);
+	leg6->Draw();
 
 	ctrlPlotCanvases.push_back(c2);
 }
@@ -416,7 +405,7 @@ void ControlPlots::ctrlPlotChi2Distribution()
 		float normEvents = t->Draw("chi2minToy-chi2minGlobalToy", ctrlPlotCuts && bincut && "chi2minToy-chi2minGlobalToy>0 && chi2minToy-chi2minGlobalToy<50");
 		if ( !gPad->GetPrimitive("htemp") ) continue;
 		TPaveText* txt = new TPaveText(0.3,0.8,0.9,0.9,"BRNDC");
-		txt->AddText(Form("%.3f<var<%.3f", binMin, binMax));
+		txt->AddText(Form("%.3f < %s < %.3f", binMin, arg->var[0].Data(), binMax));
 		txt->SetBorderSize(0);
 		txt->SetFillStyle(0);
 		txt->SetTextAlign(12);
@@ -424,9 +413,13 @@ void ControlPlots::ctrlPlotChi2Distribution()
 		((TH1F*)(gPad->GetPrimitive("htemp")))->GetXaxis()->SetTitle("#Delta#chi^{2}");
 		makePlotsNice();
 		pad->SetLogy();
+		// draw a chi2 function
+		TF1 *f = new TF1("f", "[0]*x^([1]/2-1)*exp(-x/2)", 0, 30);
 		float binWidth = ((TH1F*)(gPad->GetPrimitive("htemp")))->GetBinWidth(1);
-		TF1 *f = new TF1("f", "[0]*x^(-1/2)*exp(-x/2)", 0, 30);
-		f->SetParameter(0,1./sqrt(2.*TMath::Pi())*normEvents*binWidth);
+		int ndof = arg->var.size();
+		float norm = 1./(pow(2,ndof/2.)*TMath::Gamma(ndof/2.)) * normEvents*binWidth;
+		f->SetParameter(0,norm);
+		f->SetParameter(1,ndof);
 		f->Draw("same");
 		updateCurrentCanvas();
 	}

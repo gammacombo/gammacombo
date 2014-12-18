@@ -213,11 +213,12 @@ void MethodBergerBoosScan::readScan1dTrees(int runMin, int runMax){
 	if ( arg->controlplot ) {
 		ControlPlots cp(&t);
 		if ( arg->plotid==0 || arg->plotid==1 ) cp.ctrlPlotMore(profileLH);
-		if ( arg->plotid==0 || arg->plotid==2 ) cp.ctrlPlotSummary();
+		if ( arg->plotid==0 || arg->plotid==2 ) cp.ctrlPlotChi2();
 		if ( arg->plotid==0 || arg->plotid==3 ) cp.ctrlPlotNuisances();
 		if ( arg->plotid==0 || arg->plotid==4 ) cp.ctrlPlotObservables();
 		if ( arg->plotid==0 || arg->plotid==5 ) cp.ctrlPlotChi2Distribution();
 		if ( arg->plotid==0 || arg->plotid==6 ) cp.ctrlPlotChi2Parabola();
+		if ( arg->plotid==0 || arg->plotid==7 ) cp.ctrlPlotPvalue();
 		cp.saveCtrlPlots();
 	}
 

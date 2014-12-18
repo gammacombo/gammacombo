@@ -14,10 +14,10 @@ ToyTree::ToyTree(PDF_Generic_Abs *p, TChain* t){
 	this->w = p->getWorkspace();
 	this->name = p->getName();
 	this->arg = p->getArg();
-	pdfName  = "pdf_"+p->getPdfName();
-	obsName  = "obs_"+p->getPdfName();
-	parsName = "par_"+p->getPdfName();
-	thName   = "";
+	this->pdfName  = "pdf_"+p->getPdfName();
+	this->obsName  = "obs_"+p->getPdfName();
+	this->parsName = "par_"+p->getPdfName();
+	this->thName   = "";
 	this->initMembers(t);
 	this->storeObs  = false;
 	this->storeTh   = false;
@@ -27,17 +27,25 @@ ToyTree::ToyTree(PDF_Generic_Abs *p, TChain* t){
 ToyTree::~ToyTree()
 {}
 
+///
+/// Initialize the data members.
+///
 void ToyTree::initMembers(TChain* t){
 	this->t = t;
-	scanpointMin = 0.;
-	scanpointMax = 0.;
-	scanpointN   = -1;
+	scanpointMin        = 0.;
+	scanpointMax        = 0.;
+	scanpointN          = -1;
 	scanpoint           = 0.;
+	scanpointyMin       = 0.;
+	scanpointyMax       = 0.;
+	scanpointyN         = -1;
+	scanpointy          = 0.;
 	chi2min             = 0.;
 	chi2minGlobal       = 0.;
 	chi2minToy          = 0.;
 	chi2minGlobalToy    = 0.;
 	scanbest            = 0.;
+	scanbesty           = 0.;
 	nrun                = 0.;
 	id                  = 0.;
 	statusFree          = -5.;
@@ -114,23 +122,25 @@ void ToyTree::writeToFile()
 void ToyTree::init()
 {
 	t = new TTree("plugin", "plugin");
-	t->Branch("scanpoint",        &scanpoint,         "scanpoint/F");
-	t->Branch("chi2minGlobal",    &chi2minGlobal,     "chi2minGlobal/F");
+	t->Branch("BergerBoos_id",    &BergerBoos_id,     "BergerBoos_id/F");
 	t->Branch("chi2min",          &chi2min,           "chi2min/F");
-	t->Branch("chi2minToy",       &chi2minToy,        "chi2minToy/F");
+	t->Branch("chi2minGlobal",    &chi2minGlobal,     "chi2minGlobal/F");
 	t->Branch("chi2minGlobalToy", &chi2minGlobalToy,  "chi2minGlobalToy/F");
-	t->Branch("scanbest",         &scanbest,          "scanbest/F");
-	t->Branch("nrun",             &nrun,              "nrun/F");
-	t->Branch("id",               &id,                "id/F");
-	t->Branch("statusFree",       &statusFree,        "statusFree/F");
-	t->Branch("statusScan",       &statusScan,        "statusScan/F");
-	t->Branch("statusScanData",   &statusScanData,    "statusScanData/F");
+	t->Branch("chi2minToy",       &chi2minToy,        "chi2minToy/F");
 	t->Branch("covQualFree",      &covQualFree,       "covQualFree/F");
 	t->Branch("covQualScan",      &covQualScan,       "covQualScan/F");
 	t->Branch("covQualScanData",  &covQualScanData,   "covQualScanData/F");
-	t->Branch("nBergerBoos",      &nBergerBoos,       "nBergerBoos/F");
-	t->Branch("BergerBoos_id",    &BergerBoos_id,     "BergerBoos_id/F");
 	t->Branch("genericProbPValue",&genericProbPValue, "genericProbPValue/F");
+	t->Branch("id",               &id,                "id/F");
+	t->Branch("nBergerBoos",      &nBergerBoos,       "nBergerBoos/F");
+	t->Branch("nrun",             &nrun,              "nrun/F");
+	t->Branch("scanbest",         &scanbest,          "scanbest/F");
+	t->Branch("scanbesty",        &scanbesty,         "scanbesty/F");
+	t->Branch("scanpoint",        &scanpoint,         "scanpoint/F");
+	t->Branch("scanpointy",       &scanpointy,        "scanpointy/F");
+	t->Branch("statusFree",       &statusFree,        "statusFree/F");
+	t->Branch("statusScan",       &statusScan,        "statusScan/F");
+	t->Branch("statusScanData",   &statusScanData,    "statusScanData/F");
 
 	if ( !arg->lightfiles )
 	{
@@ -183,32 +193,32 @@ void ToyTree::init()
 void ToyTree::open()
 {
 	TObjArray* branches = t->GetListOfBranches();
-	t->SetBranchAddress("scanpoint",        &scanpoint);
-	t->SetBranchAddress("scanbest",         &scanbest);
+	t->SetBranchAddress("BergerBoos_id",    &BergerBoos_id);
 	t->SetBranchAddress("chi2min",          &chi2min);
 	t->SetBranchAddress("chi2minGlobal",    &chi2minGlobal);
-	t->SetBranchAddress("chi2minToy",       &chi2minToy);
 	t->SetBranchAddress("chi2minGlobalToy", &chi2minGlobalToy);
-	t->SetBranchAddress("statusFree",       &statusFree);
-	t->SetBranchAddress("statusScan",       &statusScan);
-	t->SetBranchAddress("statusScanData",   &statusScanData);
+	t->SetBranchAddress("chi2minToy",       &chi2minToy);
 	t->SetBranchAddress("covQualFree",      &covQualFree);
 	t->SetBranchAddress("covQualScan",      &covQualScan);
 	t->SetBranchAddress("covQualScanData",  &covQualScanData);
-	t->SetBranchAddress("nBergerBoos",      &nBergerBoos);
-	t->SetBranchAddress("BergerBoos_id",    &BergerBoos_id);
 	t->SetBranchAddress("genericProbPValue",&genericProbPValue);
+	t->SetBranchAddress("nBergerBoos",      &nBergerBoos);
+	t->SetBranchAddress("scanbest",         &scanbest);
+	t->SetBranchAddress("scanbesty",        &scanbesty);
+	t->SetBranchAddress("scanpoint",        &scanpoint);
+	t->SetBranchAddress("scanpointy",       &scanpointy);
+	t->SetBranchAddress("statusFree",       &statusFree);
+	t->SetBranchAddress("statusScan",       &statusScan);
+	t->SetBranchAddress("statusScanData",   &statusScanData);
 	// new conditionally set to values
-	if(branches->FindObject("statusScanData"))        t->SetBranchAddress("statusScanData",     &statusScanData);
+	if(branches->FindObject("chi2minGlobalToyPDF"))   t->SetBranchAddress("chi2minGlobalToyPDF",&chi2minGlobalToyPDF);
+	if(branches->FindObject("chi2minToyPDF"))         t->SetBranchAddress("chi2minToyPDF",      &chi2minToyPDF);
 	if(branches->FindObject("covQualFree"))           t->SetBranchAddress("covQualFree",        &covQualFree);
 	if(branches->FindObject("covQualScan"))           t->SetBranchAddress("covQualScan",        &covQualScan);
 	if(branches->FindObject("covQualScanData"))       t->SetBranchAddress("covQualScanData",    &covQualScanData);
 	if(branches->FindObject("statusFreePDF"))         t->SetBranchAddress("statusFreePDF",      &statusFreePDF);
+	if(branches->FindObject("statusScanData"))        t->SetBranchAddress("statusScanData",     &statusScanData);
 	if(branches->FindObject("statusScanPDF"))         t->SetBranchAddress("statusScanPDF",      &statusScanPDF);
-	if(branches->FindObject("chi2minToyPDF"))         t->SetBranchAddress("chi2minToyPDF",      &chi2minToyPDF);
-	if(branches->FindObject("chi2minGlobalToyPDF"))   t->SetBranchAddress("chi2minGlobalToyPDF",&chi2minGlobalToyPDF);
-
-
 }
 
 ///
@@ -218,28 +228,27 @@ void ToyTree::activateCoreBranchesOnly()
 {
 	TObjArray* branches = t->GetListOfBranches();
 	t->SetBranchStatus("*", 0); // perhaps we need ".*" in certain root versions?
-	t->SetBranchStatus("id", 1);
-	t->SetBranchStatus("scanpoint", 1);
-	t->SetBranchStatus("chi2minToy", 1);
-	t->SetBranchStatus("chi2minGlobalToy", 1);
+	t->SetBranchStatus("BergerBoos_id", 1);
 	t->SetBranchStatus("chi2min", 1);
 	t->SetBranchStatus("chi2minGlobal", 1);
+	t->SetBranchStatus("chi2minGlobalToy", 1);
+	t->SetBranchStatus("chi2minToy", 1);
+	t->SetBranchStatus("genericProbPValue", 1);
+	t->SetBranchStatus("id", 1);
+	t->SetBranchStatus("nBergerBoos", 1);
+	t->SetBranchStatus("scanpoint", 1);
+	t->SetBranchStatus("scanpointy", 1);
 	t->SetBranchStatus("statusFree", 1);
 	t->SetBranchStatus("statusScan", 1);
 	t->SetBranchStatus("statusScanData", 1);
-	t->SetBranchStatus("nBergerBoos", 1);
-	t->SetBranchStatus("BergerBoos_id", 1);
-	t->SetBranchStatus("genericProbPValue", 1);
-
-	if(branches->FindObject("statusScanData"))        t->SetBranchStatus("statusScanData",     1);
+	if(branches->FindObject("chi2minGlobalToyPDF"))   t->SetBranchStatus("chi2minGlobalToyPDF",1);
+	if(branches->FindObject("chi2minToyPDF"))         t->SetBranchStatus("chi2minToyPDF",      1);
 	if(branches->FindObject("covQualFree"))           t->SetBranchStatus("covQualFree",        1);
 	if(branches->FindObject("covQualScan"))           t->SetBranchStatus("covQualScan",        1);
 	if(branches->FindObject("covQualScanData"))       t->SetBranchStatus("covQualScanData",    1);
 	if(branches->FindObject("statusFreePDF"))         t->SetBranchStatus("statusFreePDF",      1);
+	if(branches->FindObject("statusScanData"))        t->SetBranchStatus("statusScanData",     1);
 	if(branches->FindObject("statusScanPDF"))         t->SetBranchStatus("statusScanPDF",      1);
-	if(branches->FindObject("chi2minToyPDF"))         t->SetBranchStatus("chi2minToyPDF",      1);
-	if(branches->FindObject("chi2minGlobalToyPDF"))   t->SetBranchStatus("chi2minGlobalToyPDF",1);
-
 }
 
 ///
