@@ -399,13 +399,14 @@ int MethodPluginScan::scan1d(int nRun)
 	float max = hCL->GetXaxis()->GetXmax();
 
 	if ( arg->verbose ){
+		cout << endl;
 		cout << "Plugin configuration:" << endl;
-		cout << "  combination : " << title << endl;
-		cout << "  scan variable : " << scanVar1 << endl;
-		cout << "  scan range : " << min << " ... " << max << endl;
-		cout << "  scan steps : " << nPoints1d << endl;
-		cout << "  par. evolution : " << (parevolPLH!=profileLH?parevolPLH->getTitle():"same as combination") << endl;
-		cout << "  nToys : " << nToys << endl;
+		cout << "  combination:    " << title << endl;
+		cout << "  scan variable:  " << scanVar1 << endl;
+		cout << "  scan range:     " << min << " ... " << max << endl;
+		cout << "  scan steps:     " << nPoints1d << endl;
+		cout << "  par. evolution: " << (parevolPLH!=profileLH?parevolPLH->getTitle():"same as combination") << endl;
+		cout << "  nToys:          " << nToys << endl;
 		cout << endl;
 	}
 
@@ -775,7 +776,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
 
 	float halfBinWidth = (t->getScanpointMax()-t->getScanpointMin())/(float)t->getScanpointN()/2;
 	if ( t->getScanpointN()==1 ) halfBinWidth = 1.;
-	TH1F *hCL 				 = new TH1F(getUniqueRootName(), "hCL", t->getScanpointN(), t->getScanpointMin()-halfBinWidth, t->getScanpointMax()+halfBinWidth);
+	TH1F *hCL          = new TH1F(getUniqueRootName(), "hCL", t->getScanpointN(), t->getScanpointMin()-halfBinWidth, t->getScanpointMax()+halfBinWidth);
 	TH1F *h_better     = (TH1F*)hCL->Clone("h_better");
 	TH1F *h_all        = (TH1F*)hCL->Clone("h_all");
 	TH1F *h_background = (TH1F*)hCL->Clone("h_background");
@@ -784,9 +785,9 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
 	Long64_t nentries  = t->GetEntries();
 	Long64_t nfailed   = 0;
 	Long64_t nwrongrun = 0;
-	Long64_t ntoysid   = 0; ///< if id is not -1, this will count the number of toys with that id
+	Long64_t ntoysid   = 0; // if id is not -1, this will count the number of toys with that id
 
-	t->activateCoreBranchesOnly();                       ///< speeds up the event loop
+	t->activateCoreBranchesOnly(); // speeds up the event loop
 	ProgressBar pb(arg, nentries);
 	cout << "MethodPluginScan::analyseToys() : reading toys ..." << endl;
 
@@ -927,10 +928,10 @@ void MethodPluginScan::readScan1dTrees(int runMin, int runMax)
 		c->Add(file);
 		nFilesRead += 1;
 	}
-	cout << "MethodPluginScan::readScan1dTrees() : read files: " << nFilesRead
-						       << ", missing files: " << nFilesMissing
-											  << "                                                               "
-															     << "                    " << endl; // many spaces to overwrite the above \r
+	cout << "MethodPluginScan::readScan1dTrees() : read files: " << nFilesRead;
+	cout << ", missing files: " << nFilesMissing;
+	cout << "                                                               ";
+	cout << "                    " << endl; // many spaces to overwrite the above \r
 	cout << "MethodPluginScan::readScan1dTrees() : " << fileNameBase+"*.root" << endl;
 	if ( nFilesRead==0 ){
 		cout << "MethodPluginScan::readScan1dTrees() : no files read!" << endl;
@@ -940,8 +941,7 @@ void MethodPluginScan::readScan1dTrees(int runMin, int runMax)
 	ToyTree t(combiner, c);
 	t.open();
 
-	if ( arg->controlplot )
-	{
+	if ( arg->controlplot ) {
 		if ( arg->plotid==0 || arg->plotid==1 ) t.ctrlPlotMore(profileLH);
 		if ( arg->plotid==0 || arg->plotid==2 ) t.ctrlPlotSummary();
 		if ( arg->plotid==0 || arg->plotid==3 ) t.ctrlPlotNuisances();
@@ -1008,7 +1008,7 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
 	TTree *tNew = 0;
 	float nfile;
 	float chi2minExt;
-	if ( arg && arg->controlplot )
+	if ( arg->controlplot )
 	{
 		tNew = new TTree("plugin", "plugin");
 		tNew->Branch("scanpoint1",        &scanpoint1,        "scanpoint1/F");
@@ -1023,6 +1023,7 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
 		tNew->Branch("chi2minExt",       &chi2minExt,       "chi2minExt/F");
 	}
 
+	cout << "hCL2d nx=" << hCL2d->GetNbinsX() << " ny=" << hCL2d->GetNbinsY() << endl;
 	TH2F *h_better = (TH2F*)hCL2d->Clone("h_better");
 	TH2F *h_all = (TH2F*)hCL2d->Clone("h_all");
 	Long64_t nentries = t->GetEntries();
@@ -1045,8 +1046,7 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
 			continue;
 		}
 
-		if ( arg->controlplot )
-		{
+		if ( arg->controlplot ) {
 			TString filename = t->GetCurrentFile()->GetName();
 			filename.ReplaceAll(fileNameBase, "");
 			filename.ReplaceAll(".root", "");
@@ -1103,6 +1103,9 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
 			hCL2d->SetBinError(i, j, sqrt(f * (1.-f)/nall));
 		}
 	}
+
+	delete h_better;
+	delete h_all;
 }
 
 ///

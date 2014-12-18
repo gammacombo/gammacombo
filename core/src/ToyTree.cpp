@@ -251,7 +251,7 @@ void ToyTree::activateCoreBranchesOnly()
 ///
 void ToyTree::activateBranch(const TString& bName){
 	t->SetBranchStatus(bName,1);
-};
+}
 
 
 ///
