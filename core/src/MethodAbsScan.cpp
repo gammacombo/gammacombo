@@ -1011,8 +1011,8 @@ void MethodAbsScan::confirmSolutions()
 		bool ok = loadSolution(i);
 		if ( !ok ) continue;
 		if ( arg->debug ){
-			cout << "MethodAbsScan::confirmSolutions() : solution " << i
-								     << " " << par1->GetName() << "=" << par1->getVal();
+			cout << "MethodAbsScan::confirmSolutions() : solution " << i;
+			cout << " " << par1->GetName() << "=" << par1->getVal();
 			if ( par2 ) cout << " " << par2->GetName() << "=" << par2->getVal();
 			cout << endl;
 		}
@@ -1075,7 +1075,7 @@ void MethodAbsScan::confirmSolutions()
 			}
 			if ( pNew->getError()>0 ){
 				float shift = fabs(pOld->getVal()-pNew->getVal());
-				if ( isAngle(pOld) ) shift = bringBackAngle(shift);
+				if ( isAngle(pOld) ) shift = angularDifference(pOld->getVal(), pNew->getVal());
 				if ( shift/pNew->getError() > allowedSigma ){
 					if ( arg->debug ){
 						cout << "MethodAbsScan::confirmSolutions() : solution " << i << ", too large parameter shift:" << endl;

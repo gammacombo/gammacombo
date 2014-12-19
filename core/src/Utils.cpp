@@ -73,6 +73,22 @@ double Utils::bringBackAngle(double angle)
 }
 
 ///
+/// Compute the difference between 2 angles. This will never be
+/// larger than pi because they wrap around!
+/// \param angle1 - first angle
+/// \param angle1 - first angle
+/// \return difference
+///
+double Utils::angularDifference(double angle1, double angle2)
+{
+	float angleSmaller = max(bringBackAngle(angle1), bringBackAngle(angle2));
+	float angleLarger = min(bringBackAngle(angle1), bringBackAngle(angle2));
+	float diff1 = angleLarger-angleSmaller;
+	float diff2 = (2.*TMath::Pi()-angleLarger) + angleSmaller;
+	return min(diff1, diff2);
+}
+
+///
 /// Fit a pdf to the minimum, but keep angular parameters in a range of
 /// [0,2pi]. If after an initial fit, a parameter has walked outside this
 /// interval, add multiples of 2pi to bring it back. Then, refit.
