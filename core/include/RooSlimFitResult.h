@@ -35,21 +35,22 @@ class RooSlimFitResult : public TObject
 		RooSlimFitResult(const RooSlimFitResult &r);
 		~RooSlimFitResult();
 
-		RooSlimFitResult*         Clone();
-		RooArgList&               constPars() const;
-		inline TMatrixDSym        correlationMatrix() const {return _correlationMatrix;};
-		inline Int_t              covQual() const {return _covQual;};
-		inline Double_t	          edm() const {return _edm;};
-		RooArgList&	              floatParsFinal() const;
-		float                     getParVal(TString name) const;
-		float                     getConstParVal(TString name) const;
-		float                     getFloatParFinalVal(TString name) const;
-		bool											hasParameter(TString name) const;
-		inline bool               isConfirmed(){return _isConfirmed;};
-		inline Double_t	          minNll() const {return _minNLL;};
-		void                      Print(bool verbose=false, bool printcor=false);
-		inline void               setConfirmed(bool c){_isConfirmed = c;};
-		inline Int_t	            status() const {return _status;};
+    	RooSlimFitResult*         Clone();
+    	RooArgList&               constPars() const;
+    	inline TMatrixDSym        correlationMatrix() const {return _correlationMatrix;};
+    	inline Int_t              covQual() const {return _covQual;};
+    	inline Double_t	          edm() const {return _edm;};
+    	RooArgList&	              floatParsFinal() const;
+    	float                     getParVal(TString name) const;
+    	float                     getParErr(TString name) const;
+    	float                     getConstParVal(TString name) const;
+    	float                     getFloatParFinalVal(TString name) const;
+    	bool					  hasParameter(TString name) const;
+    	inline bool               isConfirmed(){return _isConfirmed;};
+    	inline Double_t	          minNll() const {return _minNLL;};
+    	void                      Print(bool verbose=false, bool printcor=false);
+    	inline void               setConfirmed(bool c){_isConfirmed = c;};
+    	inline Int_t	          status() const {return _status;};
 
 		// private:
 

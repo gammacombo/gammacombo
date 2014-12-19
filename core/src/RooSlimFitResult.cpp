@@ -133,6 +133,20 @@ float RooSlimFitResult::getParVal(TString name) const
 }
 
 ///
+/// Return the error of a parameter contained in this
+/// fit result.
+/// \param name - the parameter name
+/// \return - the value, NaN if the parameter wasn't found.
+///
+float RooSlimFitResult::getParErr(TString name) const
+{
+	for ( int i=0; i<_parsNames.size(); i++ ){
+		if ( TString(_parsNames[i])==name ) return _parsErr[i];
+	}
+	return std::numeric_limits<double>::quiet_NaN(); // return nan
+}
+
+///
 /// Check if a parameter is contained in this
 /// fit result. Can be either floating or constant.
 /// \param name - the parameter name

@@ -157,15 +157,17 @@ void ParameterEvolutionPlotter::plotObsScanCheck()
 
 	cout << "ParameterEvolutionPlotter::plotObsScanCheck() : plotting ..." << endl;
 	TCanvas *c2 = new TCanvas("plotObsScanCheck"+getUniqueRootName(), title, 800,600);
+	c2->SetLeftMargin(0.2);
 
 	// get observable
-	TGraph *g = new TGraph(results.size());
+	TGraphErrors *g = new TGraphErrors(results.size());
 	int iGraph = 0;
 
 	for ( int i=0; i<results.size(); i++ ){
 		assert(results[i]);
 		// get value of observable
 		float obsValue = results[i]->getParVal(scanVar1);
+		float obsError = w->var(scanVar1)->getError();
 
 		// get value of theory prediction
 		setParameters(w,parsName,results[i]);
@@ -177,16 +179,22 @@ void ParameterEvolutionPlotter::plotObsScanCheck()
 		}
 		float thValue = w->function(thName)->getVal();
 		g->SetPoint(iGraph, iGraph, obsValue-thValue);
+		g->SetPointError(iGraph, 0., obsError);
 		iGraph++;
 	}
 
 	g->SetTitle(scanVar1);
 	g->GetXaxis()->SetTitle("scan step");
-	g->GetYaxis()->SetTitleSize(0.09);
-	g->GetYaxis()->SetLabelSize(0.07);
+	g->GetYaxis()->SetTitleSize(0.06);
+	g->GetYaxis()->SetLabelSize(0.04);
 	g->GetYaxis()->SetTitleOffset(1.5);
 	g->GetYaxis()->SetTitle(scanVar1);
-	g->Draw("al");
+	Int_t ci = 927;
+	TColor *col = new TColor(ci, 0, 0, 1, " ", 0.5);
+	g->SetFillColor(ci);
+	g->SetFillStyle(1001);
+	g->Draw("a3");
+	g->Draw("lxsame");
 	c2->Update();
 
 	savePlot(c2, "parEvolutionObsSanCheck_"+name+"_"+scanVar1);
