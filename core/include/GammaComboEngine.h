@@ -28,6 +28,11 @@
 using namespace std;
 using namespace Utils;
 
+///
+/// The main GammaCombo scanning engine, controlling
+/// the application.
+///
+
 class GammaComboEngine
 {
 	public:
