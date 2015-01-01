@@ -960,6 +960,28 @@ bool GammaComboEngine::isScanVarObservable(Combiner *c, TString scanVar)
 }
 
 ///
+/// Helper function to set up a scan for an observable, tightens
+/// the chi2 constraint.
+/// 
+/// \param c		- the combiner
+/// \param scanVar 	- the scan variable name (must be an observable)
+///
+void GammaComboEngine::tightenChi2Constraint(Combiner *c, TString scanVar)
+{
+	cout << "\n--var " << scanVar << ": Setting up a scan for an observable ..." << endl;
+	PDF_Abs* pdf = c->getPdfProvidingObservable(scanVar);
+	if ( pdf==0 ){
+		cout << "GammaComboEngine::tightenChi2Constraint() : ERROR : no PDF found that contains the observable '" << scanVar << "'. Exit." << endl;
+		exit(1);
+	}
+	float scale = 0.1;
+	cout << "... observable error is multiplied by a factor " << scale << endl;
+	pdf->ScaleError(scanVar, scale);
+	pdf->buildCov();
+	pdf->buildPdf();
+}
+
+///
 /// scan engine
 ///
 void GammaComboEngine::scan()
@@ -982,20 +1004,12 @@ void GammaComboEngine::scan()
 			c->setName(c->getName()+Form("Asimov%i",arg->asimov[i]));
 		}
 
-		// configure scans for observables - this is the part only possible before combining
+		// configure scans for observables - this part is only possible before combining
 		if ( isScanVarObservable(c, arg->var[0]) ){
-			cout << "\n--var " << arg->var[0] << ": Setting up a scan for an observable ..." << endl;
-			// 1. tighten the constraint on the observable
-			PDF_Abs* pdf = c->getPdfProvidingObservable(arg->var[0]);
-			if ( pdf==0 ){
-				cout << "GammaComboEngine::scan() : ERROR : no PDF found that contains the observable '" << arg->var[0] << "'. Exit." << endl;
-				exit(1);
-			}
-			float scale = 0.1;
-			cout << "... observable error is multiplied by a factor " << scale << endl;
-			pdf->ScaleError(arg->var[0], scale);
-			pdf->buildCov();
-			pdf->buildPdf();
+			tightenChi2Constraint(c, arg->var[0]);
+		}
+		if ( arg->var.size()==2 && isScanVarObservable(c, arg->var[1]) ){
+			tightenChi2Constraint(c, arg->var[1]);
 		}
 
 		// combine
@@ -1005,10 +1019,13 @@ void GammaComboEngine::scan()
 		// set an asimov toy - only possible after combining
 		if ( isAsimovCombiner(i) ) setAsimovToy(c, i);
 
-		// configure scans for observables - this is the part only possible after combining
+		// configure scans for observables - this part is only possible after combining
+		// add the observable(s) to the list of parameters
 		if ( isScanVarObservable(c, arg->var[0]) ){
-			// 2. add observable to the list of parameters
 			c->getWorkspace()->extendSet(c->getParsName(), arg->var[0]);
+		}
+		if ( arg->var.size()==2 && isScanVarObservable(c, arg->var[1]) ){
+			c->getWorkspace()->extendSet(c->getParsName(), arg->var[1]);
 		}
 
 		// printout
