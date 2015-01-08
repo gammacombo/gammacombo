@@ -737,7 +737,7 @@ void GammaComboEngine::make1dPluginScan(MethodPluginScan *scannerPlugin, int cId
 ///
 /// Perform the 2D plugin scan. Runs toys in batch mode, and
 /// reads them back in.
-/// 
+///
 /// \param scannerPlugin - the scanner to run the scan with
 /// \param cId - the id of this combination on the command line
 ///
@@ -836,8 +836,10 @@ void GammaComboEngine::make1dPluginPlot(MethodPluginScan *sPlugin, MethodProbSca
 ///
 void GammaComboEngine::make2dPluginPlot(MethodPluginScan *sPlugin, MethodProbScan *sProb, int cId)
 {
-	sProb->plotOn(plot);
+	sProb->setTitle( sProb->getTitle() + " (Prob)");
+  sProb->plotOn(plot);
 	sProb->setLineColor(colorsLine[cId]);
+  sPlugin->setTitle( sPlugin->getTitle() + " (Plugin)");
 	sPlugin->plotOn(plot);
 	plot->Draw();
 }
@@ -1089,11 +1091,11 @@ void GammaComboEngine::scan()
 					MethodProbScan *scannerProb = new MethodProbScan(c);
 					if ( ! ( arg->isAction("plot") && arg->plotpluginonly ) ){
 						// we don't need the prob scanner if we just want to replot the plugin only
-						scannerProb->loadScanner(fb->getFileNameScanner(scannerProb));	
+						scannerProb->loadScanner(fb->getFileNameScanner(scannerProb));
 					}
 					MethodPluginScan *scannerPlugin = new MethodPluginScan(scannerProb);
 					if ( arg->isAction("plot") ){
-						scannerPlugin->loadScanner(fb->getFileNameScanner(scannerPlugin));	
+						scannerPlugin->loadScanner(fb->getFileNameScanner(scannerPlugin));
 					}
 					else {
 						if ( arg->coverageCorrectionID>0 ) {
@@ -1126,11 +1128,11 @@ void GammaComboEngine::scan()
 					MethodProbScan *scannerProb = new MethodProbScan(c);
 					if ( ! ( arg->isAction("plot") && arg->plotpluginonly ) ){
 						// we don't need the prob scanner if we just want to replot the plugin only
-						scannerProb->loadScanner(fb->getFileNameScanner(scannerProb));	
+						scannerProb->loadScanner(fb->getFileNameScanner(scannerProb));
 					}
 					MethodPluginScan *scannerPlugin = new MethodPluginScan(scannerProb);
 					if ( arg->isAction("plot") ){
-						scannerPlugin->loadScanner(fb->getFileNameScanner(scannerPlugin));	
+						scannerPlugin->loadScanner(fb->getFileNameScanner(scannerPlugin));
 					}
 					else {
 						make2dPluginScan(scannerPlugin, i);
@@ -1171,7 +1173,7 @@ void GammaComboEngine::printBanner()
 	cout << endl
 		<< "\033[1mGammaCombo v" << VTAG << " -- Developed by Till Moritz Karbach\033[0m " << endl
 		<< "                   Copyright (C) 2014, moritz.karbach@gmail.com" << endl
-		<< "                   All rights reserved under GPLv3, http://www.gnu.org/licenses/gpl.txt" << endl << endl ;	
+		<< "                   All rights reserved under GPLv3, http://www.gnu.org/licenses/gpl.txt" << endl << endl ;
 }
 
 ///
