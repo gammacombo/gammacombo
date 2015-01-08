@@ -80,6 +80,7 @@ OptParser::OptParser()
 	scanrangeMin = -99;
 	scanrangeyMax = -99;
 	scanrangeyMin = -99;
+  smooth2d = false;
 	usage = false;
 	verbose = false;
 }
@@ -140,6 +141,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("scanforce");
 	availableOptions.push_back("scanrange");
 	availableOptions.push_back("scanrangey");
+  availableOptions.push_back("smooth2d");
 	availableOptions.push_back("title");
 	availableOptions.push_back("usage");
 	availableOptions.push_back("unoff");
@@ -382,6 +384,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::SwitchArg importanceArg("", "importance", "Enable importance sampling for plugin toys.", false);
 	TCLAP::SwitchArg nosystArg("", "nosyst", "Sets all systematic errors to zero.", false);
 	TCLAP::SwitchArg printcorArg("", "printcor", "Print the correlation matrix of each solution found.", false);
+  TCLAP::SwitchArg smooth2dArg("", "smooth2d", "Smooth 2D p-value or cl histograms for nicer contour (particularly useful for 2D plugin)", false);
 
 	// --------------- aruments that can be given multiple times
 	vector<string> vAction;
@@ -470,6 +473,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "title" ) ) cmd.add( titleArg );
 	if ( isIn<TString>(bookedOptions, "sn2d" ) ) cmd.add(sn2dArg);
 	if ( isIn<TString>(bookedOptions, "sn" ) ) cmd.add(snArg);
+  if ( isIn<TString>(bookedOptions, "smooth2d" ) ) cmd.add( smooth2dArg );
 	if ( isIn<TString>(bookedOptions, "scanrangey" ) ) cmd.add( scanrangeyArg );
 	if ( isIn<TString>(bookedOptions, "scanrange" ) ) cmd.add( scanrangeArg );
 	if ( isIn<TString>(bookedOptions, "scanforce" ) ) cmd.add( scanforceArg );
@@ -569,6 +573,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	qh                = qhArg.getValue();
 	savenuisances1d   = snArg.getValue();
 	scanforce         = scanforceArg.getValue();
+  smooth2d          = smooth2dArg.getValue();
 	usage             = usageArg.getValue();
 	verbose           = verboseArg.getValue();
 
@@ -870,7 +875,7 @@ int OptParser::convertToIntWithCheck(TString parseMe, TString usage)
 		cout << usage << endl;
 		exit(1);
 	}
-	return parseMe.Atoi();	
+	return parseMe.Atoi();
 }
 
 ///
@@ -884,7 +889,7 @@ int OptParser::convertToDigitWithCheck(TString parseMe, TString usage)
 		cout << usage << endl;
 		exit(1);
 	}
-	return parseMe.Atoi();	
+	return parseMe.Atoi();
 }
 
 ///
@@ -897,7 +902,7 @@ int OptParser::convertToDigitWithCheck(TString parseMe, TString usage)
 ///
 /// \param parseMe		- the string provided to -c
 /// \param resultCmbId		- resulting combiner ID
-/// \param resultAddDelPdf	- vector of all PDF IDs, that are requested to be added or deleted 
+/// \param resultAddDelPdf	- vector of all PDF IDs, that are requested to be added or deleted
 /// 				 	to/from the combiner. If it is supposed to be added, a positive PDF ID
 ///					is stored, if it is supposed to be deleted, a negative PDF ID is stored
 ///
@@ -912,10 +917,10 @@ void OptParser::parseCombinerString(TString parseMe, int& resultCmbId, vector<in
 	usage += "  -c 26:+12\n";
 	usage += "  -c 26:+12,-3\n";
 	// simplest case, no modification
-	if ( !parseMe.Contains(":") ){ 
+	if ( !parseMe.Contains(":") ){
 		resultCmbId = convertToDigitWithCheck(parseMe, usage);
 		return;
-	}	
+	}
 	// advanced case, there are PDF modifications
 	// 1. parse leading combiner ID
 	TObjArray *array = parseMe.Tokenize(":"); // split string at ":"

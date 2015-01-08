@@ -41,7 +41,7 @@
 	linestyle[2].push_back(kSolid);
 	fillcolor[2].push_back(cb.lightcolor(fillcolor[1][0]));
 	fillstyle[2].push_back(1001);
-	// 4 sigma  
+	// 4 sigma
 	linecolor[3].push_back(cb.lightcolor(linecolor[2][0]));
 	linestyle[3].push_back(kSolid);
 	fillcolor[3].push_back(cb.lightcolor(fillcolor[2][0]));
@@ -50,7 +50,7 @@
 	linecolor[4].push_back(cb.lightcolor(linecolor[3][0]));
 	linestyle[4].push_back(kSolid);
 	fillcolor[4].push_back(cb.lightcolor(fillcolor[3][0]));
-	fillstyle[4].push_back(1001);  
+	fillstyle[4].push_back(1001);
 
 	// 2nd scanner
 	markerstyle.push_back(29);
@@ -154,27 +154,27 @@ void OneMinusClPlot2d::makeNewPlotStyle()
 	float thisMuchDarker = 0.8;
 
 	linecolor[0].push_back(cb.darklightcolor(linecolor[0][currentNumberOfStyles-1],thisMuchDarker));
-	linestyle[0].push_back(kSolid);                                                            
+	linestyle[0].push_back(kSolid);
 	fillcolor[0].push_back(cb.darklightcolor(fillcolor[0][currentNumberOfStyles-1],thisMuchDarker));
-	fillstyle[0].push_back(3013);                                                              
+	fillstyle[0].push_back(3013);
 
 	linecolor[1].push_back(cb.darklightcolor(linecolor[1][currentNumberOfStyles-1],thisMuchDarker));
-	linestyle[1].push_back(kSolid);                                                            
+	linestyle[1].push_back(kSolid);
 	fillcolor[1].push_back(cb.darklightcolor(fillcolor[1][currentNumberOfStyles-1],thisMuchDarker));
-	fillstyle[1].push_back(1001);                                                              
+	fillstyle[1].push_back(1001);
 
 	linecolor[2].push_back(cb.darklightcolor(linecolor[2][currentNumberOfStyles-1],thisMuchDarker));
-	linestyle[2].push_back(kSolid);                                                            
+	linestyle[2].push_back(kSolid);
 	fillcolor[2].push_back(cb.darklightcolor(fillcolor[2][currentNumberOfStyles-1],thisMuchDarker));
-	fillstyle[2].push_back(1001);                                                              
+	fillstyle[2].push_back(1001);
 
 	linecolor[3].push_back(cb.darklightcolor(linecolor[3][currentNumberOfStyles-1],thisMuchDarker));
-	linestyle[3].push_back(kSolid);                                                            
+	linestyle[3].push_back(kSolid);
 	fillcolor[3].push_back(cb.darklightcolor(fillcolor[3][currentNumberOfStyles-1],thisMuchDarker));
-	fillstyle[3].push_back(1001);                                                              
+	fillstyle[3].push_back(1001);
 
 	linecolor[4].push_back(cb.darklightcolor(linecolor[4][currentNumberOfStyles-1],thisMuchDarker));
-	linestyle[4].push_back(kSolid);                                                            
+	linestyle[4].push_back(kSolid);
 	fillcolor[4].push_back(cb.darklightcolor(fillcolor[4][currentNumberOfStyles-1],thisMuchDarker));
 	fillstyle[4].push_back(1001);
 }
@@ -423,10 +423,11 @@ TList* OneMinusClPlot2d::makeHoles(TList *contour)
 TMultiGraph* OneMinusClPlot2d::makeContours(int hCLid, int nContours, bool plotFilled, bool last)
 {
 	if ( arg->debug ) {
-		cout << "OneMinusClPlot2d::makeContours() : making contours of histogram id " << hCLid 
+		cout << "OneMinusClPlot2d::makeContours() : making contours of histogram id " << hCLid
 		<< ", type " << (histosType[hCLid]==kChi2?"kChi2":"kPvalue") << endl;
 	}
 	TH2F* h = histos[hCLid];
+  if ( arg->smooth2d ) h->Smooth();
 
 	// get coordinates of plotted area
 	float xmin = h->GetXaxis()->GetXmin();
@@ -440,7 +441,7 @@ TMultiGraph* OneMinusClPlot2d::makeContours(int hCLid, int nContours, bool plotF
 			h->GetNbinsX()+2,
 			h->GetXaxis()->GetXmin() - h->GetXaxis()->GetBinWidth(1),
 			h->GetXaxis()->GetXmax() + h->GetXaxis()->GetBinWidth(1),
-			h->GetNbinsY()+2,           
+			h->GetNbinsY()+2,
 			h->GetYaxis()->GetXmin() - h->GetYaxis()->GetBinWidth(1),
 			h->GetYaxis()->GetXmax() + h->GetYaxis()->GetBinWidth(1));
 	for ( int ix=1; ix<=hBoundaries->GetXaxis()->GetNbins(); ix++ ){
@@ -540,7 +541,7 @@ TMultiGraph* OneMinusClPlot2d::makeContours(int hCLid, int nContours, bool plotF
 	if ( arg->color.size()>hCLid ) styleId = arg->color[hCLid];
 	TMultiGraph *mg = new TMultiGraph(getUniqueRootName(), "graph");
 	for ( int ic=nContours-1; ic>=0; ic-- ){
-		drawContour(mg, contour[ic], 2, linecolor[ic][styleId], linestyle[ic][styleId], 
+		drawContour(mg, contour[ic], 2, linecolor[ic][styleId], linestyle[ic][styleId],
 				fillcolor[ic][styleId], fillstyle[ic][styleId], kDashed,
 				last, plotFilled);
 	}
@@ -642,7 +643,7 @@ void OneMinusClPlot2d::DrawFull()
 
 ///
 /// Draw the legend.
-/// 
+///
 void OneMinusClPlot2d::drawLegend()
 {
 	// set up the legend
@@ -726,7 +727,7 @@ void OneMinusClPlot2d::Draw()
 		cout << "OneMinusClPlot2d::makeNewPlotStyle() : WARNING : making a new plot style" << endl;
 		cout << "OneMinusClPlot2d::makeNewPlotStyle() :   for a new scanner that doesn't have" << endl;
 		cout << "OneMinusClPlot2d::makeNewPlotStyle() :   a style defined in the constructor." << endl;
-	}  
+	}
 	for ( int i=linecolor[0].size(); i<histos.size(); i++ ){
 		makeNewPlotStyle();
 	}
@@ -896,7 +897,7 @@ void OneMinusClPlot2d::drawSolutions()
 		for ( int iSol=0; iSol<scanners[i]->getNSolutions(); iSol++ )
 		{
 			/// if option 2 is given, only plot best fit points and equivalent ones
-			if ( arg->plotsolutions==2 
+			if ( arg->plotsolutions==2
 					&& iSol>0
 					&& scanners[i]->getSolution(iSol)->minNll() - scanners[i]->getSolution(0)->minNll() > 0.01 ) continue;
 			float xSol = scanners[i]->getScanVar1Solution(iSol);
