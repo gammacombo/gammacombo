@@ -194,6 +194,7 @@ void OneMinusClPlot2d::addScanner(MethodAbsScan* s)
 		histosType.push_back(kPvalue);
 		histos.push_back(s->getHCL2d());
 	}
+  if ( arg->smooth2d ) histos[histos.size()-1]->Smooth();
 	title = s->getTitle();
 }
 
@@ -208,6 +209,7 @@ void OneMinusClPlot2d::addFile(TString fName)
 		return;
 	}
 	histos.push_back(hCL);
+  if ( arg->smooth2d ) histos[histos.size()-1]->Smooth();
 	histosType.push_back(kPvalue);
 }
 
@@ -427,7 +429,6 @@ TMultiGraph* OneMinusClPlot2d::makeContours(int hCLid, int nContours, bool plotF
 		<< ", type " << (histosType[hCLid]==kChi2?"kChi2":"kPvalue") << endl;
 	}
 	TH2F* h = histos[hCLid];
-  if ( arg->smooth2d ) h->Smooth();
 
 	// get coordinates of plotted area
 	float xmin = h->GetXaxis()->GetXmin();
