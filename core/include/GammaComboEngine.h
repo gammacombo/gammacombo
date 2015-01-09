@@ -94,6 +94,7 @@ class GammaComboEngine
 		void			setAsimovToy(Combiner* c);
 		void			setAsimovToy(Combiner* c, int cId);
 		void			setUpPlot(TString name);
+		void            tightenChi2Constraint(Combiner *c, TString scanVar);
 		void			usage();
 
 		TStopwatch 		t;
