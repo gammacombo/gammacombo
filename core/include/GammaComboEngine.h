@@ -48,8 +48,8 @@ class GammaComboEngine
 		TString			getFileBaseName();
 		PDF_Abs*		getPdf(int id);
 		inline OptParser* 	getArg(){return arg;};
-		void			newCombiner(int id, TString name, TString title, 
-					int pdf1=-1, int pdf2=-1, int pdf3=-1, int pdf4=-1, int pdf5=-1, 
+		void			newCombiner(int id, TString name, TString title,
+					int pdf1=-1, int pdf2=-1, int pdf3=-1, int pdf4=-1, int pdf5=-1,
 					int pdf6=-1, int pdf7=-1, int pdf8=-1, int pdf9=-1, int pdf10=-1,
 					int pdf11=-1, int pdf12=-1, int pdf13=-1, int pdf14=-1, int pdf15=-1);
 		void			print();
@@ -91,8 +91,8 @@ class GammaComboEngine
 		void			savePlot();
 		void			scaleDownErrors();
 		void			scan();
-		void			setAsimovToy(Combiner* c);
-		void			setAsimovToy(Combiner* c, int cId);
+		void			setAsimovObservables(Combiner* c);
+		void			loadAsimovPoint(Combiner* c, int cId);
 		void			setUpPlot(TString name);
 		void            tightenChi2Constraint(Combiner *c, TString scanVar);
 		void			usage();
