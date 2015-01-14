@@ -213,11 +213,21 @@ void GammaComboEngine::scaleDownErrors()
 		pdf[i]->buildPdf();
 	}
 
+	int i=0;
+
+	// switch off Afav
+	i = 25;
+	pdf[i]->ScaleError("afav_dk_kpi_obs",200.);
+	pdf[i]->buildCov();
+	pdf[i]->buildPdf();
+
 	// scale dD_kpi
-	int i = 7;
+	i = 7;
 	pdf[i]->ScaleError("dD_kpi_obs",1./20.);
 	pdf[i]->buildCov();
 	pdf[i]->buildPdf();
+
+	cout << endl;
 }
 
 ///

@@ -221,9 +221,11 @@ int MethodProbScan::scan1d(bool fast, bool reverse)
 			bestMinFoundInScan = TMath::Min((double)chi2minScan, (double)bestMinFoundInScan);
 
 			if ( chi2minScan < 0 ){
-				cout << "MethodProbScan::scan1d() : WARNING : " << title << " chi2 negative! Setting to 0."
-													<< " chi2 found: " << chi2minScan << endl;
-				chi2minScan = 0.0;
+				float newChi2minScan = chi2minGlobal + 25.; // 5sigma more than best point
+				cout << "MethodProbScan::scan1d() : WARNING : " << title;
+				cout << " chi2 negative: " << chi2minScan;
+				cout << " setting to: " << newChi2minScan << endl;
+				chi2minScan = newChi2minScan;
 			}
 
 			// If we find a minimum smaller than the old "global" minimum, this means that all
