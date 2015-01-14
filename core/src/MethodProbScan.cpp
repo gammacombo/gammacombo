@@ -7,11 +7,11 @@
 
 #include "MethodProbScan.h"
 
-MethodProbScan::MethodProbScan(Combiner *comb)
+	MethodProbScan::MethodProbScan(Combiner *comb)
 : MethodAbsScan(comb)
 {
-  methodName = "Prob";
-  scanDisableDragMode = false;
+	methodName = "Prob";
+	scanDisableDragMode = false;
 	nScansDone					= 0;
 }
 ///
@@ -19,8 +19,8 @@ MethodProbScan::MethodProbScan(Combiner *comb)
 ///
 MethodProbScan::MethodProbScan()
 {
-  methodName = "Prob";
-  scanDisableDragMode = false;
+	methodName = "Prob";
+	scanDisableDragMode = false;
 	nScansDone					= 0;
 }
 ///
@@ -29,25 +29,25 @@ MethodProbScan::MethodProbScan()
 ///
 MethodProbScan::MethodProbScan(PDF_Generic_Abs* PDF, OptParser* opt, TH1F* hcl, const TString &fname)
 {
-  name                = fname;
-  methodName          = "Prob";
-  scanDisableDragMode = false;
-  hCL                 = hcl;
-  combiner            = NULL;
-  w                   = PDF->getWorkspace();
-  name                = PDF->getName();
-  title               = PDF->getTitle();
-  arg                 = opt;
-  scanVar1            = arg->var[0];
-  if ( arg->var.size()>1 ) scanVar2 = arg->var[1];
-  verbose             = arg->verbose;
-  drawSolution        = arg->plotsolutions;
-  nPoints1d           = arg->npoints1d;
-  nPoints2dx          = arg->npoints2dx;
-  nPoints2dy          = arg->npoints2dy;
-  pdfName             = PDF->getPdfName();
-  obsName             = PDF->getObsName();
-  parsName            = PDF->getParName();
+	name                = fname;
+	methodName          = "Prob";
+	scanDisableDragMode = false;
+	hCL                 = hcl;
+	combiner            = NULL;
+	w                   = PDF->getWorkspace();
+	name                = PDF->getName();
+	title               = PDF->getTitle();
+	arg                 = opt;
+	scanVar1            = arg->var[0];
+	if ( arg->var.size()>1 ) scanVar2 = arg->var[1];
+	verbose             = arg->verbose;
+	drawSolution        = arg->plotsolutions;
+	nPoints1d           = arg->npoints1d;
+	nPoints2dx          = arg->npoints2dx;
+	nPoints2dy          = arg->npoints2dy;
+	pdfName             = PDF->getPdfName();
+	obsName             = PDF->getObsName();
+	parsName            = PDF->getParName();
 	nScansDone					= 0;
 }
 
@@ -222,7 +222,7 @@ int MethodProbScan::scan1d(bool fast, bool reverse)
 
 			if ( chi2minScan < 0 ){
 				cout << "MethodProbScan::scan1d() : WARNING : " << title << " chi2 negative! Setting to 0."
-								    << " chi2 found: " << chi2minScan << endl;
+													<< " chi2 found: " << chi2minScan << endl;
 				chi2minScan = 0.0;
 			}
 
@@ -230,7 +230,7 @@ int MethodProbScan::scan1d(bool fast, bool reverse)
 			// previous 1-CL values are too high.
 			if ( chi2minScan<chi2minGlobal ){
 				if ( arg->verbose ) cout << "MethodProbScan::scan1d() : WARNING : " << title << " new global minimum found! "
-											<< " chi2minScan=" << chi2minScan << endl;
+																		<< " chi2minScan=" << chi2minScan << endl;
 				chi2minGlobal = chi2minScan;
 				// recompute previous 1-CL values
 				for ( int k=1; k<=hCL->GetNbinsX(); k++ ){
@@ -287,23 +287,23 @@ int MethodProbScan::scan1d(bool fast, bool reverse)
 ///
 bool MethodProbScan::deleteIfNotInCurveResults2d(RooSlimFitResult *r)
 {
-  if ( r==0 ) return true;
-  bool del = true;
-  for ( int j=0; j<hCL2d->GetNbinsX(); j++ )
-  for ( int k=0; k<hCL2d->GetNbinsY(); k++ ){
-    if ( r==curveResults2d[j][k] ){
-      del = false;
-      break;
-    }
-  }
-  if ( del ){
-    delete r;
-    // remove also from allResults vector
-    for ( int j=0; j<allResults.size(); j++ ){
-      if ( r==allResults[j] ) allResults[j] = 0;
-    }
-  }
-  return del;
+	if ( r==0 ) return true;
+	bool del = true;
+	for ( int j=0; j<hCL2d->GetNbinsX(); j++ )
+		for ( int k=0; k<hCL2d->GetNbinsY(); k++ ){
+			if ( r==curveResults2d[j][k] ){
+				del = false;
+				break;
+			}
+		}
+	if ( del ){
+		delete r;
+		// remove also from allResults vector
+		for ( int j=0; j<allResults.size(); j++ ){
+			if ( r==allResults[j] ) allResults[j] = 0;
+		}
+	}
+	return del;
 }
 
 ///
@@ -322,46 +322,46 @@ bool MethodProbScan::deleteIfNotInCurveResults2d(RooSlimFitResult *r)
 /// \param nTurn number of inner turn to jump to, 1=next-to-outer turn, 2=second-next, etc.
 ///
 bool MethodProbScan::computeInnerTurnCoords(const int iStart, const int jStart,
-  const int i, const int j, int &iResult, int &jResult, int nTurn)
+		const int i, const int j, int &iResult, int &jResult, int nTurn)
 {
 	// compute bin coordinates of start parameters: connect center of
 	// the spiral to the scan point with a straight line, go back by sqrt(2)
 	// units, take bin this ends us in
-  iResult = iStart;
-  jResult = jStart;
-  if ( sq(i-iStart)+sq(j-jStart)>0 )
-  {
-    iResult = round((float)i - float(nTurn)*1.41 * float(i-iStart)/sqrt(sq(i-iStart)+sq(j-jStart)));
-    jResult = round((float)j - float(nTurn)*1.41 * float(j-jStart)/sqrt(sq(i-iStart)+sq(j-jStart)));
-  }
-  if ( iResult-1>=curveResults2d.size() )    iResult = iStart;
-  if ( jResult-1>=curveResults2d[0].size() ) jResult = jStart;
-  // check result
-  if ( iResult-1>=curveResults2d.size() || jResult-1>=curveResults2d[0].size()
-    || iResult-1<0 || jResult-1<0 )
-  {
-    cout << "MethodProbScan::computeInnerTurnCoords() : ERROR : resulting coordinates out of range! "
-      << iResult-1 << " " << jResult-1 << endl;
-  }
-  if ( iResult==iStart && jResult==jStart ) return false;
-  return true;
+	iResult = iStart;
+	jResult = jStart;
+	if ( sq(i-iStart)+sq(j-jStart)>0 )
+	{
+		iResult = round((float)i - float(nTurn)*1.41 * float(i-iStart)/sqrt(sq(i-iStart)+sq(j-jStart)));
+		jResult = round((float)j - float(nTurn)*1.41 * float(j-jStart)/sqrt(sq(i-iStart)+sq(j-jStart)));
+	}
+	if ( iResult-1>=curveResults2d.size() )    iResult = iStart;
+	if ( jResult-1>=curveResults2d[0].size() ) jResult = jStart;
+	// check result
+	if ( iResult-1>=curveResults2d.size() || jResult-1>=curveResults2d[0].size()
+			|| iResult-1<0 || jResult-1<0 )
+	{
+		cout << "MethodProbScan::computeInnerTurnCoords() : ERROR : resulting coordinates out of range! "
+															<< iResult-1 << " " << jResult-1 << endl;
+	}
+	if ( iResult==iStart && jResult==jStart ) return false;
+	return true;
 }
 
 
 void MethodProbScan::sanityChecks()
 {
-  if ( !w->set(parsName) ){
-    cout << "MethodProbScan::sanityChecks() : ERROR : parsName not found: " << parsName << endl;
-    exit(1);
-  }
-  if ( !w->var(scanVar1) ){
-    cout << "MethodProbScan::sanityChecks() : ERROR : scanVar1 not found: " << scanVar1 << endl;
-    exit(1);
-  }
-  if ( !w->var(scanVar2) ){
-    cout << "MethodProbScan::sanityChecks() : ERROR : scanVar2 not found: " << scanVar2 << endl;
-    exit(1);
-  }
+	if ( !w->set(parsName) ){
+		cout << "MethodProbScan::sanityChecks() : ERROR : parsName not found: " << parsName << endl;
+		exit(1);
+	}
+	if ( !w->var(scanVar1) ){
+		cout << "MethodProbScan::sanityChecks() : ERROR : scanVar1 not found: " << scanVar1 << endl;
+		exit(1);
+	}
+	if ( !w->var(scanVar2) ){
+		cout << "MethodProbScan::sanityChecks() : ERROR : scanVar2 not found: " << scanVar2 << endl;
+		exit(1);
+	}
 }
 
 ///
@@ -473,7 +473,7 @@ int MethodProbScan::scan2d()
 				// status bar
 				if (((int)nSteps % (int)(nTotalSteps/printFreq)) == 0){
 					cout << Form("MethodProbScan::scan2d() : scanning %3.0f%%", (float)nSteps/(float)nTotalSteps*100.)
-										 << "       \r" << flush;
+															 << "       \r" << flush;
 				}
 				nSteps++;
 
@@ -529,7 +529,7 @@ int MethodProbScan::scan2d()
 					// warn only if there was a significant improvement
 					if ( arg->debug || chi2minScan<chi2minGlobal-1e-2 ){
 						cout << "MethodProbScan::scan2d() : WARNING : " << title << " new global minimum found! chi2minGlobal="
-										    << chi2minGlobal << " chi2minScan=" << chi2minScan << endl;
+															<< chi2minGlobal << " chi2minScan=" << chi2minScan << endl;
 					}
 					chi2minGlobal = chi2minScan;
 					// recompute previous 1-CL values
@@ -607,44 +607,44 @@ int MethodProbScan::scan2d()
 ///
 void MethodProbScan::saveSolutions()
 {
-  if ( arg->debug ) cout << "MethodProbScan::saveSolutions() : searching for minima in hChi2min ..." << endl;
+	if ( arg->debug ) cout << "MethodProbScan::saveSolutions() : searching for minima in hChi2min ..." << endl;
 
-  // delete old solutions if any
-  vector<RooSlimFitResult*> tmp;
-  solutions = tmp;
+	// delete old solutions if any
+	vector<RooSlimFitResult*> tmp;
+	solutions = tmp;
 
-  // loop over chi2 histogram to locate local maxima
-  for ( int i=2; i<hChi2min->GetNbinsX()-1; i++ )
-  {
-    bool oneBinMax = hChi2min->GetBinContent(i-1) > hChi2min->GetBinContent(i)
-                  && hChi2min->GetBinContent(i+1) > hChi2min->GetBinContent(i);
-    bool twoBinMax = hChi2min->GetBinContent(i-1) > hChi2min->GetBinContent(i)
-                  && hChi2min->GetBinContent(i  )== hChi2min->GetBinContent(i+1)
-                  && hChi2min->GetBinContent(i+2) > hChi2min->GetBinContent(i+1);
-    if ( !(oneBinMax || twoBinMax )) continue;
+	// loop over chi2 histogram to locate local maxima
+	for ( int i=2; i<hChi2min->GetNbinsX()-1; i++ )
+	{
+		bool oneBinMax = hChi2min->GetBinContent(i-1) > hChi2min->GetBinContent(i)
+			&& hChi2min->GetBinContent(i+1) > hChi2min->GetBinContent(i);
+		bool twoBinMax = hChi2min->GetBinContent(i-1) > hChi2min->GetBinContent(i)
+			&& hChi2min->GetBinContent(i  )== hChi2min->GetBinContent(i+1)
+			&& hChi2min->GetBinContent(i+2) > hChi2min->GetBinContent(i+1);
+		if ( !(oneBinMax || twoBinMax )) continue;
 
-    // loop over fit results to find those that produced it
-    for ( int j=0; j<curveResults.size(); j++ ){
-      if ( !curveResults[j] ){
-        if ( arg->debug ) cout << "MethodProbScan::saveSolutions() : WARNING : empty solution at index " << j << endl;
-        continue;
-      }
+		// loop over fit results to find those that produced it
+		for ( int j=0; j<curveResults.size(); j++ ){
+			if ( !curveResults[j] ){
+				if ( arg->debug ) cout << "MethodProbScan::saveSolutions() : WARNING : empty solution at index " << j << endl;
+				continue;
+			}
 
-      if ( hChi2min->FindBin(curveResults[j]->getConstParVal(scanVar1))==i ){
-        if ( arg->debug ){
-          cout << "MethodProbScan::saveSolutions() : saving solution " << j << ":" << endl;
-          curveResults[j]->Print();
-        }
-        solutions.push_back(curveResults[j]);
-      }
-    }
-  }
+			if ( hChi2min->FindBin(curveResults[j]->getConstParVal(scanVar1))==i ){
+				if ( arg->debug ){
+					cout << "MethodProbScan::saveSolutions() : saving solution " << j << ":" << endl;
+					curveResults[j]->Print();
+				}
+				solutions.push_back(curveResults[j]);
+			}
+		}
+	}
 
-  if ( solutions.size()==0 ){
-    cout << "MethodProbScan::saveSolutions() : ERROR : No solutions found." << endl;
-  }
+	if ( solutions.size()==0 ){
+		cout << "MethodProbScan::saveSolutions() : ERROR : No solutions found." << endl;
+	}
 
-  sortSolutions();
+	sortSolutions();
 }
 
 ///
@@ -668,27 +668,27 @@ void MethodProbScan::saveSolutions2d()
 
 	// loop over chi2 histogram to locate local minima
 	for ( int i=2; i<hChi2min2d->GetNbinsX(); i++ )
-	for ( int j=2; j<hChi2min2d->GetNbinsY(); j++ )
-	{
-		if ( !(hChi2min2d->GetBinContent(i-1,   j) > hChi2min2d->GetBinContent(i, j)
-					&& hChi2min2d->GetBinContent(i+1,   j) > hChi2min2d->GetBinContent(i, j)
-					&& hChi2min2d->GetBinContent(i,   j-1) > hChi2min2d->GetBinContent(i, j)
-					&& hChi2min2d->GetBinContent(i,   j+1) > hChi2min2d->GetBinContent(i, j)
-					&& hChi2min2d->GetBinContent(i-1, j-1) > hChi2min2d->GetBinContent(i, j)
-					&& hChi2min2d->GetBinContent(i+1, j+1) > hChi2min2d->GetBinContent(i, j)
-					&& hChi2min2d->GetBinContent(i+1, j-1) > hChi2min2d->GetBinContent(i, j)
-					&& hChi2min2d->GetBinContent(i-1, j+1) > hChi2min2d->GetBinContent(i, j)
-		      )) continue;
+		for ( int j=2; j<hChi2min2d->GetNbinsY(); j++ )
+		{
+			if ( !(hChi2min2d->GetBinContent(i-1,   j) > hChi2min2d->GetBinContent(i, j)
+						&& hChi2min2d->GetBinContent(i+1,   j) > hChi2min2d->GetBinContent(i, j)
+						&& hChi2min2d->GetBinContent(i,   j-1) > hChi2min2d->GetBinContent(i, j)
+						&& hChi2min2d->GetBinContent(i,   j+1) > hChi2min2d->GetBinContent(i, j)
+						&& hChi2min2d->GetBinContent(i-1, j-1) > hChi2min2d->GetBinContent(i, j)
+						&& hChi2min2d->GetBinContent(i+1, j+1) > hChi2min2d->GetBinContent(i, j)
+						&& hChi2min2d->GetBinContent(i+1, j-1) > hChi2min2d->GetBinContent(i, j)
+						&& hChi2min2d->GetBinContent(i-1, j+1) > hChi2min2d->GetBinContent(i, j)
+				  )) continue;
 
-		RooSlimFitResult *r = curveResults2d[i-1][j-1]; // -1 because it starts counting at 0, but histograms at 1
-		if (!r){
-			cout << "MethodProbScan::saveSolutions2d() : ERROR : No corresponding RooFitResult found! Skipping (i,j)="
-								     << Form("(%ii,%i)",i,j) << endl;
-			continue;
+			RooSlimFitResult *r = curveResults2d[i-1][j-1]; // -1 because it starts counting at 0, but histograms at 1
+			if (!r){
+				cout << "MethodProbScan::saveSolutions2d() : ERROR : No corresponding RooFitResult found! Skipping (i,j)="
+															 << Form("(%ii,%i)",i,j) << endl;
+				continue;
+			}
+			if ( arg->debug ) cout << "MethodProbScan::saveSolutions2d() : saving ..." << endl;
+			solutions.push_back((RooSlimFitResult*)curveResults2d[i-1][j-1]->Clone());
 		}
-		if ( arg->debug ) cout << "MethodProbScan::saveSolutions2d() : saving ..." << endl;
-		solutions.push_back((RooSlimFitResult*)curveResults2d[i-1][j-1]->Clone());
-	}
 
 	if ( solutions.size()==0 ){
 		cout << "MethodProbScan::saveSolutions2d() : WARNING : No solutions found in 2D scan!" << endl;
@@ -712,7 +712,7 @@ void MethodProbScan::saveSolutions2d()
 ///
 float MethodProbScan::getChi2min(float scanpoint)
 {
-  assert(hChi2min);
-  int iBin = hChi2min->FindBin(scanpoint);
-  return hChi2min->GetBinContent(iBin);
+	assert(hChi2min);
+	int iBin = hChi2min->FindBin(scanpoint);
+	return hChi2min->GetBinContent(iBin);
 }
