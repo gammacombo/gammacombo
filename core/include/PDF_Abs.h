@@ -65,6 +65,8 @@ class PDF_Abs
 		inline TString      getUniqueID(){return uniqueID;};
 		inline unsigned long long getUniqueGlobalID(){return uniqueGlobalID;}
 		inline RooArgList*  getObservables(){return observables;};
+		inline TString		getObservableSourceString(){return obsValSource;};
+		float 				getObservableValue(TString obsname);
 		inline RooArgList*  getParameters(){return parameters;};
 		inline RooAbsPdf*   getPdf(){return pdf;};
 		inline RooArgList*  getTheory(){return theory;};

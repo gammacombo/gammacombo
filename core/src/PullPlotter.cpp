@@ -217,7 +217,7 @@ void PullPlotter::plotPulls()
 
 	// find observables we want to plot the pull of, and print their values
 	vector<TString> observables;
-
+	if ( arg->verbose ) cout << endl;
 	for ( int i=obsOrder.size()-1; i>=0; i-- ){
 		RooRealVar* pObs = (RooRealVar*)cmb->getObservables()->find(obsOrder[i]);
 		if ( !pObs ){
@@ -243,9 +243,10 @@ void PullPlotter::plotPulls()
 
 		// print out observables and fit result
 		if ( arg->verbose ){
-			printf("%20s: obs = %9.6f +/- %9.6f, th = %9.6f\n", pObs->GetName(), pObs->getVal(), pObs->getError(), pTh->getVal());
+			printf("%30s: obs = %9.6f +/- %9.6f, th = %9.6f\n", pObs->GetName(), pObs->getVal(), pObs->getError(), pTh->getVal());
 		}
 	}
+	if ( arg->verbose ) cout << endl;
 
 	// now plot the pulls of the observables we found in chunks of 10.
 	vector<TString> observablesChunk;

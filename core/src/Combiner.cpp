@@ -289,7 +289,7 @@ vector<string>& Combiner::getParameterNames()
 
 ///
 /// Return a vector of all observables names present
-/// in this combination. 
+/// in this combination.
 /// If being called before combine() was called, a list of
 /// observables contained in all PDFs is returned, without
 /// unification strings. There might be duplicates in that
@@ -439,7 +439,7 @@ void Combiner::fixParameters(TString vars)
 ///
 /// Set the observables in the workspace to toy values,
 /// that were generated from the current parameter values
-/// in the workspace. 
+/// in the workspace.
 ///
 /// This can be used to perform a coverage test.
 ///

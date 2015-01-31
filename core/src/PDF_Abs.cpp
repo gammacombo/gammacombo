@@ -604,3 +604,20 @@ bool PDF_Abs::ScaleError(TString obsname, float scale)
 	return true;
 }
 
+///
+/// Return the numerical value of an observable of a given name.
+///
+/// \param obsname  - observable name. If the PDF was uniquified before by
+/// calling uniquify(), it has to include the unique ID string.
+/// \return    		- the value
+///
+float PDF_Abs::getObservableValue(TString obsname)
+{
+	// check if requested observable exits
+	if ( ! hasObservable(obsname) ){
+		cout << "PDF_Abs::getObservableValue() : ERROR : Requested observable doesn't exist: " << obsname << ". Exit." << endl;
+		exit(1);
+	}
+	return ((RooRealVar*)observables->find(obsname))->getVal();
+}
+
