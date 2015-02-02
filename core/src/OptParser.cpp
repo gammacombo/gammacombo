@@ -59,6 +59,8 @@ OptParser::OptParser()
 	plotlegend = true;
 	plotlegx = -99;
 	plotlegy = -99;
+  plotlegsizex = -99;
+  plotlegsizey = -99;
 	plotgroupx = -99;
 	plotgroupy = -99;
 	plotlog = false;
@@ -103,6 +105,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("digits");
 	availableOptions.push_back("evol");
 	availableOptions.push_back("fix");
+  availableOptions.push_back("ext");
 	availableOptions.push_back("id");
 	availableOptions.push_back("importance");
 	availableOptions.push_back("interactive");
@@ -110,6 +113,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("jobs");
 	availableOptions.push_back("largest");
 	availableOptions.push_back("leg");
+	availableOptions.push_back("legsize");
 	availableOptions.push_back("group");
 	availableOptions.push_back("grouppos");
 	availableOptions.push_back("lightfiles");
@@ -172,7 +176,9 @@ void OptParser::bookPlottingOptions()
 {
 	bookedOptions.push_back("color");
 	bookedOptions.push_back("digits");
+	bookedOptions.push_back("ext");
 	bookedOptions.push_back("leg");
+	bookedOptions.push_back("legsize");
 	bookedOptions.push_back("group");
 	bookedOptions.push_back("grouppos");
 	bookedOptions.push_back("log");
@@ -323,9 +329,13 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"Disable the legend with --leg off .\n"
 			"2d plots: set the position of the legend. "
 			"Format: --leg xmin:ymin in normalized coordinates [0,1]. Default: 0.17:0.75", false, "default", "string");
+  TCLAP::ValueArg<string> plotlegsizeArg("", "legsize", "Adjust the plot legend size.\n"
+      "2d plots: set the size of the legend. "
+      "Format: --legsize xsize:ysize in normalized coordinates [0,1]. Default: 0.38:0.15", false, "default", "string");
 	TCLAP::ValueArg<string> pluginplotrangeArg("", "pluginplotrange", "Restrict the Plugin plot to a given range to "
 			"rejcet low-statistics outliers. Format: --pluginplotrange min-max.", false, "default", "string");
 	TCLAP::ValueArg<int> plotnsigmacontArg("", "ncontours", "plot this many sigma contours in 2d plots (max 5)", false, 2, "int");
+  TCLAP::ValueArg<string> filenameadditionArg("","ext","Add this piece into the file name (in case you don't want files/plots to be overwritten", false, "", "string");
 	TCLAP::ValueArg<string> plotgroupArg("", "group", "Set the group logo. Use '--group off' to disable the logo. "
 			"See also --grouppos. Default: GammaCombo", false, "GammaCombo", "string");
 	TCLAP::ValueArg<string> plotgroupposArg("", "grouppos", "Set the position of the group logo. "
@@ -507,6 +517,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "log" ) ) cmd.add( plotlogArg );
 	if ( isIn<TString>(bookedOptions, "loadParamsFile" ) ) cmd.add( loadParamsFileArg );
 	if ( isIn<TString>(bookedOptions, "lightfiles" ) ) cmd.add( lightfilesArg );
+	if ( isIn<TString>(bookedOptions, "legsize" ) ) cmd.add( plotlegsizeArg );
 	if ( isIn<TString>(bookedOptions, "leg" ) ) cmd.add( plotlegArg );
 	if ( isIn<TString>(bookedOptions, "largest" ) ) cmd.add( largestArg );
 	if ( isIn<TString>(bookedOptions, "jobs" ) ) cmd.add(jobsArg);
@@ -517,6 +528,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "group" ) ) cmd.add( plotgroupArg );
 	if ( isIn<TString>(bookedOptions, "grouppos" ) ) cmd.add( plotgroupposArg );
 	if ( isIn<TString>(bookedOptions, "fix" ) ) cmd.add(fixArg);
+  if ( isIn<TString>(bookedOptions, "ext" ) ) cmd.add(filenameadditionArg);
 	if ( isIn<TString>(bookedOptions, "evol" ) ) cmd.add(parevolArg);
 	if ( isIn<TString>(bookedOptions, "digits" ) ) cmd.add(digitsArg);
 	if ( isIn<TString>(bookedOptions, "debug" ) ) cmd.add(debugArg);
@@ -537,6 +549,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	controlplot       = controlplotArg.getValue();
 	digits            = digitsArg.getValue();
 	enforcePhysRange  = physrangeArg.getValue();
+  filenameaddition  = filenameadditionArg.getValue();
 	group             = plotgroupArg.getValue();
 	id                = idArg.getValue();
 	importance        = importanceArg.getValue();
@@ -709,6 +722,15 @@ void OptParser::parseArguments(int argc, char* argv[])
 		plotlegend = true;
 		parsePosition(plotlegArg.getValue(), plotlegx, plotlegy, usage);
 	}
+
+  // --legsize
+  usage = "";
+  usage += "Required format: '--legsize 0.a:0.b'\n";
+  usage += "  Examples:\n";
+  usage += "  --legsize 0.4:0.2\n";
+	usage += "  --legsize 0.4:def\n";
+	usage += "  --legsize def:0.2\n";
+  parsePosition(plotlegsizeArg.getValue(), plotlegsizex, plotlegsizey, usage);
 
 	// --grouppos
 	usage = "";
