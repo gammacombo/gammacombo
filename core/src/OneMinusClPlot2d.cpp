@@ -138,6 +138,35 @@
 	linestyle[4].push_back(kSolid);
 	fillcolor[4].push_back(cb.lightcolor(fillcolor[3][3]));
 	fillstyle[4].push_back(1001);
+
+	// 4th scanner
+	markerstyle.push_back(22);
+	markersize.push_back(1.1);
+
+	linecolor[0].push_back(kGray+3);
+	linestyle[0].push_back(kSolid);
+	fillcolor[0].push_back(kGray-7);
+	fillstyle[0].push_back(3013);
+
+	linecolor[1].push_back(kGray-1);
+	linestyle[1].push_back(kSolid);
+	fillcolor[1].push_back(kGray-6);
+	fillstyle[1].push_back(1001);
+
+	linecolor[2].push_back(kGray-2);
+	linestyle[2].push_back(kSolid);
+	fillcolor[2].push_back(kGray-9);
+	fillstyle[2].push_back(1001);
+
+	linecolor[3].push_back(cb.lightcolor(linecolor[2][3]));
+	linestyle[3].push_back(kSolid);
+	fillcolor[3].push_back(cb.lightcolor(fillcolor[2][3]));
+	fillstyle[3].push_back(1001);
+
+	linecolor[4].push_back(cb.lightcolor(linecolor[3][3]));
+	linestyle[4].push_back(kSolid);
+	fillcolor[4].push_back(cb.lightcolor(fillcolor[3][3]));
+	fillstyle[4].push_back(1001);
 }
 
 ///
@@ -650,8 +679,8 @@ void OneMinusClPlot2d::drawLegend()
 	// set up the legend
 	float legendXmin = arg->plotlegx!=-1. ? arg->plotlegx : 0.17;
 	float legendYmin = arg->plotlegy!=-1. ? arg->plotlegy : 0.75;
-	float legendXmax = legendXmin+0.38;
-	float legendYmax = legendYmin+0.15;
+	float legendXmax = legendXmin + (arg->plotlegsizex!=-1. ? arg->plotlegsizex : 0.38) ;
+	float legendYmax = legendYmin + (arg->plotlegsizey!=-1. ? arg->plotlegsizey : 0.15) ;
 	TLegend* leg = new TLegend(legendXmin,legendYmin,legendXmax,legendYmax);
 	leg->SetFillColor(0);
 	leg->SetFillStyle(0);

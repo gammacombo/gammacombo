@@ -47,6 +47,7 @@ class OptParser
 		bool            	debug;
 		int		        digits;
 		bool            	enforcePhysRange;
+    TString         filenameaddition;
 		vector<vector<FixPar> >	fixParameters;
 		TString	group;
 		TString	groupPos;
@@ -75,9 +76,11 @@ class OptParser
 		bool            plot2dcl;
 		int             plotid;
 		bool            plotlog;
-		bool		plotlegend;
+		bool		        plotlegend;
 		float           plotlegx;
 		float           plotlegy;
+    float           plotlegsizex;
+    float           plotlegsizey;
 		float           plotgroupx;
 		float           plotgroupy;
 		bool            plotmagnetic;

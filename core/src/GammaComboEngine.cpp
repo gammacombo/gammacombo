@@ -16,6 +16,7 @@ GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[])
 	// configure names
 	execname = argv[0];
 	basename = name;
+  if (arg->filenameaddition!="") basename += "_"+arg->filenameaddition;
 	fb = new FileNameBuilder(arg, basename);
 
 	// run ROOT in interactive mode, if requested (-i)
