@@ -631,7 +631,12 @@ void GammaComboEngine::defineColors()
 		colorsLine.push_back(TColor::GetColor("#66a61e"));
 		colorsLine.push_back(TColor::GetColor("#e6ab02"));
 
-		ColorBuilder cb;
+    // from http://colorbrewer2.org with:
+    //   number of data classes: 6
+    //   nature of data:         qualitative
+    //   second colour scheme
+
+    ColorBuilder cb;
 		for ( int i=0; i<colorsLine.size(); i++ ){
 			colorsText.push_back(cb.darklightcolor(colorsLine[i], 0.5));
 		}
