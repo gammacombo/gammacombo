@@ -82,6 +82,7 @@ namespace Utils
 		lumi3fbFix,
 		lumi3fbFullDP,
 		lumi3fbPaper,
+		lumi3fbDKstz,
 		lumi5ab,
 		lumi5fb,
 		lumi9fb,
