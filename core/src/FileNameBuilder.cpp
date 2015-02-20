@@ -6,8 +6,8 @@
 
 FileNameBuilder::FileNameBuilder(OptParser *arg, TString name)
 {
-  assert(arg);
-  _arg = arg;
+	assert(arg);
+	_arg = arg;
 	_basename = name;
 }
 
@@ -24,10 +24,10 @@ FileNameBuilder::~FileNameBuilder()
 TString FileNameBuilder::getFileBaseName(const GammaComboEngine *gc)
 {
 	TString name = gc->getBasename();
-  for ( int i=0; i<_arg->combid.size(); i++ ) name += "_"+gc->getCombiner(_arg->combid[i])->getName();
-  name += "_"+_arg->var[0];
-  if ( _arg->var.size()==2 ) name += "_"+_arg->var[1];
-	return name;	
+	for ( int i=0; i<_arg->combid.size(); i++ ) name += "_"+gc->getCombiner(_arg->combid[i])->getName();
+	name += "_"+_arg->var[0];
+	if ( _arg->var.size()==2 ) name += "_"+_arg->var[1];
+	return name;
 }
 
 ///
@@ -40,8 +40,8 @@ TString FileNameBuilder::getFileBaseName(const Combiner *c)
 {
 	TString name = _basename;
 	name += "_"+c->getName();
-  name += "_"+_arg->var[0];
-  if ( _arg->var.size()==2 ) name += "_"+_arg->var[1];
+	name += "_"+_arg->var[0];
+	if ( _arg->var.size()==2 ) name += "_"+_arg->var[1];
 	return name;
 }
 
@@ -54,7 +54,7 @@ TString FileNameBuilder::getFileNameScanner(const MethodAbsScan *c)
 	TString name = "plots/scanner/"+_basename+"_scanner_"+c->getName();
 	if ( c->getMethodName()!=TString("Prob") ) name += "_"+c->getMethodName();
 	name += "_"+_arg->var[0];
-  if ( _arg->var.size()==2 ) name += "_"+_arg->var[1];
-  name += ".root";
+	if ( _arg->var.size()==2 ) name += "_"+_arg->var[1];
+	name += ".root";
 	return name;
 }
