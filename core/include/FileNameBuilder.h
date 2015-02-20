@@ -26,19 +26,19 @@ class Combiner;
 ///
 class FileNameBuilder
 {
-public:
+	public:
 
-	FileNameBuilder(OptParser *arg, TString name="gammacombo");
-	~FileNameBuilder();
-    
-	TString getFileBaseName(const GammaComboEngine *gc);
-	TString getFileBaseName(const Combiner *c);
-  TString getFileNameScanner(const MethodAbsScan *c);
+		FileNameBuilder(OptParser *arg, TString name="gammacombo");
+		~FileNameBuilder();
 
-private:
-      
-	OptParser *_arg;                    ///< command line arguments
-	TString _basename;									///< the base name, e.g. "gammacombo"
+		TString getFileBaseName(const GammaComboEngine *gc);
+		TString getFileBaseName(const Combiner *c);
+		TString getFileNameScanner(const MethodAbsScan *c);
+
+	private:
+
+		OptParser *_arg;                    ///< command line arguments
+		TString _basename;									///< the base name, e.g. "gammacombo"
 };
 
 #endif
