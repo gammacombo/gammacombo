@@ -17,7 +17,7 @@ GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[])
 	execname = argv[0];
 	basename = name;
 	if (arg->filenameaddition!="") basename += "_"+arg->filenameaddition;
-	fb = new FileNameBuilder(arg, basename);
+	m_fnamebuilder = new FileNameBuilder(arg, basename);
 
 	// run ROOT in interactive mode, if requested (-i)
 	if ( arg->interactive ) theApp = new TApplication("App", &argc, argv);
@@ -28,7 +28,7 @@ GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[])
 
 GammaComboEngine::~GammaComboEngine()
 {
-	delete fb;
+	delete m_fnamebuilder;
 }
 
 
@@ -735,7 +735,7 @@ void GammaComboEngine::make1dProbScan(MethodProbScan *scanner, int cId)
 			plotter.plotObsScanCheck();
 		}
 		if (!arg->isAction("plugin")){
-			scanner->saveScanner(fb->getFileNameScanner(scanner));
+			scanner->saveScanner(m_fnamebuilder->getFileNameScanner(scanner));
 			pCache->cacheParameters(scanner);
 		}
 	}
@@ -759,7 +759,7 @@ void GammaComboEngine::make1dPluginScan(MethodPluginScan *scannerPlugin, int cId
 	}
 	scannerPlugin->calcCLintervals();
 	if ( !arg->isAction("pluginbatch") ){
-		scannerPlugin->saveScanner(fb->getFileNameScanner(scannerPlugin));
+		scannerPlugin->saveScanner(m_fnamebuilder->getFileNameScanner(scannerPlugin));
 	}
 }
 
@@ -778,7 +778,7 @@ void GammaComboEngine::make2dPluginScan(MethodPluginScan *scannerPlugin, int cId
 	}
 	else {
 		scannerPlugin->readScan2dTrees(arg->jmin[cId],arg->jmax[cId]);
-		scannerPlugin->saveScanner(fb->getFileNameScanner(scannerPlugin));
+		scannerPlugin->saveScanner(m_fnamebuilder->getFileNameScanner(scannerPlugin));
 		// plot chi2
 		OneMinusClPlot2d* plotf = new OneMinusClPlot2d(arg, plot->getName()+"_plugin_full", "p-value histogram: "+scannerPlugin->getTitle());
 		scannerPlugin->plotOn(plotf);
@@ -917,7 +917,7 @@ void GammaComboEngine::make2dProbScan(MethodProbScan *scanner, int cId)
 	cout << endl;
 	scanner->printLocalMinima();
 	// save
-	scanner->saveScanner(fb->getFileNameScanner(scanner));
+	scanner->saveScanner(m_fnamebuilder->getFileNameScanner(scanner));
 	pCache->cacheParameters(scanner);
 	// plot
 	if (!arg->isAction("pluginbatch")){
@@ -1084,7 +1084,7 @@ void GammaComboEngine::scan()
 			if ( arg->var.size()==1 )
 			{
 				if ( arg->isAction("plot") ){
-					scannerProb->loadScanner(fb->getFileNameScanner(scannerProb));
+					scannerProb->loadScanner(m_fnamebuilder->getFileNameScanner(scannerProb));
 				}
 				else{
 					make1dProbScan(scannerProb, i);
@@ -1095,7 +1095,7 @@ void GammaComboEngine::scan()
 			else if ( arg->var.size()==2 )
 			{
 				if ( arg->isAction("plot") ){
-					scannerProb->loadScanner(fb->getFileNameScanner(scannerProb));
+					scannerProb->loadScanner(m_fnamebuilder->getFileNameScanner(scannerProb));
 					make2dProbPlot(scannerProb, i);
 				}
 				else{
@@ -1137,11 +1137,11 @@ void GammaComboEngine::scan()
 					MethodProbScan *scannerProb = new MethodProbScan(c);
 					if ( ! ( arg->isAction("plot") && arg->plotpluginonly ) ){
 						// we don't need the prob scanner if we just want to replot the plugin only
-						scannerProb->loadScanner(fb->getFileNameScanner(scannerProb));
+						scannerProb->loadScanner(m_fnamebuilder->getFileNameScanner(scannerProb));
 					}
 					MethodPluginScan *scannerPlugin = new MethodPluginScan(scannerProb);
 					if ( arg->isAction("plot") ){
-						scannerPlugin->loadScanner(fb->getFileNameScanner(scannerPlugin));
+						scannerPlugin->loadScanner(m_fnamebuilder->getFileNameScanner(scannerPlugin));
 					}
 					else {
 						if ( arg->coverageCorrectionID>0 ) {
@@ -1174,11 +1174,11 @@ void GammaComboEngine::scan()
 					MethodProbScan *scannerProb = new MethodProbScan(c);
 					if ( ! ( arg->isAction("plot") && arg->plotpluginonly ) ){
 						// we don't need the prob scanner if we just want to replot the plugin only
-						scannerProb->loadScanner(fb->getFileNameScanner(scannerProb));
+						scannerProb->loadScanner(m_fnamebuilder->getFileNameScanner(scannerProb));
 					}
 					MethodPluginScan *scannerPlugin = new MethodPluginScan(scannerProb);
 					if ( arg->isAction("plot") ){
-						scannerPlugin->loadScanner(fb->getFileNameScanner(scannerPlugin));
+						scannerPlugin->loadScanner(m_fnamebuilder->getFileNameScanner(scannerPlugin));
 					}
 					else {
 						make2dPluginScan(scannerPlugin, i);

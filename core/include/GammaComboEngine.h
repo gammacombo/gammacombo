@@ -102,7 +102,7 @@ class GammaComboEngine
 		OptParser*		arg;
 		vector<PDF_Abs*>	pdf;
 		vector<Combiner*> 	cmb;
-		FileNameBuilder*	fb;
+		FileNameBuilder*	m_fnamebuilder;
 
 		OneMinusClPlotAbs*	plot;
 		vector<int> 		colorsLine;
