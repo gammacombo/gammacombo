@@ -223,7 +223,7 @@ void MethodAbsScan::initScan()
 			RooMsgService::instance().setGlobalKillBelow(ERROR);
 			par2->setRange("scan", arg->scanrangeyMin, arg->scanrangeyMax);
 			RooMsgService::instance().setGlobalKillBelow(INFO);
-		}    
+		}
 		setLimit(w, scanVar2, "scan");
 		float min2 = par2->getMin();
 		float max2 = par2->getMax();
@@ -897,12 +897,15 @@ void MethodAbsScan::loadParameters(RooSlimFitResult *r)
 void MethodAbsScan::printLocalMinima()
 {
 	TDatime date; // lets also print the current date
-	cout << "MethodAbsScan::printLocalMinima() : LOCAL MINIMA for " << title << endl;
-	cout << endl;
+	if ( arg->debug ){
+		cout << "MethodAbsScan::printLocalMinima() : LOCAL MINIMA for " << title << endl;
+		cout << endl;
+	}
 	for ( int i=0; i<solutions.size(); i++ ){
 		cout << "SOLUTION " << i << ":\n" << endl;
-		cout << "  combination: " << name;
-		cout << " (" << date.AsString() << ")" << endl;
+		cout << "  combination: " << name << endl;
+		cout << "  title:       " << title << endl;
+		cout << "  date:        " << date.AsString() << endl;
 		solutions[i]->Print(arg->verbose, arg->printcor);
 	}
 }

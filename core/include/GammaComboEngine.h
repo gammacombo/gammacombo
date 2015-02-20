@@ -55,7 +55,7 @@ class GammaComboEngine
 		void			printCombinations();
 		void			run();
 		void			runApplication();
-		static void             scanStrategy1d(MethodProbScan *scanner, ParameterCache *pCache);
+		void            scanStrategy1d(MethodProbScan *scanner, ParameterCache *pCache);
 		void			scanStrategy2d(MethodProbScan *scanner, ParameterCache *pCache);
 		PDF_Abs* 		operator[](int idx);
 
@@ -69,8 +69,9 @@ class GammaComboEngine
 		void			defineColors();
 		void			disableSystematics();
 		void			fixParameters(Combiner *c, int cId);
-		TString			getStartParFileFromCommandLine(int cId);
+		TString			getStartParFileName(int cId);
 		bool			isScanVarObservable(Combiner *c, TString scanVar);
+		void 			loadStartParameters(ParameterCache *pCache, int cId);
 		void			make1dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId);
 		void			make1dPluginPlot(MethodPluginScan *sPlugin, MethodProbScan *sProb, int cId);
 		void			make1dPluginScan(MethodPluginScan *scannerPlugin, int cId);

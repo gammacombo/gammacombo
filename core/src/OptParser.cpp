@@ -642,7 +642,6 @@ void OptParser::parseArguments(int argc, char* argv[])
 	// --loadParamsFile
 	tmp = loadParamsFileArg.getValue();
 	for ( int i = 0; i < tmp.size(); i++ ) loadParamsFile.push_back(tmp[i]);
-	if ( tmp.size()==0 ) loadParamsFile.push_back("default");
 
 	// --debug
 	debug = debugArg.getValue();

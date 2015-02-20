@@ -32,8 +32,13 @@ class FileNameBuilder
 		~FileNameBuilder();
 		TString getBaseName();
 		TString getFileBaseName(const Combiner *c);
-		TString getFileNameScanner(const MethodAbsScan *c);
-		TString getPlotFileName(const vector<Combiner*>& cmb);
+		TString getFileBaseName(const MethodAbsScan *s);
+		TString getFileNameScanner(const MethodAbsScan *s);
+		TString getFileNamePar(const Combiner *c);
+		TString getFileNamePar(const MethodAbsScan *s);
+		TString getFileNamePlot(const vector<Combiner*>& cmb);
+		TString getFileNameStartPar(const Combiner *c);
+		TString getFileNameStartPar(const MethodAbsScan *s);
 
 	private:
 

@@ -312,16 +312,14 @@ void GammaComboEngine::loadAsimovPoint(Combiner* c, int cId)
 	}
 	// load truth values from Asimov parameter file
 	cout << "GammaComboEngine::loadAsimovPoint() : Trying Asimov parameter file ..." << endl;
-	ParameterCache *pCache = new ParameterCache(arg, m_fnamebuilder->getFileBaseName(c));
-	TString parfile = getStartParFileFromCommandLine(cId);
+	ParameterCache *pCache = new ParameterCache(arg);
+	TString parfile = getStartParFileName(cId);
 	bool loaded = pCache->loadPoints(parfile);
 
 	// if no dedicated Asimov parameter file was found, try the start parameter file
 	if ( !loaded ){
 		cout << "GammaComboEngine::loadAsimovPoint() : Asimov parameter file not found. Trying non-Asimov parameter file." << endl;
-		TString nonAsimovDefaultFile = pCache->getDefaultFileName();
-		nonAsimovDefaultFile.ReplaceAll(Form("Asimov%i",arg->asimov[cId]),"");
-		loaded = pCache->loadPoints(nonAsimovDefaultFile);
+		loaded = pCache->loadPoints(m_fnamebuilder->getFileNameStartPar(c));
 	}
 	// if some point was loaded from the above files, set the point
 	if ( loaded ){
@@ -530,12 +528,12 @@ void GammaComboEngine::printCombinerStructure()
 }
 
 ///
-/// Override default titles of the combinations, if requested.
+/// Override default titles of the combinations, if requested
+/// on the command line.
 ///
 void GammaComboEngine::customizeCombinerTitles()
 {
-	for ( int i=0; i<arg->combid.size(); i++ )
-	{
+	for ( int i=0; i<arg->combid.size(); i++ ){
 		int combinerId = arg->combid[i];
 		Combiner *c = cmb[combinerId];
 		if ( i<arg->title.size() ){
@@ -550,10 +548,10 @@ void GammaComboEngine::customizeCombinerTitles()
 void GammaComboEngine::setUpPlot()
 {
 	if ( arg->var.size()==1 ){
-		plot = new OneMinusClPlot(arg, m_fnamebuilder->getPlotFileName(cmb), "p-value curves");
+		plot = new OneMinusClPlot(arg, m_fnamebuilder->getFileNamePlot(cmb), "p-value curves");
 	}
 	else{
-		plot = new OneMinusClPlot2d(arg, m_fnamebuilder->getPlotFileName(cmb), "p-value contours");
+		plot = new OneMinusClPlot2d(arg, m_fnamebuilder->getFileNamePlot(cmb), "p-value contours");
 	}
 	plot->disableLegend(arg->plotlegend);
 }
@@ -665,29 +663,70 @@ void GammaComboEngine::scanStrategy2d(MethodProbScan *scanner, ParameterCache *p
 }
 
 ///
+/// Load start parameters.
+///
+/// \param cId - combiner id
+/// \param pCache - parameter cache
+///
+void GammaComboEngine::loadStartParameters(ParameterCache *pCache, int cId)
+{
+	cout << "Start parameter configuration:\n" << endl;
+	TString startparfile;
+	bool filefound = false;
+	// try the file provided through --parfile
+	if ( arg->loadParamsFile.size()>cId && ! arg->loadParamsFile[cId].EqualTo("default") ) {
+		startparfile = arg->loadParamsFile[cId];
+		filefound = FileExists(startparfile);
+	}
+	// requested file not found, try default
+	if ( ! filefound ){
+		startparfile = m_fnamebuilder->getFileNameStartPar(cmb[cId]);
+		filefound = FileExists(startparfile);
+	}
+	// still not found
+	if ( ! filefound ){
+		cout << "  No start parameter file was found, will use the default values" << endl;
+		cout << "  configured in ParameterAbs class. You can provide a parameter file" << endl;
+		cout << "  through the --parfile argument, or create the default file:" << endl;
+		cout << "  " << startparfile << endl;
+		cout << endl;
+		return;
+	}
+	// found
+	cout << "  Loading start parameters from: " << startparfile << endl;
+	bool loaded = pCache->loadPoints(getStartParFileName(cId));
+	if ( !loaded ){
+		cout << "  Error loading file. Exit." << endl;
+		exit(1);
+	}
+	// If an asimov toy is configured, but no dedicated
+	// par file was given to configure the asimov point, and also no dedicated
+	// RO par file exists, we use the default par file without asimov.
+	//if ( arg->isAsimovCombiner(cId) && !loaded ){
+		//cout << "GammaComboEngine::make1dProbScan() : Asimov start parameters not found. Trying non-Asimov parameters." << endl;
+		//TString nonAsimovDefaultFile = pCache->getDefaultFileName();
+		//nonAsimovDefaultFile.ReplaceAll(Form("Asimov%i",arg->asimov[cId]),"");
+		//pCache->loadPoints(nonAsimovDefaultFile);
+	//}
+	cout << endl;
+}
+
+///
 /// Perform the prob scan.
+///
 /// \param scanner - the scanner to run the scan with
 /// \param cId - the id of this combination on the command line
 ///
 void GammaComboEngine::make1dProbScan(MethodProbScan *scanner, int cId)
 {
 	// load start parameters
-	ParameterCache *pCache = new ParameterCache(arg, m_fnamebuilder->getFileBaseName(scanner->getCombiner()));
-	TString startparfile = getStartParFileFromCommandLine(cId);
-	bool loaded = pCache->loadPoints(startparfile);
-
-	// If an asimov toy is configured, but no dedicated
-	// par file was given to configure the asimov point, and also no dedicated
-	// RO par file exists, we use the default par file without asimov.
-	if ( arg->isAsimovCombiner(cId) && !loaded ){
-		cout << "GammaComboEngine::make1dProbScan() : Asimov start parameters not found. Trying non-Asimov parameters." << endl;
-		TString nonAsimovDefaultFile = pCache->getDefaultFileName();
-		nonAsimovDefaultFile.ReplaceAll(Form("Asimov%i",arg->asimov[cId]),"");
-		pCache->loadPoints(nonAsimovDefaultFile);
-	}
+	ParameterCache *pCache = new ParameterCache(arg);
+	loadStartParameters(pCache, cId);
 
 	scanner->initScan();
 	scanStrategy1d(scanner, pCache);
+	cout << "\nResults:" << endl;
+	cout <<   "========\n" << endl;
 	scanner->printLocalMinima();
 	scanner->calcCLintervals();
 	if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
@@ -702,7 +741,7 @@ void GammaComboEngine::make1dProbScan(MethodProbScan *scanner, int cId)
 		}
 		if (!arg->isAction("plugin")){
 			scanner->saveScanner(m_fnamebuilder->getFileNameScanner(scanner));
-			pCache->cacheParameters(scanner);
+			pCache->cacheParameters(scanner,m_fnamebuilder->getFileNamePar(scanner));
 		}
 	}
 }
@@ -779,24 +818,27 @@ void GammaComboEngine::make1dProbPlot(MethodProbScan *scanner, int cId)
 ///
 void GammaComboEngine::scanStrategy1d(MethodProbScan *scanner, ParameterCache *pCache)
 {
+	cout << "Scan strategy:" << endl;
+	cout << "==============\n" << endl;
 	int nStartingPoints = pCache->getNPoints();
-	if (nStartingPoints==0) {
-		cout << "Scan strategy: Now performing the first scan." << endl;
+	if ( nStartingPoints==0 ) {
+		cout << "1. perform an initial scan" << endl;
+		cout << "2. perform an additional scan starting from each solution found\n" << endl;
+		cout << "first scan ..." << endl;
 		scanner->scan1d();
-		cout << "Scan strategy: Now performing an additional scan starting at each solution found." << endl;
-		cout << "Scan strategy: Number of scans to run: " << scanner->getNSolutions() << endl;
-		if ( !(scanner->getArg()->probforce) ){
-			for ( int j=0; j<scanner->getNSolutions(); j++ ){
-				scanner->loadSolution(j);
+		if ( !arg->probforce ){
+			for ( int i=0; i<scanner->getNSolutions(); i++ ){
+				cout << "rescan " << i+1 << " of " << scanner->getNSolutions() << " ..." << endl;
+				scanner->loadSolution(i);
 				scanner->scan1d(true);
 			}
 		}
 	}
 	// otherwise load each starting value found
 	else {
-		cout << "Scan strategy: Scanning from start points found in file." << endl;
-		cout << "Number of scans to run: " << nStartingPoints << endl;
+		cout << "Scanning from each point found in start parameter file.\n" << endl;
 		for (int i=0; i<nStartingPoints; i++){
+			cout << "scan " << i+1 << " of " << nStartingPoints << " ..." << endl;
 			pCache->setPoint(scanner,i);
 			scanner->scan1d();
 		}
@@ -874,9 +916,8 @@ void GammaComboEngine::make2dPluginOnlyPlot(MethodPluginScan *sPlugin)
 void GammaComboEngine::make2dProbScan(MethodProbScan *scanner, int cId)
 {
 	// load start parameters
-	ParameterCache *pCache = new ParameterCache(arg, m_fnamebuilder->getFileBaseName(scanner->getCombiner()));
-	TString startparfile = getStartParFileFromCommandLine(cId);
-	pCache->loadPoints(startparfile);
+	ParameterCache *pCache = new ParameterCache(arg);
+	pCache->loadPoints(getStartParFileName(cId));
 	// scan
 	scanner->initScan();
 	scanStrategy2d(scanner,pCache);
@@ -884,7 +925,7 @@ void GammaComboEngine::make2dProbScan(MethodProbScan *scanner, int cId)
 	scanner->printLocalMinima();
 	// save
 	scanner->saveScanner(m_fnamebuilder->getFileNameScanner(scanner));
-	pCache->cacheParameters(scanner);
+	pCache->cacheParameters(scanner, m_fnamebuilder->getFileNamePar(scanner));
 	// plot
 	if (!arg->isAction("pluginbatch")){
 		scanner->plotOn(plot);
@@ -923,14 +964,14 @@ void GammaComboEngine::fixParameters(Combiner *c, int cId)
 ///
 /// Helper function for scan(): Checks if for a given combid (the
 /// running index of the -c argument) a start parameter file was
-/// configured (-l) argument. If so, it is returned, else "default"
-/// is returned, causing the default start parameter file to
-/// be loaded.
+/// configured (-l) argument. If so, it is returned, else the default
+/// name is returned.
 ///
-TString GammaComboEngine::getStartParFileFromCommandLine(int i)
+TString GammaComboEngine::getStartParFileName(int cId)
 {
-	if ( arg->loadParamsFile.size()<=i ) return "default";
-	return arg->loadParamsFile[i];
+	if ( arg->loadParamsFile.size()<=cId ) return m_fnamebuilder->getFileNameStartPar(cmb[cId]);
+	if ( arg->loadParamsFile[cId].EqualTo("default") ) return m_fnamebuilder->getFileNameStartPar(cmb[cId]);
+	return arg->loadParamsFile[cId];
 }
 
 ///
@@ -1189,7 +1230,6 @@ void GammaComboEngine::printBanner()
 void GammaComboEngine::run()
 {
 	if ( arg->usage ) usage(); // print usage and exit
-	defineColors();
 	checkCombinationArg();
 	checkColorArg();
 	//scaleDownErrors();

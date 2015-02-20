@@ -47,6 +47,72 @@ TString FileNameBuilder::getFileBaseName(const Combiner *c)
 	if ( m_arg->var.size()==2 ) name += "_"+m_arg->var[1];
 	return name;
 }
+TString FileNameBuilder::getFileBaseName(const MethodAbsScan *s)
+{
+	return getFileBaseName(s->getCombiner());
+}
+
+///
+/// Compute the file name of the start parameter file.
+/// Format of returned filename:
+///
+/// plots/par/basename_combinername[_+N][_-N]_var1[_var2]_start.dat
+///
+/// \param c - Combiner object
+/// \return - filename
+///
+TString FileNameBuilder::getFileNameStartPar(const Combiner *c)
+{
+	TString name = "plots/par/";
+	name += getFileBaseName(c);
+	name += "_start.dat";
+	return name;
+}
+
+///
+/// Compute the file name of the start parameter file.
+/// Format of returned filename:
+///
+/// plots/par/basename_combinername[_+N][_-N]_var1[_var2]_start.dat
+///
+/// \param s - Scanner object
+/// \return - filename
+///
+TString FileNameBuilder::getFileNameStartPar(const MethodAbsScan *s)
+{
+	return getFileNameStartPar(s->getCombiner());
+}
+
+///
+/// Compute the file name of the parameter file.
+/// Format of returned filename:
+///
+/// plots/par/basename_combinername[_+N][_-N]_var1[_var2].dat
+///
+/// \param c - Combiner object
+/// \return - filename
+///
+TString FileNameBuilder::getFileNamePar(const Combiner *c)
+{
+	TString name = "plots/par/";
+	name += getFileBaseName(c);
+	name += ".dat";
+	return name;
+}
+
+///
+/// Compute the file name of the parameter file.
+/// Format of returned filename:
+///
+/// plots/par/basename_combinername[_+N][_-N]_var1[_var2].dat
+///
+/// \param s - Scanner object
+/// \return - filename
+///
+TString FileNameBuilder::getFileNamePar(const MethodAbsScan *s)
+{
+	return getFileNamePar(s->getCombiner());
+}
 
 ///
 /// Compute the file name of the file to which a scanner gets saved.
@@ -74,7 +140,7 @@ TString FileNameBuilder::getFileNameScanner(const MethodAbsScan *c)
 ///
 /// \return - the filename
 ///
-TString FileNameBuilder::getPlotFileName(const vector<Combiner*>& cmb)
+TString FileNameBuilder::getFileNamePlot(const vector<Combiner*>& cmb)
 {
 	TString name = m_basename;
 	for ( int i=0; i<m_arg->combid.size(); i++ ){

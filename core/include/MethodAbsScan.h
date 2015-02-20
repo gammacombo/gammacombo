@@ -56,7 +56,7 @@ public:
     inline float                    getChi2minGlobal(){return chi2minGlobal;}
     float                           getCL(double val);
     CLInterval                      getCLintervalCentral(int sigma=1);
-    inline Combiner*                getCombiner(){return combiner;};
+    inline Combiner* 				getCombiner() const {return combiner;};
     int                             getDrawSolution();
     inline bool                     getFilled(){return drawFilled;};
     inline TH1F*                    getHCL(){return hCL;};
@@ -128,7 +128,7 @@ public:
     vector<CLInterval> clintervals2sigma;           ///< all 2 sigma intervals that were found by calcCLintervals()
 
 protected:
-	
+
 		void    sortSolutions();
 
     TString name;       ///< basename, e.g. ggsz
@@ -171,7 +171,7 @@ protected:
     Combiner* combiner;         ///< the combination
 
 private:
-	
+
   bool    compareSolutions(RooSlimFitResult* r1, RooSlimFitResult* r2);
   float   pq(float p0, float p1, float p2, float y, int whichSol=0);
   void    removeDuplicateSolutions();

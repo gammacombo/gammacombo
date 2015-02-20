@@ -4,26 +4,18 @@ using namespace std;
 
 ///
 /// Constructor.
-/// Also creates the directory where the parameter files get saved
-/// into: plots/par
 ///
 /// \param arg - command line options
-/// \param basename - Example: gammacombo_ckm2014full_g
 ///
-ParameterCache::ParameterCache(OptParser* arg, TString basename):
-	parametersLoaded(false)
+ParameterCache::ParameterCache(OptParser* arg):
+	m_parametersLoaded(false)
 {
 	assert(arg);
 	m_arg = arg;
-	m_basename = basename;
-	m_fnamebuilder = new FileNameBuilder(arg, basename);
-	system("mkdir -p plots/par");
 }
 
 
-ParameterCache::~ParameterCache(){
-	delete m_fnamebuilder;
-}
+ParameterCache::~ParameterCache(){}
 
 
 void ParameterCache::printFitResultToOutStream(ofstream &out, RooSlimFitResult *slimFitRes) {
@@ -41,14 +33,9 @@ void ParameterCache::printFitResultToOutStream(ofstream &out, RooSlimFitResult *
 	delete iter;
 }
 
-void ParameterCache::cacheParameters(MethodAbsScan *scanner){
 
-	if ( m_basename=="" ) {
-		cout << "ParameterCache::cacheParameters() : ERROR : basename is empty, didn't save file.\n"
-			"Configure a basename in the constructor!" << endl;
-		return;
-	}
-	TString fileName = getFullPath(m_basename);
+void ParameterCache::cacheParameters(MethodAbsScan *scanner, TString fileName){
+
 	int totalCachedPoints=0;
 
 	// cache default solutions
@@ -90,7 +77,8 @@ void ParameterCache::cacheParameters(MethodAbsScan *scanner){
 				return;
 			}
 			outfile << endl;
-			outfile << "----- SOLUTION " << totalCachedPoints << " (not glob min just min at " << scanner->getScanVar1Name() << " = " << Form("%10.5f",points[i]) << " -----" << endl;
+			outfile << "----- SOLUTION " << totalCachedPoints << " (not glob min just min at "
+				<< scanner->getScanVar1Name() << " = " << Form("%10.5f",points[i]) << " -----" << endl;
 			printFitResultToOutStream(outfile,r);
 			totalCachedPoints++;
 		}
@@ -132,20 +120,10 @@ void ParameterCache::cacheParameters(MethodAbsScan *scanner){
 	outfile.close();
 }
 
-TString ParameterCache::getDefaultFileName()
-{
-	TString	fileName = getFullPath(m_basename);
-	fileName.ReplaceAll(".dat","_RO.dat");
-	return fileName;
-}
-
 ///
-/// Load starting values from a file. The default is computed
-/// from the basename by attaching the read-only string "_RO".
+/// Load starting values from a file.
+///
 /// \param fileName - Load the parameters from a file with this name.
-///										If "default" is given, the default file is loaded.
-///                   Example 1: plot/par/gammacombo_ckm2014full_g.dat
-///                   Example 1: default
 /// \return - true, if a file was loaded
 ///
 bool ParameterCache::loadPoints(TString fileName){
@@ -153,11 +131,9 @@ bool ParameterCache::loadPoints(TString fileName){
 	bool successfullyLoaded = false;
 	startingValues.clear();
 
-	if ( fileName==TString("default") ) fileName = getDefaultFileName();
-
 	ifstream infile(fileName.Data());
 	if (infile) { // file exists
-		cout << "ParameterCache::loadPoints() -- loading parameters from file " << fileName << endl;
+		if ( m_arg->debug ) cout << "ParameterCache::loadPoints() -- loading parameters from file " << fileName << endl;
 		string line;
 		if (infile.is_open()){
 			int nSolutions=0;
@@ -177,12 +153,12 @@ bool ParameterCache::loadPoints(TString fileName){
 				}
 			}
 		}
-		parametersLoaded=true;
+		m_parametersLoaded=true;
 		successfullyLoaded=true;
 		if ( m_arg->debug ) printPoint();
 	}
 	else {
-		cout << "ParameterCache::loadPoints() -- no ParameterCache file found: " << fileName << endl;
+		cout << "ParameterCache::loadPoints() : ERROR : file not found: " << fileName << endl;
 	}
 	return successfullyLoaded;
 }
@@ -216,7 +192,7 @@ void ParameterCache::setPoint(MethodAbsScan *scanner, int i) {
 }
 
 void ParameterCache::setPoint(Combiner *cmb, int i) {
-	if ( !parametersLoaded ){
+	if ( !m_parametersLoaded ){
 		cout << "ParameterCache::setPoint() : ERROR : Can't set starting "
 			"point as no starting values have been loaded" << endl;
 		return;
@@ -228,31 +204,19 @@ void ParameterCache::setPoint(Combiner *cmb, int i) {
 	vector<TString> fixNames = getFixedNames(cmb->getConstVars());
 
 	RooWorkspace *w = cmb->getWorkspace();
-	cout << "ParameterCache::setPoint() : Setting parameter values for point " << i+1 << endl;
+	if ( m_arg->debug ) cout << "ParameterCache::setPoint() : Setting parameter values for point " << i+1 << endl;
 
 	for (map<TString,double>::iterator it=startingValues[i].begin(); it!=startingValues[i].end(); it++){
 		TString name = it->first;
 		double val = it->second;
 		if ( find(fixNames.begin(), fixNames.end(), name) != fixNames.end() ) {
-			if (cmb->getArg()->debug) cout << "\tLeft " << Form("%-15s",name.Data()) << " = " << Form("%12.6f",w->var(name)->getVal()) << " constant" << endl;
+			if (m_arg->debug) cout << "\tLeft " << Form("%-15s",name.Data()) << " = " << Form("%12.6f",w->var(name)->getVal()) << " constant" << endl;
 			continue;
 		}
 		if ( w->var(name) ) {
 			w->var(name)->setVal(val);
-			if (cmb->getArg()->debug) cout << "\tSet  " << Form("%-15s",name.Data()) << " = " << Form("%12.6f",w->var(name)->getVal()) << endl;
+			if (m_arg->debug) cout << "\tSet  " << Form("%-15s",name.Data()) << " = " << Form("%12.6f",w->var(name)->getVal()) << endl;
 		}
 	}
-
-	// if (cmb->getArg()->debug) w->allVars().Print("v");
 }
 
-///
-/// Get the full path of a file from its base name. This defines
-/// where the parameter files get stored.
-/// \param basename - basename of the parameter file. Example: gammacombo_ckm2014full_g
-/// \return full path. Example: plots/par/gammacombo_ckm2014full_g.dat
-///
-TString ParameterCache::getFullPath(TString basename)
-{
-	return Form("plots/par/%s.dat",basename.Data());
-}

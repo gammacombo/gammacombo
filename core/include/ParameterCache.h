@@ -6,7 +6,6 @@
 #include <algorithm>
 
 #include "Combiner.h"
-#include "FileNameBuilder.h"
 #include "MethodAbsScan.h"
 #include "RooAbsArg.h"
 #include "RooSlimFitResult.h"
@@ -22,15 +21,14 @@ class ParameterCache {
 
 	public:
 
-		ParameterCache(OptParser* arg, TString basename="");
+		ParameterCache(OptParser* arg);
 		~ParameterCache();
 
-		void cacheParameters(MethodAbsScan *scanner);
-		bool loadPoints(TString fileName="default");
+		void cacheParameters(MethodAbsScan *scanner, TString fileName);
+		bool loadPoints(TString fileName);
 		void printFitResultToOutStream(ofstream &out, RooSlimFitResult *slimFitResult);
 		void printPoint();
 		int getNPoints();
-		TString getDefaultFileName();
 		void setPoint(Combiner* cmb, int i);
 		void setPoint(MethodAbsScan *scanner, int i);
 		std::vector<TString> getFixedNames(std::vector<Utils::FixPar> fixPar);
@@ -38,11 +36,8 @@ class ParameterCache {
 
 	private:
 
-		TString getFullPath(TString basename);
-		bool parametersLoaded;
+		bool m_parametersLoaded;
 		OptParser* m_arg;
-		TString m_basename;
-		FileNameBuilder* m_fnamebuilder;
 };
 
 #endif
