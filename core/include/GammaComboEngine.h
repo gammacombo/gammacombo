@@ -73,7 +73,7 @@ class GammaComboEngine
 		void			fixParameters(Combiner *c, int cId);
 		TString			getStartParFileName(int cId);
 		bool			isScanVarObservable(Combiner *c, TString scanVar);
-		void 			loadStartParameters(ParameterCache *pCache, int cId);
+		void 			loadStartParameters(MethodProbScan *s, ParameterCache *pCache, int cId);
 		void			make1dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId);
 		void			make1dPluginPlot(MethodPluginScan *sPlugin, MethodProbScan *sProb, int cId);
 		void			make1dPluginScan(MethodPluginScan *scannerPlugin, int cId);
