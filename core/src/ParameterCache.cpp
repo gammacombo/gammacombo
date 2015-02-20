@@ -14,35 +14,43 @@ ParameterCache::ParameterCache(OptParser* arg, TString basename):
 	parametersLoaded(false)
 {
 	assert(arg);
-	this->arg = arg;
-	_basename = basename;
+	m_arg = arg;
+	m_basename = basename;
+	m_fnamebuilder = new FileNameBuilder(arg, basename);
 	system("mkdir -p plots/par");
 }
 
-ParameterCache::~ParameterCache(){}
+
+ParameterCache::~ParameterCache(){
+	delete m_fnamebuilder;
+}
+
 
 void ParameterCache::printFitResultToOutStream(ofstream &out, RooSlimFitResult *slimFitRes) {
 
 	out << "### FCN: " << slimFitRes->minNll() << ", EDM: " << slimFitRes->edm() << endl;
-	out << "### COV quality: " << slimFitRes->covQual() << ", status: " << slimFitRes->status() << ", confirmed: " << (slimFitRes->_isConfirmed?"yes":"no") << endl;
+	out << "### COV quality: " << slimFitRes->covQual() << ", status: " << slimFitRes->status()
+		<< ", confirmed: " << (slimFitRes->_isConfirmed?"yes":"no") << endl;
 	RooArgList argList = slimFitRes->floatParsFinal();
 	TIterator *iter = argList.createIterator();
 	while ( RooRealVar *arg=(RooRealVar*)iter->Next() ) {
-		out << Form("%-25s",arg->GetName()) << " " << Form("%12.6f",arg->getVal()) << " " << Form("%12.6f",arg->getErrorLo()) << " " << Form("%12.6f",arg->getErrorHi()) << endl;
+		out << Form("%-25s",arg->GetName()) << " " << Form("%12.6f",arg->getVal())
+			<< " " << Form("%12.6f",arg->getErrorLo())
+			<< " " << Form("%12.6f",arg->getErrorHi()) << endl;
 	}
 	delete iter;
 }
 
 void ParameterCache::cacheParameters(MethodAbsScan *scanner){
 
-	if ( _basename=="" ) {
+	if ( m_basename=="" ) {
 		cout << "ParameterCache::cacheParameters() : ERROR : basename is empty, didn't save file.\n"
 			"Configure a basename in the constructor!" << endl;
 		return;
 	}
-	TString fileName = getFullPath(_basename);
+	TString fileName = getFullPath(m_basename);
 	int totalCachedPoints=0;
-	
+
 	// cache default solutions
 	//
 	cout << "ParameterCache::cacheParameters() : saving parameters to the following file " << fileName << endl;
@@ -68,13 +76,11 @@ void ParameterCache::cacheParameters(MethodAbsScan *scanner){
 	}
 	cout << "ParameterCache::cacheParameters() : cached " << solutions.size() << " solutions" << endl;
 
-	OptParser* arg = scanner->getArg();
-
 	// cache also any specifically requested points
 	//
 	// 1D
-	if (arg->savenuisances1d.size()>0){
-		vector<float> &points = arg->savenuisances1d;
+	if (m_arg->savenuisances1d.size()>0){
+		vector<float> &points = m_arg->savenuisances1d;
 		for (int i=0; i<points.size(); i++){
 
 			int iBin = scanner->getHCL()->FindBin(points[i]);
@@ -91,9 +97,9 @@ void ParameterCache::cacheParameters(MethodAbsScan *scanner){
 		cout << "ParameterCache::cacheParameters() : cached " << totalCachedPoints-solutions.size() << " further points" << endl;
 	}
 	// 2D
-	if (arg->savenuisances2dx.size()>0){
-		vector<float> &pointsx = arg->savenuisances2dx;
-		vector<float> &pointsy = arg->savenuisances2dy;
+	if (m_arg->savenuisances2dx.size()>0){
+		vector<float> &pointsx = m_arg->savenuisances2dx;
+		vector<float> &pointsy = m_arg->savenuisances2dy;
 
 		if (pointsx.size() != pointsy.size() ) {
 			cout << "ParameterCache::cacheParameters() : ERROR : vectors for savenuisances2dx(y) have different size" << endl;
@@ -114,9 +120,9 @@ void ParameterCache::cacheParameters(MethodAbsScan *scanner){
 				return;
 			}
 			outfile << endl;
-			outfile << "----- SOLUTION " << totalCachedPoints << " (not glob min just min at " 
-				<< scanner->getScanVar1Name() << " = " << pointsx[i] << " , " 
-				<< scanner->getScanVar2Name() << " = " 
+			outfile << "----- SOLUTION " << totalCachedPoints << " (not glob min just min at "
+				<< scanner->getScanVar1Name() << " = " << pointsx[i] << " , "
+				<< scanner->getScanVar2Name() << " = "
 				<< pointsy[i] << " -----" << endl;
 			printFitResultToOutStream(outfile,r);
 			totalCachedPoints++;
@@ -128,7 +134,7 @@ void ParameterCache::cacheParameters(MethodAbsScan *scanner){
 
 TString ParameterCache::getDefaultFileName()
 {
-	TString	fileName = getFullPath(_basename);
+	TString	fileName = getFullPath(m_basename);
 	fileName.ReplaceAll(".dat","_RO.dat");
 	return fileName;
 }
@@ -173,7 +179,7 @@ bool ParameterCache::loadPoints(TString fileName){
 		}
 		parametersLoaded=true;
 		successfullyLoaded=true;
-		if ( arg->debug ) printPoint();
+		if ( m_arg->debug ) printPoint();
 	}
 	else {
 		cout << "ParameterCache::loadPoints() -- no ParameterCache file found: " << fileName << endl;

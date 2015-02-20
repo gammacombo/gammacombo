@@ -43,9 +43,7 @@ class GammaComboEngine
 		void			addPdf(int id, PDF_Abs* pdf, TString title="");
 		void			addCombiner(int id, Combiner* cmb);
 		void			cloneCombiner(int newId, int oldId, TString name, TString title);
-		inline TString		getBasename() const {return basename;}
 		Combiner* 		getCombiner(int id) const;
-		TString			getFileBaseName();
 		PDF_Abs*		getPdf(int id);
 		inline OptParser* 	getArg(){return arg;};
 		void			newCombiner(int id, TString name, TString title,
@@ -71,9 +69,7 @@ class GammaComboEngine
 		void			defineColors();
 		void			disableSystematics();
 		void			fixParameters(Combiner *c, int cId);
-		TString			getFileBaseName(Combiner *c);
 		TString			getStartParFileFromCommandLine(int cId);
-		bool			isAsimovCombiner(int cId);
 		bool			isScanVarObservable(Combiner *c, TString scanVar);
 		void			make1dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId);
 		void			make1dPluginPlot(MethodPluginScan *sPlugin, MethodProbScan *sProb, int cId);
@@ -93,22 +89,20 @@ class GammaComboEngine
 		void			scan();
 		void			setAsimovObservables(Combiner* c);
 		void			loadAsimovPoint(Combiner* c, int cId);
-		void			setUpPlot(TString name);
+		void			setUpPlot();
 		void            tightenChi2Constraint(Combiner *c, TString scanVar);
 		void			usage();
 
-		TStopwatch 		t;
-		TApplication* 		theApp;
-		OptParser*		arg;
-		vector<PDF_Abs*>	pdf;
+		OptParser*			arg;
 		vector<Combiner*> 	cmb;
-		FileNameBuilder*	m_fnamebuilder;
-
-		OneMinusClPlotAbs*	plot;
 		vector<int> 		colorsLine;
 		vector<int> 		colorsText;
-		TString 		basename;
-		TString 		execname;
+		TString 			execname;
+		FileNameBuilder*	m_fnamebuilder;
+		vector<PDF_Abs*>	pdf;
+		OneMinusClPlotAbs*	plot;
+		TStopwatch 			t;
+		TApplication* 		theApp;
 };
 
 #endif

@@ -33,6 +33,7 @@ class OptParser
 		void bookFlowcontrolOptions();
 		void parseArguments(int argc, char* argv[]);
 		bool isAction(TString s);
+		bool isAsimovCombiner(int id);
 		bool isQuickhack(int id);
 
 		vector<TString>		action;

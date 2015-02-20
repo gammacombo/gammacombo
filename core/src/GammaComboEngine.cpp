@@ -15,9 +15,8 @@ GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[])
 
 	// configure names
 	execname = argv[0];
-	basename = name;
-	if (arg->filenameaddition!="") basename += "_"+arg->filenameaddition;
-	m_fnamebuilder = new FileNameBuilder(arg, basename);
+	if (arg->filenameaddition!="") name += "_"+arg->filenameaddition;
+	m_fnamebuilder = new FileNameBuilder(arg, name);
 
 	// run ROOT in interactive mode, if requested (-i)
 	if ( arg->interactive ) theApp = new TApplication("App", &argc, argv);
@@ -313,7 +312,7 @@ void GammaComboEngine::loadAsimovPoint(Combiner* c, int cId)
 	}
 	// load truth values from Asimov parameter file
 	cout << "GammaComboEngine::loadAsimovPoint() : Trying Asimov parameter file ..." << endl;
-	ParameterCache *pCache = new ParameterCache(arg, getFileBaseName(c));
+	ParameterCache *pCache = new ParameterCache(arg, m_fnamebuilder->getFileBaseName(c));
 	TString parfile = getStartParFileFromCommandLine(cId);
 	bool loaded = pCache->loadPoints(parfile);
 
@@ -546,48 +545,15 @@ void GammaComboEngine::customizeCombinerTitles()
 }
 
 ///
-/// Compute the file base name of individual combinations.
-///
-/// \param c - Combiner object
-/// \return the filename: basename_combinername[_addPdfN][_delPdfN]_var1[_var2]
-///
-TString GammaComboEngine::getFileBaseName(Combiner *c)
-{
-	TString name = basename;
-	name += "_"+c->getName();
-	name += "_"+arg->var[0];
-	if ( arg->var.size()==2 ) name += "_"+arg->var[1];
-	return name;
-}
-
-///
-/// Compute the file base name of when including several into one file.
-///
-/// \return the filename: basename_combiner1name[_addPdfN][_delPdfN][_combiner2name[_addPdfN][_delPdfN]]_var1[_var2]
-///
-TString GammaComboEngine::getFileBaseName()
-{
-	TString name = basename;
-	for ( int i=0; i<arg->combid.size(); i++ ){
-		name += "_"+cmb[arg->combid[i]]->getName();
-		if ( isAsimovCombiner(i) ) name += Form("Asimov%i",arg->asimov[i]);
-	}
-	name += "_"+arg->var[0];
-	if ( arg->var.size()==2 ) name += "_"+arg->var[1];
-	return name;
-}
-
-///
 /// Set up the plot.
 ///
-void GammaComboEngine::setUpPlot(TString name)
+void GammaComboEngine::setUpPlot()
 {
-	if ( arg->plotpluginonly ) name += "_pluginOnly";
 	if ( arg->var.size()==1 ){
-		plot = new OneMinusClPlot(arg, name, "p-value curves");
+		plot = new OneMinusClPlot(arg, m_fnamebuilder->getPlotFileName(cmb), "p-value curves");
 	}
 	else{
-		plot = new OneMinusClPlot2d(arg, name, "p-value contours");
+		plot = new OneMinusClPlot2d(arg, m_fnamebuilder->getPlotFileName(cmb), "p-value contours");
 	}
 	plot->disableLegend(arg->plotlegend);
 }
@@ -706,14 +672,14 @@ void GammaComboEngine::scanStrategy2d(MethodProbScan *scanner, ParameterCache *p
 void GammaComboEngine::make1dProbScan(MethodProbScan *scanner, int cId)
 {
 	// load start parameters
-	ParameterCache *pCache = new ParameterCache(arg, getFileBaseName(scanner->getCombiner()));
+	ParameterCache *pCache = new ParameterCache(arg, m_fnamebuilder->getFileBaseName(scanner->getCombiner()));
 	TString startparfile = getStartParFileFromCommandLine(cId);
 	bool loaded = pCache->loadPoints(startparfile);
 
 	// If an asimov toy is configured, but no dedicated
 	// par file was given to configure the asimov point, and also no dedicated
 	// RO par file exists, we use the default par file without asimov.
-	if ( isAsimovCombiner(cId) && !loaded ){
+	if ( arg->isAsimovCombiner(cId) && !loaded ){
 		cout << "GammaComboEngine::make1dProbScan() : Asimov start parameters not found. Trying non-Asimov parameters." << endl;
 		TString nonAsimovDefaultFile = pCache->getDefaultFileName();
 		nonAsimovDefaultFile.ReplaceAll(Form("Asimov%i",arg->asimov[cId]),"");
@@ -908,7 +874,7 @@ void GammaComboEngine::make2dPluginOnlyPlot(MethodPluginScan *sPlugin)
 void GammaComboEngine::make2dProbScan(MethodProbScan *scanner, int cId)
 {
 	// load start parameters
-	ParameterCache *pCache = new ParameterCache(arg, getFileBaseName(scanner->getCombiner()));
+	ParameterCache *pCache = new ParameterCache(arg, m_fnamebuilder->getFileBaseName(scanner->getCombiner()));
 	TString startparfile = getStartParFileFromCommandLine(cId);
 	pCache->loadPoints(startparfile);
 	// scan
@@ -965,11 +931,6 @@ TString GammaComboEngine::getStartParFileFromCommandLine(int i)
 {
 	if ( arg->loadParamsFile.size()<=i ) return "default";
 	return arg->loadParamsFile[i];
-}
-
-bool GammaComboEngine::isAsimovCombiner(int i)
-{
-	return i<arg->asimov.size() && arg->asimov[i]>0;
 }
 
 ///
@@ -1030,7 +991,7 @@ void GammaComboEngine::scan()
 		if ( i<arg->fixParameters.size() ) fixParameters(c, i);
 
 		// configure names to run an Asimov toy - only possible before combining
-		if ( isAsimovCombiner(i) ){
+		if ( arg->isAsimovCombiner(i) ){
 			if ( arg->title[i]==TString("default") ) c->setTitle(c->getTitle()+" (Asimov)");
 			c->setName(c->getName()+Form("Asimov%i",arg->asimov[i]));
 		}
@@ -1048,7 +1009,7 @@ void GammaComboEngine::scan()
 		if ( !c->isCombined() ) continue; // error during combining
 
 		// set an asimov toy - only possible after combining
-		if ( isAsimovCombiner(i) ) loadAsimovPoint(c, i);
+		if ( arg->isAsimovCombiner(i) ) loadAsimovPoint(c, i);
 
 		// configure scans for observables - this part is only possible after combining
 		// add the observable(s) to the list of parameters
@@ -1075,7 +1036,7 @@ void GammaComboEngine::scan()
 			// pvalue corrector
 			if ( arg->coverageCorrectionID>0 ) {
 				PValueCorrection *pvalueCorrector = new PValueCorrection(arg->coverageCorrectionID, arg->verbose);
-				pvalueCorrector->readFiles(getFileBaseName(c),arg->coverageCorrectionPoint,false); // false means for prob
+				pvalueCorrector->readFiles(m_fnamebuilder->getFileBaseName(c),arg->coverageCorrectionPoint,false); // false means for prob
 				pvalueCorrector->write("root/pvalueCorrection_prob.root");
 				scannerProb->setPValueCorrector(pvalueCorrector);
 			}
@@ -1124,7 +1085,7 @@ void GammaComboEngine::scan()
 				//if ( arg->isAction("pluginhybridbatch") ){
 				//// Hybrid Plugin: compute a second profile likelihood to define the parameter evolution
 				//cout << "HYBRID PLUGIN: preparing profile likelihood to be used for parameter evolution:" << endl;
-				//ParameterCache *pCache = new ParameterCache(arg, getFileBaseName(cmb[arg->pevid[0]]));
+				//ParameterCache *pCache = new ParameterCache(arg, m_fnamebuilder->getFileBaseName(cmb[arg->pevid[0]]));
 				//pCache->loadPoints();
 				//MethodProbScan *scanner3 = new MethodProbScan(cmb[arg->pevid[0]]);
 				//scanner3->initScan();
@@ -1146,7 +1107,7 @@ void GammaComboEngine::scan()
 					else {
 						if ( arg->coverageCorrectionID>0 ) {
 							PValueCorrection *pvalueCorrector= new PValueCorrection(arg->coverageCorrectionID, arg->verbose);
-							pvalueCorrector->readFiles(getFileBaseName(c),arg->coverageCorrectionPoint,true); // true means for plugin
+							pvalueCorrector->readFiles(m_fnamebuilder->getFileBaseName(c),arg->coverageCorrectionPoint,true); // true means for plugin
 							pvalueCorrector->write("root/pvalueCorrection_plugin.root");
 							scannerPlugin->setPValueCorrector(pvalueCorrector);
 						}
@@ -1237,7 +1198,7 @@ void GammaComboEngine::run()
 	defineColors();
 	printCombinerStructure();
 	customizeCombinerTitles();
-	setUpPlot(getFileBaseName());
+	setUpPlot();
 	scan();
 	if (!arg->isAction("pluginbatch")) savePlot();
 	t.Stop();

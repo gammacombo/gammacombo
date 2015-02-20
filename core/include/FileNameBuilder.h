@@ -30,15 +30,15 @@ class FileNameBuilder
 
 		FileNameBuilder(OptParser *arg, TString name="gammacombo");
 		~FileNameBuilder();
-
-		TString getFileBaseName(const GammaComboEngine *gc);
+		TString getBaseName();
 		TString getFileBaseName(const Combiner *c);
 		TString getFileNameScanner(const MethodAbsScan *c);
+		TString getPlotFileName(const vector<Combiner*>& cmb);
 
 	private:
 
-		OptParser *_arg;                    ///< command line arguments
-		TString _basename;									///< the base name, e.g. "gammacombo"
+		OptParser* m_arg; 		///< command line arguments
+		TString m_basename; 	///< the base name, e.g. "gammacombo"
 };
 
 #endif

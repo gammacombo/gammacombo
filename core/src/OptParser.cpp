@@ -967,3 +967,14 @@ void OptParser::parseCombinerString(TString parseMe, int& resultCmbId, vector<in
 	delete arrayCommaList;
 }
 
+///
+/// Check if a combiner with a given ID is an Asimov combiner.
+/// The ID is the position of the -c argument on the command line.
+///
+/// \param id - position of -c argument
+///
+bool OptParser::isAsimovCombiner(int id)
+{
+	return id<asimov.size() && asimov[id]>0;
+}
+

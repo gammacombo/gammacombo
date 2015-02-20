@@ -5,18 +5,18 @@
 #include <vector>
 #include <algorithm>
 
+#include "Combiner.h"
+#include "FileNameBuilder.h"
+#include "MethodAbsScan.h"
+#include "RooAbsArg.h"
+#include "RooSlimFitResult.h"
+#include "TDatime.h"
+#include "TIterator.h"
+#include "TString.h"
+#include "Utils.h"
 #include "boost/algorithm/string/predicate.hpp"
 #include "boost/algorithm/string/split.hpp"
 #include "boost/lexical_cast.hpp"
-#include "TString.h"
-#include "RooSlimFitResult.h"
-#include "TIterator.h"
-#include "TDatime.h"
-#include "RooAbsArg.h"
-
-#include "Combiner.h"
-#include "MethodAbsScan.h"
-#include "Utils.h"
 
 class ParameterCache {
 
@@ -37,11 +37,12 @@ class ParameterCache {
 		std::vector<std::map<TString,double> > startingValues;
 
 	private:
-		
+
 		TString getFullPath(TString basename);
 		bool parametersLoaded;
-		OptParser* arg;
-		TString _basename;
+		OptParser* m_arg;
+		TString m_basename;
+		FileNameBuilder* m_fnamebuilder;
 };
 
 #endif
