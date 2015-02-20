@@ -430,10 +430,10 @@ int MethodProbScan::scan2d()
 	TCanvas *cDbg = new TCanvas(getUniqueRootName(), Form("DeltaChi2 for 2D scan %i",nScansDone));
 	cDbg->SetMargin(0.1,0.15,0.1,0.1);
 	float hChi2min2dMin = hChi2min2d->GetMinimum();
-	bool firstScan = hChi2min2dMin<1e5;
-	TH2F *hDbgChi2min2d = histHardCopy(hChi2min2d, firstScan);
+	bool firstScanDone = hChi2min2dMin<1e5;
+	TH2F *hDbgChi2min2d = histHardCopy(hChi2min2d, firstScanDone);
 	hDbgChi2min2d->SetTitle(Form("#Delta#chi^{2} for scan %i, %s",nScansDone,title.Data()));
-	if ( firstScan ) hDbgChi2min2d->GetZaxis()->SetRangeUser(hChi2min2dMin,hChi2min2dMin+36);
+	if ( firstScanDone ) hDbgChi2min2d->GetZaxis()->SetRangeUser(hChi2min2dMin,hChi2min2dMin+25);
 	hDbgChi2min2d->GetXaxis()->SetTitle(par1->GetTitle());
 	hDbgChi2min2d->GetYaxis()->SetTitle(par2->GetTitle());
 	hDbgChi2min2d->GetZaxis()->SetTitle("#Delta#chi^{2}");

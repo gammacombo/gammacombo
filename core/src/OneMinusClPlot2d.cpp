@@ -658,7 +658,7 @@ void OneMinusClPlot2d::DrawFull()
 	hChi2->SetContour(95);
 	hChi2->GetXaxis()->SetTitle(xTitle!="" ? xTitle : (TString)scanners[0]->getScanVar1()->GetTitle());
 	hChi2->GetYaxis()->SetTitle(yTitle!="" ? yTitle : (TString)scanners[0]->getScanVar2()->GetTitle());
-	hChi2->GetZaxis()->SetRangeUser(hChi2->GetMinimum(),hChi2->GetMinimum()+(histosType[0]==kChi2?36:1));
+	hChi2->GetZaxis()->SetRangeUser(hChi2->GetMinimum(),hChi2->GetMinimum()+(histosType[0]==kChi2?25:1));
 	hChi2->GetZaxis()->SetTitle(histosType[0]==kChi2?"#Delta#chi^{2}":"p-value");
 	hChi2->Draw("colz");
 	TPaveText *title = new TPaveText(.10,.92,.90,.99,"BRNDC");

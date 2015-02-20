@@ -621,3 +621,58 @@ float PDF_Abs::getObservableValue(TString obsname)
 	return ((RooRealVar*)observables->find(obsname))->getVal();
 }
 
+///
+/// Return a submatrix of a given input matrix, defined by the rows
+/// and columns provided.
+///
+/// \param source - the input matrix
+/// \param target - the output matrix
+/// \param indices - vector of the row/column indices that should make up the submatrix
+///
+void PDF_Abs::getSubMatrix(TMatrixDSym& target, TMatrixDSym& source, vector<int>& indices)
+{
+	if ( indices.size()==0 ){
+		cout << "PDF_Abs::getSubMatrix() : vector 'indices' can't be empty" << endl;
+		exit(1);
+	}
+	if ( target.GetNcols() != indices.size() ){
+		cout << "PDF_Abs::getSubMatrix() : 'target' matrix doesn't have size of 'indices' vector" << endl;
+		exit(1);
+	}
+	for ( int i=0; i<indices.size(); i++ ){
+		// check requested index
+		if ( indices[i]<0 || indices[i]>=source.GetNcols() ){
+			cout << "PDF_Abs::getSubMatrix() : ERROR : requested index for submatrix is out of range of parent matrix" << endl;
+			exit(1);
+		}
+		// copy over row and column
+		for ( int j=0; j<indices.size(); j++ ){
+			target[i][j] = source[indices[i]][indices[j]];
+			target[j][i] = source[indices[j]][indices[i]];
+		}
+	}
+}
+
+///
+/// Return a submatrix of the statistical correlation matrix, defined by the rows
+/// and columns provided.
+///
+/// \param target - the output matrix
+/// \param indices - vector of the row/column indices that should make up the submatrix
+///
+void PDF_Abs::getSubCorrelationStat(TMatrixDSym& target, vector<int>& indices)
+{
+	getSubMatrix(target, corStatMatrix, indices);
+}
+
+///
+/// Return a submatrix of the systematic correlation matrix, defined by the rows
+/// and columns provided.
+///
+/// \param target - the output matrix
+/// \param indices - vector of the row/column indices that should make up the submatrix
+///
+void PDF_Abs::getSubCorrelationSyst(TMatrixDSym& target, vector<int>& indices)
+{
+	getSubMatrix(target, corSystMatrix, indices);
+}
