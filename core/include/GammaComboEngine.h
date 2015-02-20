@@ -62,8 +62,10 @@ class GammaComboEngine
 	private:
 
 		void			makeAddDelCombinations();
+		void			checkAsimovArg();
 		void			checkColorArg();
 		void			checkCombinationArg();
+		void            configureAsimovCombinerNames(Combiner* c, int i);
 		bool			combinerExists(int id) const;
 		void			customizeCombinerTitles();
 		void			defineColors();

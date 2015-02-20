@@ -15,6 +15,7 @@ FileNameBuilder::FileNameBuilder(OptParser *arg, TString name)
 	assert(arg);
 	m_arg = arg;
 	m_basename = name;
+	m_asimov = "Asimov";
 }
 
 FileNameBuilder::~FileNameBuilder()
@@ -68,17 +69,37 @@ TString FileNameBuilder::getFileNameStartPar(const Combiner *c)
 	name += "_start.dat";
 	return name;
 }
+TString FileNameBuilder::getFileNameStartPar(const MethodAbsScan *s)
+{
+	return getFileNameStartPar(s->getCombiner());
+}
 
 ///
-/// Compute the file name of the start parameter file.
+/// Compute the file name of the parameter file defining the Asimov
+/// point where the Asimov toy is generated at.
+/// The combiner name will be followed by the Asimov addition (getAsimovCombinerNameAddition()),
+/// but without the number denoting the Asimov point in the file, as the file contains all points.
 /// Format of returned filename:
 ///
-/// plots/par/basename_combinername[_+N][_-N]_var1[_var2]_start.dat
+/// plots/par/basename_combinernameAsimov[_+N][_-N]_var1[_var2]_genpoints.dat
 ///
-/// \param s - Scanner object
+/// \param c - Combiner object
 /// \return - filename
 ///
-TString FileNameBuilder::getFileNameStartPar(const MethodAbsScan *s)
+TString FileNameBuilder::getFileNameAsimovPar(const Combiner *c)
+{
+	TString name = "plots/par/";
+	name += getFileBaseName(c);
+	// remove any string after the "Asimov" token and the first "_" after that
+	// e.g.: "combinerAsimov3_" -> "combinerAsimov_"
+	int startOfToken = name.Index(m_asimov);
+	int startOfFirstUnderscore = name.Index("_",startOfToken);
+	int length = startOfFirstUnderscore-(startOfToken+m_asimov.Sizeof())+1;
+	name.Replace(startOfToken+m_asimov.Sizeof()-1, length, "");
+	name += "_genpoints.dat";
+	return name;
+}
+TString FileNameBuilder::getFileNameAsimovPar(const MethodAbsScan *s)
 {
 	return getFileNameStartPar(s->getCombiner());
 }
@@ -151,5 +172,13 @@ TString FileNameBuilder::getFileNamePlot(const vector<Combiner*>& cmb)
 	if ( m_arg->var.size()==2 ) name += "_"+m_arg->var[1];
 	if ( m_arg->plotpluginonly ) name += "_pluginonly";
 	return name;
+}
+
+///
+/// Define the addition to combiner names for Asimov combiners.
+///
+TString FileNameBuilder::getAsimovCombinerNameAddition(int id)
+{
+	return m_asimov + Form("%i", id);
 }
 

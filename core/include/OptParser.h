@@ -36,8 +36,9 @@ class OptParser
 		bool isAsimovCombiner(int id);
 		bool isQuickhack(int id);
 
-		vector<TString>		action;
+		vector<TString>	action;
 		vector<int>		asimov;
+		vector<TString> asimovfile;
 		bool			cacheStartingValues;
 		vector<int>		color;
 		vector<int>		combid;
@@ -45,9 +46,9 @@ class OptParser
 		bool			controlplot;
 		int 			coverageCorrectionID;
 		int 			coverageCorrectionPoint;
-		bool            	debug;
+		bool            debug;
 		int		        digits;
-		bool            	enforcePhysRange;
+		bool            enforcePhysRange;
 		TString         filenameaddition;
 		vector<vector<FixPar> >	fixParameters;
 		TString	group;

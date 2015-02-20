@@ -150,16 +150,16 @@ void Combiner::combine()
     for (int j=i+1; j<pdfs.size(); j++ ){
       PDF_Abs* p = pdfs[j];
       if ( pdfs[i]->getUniqueGlobalID() == p->getUniqueGlobalID() ){
-        cout << "WARNING : You are trying to combine the same PDF twice!" << endl;
-        cout << "          Ignore this warning if you're doing it intentionally!" << endl;
-        cout << "          combiner: " << title << endl;
-        cout << "          PDF: " << p->getBaseName() << endl;
+        cout << "\nWARNING : You are trying to combine the same PDF twice!" << endl;
+        cout <<   "          Ignore this warning if you're doing it intentionally!" << endl;
+        cout <<   "          combiner: " << title << endl;
+        cout <<   "          PDF: " << p->getBaseName() << endl;
       }
       else if ( pdfs[i]->getBaseName() == p->getBaseName() ){
-        cout << "WARNING : You are trying to combine two PDFs with the same name." << endl;
-        cout << "          Ignore this warning if you're doing it intentionally!" << endl;
-        cout << "          combiner: " << title << endl;
-        cout << "          PDF: " << p->getBaseName() << endl;
+        cout << "\nWARNING : You are trying to combine two PDFs with the same name." << endl;
+        cout <<   "          Ignore this warning if you're doing it intentionally!" << endl;
+        cout <<   "          combiner: " << title << endl;
+        cout <<   "          PDF: " << p->getBaseName() << endl;
       }
     }
   }

@@ -195,11 +195,12 @@ void ParameterCache::setPoint(Combiner *cmb, int i) {
 	if ( !m_parametersLoaded ){
 		cout << "ParameterCache::setPoint() : ERROR : Can't set starting "
 			"point as no starting values have been loaded" << endl;
-		return;
+		exit(1);
 	}
 	if ( i>=getNPoints() ) {
-		cout << "ParameterCache::setPoint() : ERROR : parameter point number " << i+1 << " not found in file." << endl;
-		return;
+		if (m_arg->debug) cout << "ParameterCache::setPoint() : ";
+		cout << "  ERROR : parameter point number " << i+1 << " not found in file. Exit." << endl;
+		exit(1);
 	}
 	vector<TString> fixNames = getFixedNames(cmb->getConstVars());
 

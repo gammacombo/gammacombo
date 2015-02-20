@@ -294,41 +294,127 @@ void GammaComboEngine::setAsimovObservables(Combiner* c)
 }
 
 ///
+/// Load start parameters.
+///
+/// \param cId - combiner id
+/// \param pCache - parameter cache
+///
+void GammaComboEngine::loadStartParameters(ParameterCache *pCache, int cId)
+{
+	cout << "Start parameter configuration:\n" << endl;
+	TString startparfile;
+	bool filefound = false;
+	bool loaded = false;
+	// try the file provided through --parfile
+	if ( arg->loadParamsFile.size()>cId && ! arg->loadParamsFile[cId].EqualTo("default") ) {
+		startparfile = arg->loadParamsFile[cId];
+		cout << "  --parfile: Loading start parameters from: " << startparfile << endl;
+		filefound = FileExists(startparfile);
+		if ( filefound ) loaded = pCache->loadPoints(startparfile);
+	}
+	// requested file not found, try default
+	if ( ! filefound ){
+		startparfile = m_fnamebuilder->getFileNameStartPar(cmb[cId]);
+		cout << "  Loading start parameters from: " << startparfile << endl;
+		filefound = FileExists(startparfile);
+		if ( filefound ) loaded = pCache->loadPoints(startparfile);
+	}
+	// still not found
+	if ( ! filefound ){
+		cout << "  No start parameter file was found, will use the default values" << endl;
+		cout << "  configured in ParameterAbs class. You can provide a parameter file" << endl;
+		cout << "  through the --parfile argument, or create the default file:" << endl;
+		cout << "  " << startparfile << endl;
+	}
+	// error loading
+	if ( filefound && !loaded ){
+		cout << "  Error loading file. Exit." << endl;
+		exit(1);
+	}
+	// If an asimov toy is configured, but no dedicated
+	// par file was given to configure the asimov point, and also no dedicated
+	// RO par file exists, we use the default par file without asimov.
+	//if ( arg->isAsimovCombiner(cId) && !loaded ){
+		//cout << "GammaComboEngine::make1dProbScan() : Asimov start parameters not found. Trying non-Asimov parameters." << endl;
+		//TString nonAsimovDefaultFile = pCache->getDefaultFileName();
+		//nonAsimovDefaultFile.ReplaceAll(Form("Asimov%i",arg->asimov[cId]),"");
+		//pCache->loadPoints(nonAsimovDefaultFile);
+	//}
+	cout << endl;
+}
+
+///
+/// Configure the names and titles of Asimov combiners.
+/// It adds things like "Asimov3" to the combiner name,
+/// where 3 means the 3rd Asimov point from the configured
+/// Asimov parameter file (typically *_genpoints.dat).
+///
+void GammaComboEngine::configureAsimovCombinerNames(Combiner* c, int i)
+{
+	if ( arg->asimov[i]==0 ){
+		cout << "\n--asimov 0 : ignoring generator point ID 0" << endl;
+		return;
+	}
+	cout << "\n--asimov : setting up an ASIMOV TOY based on combination \"" << c->getName() << "\"" << endl;
+	if ( arg->title[i]==TString("default") ) c->setTitle(c->getTitle()+" (Asimov)");
+	c->setName(c->getName() + m_fnamebuilder->getAsimovCombinerNameAddition(arg->asimov[i]));
+	cout <<   "           Asimov combiner name: \"" << c->getName() << "\"" << endl;
+}
+
+///
 /// Make an Asimov toy: set all observables set to truth values.
-/// The truth values are loaded from a parameter file. If there
-/// are more than one points present in that file, the first one
-/// is used.
+/// The truth values are loaded from a parameter file.
 ///
 void GammaComboEngine::loadAsimovPoint(Combiner* c, int cId)
 {
-	cout << "\n--asimov : Modifying combination \"" << c->getName() << "\", running an ASIMOV TOY" << endl;
-	if ( cId>=arg->asimov.size() ){
-		cout << "GammaComboEngine::loadAsimovPoint() : ERROR : requesting a non-existent Asimov ID." << endl;
-		return;
-	}
-	if ( arg->asimov[cId]==0 ){
-		cout << "GammaComboEngine::loadAsimovPoint() : INFO : found Asimov ID 0 => not running an Asimov toy" << endl;
-		return;
-	}
-	// load truth values from Asimov parameter file
-	cout << "GammaComboEngine::loadAsimovPoint() : Trying Asimov parameter file ..." << endl;
+	if ( arg->asimov[cId]==0 ) return;
+	cout << "\nAsimov point configuration:\n" << endl;
 	ParameterCache *pCache = new ParameterCache(arg);
-	TString parfile = getStartParFileName(cId);
-	bool loaded = pCache->loadPoints(parfile);
-
-	// if no dedicated Asimov parameter file was found, try the start parameter file
-	if ( !loaded ){
-		cout << "GammaComboEngine::loadAsimovPoint() : Asimov parameter file not found. Trying non-Asimov parameter file." << endl;
-		loaded = pCache->loadPoints(m_fnamebuilder->getFileNameStartPar(c));
+	TString asimovfile;
+	TString asimovfile2 = m_fnamebuilder->getFileNameAsimovPar(c);
+	TString asimovfile3 = m_fnamebuilder->getFileNameStartPar(c); // this gets the start parameter file of the Asimov combiner
+	asimovfile3.ReplaceAll(m_fnamebuilder->getAsimovCombinerNameAddition(arg->asimov[cId]),"");
+	TString asimovfile4 = m_fnamebuilder->getFileNamePar(c); // this gets the result parameter file of the Asimov combiner
+	asimovfile4.ReplaceAll(m_fnamebuilder->getAsimovCombinerNameAddition(arg->asimov[cId]),"");
+	bool filefound = false;
+	// try the file provided through --asimovfile
+	if ( arg->asimovfile.size()>cId && ! arg->asimovfile[cId].EqualTo("default") ) {
+		asimovfile = arg->loadParamsFile[cId];
+		filefound = FileExists(asimovfile);
 	}
-	// if some point was loaded from the above files, set the point
-	if ( loaded ){
-		cout << "GammaComboEngine::loadAsimovPoint() : file found! Loading parameters corresponding to --asimov "<< arg->asimov[cId] << " ..." << endl;
-		pCache->setPoint(c,arg->asimov[cId]-1);
+	// requested file not found, try default
+	if ( ! filefound ){
+		asimovfile = asimovfile2;
+		filefound = FileExists(asimovfile);
+	}
+	// requested file not found, try the start parameter file of the corresponding non-Asimov combiner
+	if ( ! filefound ){
+		asimovfile = asimovfile3;
+		filefound = FileExists(asimovfile);
+	}
+	// requested file not found, try the result parameter file of the corresponding non-Asimov combiner
+	if ( ! filefound ){
+		asimovfile = asimovfile4;
+		filefound = FileExists(asimovfile);
 	}
 	// if no parameter file exits, we use point from the ParameterAbs class
-	if ( !loaded ){
-		cout << "GammaComboEngine::loadAsimovPoint() : non-Asimov parameter file not found. Using start values configured in ParameterAbs class." << endl;
+	if ( ! filefound ){
+		cout << "  No Asimov point parameter file found. Using start values configured in ParameterAbs class." << endl;
+		cout << "  Point files are looked for in the following order:" << endl;
+		cout << "  1. --asimovfile" << endl;
+		cout << "  2. " << asimovfile2 << endl;
+		cout << "  3. " << asimovfile3 << endl;
+		cout << "  4. " << asimovfile4 << endl;
+	}
+	else {
+		cout << "  Loading Asimov points from file: " << asimovfile << endl;
+		bool loaded = pCache->loadPoints(asimovfile);
+		if ( !loaded ){
+			cout << "  Error loading file. Exit." << endl;
+			exit(1);
+		}
+		cout << "  Setting point number: " << arg->asimov[cId] << endl;
+		pCache->setPoint(c,arg->asimov[cId]-1);
 	}
 	setAsimovObservables(c);
 }
@@ -422,6 +508,21 @@ void GammaComboEngine::checkCombinationArg()
 				<< "Use the -u option to print a list of available combinations." << endl;
 			exit(1);
 		}
+	}
+}
+
+///
+/// Check Asimov arg: when only one --asimov argument is given
+/// with the ID 0, it won't do anything. Print a warning in that
+/// case.
+///
+void GammaComboEngine::checkAsimovArg()
+{
+	if ( arg->asimov.size()==1 && arg->asimov[0]==0 ){
+		cout << "WARNING : --asimov 0 found, this won't do anything." << endl;
+		cout << "          To run an Asimov toy, the generation point ID" << endl;
+		cout << "          needs to be different from 0." << endl;
+		cout << endl;
 	}
 }
 
@@ -662,54 +763,6 @@ void GammaComboEngine::scanStrategy2d(MethodProbScan *scanner, ParameterCache *p
 	}
 }
 
-///
-/// Load start parameters.
-///
-/// \param cId - combiner id
-/// \param pCache - parameter cache
-///
-void GammaComboEngine::loadStartParameters(ParameterCache *pCache, int cId)
-{
-	cout << "Start parameter configuration:\n" << endl;
-	TString startparfile;
-	bool filefound = false;
-	// try the file provided through --parfile
-	if ( arg->loadParamsFile.size()>cId && ! arg->loadParamsFile[cId].EqualTo("default") ) {
-		startparfile = arg->loadParamsFile[cId];
-		filefound = FileExists(startparfile);
-	}
-	// requested file not found, try default
-	if ( ! filefound ){
-		startparfile = m_fnamebuilder->getFileNameStartPar(cmb[cId]);
-		filefound = FileExists(startparfile);
-	}
-	// still not found
-	if ( ! filefound ){
-		cout << "  No start parameter file was found, will use the default values" << endl;
-		cout << "  configured in ParameterAbs class. You can provide a parameter file" << endl;
-		cout << "  through the --parfile argument, or create the default file:" << endl;
-		cout << "  " << startparfile << endl;
-		cout << endl;
-		return;
-	}
-	// found
-	cout << "  Loading start parameters from: " << startparfile << endl;
-	bool loaded = pCache->loadPoints(getStartParFileName(cId));
-	if ( !loaded ){
-		cout << "  Error loading file. Exit." << endl;
-		exit(1);
-	}
-	// If an asimov toy is configured, but no dedicated
-	// par file was given to configure the asimov point, and also no dedicated
-	// RO par file exists, we use the default par file without asimov.
-	//if ( arg->isAsimovCombiner(cId) && !loaded ){
-		//cout << "GammaComboEngine::make1dProbScan() : Asimov start parameters not found. Trying non-Asimov parameters." << endl;
-		//TString nonAsimovDefaultFile = pCache->getDefaultFileName();
-		//nonAsimovDefaultFile.ReplaceAll(Form("Asimov%i",arg->asimov[cId]),"");
-		//pCache->loadPoints(nonAsimovDefaultFile);
-	//}
-	cout << endl;
-}
 
 ///
 /// Perform the prob scan.
@@ -1032,10 +1085,7 @@ void GammaComboEngine::scan()
 		if ( i<arg->fixParameters.size() ) fixParameters(c, i);
 
 		// configure names to run an Asimov toy - only possible before combining
-		if ( arg->isAsimovCombiner(i) ){
-			if ( arg->title[i]==TString("default") ) c->setTitle(c->getTitle()+" (Asimov)");
-			c->setName(c->getName()+Form("Asimov%i",arg->asimov[i]));
-		}
+		if ( arg->isAsimovCombiner(i) ) configureAsimovCombinerNames(c, i);
 
 		// configure scans for observables - this part is only possible before combining
 		if ( isScanVarObservable(c, arg->var[0]) ){
@@ -1232,6 +1282,7 @@ void GammaComboEngine::run()
 	if ( arg->usage ) usage(); // print usage and exit
 	checkCombinationArg();
 	checkColorArg();
+	checkAsimovArg();
 	//scaleDownErrors();
 	if ( arg->nosyst ) disableSystematics();
 	makeAddDelCombinations();

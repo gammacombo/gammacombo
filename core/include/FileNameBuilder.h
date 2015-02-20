@@ -39,11 +39,15 @@ class FileNameBuilder
 		TString getFileNamePlot(const vector<Combiner*>& cmb);
 		TString getFileNameStartPar(const Combiner *c);
 		TString getFileNameStartPar(const MethodAbsScan *s);
+		TString getFileNameAsimovPar(const Combiner *c);
+		TString getFileNameAsimovPar(const MethodAbsScan *s);
+		TString getAsimovCombinerNameAddition(int id);
 
 	private:
 
 		OptParser* m_arg; 		///< command line arguments
 		TString m_basename; 	///< the base name, e.g. "gammacombo"
+		TString m_asimov; 		///< literal naming Asimov combiners
 };
 
 #endif

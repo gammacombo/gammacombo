@@ -28,7 +28,6 @@ OptParser::OptParser()
 
 	// Initialize the variables.
 	// For more complex arguments these are also the default values.
-	cacheStartingValues = false;
 	controlplot = false;
 	coverageCorrectionID = 0;
 	coverageCorrectionPoint = 0;
@@ -53,7 +52,6 @@ OptParser::OptParser()
 	npointstoy = -99;
 	nrun = -99;
 	ntoys = -99;
-	parsavefile = "";
 	parevol = false;
 	plotid = -99;
 	plotlegend = true;
@@ -95,7 +93,7 @@ void OptParser::defineOptions()
 {
 	availableOptions.push_back("action");
 	availableOptions.push_back("asimov");
-	availableOptions.push_back("cacheStartingValues");
+	availableOptions.push_back("asimovfile");
 	availableOptions.push_back("combid");
 	availableOptions.push_back("color");
 	availableOptions.push_back("controlplots");
@@ -128,7 +126,6 @@ void OptParser::defineOptions()
 	availableOptions.push_back("npointstoy");
 	availableOptions.push_back("nrun");
 	availableOptions.push_back("ntoys");
-	availableOptions.push_back("parsavefile");
 	//availableOptions.push_back("pevid");
 	availableOptions.push_back("physrange");
 	availableOptions.push_back("plotid");
@@ -222,6 +219,7 @@ void OptParser::bookPluginOptions()
 void OptParser::bookProbOptions()
 {
 	bookedOptions.push_back("asimov");
+	bookedOptions.push_back("asimovfile");
 	bookedOptions.push_back("evol");
 	bookedOptions.push_back("npoints");
 	bookedOptions.push_back("npoints2dx");
@@ -459,7 +457,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::MultiArg<string> loadParamsFileArg("", "parfile", "Load starting parameters for the corresponding "
 			"combination from this particular file. "
 			"If 'default' is given, the default file for that combination is used, which is found in "
-			"plots/par/*_RO.dat ."
+			"plots/par/*_start.dat ."
 			"Example: --parfile parsForFirstCombination.dat --parfile parsForSecondCombination.dat", false, "string");
 	TCLAP::MultiArg<int> asimovArg("", "asimov", "Run an Asimov toy, in which all observables are set to "
 			"truth values defined in a parameter .dat file. This can be the default one, or a configured one "
@@ -470,6 +468,13 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"This will run an Asimov toy for the first combination at point 2, and another one "
 			"for the second combination at point 1. If you only want to run an Asimov for the second "
 			"combination, select asimov point 0 for the first one.", false, "int");
+	TCLAP::MultiArg<string> asimovFileArg("", "asimovfile", "Load the parameter point to set an Asimov "
+			"toy from this file. "
+			"If 'default' is given, the default file for that combination is used, which is found in\n"
+			"plots/par/*_genpoints.dat\n"
+			"The argument can be given multiple times to configure different "
+			"files for different Asimov combiners. "
+			"Example: --asimovfile parameters.dat", false, "string");
 
 	//
 	// let TCLAP parse the command line
@@ -537,6 +542,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "controlplots" ) ) cmd.add(controlplotArg);
 	if ( isIn<TString>(bookedOptions, "combid" ) ) cmd.add(combidArg);
 	if ( isIn<TString>(bookedOptions, "color" ) ) cmd.add(colorArg);
+	if ( isIn<TString>(bookedOptions, "asimovfile" ) ) cmd.add( asimovFileArg );
 	if ( isIn<TString>(bookedOptions, "asimov") ) cmd.add(asimovArg);
 	if ( isIn<TString>(bookedOptions, "action") ) cmd.add(actionArg);
 	cmd.parse( argc, argv );
@@ -639,9 +645,13 @@ void OptParser::parseArguments(int argc, char* argv[])
 	for ( int i = 0; i < tmp.size(); i++ ) title.push_back(tmp[i]);
 	if ( tmp.size()==0 ) title.push_back("default");
 
-	// --loadParamsFile
+	// --parfile
 	tmp = loadParamsFileArg.getValue();
 	for ( int i = 0; i < tmp.size(); i++ ) loadParamsFile.push_back(tmp[i]);
+
+	// --asimovfile
+	tmp = asimovFileArg.getValue();
+	for ( int i = 0; i < tmp.size(); i++ ) asimovfile.push_back(tmp[i]);
 
 	// --debug
 	debug = debugArg.getValue();
