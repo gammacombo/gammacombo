@@ -16,7 +16,7 @@ GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[])
 	// configure names
 	execname = argv[0];
 	basename = name;
-  if (arg->filenameaddition!="") basename += "_"+arg->filenameaddition;
+	if (arg->filenameaddition!="") basename += "_"+arg->filenameaddition;
 	fb = new FileNameBuilder(arg, basename);
 
 	// run ROOT in interactive mode, if requested (-i)
@@ -254,7 +254,7 @@ void GammaComboEngine::setAsimovObservables(Combiner* c)
 {
 	if ( !c->isCombined() ){
 		cout << "GammaComboEngine::setAsimovObservables() : ERROR : Can't set an Asimov toy before "
-													"the combiner is combined. Call combine() first." << endl;
+															"the combiner is combined. Call combine() first." << endl;
 		exit(1);
 	}
 
@@ -631,12 +631,12 @@ void GammaComboEngine::defineColors()
 		colorsLine.push_back(TColor::GetColor("#66a61e"));
 		colorsLine.push_back(TColor::GetColor("#e6ab02"));
 
-    // from http://colorbrewer2.org with:
-    //   number of data classes: 6
-    //   nature of data:         qualitative
-    //   second colour scheme
+		// from http://colorbrewer2.org with:
+		//   number of data classes: 6
+		//   nature of data:         qualitative
+		//   second colour scheme
 
-    ColorBuilder cb;
+		ColorBuilder cb;
 		for ( int i=0; i<colorsLine.size(); i++ ){
 			colorsText.push_back(cb.darklightcolor(colorsLine[i], 0.5));
 		}
