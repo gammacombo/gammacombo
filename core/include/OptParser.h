@@ -48,7 +48,7 @@ class OptParser
 		bool            	debug;
 		int		        digits;
 		bool            	enforcePhysRange;
-    TString         filenameaddition;
+		TString         filenameaddition;
 		vector<vector<FixPar> >	fixParameters;
 		TString	group;
 		TString	groupPos;
@@ -80,8 +80,8 @@ class OptParser
 		bool		        plotlegend;
 		float           plotlegx;
 		float           plotlegy;
-    float           plotlegsizex;
-    float           plotlegsizey;
+		float           plotlegsizex;
+		float           plotlegsizey;
 		float           plotgroupx;
 		float           plotgroupy;
 		bool            plotmagnetic;
@@ -107,7 +107,7 @@ class OptParser
 		float           scanrangeMax;
 		float           scanrangeyMin;
 		float           scanrangeyMax;
-    bool    smooth2d;
+		bool    smooth2d;
 		vector<TString> title;
 		bool            usage;
 		vector<TString> var;

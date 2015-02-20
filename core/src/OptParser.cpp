@@ -59,8 +59,8 @@ OptParser::OptParser()
 	plotlegend = true;
 	plotlegx = -99;
 	plotlegy = -99;
-  plotlegsizex = -99;
-  plotlegsizey = -99;
+	plotlegsizex = -99;
+	plotlegsizey = -99;
 	plotgroupx = -99;
 	plotgroupy = -99;
 	plotlog = false;
@@ -82,7 +82,7 @@ OptParser::OptParser()
 	scanrangeMin = -99;
 	scanrangeyMax = -99;
 	scanrangeyMin = -99;
-  smooth2d = false;
+	smooth2d = false;
 	usage = false;
 	verbose = false;
 }
@@ -105,7 +105,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("digits");
 	availableOptions.push_back("evol");
 	availableOptions.push_back("fix");
-  availableOptions.push_back("ext");
+	availableOptions.push_back("ext");
 	availableOptions.push_back("id");
 	availableOptions.push_back("importance");
 	availableOptions.push_back("interactive");
@@ -145,7 +145,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("scanforce");
 	availableOptions.push_back("scanrange");
 	availableOptions.push_back("scanrangey");
-  availableOptions.push_back("smooth2d");
+	availableOptions.push_back("smooth2d");
 	availableOptions.push_back("title");
 	availableOptions.push_back("usage");
 	availableOptions.push_back("unoff");
@@ -329,13 +329,13 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"Disable the legend with --leg off .\n"
 			"2d plots: set the position of the legend. "
 			"Format: --leg xmin:ymin in normalized coordinates [0,1]. Default: 0.17:0.75", false, "default", "string");
-  TCLAP::ValueArg<string> plotlegsizeArg("", "legsize", "Adjust the plot legend size.\n"
-      "2d plots: set the size of the legend. "
-      "Format: --legsize xsize:ysize in normalized coordinates [0,1]. Default: 0.38:0.15", false, "default", "string");
+	TCLAP::ValueArg<string> plotlegsizeArg("", "legsize", "Adjust the plot legend size.\n"
+			"2d plots: set the size of the legend. "
+			"Format: --legsize xsize:ysize in normalized coordinates [0,1]. Default: 0.38:0.15", false, "default", "string");
 	TCLAP::ValueArg<string> pluginplotrangeArg("", "pluginplotrange", "Restrict the Plugin plot to a given range to "
 			"rejcet low-statistics outliers. Format: --pluginplotrange min-max.", false, "default", "string");
 	TCLAP::ValueArg<int> plotnsigmacontArg("", "ncontours", "plot this many sigma contours in 2d plots (max 5)", false, 2, "int");
-  TCLAP::ValueArg<string> filenameadditionArg("","ext","Add this piece into the file name (in case you don't want files/plots to be overwritten", false, "", "string");
+	TCLAP::ValueArg<string> filenameadditionArg("","ext","Add this piece into the file name (in case you don't want files/plots to be overwritten", false, "", "string");
 	TCLAP::ValueArg<string> plotgroupArg("", "group", "Set the group logo. Use '--group off' to disable the logo. "
 			"See also --grouppos. Default: GammaCombo", false, "GammaCombo", "string");
 	TCLAP::ValueArg<string> plotgroupposArg("", "grouppos", "Set the position of the group logo. "
@@ -394,7 +394,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::SwitchArg importanceArg("", "importance", "Enable importance sampling for plugin toys.", false);
 	TCLAP::SwitchArg nosystArg("", "nosyst", "Sets all systematic errors to zero.", false);
 	TCLAP::SwitchArg printcorArg("", "printcor", "Print the correlation matrix of each solution found.", false);
-  TCLAP::SwitchArg smooth2dArg("", "smooth2d", "Smooth 2D p-value or cl histograms for nicer contour (particularly useful for 2D plugin)", false);
+	TCLAP::SwitchArg smooth2dArg("", "smooth2d", "Smooth 2D p-value or cl histograms for nicer contour (particularly useful for 2D plugin)", false);
 
 	// --------------- aruments that can be given multiple times
 	vector<string> vAction;
@@ -483,7 +483,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "title" ) ) cmd.add( titleArg );
 	if ( isIn<TString>(bookedOptions, "sn2d" ) ) cmd.add(sn2dArg);
 	if ( isIn<TString>(bookedOptions, "sn" ) ) cmd.add(snArg);
-  if ( isIn<TString>(bookedOptions, "smooth2d" ) ) cmd.add( smooth2dArg );
+	if ( isIn<TString>(bookedOptions, "smooth2d" ) ) cmd.add( smooth2dArg );
 	if ( isIn<TString>(bookedOptions, "scanrangey" ) ) cmd.add( scanrangeyArg );
 	if ( isIn<TString>(bookedOptions, "scanrange" ) ) cmd.add( scanrangeArg );
 	if ( isIn<TString>(bookedOptions, "scanforce" ) ) cmd.add( scanforceArg );
@@ -528,7 +528,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "group" ) ) cmd.add( plotgroupArg );
 	if ( isIn<TString>(bookedOptions, "grouppos" ) ) cmd.add( plotgroupposArg );
 	if ( isIn<TString>(bookedOptions, "fix" ) ) cmd.add(fixArg);
-  if ( isIn<TString>(bookedOptions, "ext" ) ) cmd.add(filenameadditionArg);
+	if ( isIn<TString>(bookedOptions, "ext" ) ) cmd.add(filenameadditionArg);
 	if ( isIn<TString>(bookedOptions, "evol" ) ) cmd.add(parevolArg);
 	if ( isIn<TString>(bookedOptions, "digits" ) ) cmd.add(digitsArg);
 	if ( isIn<TString>(bookedOptions, "debug" ) ) cmd.add(debugArg);
@@ -549,7 +549,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	controlplot       = controlplotArg.getValue();
 	digits            = digitsArg.getValue();
 	enforcePhysRange  = physrangeArg.getValue();
-  filenameaddition  = filenameadditionArg.getValue();
+	filenameaddition  = filenameadditionArg.getValue();
 	group             = plotgroupArg.getValue();
 	id                = idArg.getValue();
 	importance        = importanceArg.getValue();
@@ -586,7 +586,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	qh                = qhArg.getValue();
 	savenuisances1d   = snArg.getValue();
 	scanforce         = scanforceArg.getValue();
-  smooth2d          = smooth2dArg.getValue();
+	smooth2d          = smooth2dArg.getValue();
 	usage             = usageArg.getValue();
 	verbose           = verboseArg.getValue();
 
@@ -722,14 +722,14 @@ void OptParser::parseArguments(int argc, char* argv[])
 		parsePosition(plotlegArg.getValue(), plotlegx, plotlegy, usage);
 	}
 
-  // --legsize
-  usage = "";
-  usage += "Required format: '--legsize 0.a:0.b'\n";
-  usage += "  Examples:\n";
-  usage += "  --legsize 0.4:0.2\n";
+	// --legsize
+	usage = "";
+	usage += "Required format: '--legsize 0.a:0.b'\n";
+	usage += "  Examples:\n";
+	usage += "  --legsize 0.4:0.2\n";
 	usage += "  --legsize 0.4:def\n";
 	usage += "  --legsize def:0.2\n";
-  parsePosition(plotlegsizeArg.getValue(), plotlegsizex, plotlegsizey, usage);
+	parsePosition(plotlegsizeArg.getValue(), plotlegsizex, plotlegsizey, usage);
 
 	// --grouppos
 	usage = "";
