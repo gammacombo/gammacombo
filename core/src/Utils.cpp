@@ -28,7 +28,7 @@ RooFitResult* Utils::fitToMin(RooAbsPdf *pdf, bool thorough, int printLevel)
 		m.setNoWarn();
 	}
 	else m.setPrintLevel(1);
-	// if (quiet) m.setLogFile();  
+	// if (quiet) m.setLogFile();
 	m.setErrorLevel(1.0);
 	m.setStrategy(2);
 	m.setProfile(0); // 1 enables migrad timer
@@ -131,7 +131,7 @@ RooFitResult* Utils::fitToMinBringBackAngles(RooAbsPdf *pdf, bool thorough, int 
 /// \param w Workspace holding the pdf.
 /// \param name Name of the pdf without leading "pdf_".
 /// \param forceVariables Apply the force method for these variables only. Format
-/// "var1,var2,var3," (list must end with comma). Default is to apply for all angles, 
+/// "var1,var2,var3," (list must end with comma). Default is to apply for all angles,
 /// all ratios except rD_k3pi and rD_kpi, and the k3pi coherence factor.
 ///
 RooFitResult* Utils::fitToMinForce(RooWorkspace *w, TString name, TString forceVariables)
@@ -163,7 +163,7 @@ RooFitResult* Utils::fitToMinForce(RooWorkspace *w, TString name, TString forceV
 					|| TString(p->GetName()).BeginsWith("d") ///< use these variables
 					// || TString(p->GetName()).BeginsWith("r")
 					|| TString(p->GetName()).BeginsWith("k")
-					|| TString(p->GetName()) == "g" 
+					|| TString(p->GetName()) == "g"
 					) && ! (
 						TString(p->GetName()) == "rD_k3pi"  ///< don't use these
 						|| TString(p->GetName()) == "rD_kpi"
@@ -214,7 +214,7 @@ RooFitResult* Utils::fitToMinForce(RooWorkspace *w, TString name, TString forceV
 		// check if start parameters are sensible, skip if they're not
 		double startParChi2 = getChi2(w->pdf(pdfName));
 		if ( startParChi2>2000 ){
-			nErrors += 1;  
+			nErrors += 1;
 			continue;
 		}
 
@@ -255,13 +255,13 @@ RooFitResult* Utils::fitToMinForce(RooWorkspace *w, TString name, TString forceV
 /// The idea is to kill known minima. For this, we add a multivariate
 /// Gaussian to the chi2 at the position of the minimum. Ideally it should
 /// be a parabola shaped function, but the Gaussian is readily available.
-/// A true parabola like in the original IMPROVE algorithm doesn't work 
+/// A true parabola like in the original IMPROVE algorithm doesn't work
 /// because apparently it affects the other regions of
 /// the chi2 too much. There are two parameters to tune: the width of the
 /// Gaussian, which is controlled by the error definition of the first fit,
 /// and the height of the Gaussian, which is set to 16 (=4 sigma).
 /// Three fits are performed: 1) initial fit, 2) fit with improved FCN,
-/// 3) fit of the non-improved FCN using the result from step 2 as the start 
+/// 3) fit of the non-improved FCN using the result from step 2 as the start
 /// parameters.
 /// So far it is only available for the Prob method, via the probimprove
 /// command line flag.
@@ -289,11 +289,11 @@ RooFitResult* Utils::fitToMinImprove(RooWorkspace *w, TString name)
 		// {
 		//   cout << "step 1" << endl;
 		//   r1->Print("v");
-		//   gStyle->SetPalette(1);    
+		//   gStyle->SetPalette(1);
 		//   float xmin = 0.;
 		//   float xmax = 3.14;
 		//   float ymin = 0.;
-		//   float ymax = 0.2;    
+		//   float ymax = 0.2;
 		//   TH2F* histo = new TH2F("histo", "histo", 100, xmin, xmax, 100, ymin, ymax);
 		//   for ( int ix=0; ix<100; ix++ )
 		//   for ( int iy=0; iy<100; iy++ )
@@ -338,12 +338,12 @@ RooFitResult* Utils::fitToMinImprove(RooWorkspace *w, TString name)
 		// {
 		//   cout << "step 3" << endl;
 		//   r2->Print("v");
-		//   
-		//   gStyle->SetPalette(1);    
+		//
+		//   gStyle->SetPalette(1);
 		//   float xmin = 0.;
 		//   float xmax = 3.14;
 		//   float ymin = 0.;
-		//   float ymax = 0.2;    
+		//   float ymax = 0.2;
 		//   TH2F* histo = new TH2F("histo", "histo", 100, xmin, xmax, 100, ymin, ymax);
 		//   for ( int ix=0; ix<100; ix++ )
 		//   for ( int iy=0; iy<100; iy++ )
@@ -425,7 +425,7 @@ void Utils::randomizeParameters(RooWorkspace* w, TString setname)
 }
 
 ///
-/// Set each parameter in workspace to the values found 
+/// Set each parameter in workspace to the values found
 /// in the fit result
 ///
 void Utils::setParameters(RooWorkspace* w, RooFitResult* values){
@@ -435,7 +435,7 @@ void Utils::setParameters(RooWorkspace* w, RooFitResult* values){
 	while(RooRealVar* p = (RooRealVar*)it->Next()){
 		RooRealVar* var = dynamic_cast<RooRealVar*>(w->allVars().find(p->GetName()));
 		if(!(var)){
-			std::cout <<  "WARNING in Utils::setParameters(RooWorkspace,RooFitResult) -- no Var found with name " 
+			std::cout <<  "WARNING in Utils::setParameters(RooWorkspace,RooFitResult) -- no Var found with name "
 				<< p->GetName() << " in Workspace!" << endl;
 		}
 		else{
@@ -506,7 +506,7 @@ void Utils::setParametersFloating(RooWorkspace* w, TString parname, const RooAbs
 
 ///
 /// Set each parameter in the named set parname inside workspace w
-/// to the value found in the final set of floating (or floating and constant) 
+/// to the value found in the final set of floating (or floating and constant)
 /// fit parameters in r.
 /// \param constAndFloat If set to true, parameter values will be copied from both
 ///                      constant and floating fit parameters in the RooFitResult.
@@ -746,7 +746,7 @@ TString Utils::combine(RooWorkspace *w, TString pdf1, TString pdf2)
 	// define sets of combined parameters
 	mergeNamedSets(w, "par_"+name, "par_"+pdf1, "par_"+pdf2);
 	mergeNamedSets(w, "obs_"+name, "obs_"+pdf1, "obs_"+pdf2);
-	mergeNamedSets(w, "th_"+name, "th_"+pdf1, "th_"+pdf2);  
+	mergeNamedSets(w, "th_"+name, "th_"+pdf1, "th_"+pdf2);
 	return name;
 }
 
@@ -778,7 +778,7 @@ TString Utils::combine(RooWorkspace *w, TString pdf1, TString pdf2, TString pdf3
 	return combine(w, combine(w, combine(w, combine(w, combine(w, combine(w, pdf1, pdf2), pdf3), pdf4), pdf5), pdf6), pdf7);
 }
 
-/* 
+/*
  * doesn't work with 3GB files.
  *
  */
@@ -808,7 +808,7 @@ bool Utils::FileExists( TString strFilename )
 
 void Utils::savePlot(TCanvas *c1, TString name)
 {
-	cout << "Utils::savePlot() : saving plots/pdf/"+name+".pdf" << endl;
+	cout << "saving plot (pdf and other formats): plots/pdf/"+name+".pdf" << endl;
 	gErrorIgnoreLevel = kWarning;
 	c1->Print("plots/png/"+name+".png");
 	c1->Print("plots/pdf/"+name+".pdf");
@@ -847,7 +847,7 @@ int Utils::calcNsubdigits(double value, int sigdigits)
 	}
 
 	// do it again to catch a rounding issue: 9.97 at 2 digit
-	// precision gives count=1 above, but we want count=0 to 
+	// precision gives count=1 above, but we want count=0 to
 	// get "10" instead of "10.0"
 	value = TString(Form("%.*f",count,myvalue)).Atof();
 	if ( value==0 ) return 1;
@@ -880,7 +880,7 @@ TTree* Utils::convertRooDatasetToTTree(RooDataSet *d)
 	// loop over the dataset, filling the tree
 	int nEntries = d->sumEntries();
 	for ( int i=0; i<nEntries; i++ ){
-		it = d->get(i)->createIterator();    
+		it = d->get(i)->createIterator();
 		while ( RooRealVar* p = (RooRealVar*)it->Next() ){
 			variables[p->GetName()] = p->getVal();
 		}
@@ -968,7 +968,7 @@ bool Utils::isAngle(RooRealVar* v)
 void Utils::fillArgList(RooArgList* list, RooWorkspace* w, std::vector<TString> names){
 	for (std::vector<TString>::iterator it = names.begin() ; it != names.end(); ++it){
 		if( ! list->add(*w->var(*it), kTRUE) ){ //> add silent
-			std::cout << "WARNING: Utils::fillArgList - Var either already in ArgList: " 
+			std::cout << "WARNING: Utils::fillArgList - Var either already in ArgList: "
 				<< list->GetName() << " or the List does own its vars" << endl;
 		};
 	}
@@ -991,7 +991,7 @@ void Utils::getParameters(const RooFitResult &result, std::vector<TString> &name
 ///
 std::vector<TString> Utils::getParsWithName(const TString& subString, const RooArgSet& set){
 	std::string vars = set.contentsString();
-	std::vector<std::string>  _names; 
+	std::vector<std::string>  _names;
 	std::vector<TString>      _results;
 	boost::split(_names,vars,boost::is_any_of(","));
 	for( std::string str : _names){
@@ -1046,7 +1046,7 @@ void Utils::setParametersFloating(RooWorkspace* w, std::vector<TString> names){
 	if(names.size() == 0) return;
 	for(auto& n : names){
 		w->var(n)->setConstant(kFALSE);
-	} 
+	}
 };
 
 ///

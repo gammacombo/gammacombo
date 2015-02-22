@@ -43,7 +43,8 @@ void ParameterCache::cacheParameters(MethodAbsScan *scanner, TString fileName){
 
 	// cache default solutions
 	//
-	cout << "ParameterCache::cacheParameters() : saving parameters to the following file " << fileName << endl;
+	if ( m_arg->debug ) cout << "ParameterCache::cacheParameters() : ";
+	cout << "saving parameters to: " << fileName << endl;
 
 	ofstream outfile;
 	outfile.open(fileName);
@@ -64,7 +65,7 @@ void ParameterCache::cacheParameters(MethodAbsScan *scanner, TString fileName){
 		printFitResultToOutStream(outfile,slimFitRes);
 		totalCachedPoints++;
 	}
-	cout << "ParameterCache::cacheParameters() : cached " << solutions.size() << " solutions" << endl;
+	if ( m_arg->debug )cout << "ParameterCache::cacheParameters() : cached " << solutions.size() << " solutions" << endl;
 
 	// cache also any specifically requested points
 	//
@@ -85,7 +86,7 @@ void ParameterCache::cacheParameters(MethodAbsScan *scanner, TString fileName){
 			printFitResultToOutStream(outfile,r);
 			totalCachedPoints++;
 		}
-		cout << "ParameterCache::cacheParameters() : cached " << totalCachedPoints-solutions.size() << " further points" << endl;
+		if ( m_arg->debug )	cout << "ParameterCache::cacheParameters() : cached " << totalCachedPoints-solutions.size() << " further points" << endl;
 	}
 	// 2D
 	if (m_arg->savenuisances2dx.size()>0){
@@ -118,7 +119,7 @@ void ParameterCache::cacheParameters(MethodAbsScan *scanner, TString fileName){
 			printFitResultToOutStream(outfile,r);
 			totalCachedPoints++;
 		}
-		cout << "ParameterCache::cacheParameters() : cached " << totalCachedPoints-solutions.size() << " further points" << endl;
+		if ( m_arg->debug ) cout << "ParameterCache::cacheParameters() : cached " << totalCachedPoints-solutions.size() << " further points" << endl;
 	}
 	outfile.close();
 }

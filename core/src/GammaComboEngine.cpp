@@ -1263,7 +1263,10 @@ void GammaComboEngine::scan()
 ///
 void GammaComboEngine::runApplication()
 {
-	if ( arg->interactive ) theApp->Run();
+	if ( arg->interactive ){
+		cout << "Exit with Ctrl+c" << endl;
+		theApp->Run();
+	}
 }
 
 ///
@@ -1296,6 +1299,7 @@ void GammaComboEngine::run()
 	setUpPlot();
 	scan();
 	if (!arg->isAction("pluginbatch")) savePlot();
+	cout << endl;
 	t.Stop();
 	t.Print();
 	runApplication();
