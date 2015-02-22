@@ -386,7 +386,8 @@ void ToyTree::computeMinMaxN()
 	Long64_t nentries = t->GetEntries();
 	if ( nentries==0 ) return;
 	ProgressBar pb(arg, nentries);
-	cout << "ToyTree::computeMinMaxN() : reading toys ..." << endl;
+	if ( arg->debug ) cout << "ToyTree::computeMinMaxN() : ";
+	cout << "analysing toys ..." << endl;
 	for (Long64_t i = 0; i < nentries; i++){
 		// status bar
 		pb.progress();

@@ -707,7 +707,8 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
 
 	t->activateCoreBranchesOnly(); // speeds up the event loop
 	ProgressBar pb(arg, nentries);
-	cout << "MethodPluginScan::analyseToys() : reading toys ..." << endl;
+	if ( arg->debug ) cout << "MethodPluginScan::analyseToys() : ";
+	cout << "building p-value histogram ..." << endl;
 
 	for (Long64_t i = 0; i < nentries; i++)
 	{
@@ -768,16 +769,19 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
 		}
 	}
 
+	if ( arg->debug ) cout << "MethodPluginScan::analyseToys() : ";
 	if ( id==-1 ){
-		cout << "MethodPluginScan::analyseToys() : read an average of ";
+		cout << "read an average of ";
 		cout << (nentries-nfailed)/nPoints1d << " toys per scan point." << endl;
 	}
 	else{
-		cout << "MethodPluginScan::analyseToys() : read ";
+		cout << "read ";
 		cout << ntoysid << " toys at ID " << id << endl;
 	}
-	cout << "MethodPluginScan::analyseToys() : fraction of failed toys: " << (double)nfailed/(double)nentries*100. << "%." << endl;
-	cout << "MethodPluginScan::analyseToys() : fraction of background toys: " << h_background->GetEntries()/(double)nentries*100. << "%." << endl;
+	if ( arg->debug ) cout << "MethodPluginScan::analyseToys() : ";
+	cout << "fraction of failed toys: " << (double)nfailed/(double)nentries*100. << "%." << endl;
+	if ( arg->debug ) cout << "MethodPluginScan::analyseToys() : ";
+	cout << "fraction of background toys: " << h_background->GetEntries()/(double)nentries*100. << "%." << endl;
 	if ( id==-1 && nwrongrun>0 ){
 		cout << "\nMethodPluginScan::analyseToys() : WARNING : Read toys that differ in global chi2min (wrong run) : "
 			<< (double)nwrongrun/(double)(nentries-nfailed)*100. << "%.\n" << endl;
@@ -813,7 +817,8 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
 		float nall = h_all->GetBinContent(iBinBestFit);
 		float fitprobabilityVal = nGofBetter/nall;
 		float fitprobabilityErr = sqrt(fitprobabilityVal * (1.-fitprobabilityVal)/nall);
-		cout << "MethodPluginScan::analyseToys() : fit prob of best-fit point (" << assumedbestfitpoint << "): "
+		if ( arg->debug ) cout << "MethodPluginScan::analyseToys() : ";
+		cout << "fit prob of best-fit point (" << assumedbestfitpoint << "): "
 			<< Form("(%.1f+/-%.1f)%%", fitprobabilityVal*100., fitprobabilityErr*100.) << endl;
 	}
 
@@ -838,22 +843,25 @@ void MethodPluginScan::readScan1dTrees(int runMin, int runMax)
 	int nFilesRead = 0;
 	TString dirname = "root/scan1dPlugin_"+name+"_"+scanVar1;
 	TString fileNameBase = dirname+"/scan1dPlugin_"+name+"_"+scanVar1+"_run";
+	if ( arg->debug ) cout << "MethodPluginScan::readScan1dTrees() : ";
+	cout << "reading files: " << fileNameBase+"*.root" << endl;
 	for (int i=runMin; i<=runMax; i++){
 		TString file = Form(fileNameBase+"%i.root", i);
 		if ( !FileExists(file) ){
-			if ( arg->verbose ) cout << "MethodPluginScan::readScan1dTrees() : ERROR : File not found: " + file + " ..." << endl;
+			if ( arg->verbose ) cout << "ERROR : File not found: " + file + " ..." << endl;
 			nFilesMissing += 1;
 			continue;
 		}
-		if ( arg->verbose ) cout << "MethodPluginScan::readScan1dTrees() : reading " + file + " ..." << endl;
+		if ( arg->verbose ) cout << "reading " + file + " ..." << endl;
 		c->Add(file);
 		nFilesRead += 1;
 	}
-	cout << "MethodPluginScan::readScan1dTrees() : read files: " << nFilesRead;
+	if ( arg->debug ) cout << "MethodPluginScan::readScan1dTrees() : ";
+	cout << "read toy files: " << nFilesRead;
 	cout << ", missing files: " << nFilesMissing << endl;
-	cout << "MethodPluginScan::readScan1dTrees() : " << fileNameBase+"*.root" << endl;
 	if ( nFilesRead==0 ){
-		cout << "MethodPluginScan::readScan1dTrees() : no files read!" << endl;
+		if ( arg->debug ) cout << "MethodPluginScan::readScan1dTrees() : ";
+		cout << "ERROR : no files read!" << endl;
 		exit(1);
 	}
 

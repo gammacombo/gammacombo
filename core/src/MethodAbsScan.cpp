@@ -292,7 +292,8 @@ bool MethodAbsScan::loadScanner(TString fName)
 		FileNameBuilder fb(arg);
 		fName = fb.getFileNameScanner(this);
 	}
-	cout << "MethodAbsScan::loadScanner() : loading scanner: " << fName << endl;
+	if ( arg->debug ) cout << "MethodAbsScan::loadScanner() : ";
+	cout << "loading scanner: " << fName << endl;
 	if ( !FileExists(fName) ){
 		cout << "MethodAbsScan::loadScanner() : ERROR : file not found: " << fName << endl;
 		cout << "                               Run first without the '-a plot' option to produce the missing file." << endl;
