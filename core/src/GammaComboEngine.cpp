@@ -459,11 +459,13 @@ void GammaComboEngine::usage()
 ///
 void GammaComboEngine::printPdfs()
 {
-	cout << "AVAILABLE PDFS" << endl;
+	cout << "AVAILABLE MEASUREMENTS" << endl;
 	cout << endl;
 	for ( int i=0; i<pdf.size(); i++ ){
 		if ( pdf[i]==0 ) continue;
-		printf(" (%2i) %s\n", i, pdf[i]->getTitle().Data());
+		if      ( i< 10 ) printf("   (%i) %s\n", i, pdf[i]->getTitle().Data());
+		else if ( i<100 ) printf("  (%2i) %s\n", i, pdf[i]->getTitle().Data());
+		else              printf( " (%3i) %s\n", i, pdf[i]->getTitle().Data());
 	}
 	cout << endl;
 }
@@ -477,7 +479,9 @@ void GammaComboEngine::printCombinations()
 	cout << endl;
 	for ( int i=0; i<cmb.size(); i++ ){
 		if ( cmb[i]==0 ) continue;
-		printf(" (%i) %s\n", i, cmb[i]->getTitle().Data());
+		if      ( i< 10 ) printf("   (%i) %s\n", i, cmb[i]->getTitle().Data());
+		else if ( i<100 ) printf("  (%2i) %s\n", i, cmb[i]->getTitle().Data());
+		else              printf( " (%3i) %s\n", i, cmb[i]->getTitle().Data());
 	}
 	cout << endl;
 }
