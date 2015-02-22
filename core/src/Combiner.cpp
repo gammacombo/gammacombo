@@ -226,7 +226,8 @@ void Combiner::combine()
 
 ///
 /// Helper function for combine(), that actually sets those parameters,
-/// that we want to fix, constant in the workspace.
+/// that we want to fix, constant in the workspace. They just get added
+/// to the "const" set. Later, they are fixed in MethodAbsScan::doInitialFit().
 ///
 void Combiner::setParametersConstant()
 {
