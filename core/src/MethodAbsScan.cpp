@@ -524,7 +524,9 @@ void MethodAbsScan::calcCLintervals()
 		clm.calcCLintervals();
 	}
 
-	cout << "\nMethodAbsScan::calcCLintervals() : " << name << endl << endl;
+	cout << endl;
+	if ( arg->debug ) cout << "MethodAbsScan::calcCLintervals() : ";
+	cout << "CONFIDENECE INTERVALS for combination " << name << endl << endl;
 	clintervals1sigma.clear(); // clear, else calling this function twice doesn't work
 	clintervals2sigma.clear();
 	int n = hCL->GetNbinsX();
