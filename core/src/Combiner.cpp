@@ -362,7 +362,7 @@ void Combiner::print()
 	for (int i=0; i<pdfs.size(); i++ ){
 		TString name = pdfs[i]->getName();
 		name.ReplaceAll(pdfs[i]->getUniqueID(),"");
-		printf("%2i. [PDF %3i] %-65s\n", i+1, pdfs[i]->getGcId(), (pdfs[i]->getTitle()).Data());
+		printf("%2i. [measurement %3i] %-65s\n", i+1, pdfs[i]->getGcId(), (pdfs[i]->getTitle()).Data());
 	}
 	// verbose printout
 	if ( arg->verbose ){
