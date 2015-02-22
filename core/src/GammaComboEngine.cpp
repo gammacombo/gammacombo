@@ -433,7 +433,7 @@ void GammaComboEngine::usage()
 		"  " << execname << " -c 1 -i --var a_gaus --ps 1\n\n"
 		"  # Add combinations 1, 2, 3, add to the same plot:\n"
 		"  " << execname << " -c 1 -c 2 -c 3 -i --var a_gaus --ps 1\n\n"
-		"  # Add or remove PDFs to/from existing cominers:\n"
+		"  # Add or remove measurements to/from existing cominers:\n"
 		"  " << execname << " -i --var a_gaus -c 3:+1,+2,-3\n\n"
 		"  # Make a 2D Prob scan\n"
 		"  " << execname << " -c 4 --var a_gaus --var b_gaus -i\n\n"
