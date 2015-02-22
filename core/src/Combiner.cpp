@@ -379,7 +379,7 @@ void Combiner::print()
 /// Fix a parameters in the fit to the specified value.
 /// To do that, add the parameters to
 /// the list of constant parameters.
-/// \param vars Comma separated list of parameteters to fix.
+/// \param vars Comma separated list of parameters to fix.
 ///
 
 void Combiner::fixParameter(TString var, float value)
