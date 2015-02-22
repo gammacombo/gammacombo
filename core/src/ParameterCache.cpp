@@ -24,8 +24,11 @@ void ParameterCache::printFitResultToOutStream(ofstream &out, RooSlimFitResult *
 	out << "### COV quality: " << slimFitRes->covQual() << ", status: " << slimFitRes->status()
 		<< ", confirmed: " << (slimFitRes->_isConfirmed?"yes":"no") << endl;
 	RooArgList argList = slimFitRes->floatParsFinal();
+	argList.add(slimFitRes->constPars());
+	argList.sort();
 	TIterator *iter = argList.createIterator();
 	while ( RooRealVar *arg=(RooRealVar*)iter->Next() ) {
+		if ( TString(arg->GetName()).Contains("obs") ) continue;
 		out << Form("%-25s",arg->GetName()) << " " << Form("%12.6f",arg->getVal())
 			<< " " << Form("%12.6f",arg->getErrorLo())
 			<< " " << Form("%12.6f",arg->getErrorHi()) << endl;
@@ -77,8 +80,8 @@ void ParameterCache::cacheParameters(MethodAbsScan *scanner, TString fileName){
 				return;
 			}
 			outfile << endl;
-			outfile << "----- SOLUTION " << totalCachedPoints << " (not glob min just min at "
-				<< scanner->getScanVar1Name() << " = " << Form("%10.5f",points[i]) << " -----" << endl;
+			outfile << "----- SOLUTION " << totalCachedPoints << " (--sn at "
+				<< scanner->getScanVar1Name() << " = " << Form("%10.5f",points[i]) << ") -----" << endl;
 			printFitResultToOutStream(outfile,r);
 			totalCachedPoints++;
 		}
