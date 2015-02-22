@@ -17,7 +17,7 @@ using namespace std;
 class PDF_rb : public PDF_Abs
 {
 	public:
-		PDF_rb(TString cObs="year2014", TString cErr="year2014", TString cCor="year2014");
+		PDF_rb(TString cObs, TString cErr, TString cCor);
 		~PDF_rb();
 		void          buildPdf();
 		void          initObservables();

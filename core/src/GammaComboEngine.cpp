@@ -846,6 +846,7 @@ void GammaComboEngine::make2dPluginScan(MethodPluginScan *scannerPlugin, int cId
 		scannerPlugin->readScan2dTrees(arg->jmin[cId],arg->jmax[cId]);
 		scannerPlugin->saveScanner(m_fnamebuilder->getFileNameScanner(scannerPlugin));
 		// plot chi2
+		cout << "making full chi2 plot ..." << endl;
 		OneMinusClPlot2d* plotf = new OneMinusClPlot2d(arg, plot->getName()+"_plugin_full", "p-value histogram: "+scannerPlugin->getTitle());
 		scannerPlugin->plotOn(plotf);
 		plotf->DrawFull();

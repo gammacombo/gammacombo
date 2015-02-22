@@ -898,22 +898,24 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
 	int nFilesRead = 0;
 	TString dirname = "root/scan2dPlugin_"+name+"_"+scanVar1+"_"+scanVar2;
 	TString fileNameBase = dirname+"/scan2dPlugin_"+name+"_"+scanVar1+"_"+scanVar2+"_run";
+	if ( arg->debug ) cout << "MethodPluginScan::readScan2dTrees() : ";
+	cout << "reading files: " << fileNameBase+"*.root" << endl;
 	for (int i=runMin; i<=runMax; i++) {
 		TString file = Form(fileNameBase+"%i.root", i);
 		if ( !FileExists(file) ) {
-			if ( arg->verbose ) cout << "MethodPluginScan::readScan2dTrees() : ERROR : File not found: " + file + " ..." << endl;
+			if ( arg->verbose ) cout << "ERROR : File not found: " + file + " ..." << endl;
 			nFilesMissing += 1;
 			continue;
 		}
-		if ( arg->verbose ) cout << "MethodPluginScan::readScan2dTrees() : reading " + file + " ..." << endl;
+		if ( arg->verbose ) cout << "reading " + file + " ..." << endl;
 		chain->Add(file);
 		nFilesRead += 1;
 	}
-	cout << "MethodPluginScan::readScan2dTrees() : read files: " << nFilesRead;
+	cout << "read toy files: " << nFilesRead;
 	cout << ", missing files: " << nFilesMissing << endl;
-	cout << "MethodPluginScan::readScan2dTrees() : " << fileNameBase+"*.root" << endl;
 	if ( nFilesRead==0 ){
-		cout << "MethodPluginScan::readScan2dTrees() : no files read!" << endl;
+		if ( arg->debug ) cout << "MethodPluginScan::readScan2dTrees() : ";
+		cout << "ERROR : no files read!" << endl;
 		exit(1);
 	}
 
@@ -949,7 +951,8 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
 
 	t.activateCoreBranchesOnly(); // speeds up the event loop
 	ProgressBar pb(arg, nentries);
-	cout << "MethodPluginScan::readScan2dTrees() : reading toys ..." << endl;
+	if ( arg->debug ) cout << "MethodPluginScan::readScan2dTrees() : ";
+	cout << "building p-value histogram ..." << endl;
 
 	for (Long64_t i = 0; i < nentries; i++)
 	{
@@ -995,14 +998,16 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
 		}
 	}
 
+	if ( arg->debug ) cout << "MethodPluginScan::readScan2dTrees() : ";
 	if ( arg->id==-1 ){
-		cout << "MethodPluginScan::readScan2dTrees() : read an average of " << (nentries-nfailed)/nPoints2dx/nPoints2dy << " toys per scan point." << endl;
+		cout << "read an average of " << (nentries-nfailed)/nPoints2dx/nPoints2dy << " toys per scan point." << endl;
 	}
 	else{
-		cout << "MethodPluginScan::readScan2dTrees() : read ";
+		cout << "read ";
 		cout << ntoysid << " toys at ID " << arg->id << endl;
 	}
-	cout << "MethodPluginScan::readScan2dTrees() : fraction of failed toys: " << (double)nfailed/(double)nentries*100. << "%." << endl;
+	if ( arg->debug ) cout << "MethodPluginScan::readScan2dTrees() : ";
+	cout << "fraction of failed toys: " << (double)nfailed/(double)nentries*100. << "%." << endl;
 
 	// compute 1-CL
 	for (int i=1; i<=h_better->GetNbinsX(); i++){

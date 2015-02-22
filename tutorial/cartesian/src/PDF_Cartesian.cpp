@@ -28,8 +28,8 @@ void PDF_Cartesian::initParameters()
 {
 	ParametersCartesian p; // <-- use the project's parameter class
 	parameters = new RooArgList("parameters");
-	parameters->add(*(p.get("r_dk"))); 
-	parameters->add(*(p.get("d_dk"))); 
+	parameters->add(*(p.get("r_dk")));
+	parameters->add(*(p.get("d_dk")));
 	parameters->add(*(p.get("g")));
 }
 
@@ -63,7 +63,7 @@ void PDF_Cartesian::setObservables(TString c)
 	else if ( c.EqualTo("toy") ){
 		setObservablesToy();
 	}
-	else if ( c.EqualTo("lumi3fb") ){
+	else if ( c.EqualTo("year2014") ){
 		obsValSource = "arxiv:1408.2748";
 		setObservable("xm_dk_obs", 2.5e-2);
 		setObservable("ym_dk_obs", 7.5e-2);
@@ -79,7 +79,7 @@ void PDF_Cartesian::setObservables(TString c)
 
 void PDF_Cartesian::setUncertainties(TString c)
 {
-	if ( c.EqualTo("lumi3fb") ){
+	if ( c.EqualTo("year2014") ){
 		obsErrSource = "arxiv:1408.2748";
 		StatErr[0] = 0.025; // xm
 		StatErr[1] = 0.029; // ym
@@ -100,18 +100,18 @@ void PDF_Cartesian::setUncertainties(TString c)
 void PDF_Cartesian::setCorrelations(TString c)
 {
 	resetCorrelations();
-	if ( c.EqualTo("lumi3fb") ){
+	if ( c.EqualTo("year2014") ){
 		corSource = "arxiv:1408.2748";
-		double dataStat[]  = { 
-			// xm      ym      xp      yp 
+		double dataStat[]  = {
+			// xm      ym      xp      yp
 			 1.   , -0.247,  0.038, -0.003, // xm
 			-0.247,  1.   , -0.011,  0.012, // ym
 			 0.038, -0.011,  1.   ,  0.002, // xp
 			-0.003,  0.012,  0.002,  1.     // yp
 		};
 		corStatMatrix = TMatrixDSym(nObs,dataStat);
-		double dataSyst[]  = { 
-			// xm      ym      xp      yp 
+		double dataSyst[]  = {
+			// xm      ym      xp      yp
 			 1.   ,  0.005, -0.025,  0.070, // xm
 			 0.005,  1.   ,  0.009, -0.141, // ym
 			-0.025,  0.009,  1.   ,  0.008, // xp

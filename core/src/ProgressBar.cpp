@@ -33,13 +33,21 @@ void ProgressBar::progressBar()
 {
 	float ratio  =  _x/(float)_n;
 	int   c      =  ratio * _width;
-	
+
 	cout << setw(3) << (int)(ratio*100) << "% [";
 	for (int x=0; x<c; x++) cout << "=";
 	for (int x=c; x<_width; x++) cout << " ";
 	cout << "]";
-	if ( _x<_n ) cout << "\r" << flush;
-	else cout << endl;
+	// this code leaves the progress bar in the output once the loop is done
+	//if ( _x<_n ) cout << "\r" << flush;
+	//else cout << endl;
+	// and this code removes it
+	cout << "\r" << flush;
+	if ( _x==_n ){
+		int offset = TString("100% []").Sizeof();
+		for (int x=0; x<c+offset; x++) cout << " ";
+		cout << "\r" << flush;
+	}
 }
 
 ///
@@ -58,5 +66,5 @@ void ProgressBar::progressPercentage()
 ///
 void ProgressBar::skipSteps(unsigned int n)
 {
-	_x += n;	
+	_x += n;
 }
