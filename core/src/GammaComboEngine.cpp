@@ -588,18 +588,18 @@ void GammaComboEngine::makeAddDelCombinations()
 		for ( int j=0; j<arg->combmodifications[i].size(); j++ ){
 			int pdfId = abs(arg->combmodifications[i][j]);
 			if ( ! pdfExists(pdfId) ){
-				cout << "\nERROR: PDF of given ID does not exist: " << pdfId << endl;
-				cout << "       Here is a list of available PDFs:" << endl;
+				cout << "\nERROR: measurement of given ID does not exist: " << pdfId << endl;
+				cout << "       Here is a list of available measurements:" << endl;
 				printPdfs();
 				exit(1);
 			}
 			if ( arg->combmodifications[i][j]>0 ){
 				nameNew += Form("+%i",pdfId);
-				titleNew += Form(", + PDF%i",pdfId);
+				titleNew += Form(", + Meas.%i",pdfId);
 			}
 			else {
 				nameNew += Form("-%i",pdfId);
-				titleNew += Form(", w/o PDF%i",pdfId);
+				titleNew += Form(", w/o Meas.%i",pdfId);
 			}
 		}
 		// make the new combiner
@@ -608,11 +608,11 @@ void GammaComboEngine::makeAddDelCombinations()
 		for ( int j=0; j<arg->combmodifications[i].size(); j++ ){
 			int pdfId = abs(arg->combmodifications[i][j]);
 			if ( arg->combmodifications[i][j]>0 ){
-				cout << "... adding PDF " << pdfId << endl;
+				cout << "... adding measurement " << pdfId << endl;
 				cNew->addPdf(pdf[pdfId]);
 			}
 			else {
-				cout << "... deleting PDF " << pdfId << endl;
+				cout << "... deleting measurement " << pdfId << endl;
 				cNew->delPdf(pdf[pdfId]);
 			}
 		}
@@ -822,8 +822,8 @@ void GammaComboEngine::make1dPluginScan(MethodPluginScan *scannerPlugin, int cId
 	}
 	else {
 		scannerPlugin->readScan1dTrees(arg->jmin[cId],arg->jmax[cId]);
+		scannerPlugin->calcCLintervals();
 	}
-	scannerPlugin->calcCLintervals();
 	if ( !arg->isAction("pluginbatch") ){
 		scannerPlugin->saveScanner(m_fnamebuilder->getFileNameScanner(scannerPlugin));
 	}
@@ -1194,11 +1194,24 @@ void GammaComboEngine::scan()
 				//scanner2->setParevolPLH(scanner3);
 				//}
 				else if ( arg->isAction("plugin") ){
+					// create the Prob scanner: load from disc if it exists, else redo the scan
+					// we don't need the prob scanner for the plugin only plot, if we either just
+					// want to replot it, or if we use the external chi2 values directly from the toys
 					MethodProbScan *scannerProb = new MethodProbScan(c);
-					if ( ! ( arg->isAction("plot") && arg->plotpluginonly ) ){
-						// we don't need the prob scanner if we just want to replot the plugin only
-						scannerProb->loadScanner(m_fnamebuilder->getFileNameScanner(scannerProb));
+					if ( ! ( arg->plotpluginonly && ( arg->isAction("plot") || !arg->intprob ) ) ){
+						if ( FileExists(m_fnamebuilder->getFileNameScanner(scannerProb)) ){
+							scannerProb->loadScanner(m_fnamebuilder->getFileNameScanner(scannerProb));
+						}
+						else {
+							cout << "\nWARNING : Couldn't load the Prob scanner, will rerun the Prob" << endl;
+							cout <<   "          scan now. You should have run the Prob scan locally" << endl;
+							cout <<   "          before running the Plugin scan." << endl;
+							cout <<   "          missing file: " << m_fnamebuilder->getFileNameScanner(scannerProb) << endl;
+							cout << endl;
+							make1dProbScan(scannerProb, i);
+						}
 					}
+					// create Plugin scanner
 					MethodPluginScan *scannerPlugin = new MethodPluginScan(scannerProb);
 					if ( arg->isAction("plot") ){
 						scannerPlugin->loadScanner(m_fnamebuilder->getFileNameScanner(scannerPlugin));

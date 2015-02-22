@@ -808,7 +808,7 @@ bool Utils::FileExists( TString strFilename )
 
 void Utils::savePlot(TCanvas *c1, TString name)
 {
-	cout << "saving plot (pdf and other formats): plots/pdf/"+name+".pdf" << endl;
+	cout << "saving plot (pdf and other formats) to: plots/pdf/"+name+".pdf" << endl;
 	gErrorIgnoreLevel = kWarning;
 	c1->Print("plots/png/"+name+".png");
 	c1->Print("plots/pdf/"+name+".pdf");

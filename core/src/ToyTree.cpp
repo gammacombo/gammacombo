@@ -101,7 +101,8 @@ void ToyTree::fill()
 void ToyTree::writeToFile(TString fName)
 {
 	assert(t);
-	cout << "ToyTree::writeToFile() : saving root tree to " << fName << " ..." << endl;
+	if ( arg->debug ) cout << "ToyTree::writeToFile() : ";
+	cout << "saving toys to: " << fName << endl;
 	TFile *f = new TFile(fName, "recreate");
 	t->Write();
 	f->Close();
@@ -110,7 +111,8 @@ void ToyTree::writeToFile(TString fName)
 void ToyTree::writeToFile()
 {
 	assert(t);
-	cout << "ToyTree::writeToFile() : saving root tree ..." << endl;
+	if ( arg->debug ) cout << "ToyTree::writeToFile() : ";
+	cout << "saving toys to ... " << endl;
 	t->GetCurrentFile()->cd();
 	t->Write();
 }

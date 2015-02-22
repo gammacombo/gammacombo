@@ -431,7 +431,8 @@ int MethodPluginScan::scan1d(int nRun)
 	ProgressBar *pb = new ProgressBar(arg, allSteps);
 
 	// start scan
-	cout << "MethodPluginScan::scan1d() : starting ..." << endl;
+	if ( arg->debug ) cout << "MethodPluginScan::scan1d() : ";
+	cout << "PLUGIN scan starting ..." << endl;
 	for ( int i=0; i<nPoints1d; i++ )
 	{
 		float scanpoint = min + (max-min)*(double)i/(double)nPoints1d + hCL->GetBinWidth(1)/2.;
@@ -452,7 +453,7 @@ int MethodPluginScan::scan1d(int nRun)
 		setParameters(w, obsName, obsDataset->get(0));
 	}
 
-	myFit->print();
+	if ( arg->debug ) myFit->print();
 	TString dirname = "root/scan1dPlugin_"+name+"_"+scanVar1;
 	system("mkdir -p "+dirname);
 	t.writeToFile(Form(dirname+"/scan1dPlugin_"+name+"_"+scanVar1+"_run%i.root", nRun));
@@ -878,7 +879,7 @@ void MethodPluginScan::readScan1dTrees(int runMin, int runMax)
 ///
 /// Read in the TTrees that were produced by scan2d().
 /// Fills the 1-CL histogram.
-/// 
+///
 /// \param runMin Number of first root file to read.
 /// \param runMax Number of lase root file to read.
 ///
@@ -965,7 +966,7 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
 		if ( arg->id!=-1 && ! (fabs(t.chi2minGlobal-chi2minGlobal)<0.2) ){
 			nwrongrun++;
 		}
-		
+
 		// use profile likelihood from internal scan, not the one found in the root files
 		if ( arg->intprob ){
 			int iBin = profileLH->getHchisq2d()->FindBin(t.scanpoint,t.scanpointy);
