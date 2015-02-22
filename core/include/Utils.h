@@ -52,6 +52,7 @@ namespace Utils
     int           calcNsubdigits(double value, int sigdigits=2);
     float         Round(double value, int digits);
     double        bringBackAngle(double angle);
+	double        angularDifference(double angle1, double angle2);
     bool          isPosDef(TMatrixDSym* c);
     bool          isAngle(RooRealVar* v);
     

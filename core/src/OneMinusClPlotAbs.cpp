@@ -9,36 +9,36 @@
 
 OneMinusClPlotAbs::OneMinusClPlotAbs(OptParser *arg, TString name, TString title)
 {
-  font       = 133;
-  labelsize  = 35;  ///< axis labels, numeric solutions, CL guide lines
-  titlesize  = 45;  ///< axis titles, group label, "Preliminary" is x0.75
-  legendsize = 29;  ///< legends in 1d and 2d plots
-  
-  gStyle->SetOptTitle(0);
-  gStyle->SetOptStat(0);
-  gStyle->SetPadTopMargin(0.05);
-  gStyle->SetPadRightMargin(0.05);
-  gStyle->SetPadBottomMargin(0.17);
-  gStyle->SetPadLeftMargin(0.16);
-  gStyle->SetLabelOffset(0.005, "X");
-  gStyle->SetLabelOffset(0.010, "Y");
+	font       = 133;
+	labelsize  = 35;  ///< axis labels, numeric solutions, CL guide lines
+	titlesize  = 45;  ///< axis titles, group label, "Preliminary" is x0.75
+	legendsize = 29;  ///< legends in 1d and 2d plots
 
-  this->arg = arg;
-  this->name = name;
-  this->title = title;
+	gStyle->SetOptTitle(0);
+	gStyle->SetOptStat(0);
+	gStyle->SetPadTopMargin(0.05);
+	gStyle->SetPadRightMargin(0.05);
+	gStyle->SetPadBottomMargin(0.17);
+	gStyle->SetPadLeftMargin(0.16);
+	gStyle->SetLabelOffset(0.005, "X");
+	gStyle->SetLabelOffset(0.010, "Y");
+
+	this->arg = arg;
+	this->name = name;
+	this->title = title;
 	c1 = new TCanvas(name+getUniqueRootName(), title, 800, 600);
-	
-  if ( arg->plotlog ){
-    c1->SetLogy();
-    this->name = this->name + "_log";
-  }
-  if ( arg->plotprelim ){
-    this->name = this->name + "_prelim";
-  }
-  plotLegend    = true;
-  plotSolution  = true;
-  plotLogYMin   = 1.e-3;
-  plotLogYMax   = 1;
+
+	if ( arg->plotlog ){
+		c1->SetLogy();
+		this->name = this->name + "_log";
+	}
+	if ( arg->plotprelim ){
+		this->name = this->name + "_prelim";
+	}
+	plotLegend    = true;
+	plotSolution  = true;
+	plotLogYMin   = 1.e-3;
+	plotLogYMax   = 1;
 
 }
 
@@ -47,8 +47,8 @@ OneMinusClPlotAbs::OneMinusClPlotAbs(OptParser *arg, TString name, TString title
 ///
 void OneMinusClPlotAbs::addScanner(MethodAbsScan* s)
 {
-  if ( arg->debug ) cout << "OneMinusClPlotAbs::addScanner() : adding " << s->getName() << endl;
-  scanners.push_back(s);
+	if ( arg->debug ) cout << "OneMinusClPlotAbs::addScanner() : adding " << s->getName() << endl;
+	scanners.push_back(s);
 }
 
 ///
@@ -91,11 +91,11 @@ void OneMinusClPlotAbs::drawGroup(float yPos)
 
 void OneMinusClPlotAbs::drawSolutions()
 {
-  // not implemented
+	// not implemented
 }
 
 
 void OneMinusClPlotAbs::Draw()
 {
-  // not implemented
+	// not implemented
 }

@@ -15,8 +15,8 @@ GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[])
 
 	// configure names
 	execname = argv[0];
-	basename = name;
-	fb = new FileNameBuilder(arg, basename);
+	if (arg->filenameaddition!="") name += "_"+arg->filenameaddition;
+	m_fnamebuilder = new FileNameBuilder(arg, name);
 
 	// run ROOT in interactive mode, if requested (-i)
 	if ( arg->interactive ) theApp = new TApplication("App", &argc, argv);
@@ -27,7 +27,7 @@ GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[])
 
 GammaComboEngine::~GammaComboEngine()
 {
-	delete fb;
+	delete m_fnamebuilder;
 }
 
 
@@ -160,9 +160,9 @@ PDF_Abs* GammaComboEngine::operator[](int idx)
 /// later. In that case, leave all pdf arguments at -1.
 ///
 void GammaComboEngine::newCombiner(int id, TString name, TString title,
-						int pdf1, int pdf2, int pdf3, int pdf4, int pdf5,
-						int pdf6, int pdf7, int pdf8, int pdf9, int pdf10,
-						int pdf11, int pdf12, int pdf13, int pdf14, int pdf15)
+		int pdf1, int pdf2, int pdf3, int pdf4, int pdf5,
+		int pdf6, int pdf7, int pdf8, int pdf9, int pdf10,
+		int pdf11, int pdf12, int pdf13, int pdf14, int pdf15)
 {
 	if ( combinerExists(id) ){
 		cout << "GammaComboEngine::newCombiner() : ERROR : Requested new Combiner id exists already in GammaComboEngine. Exit." << endl;
@@ -196,17 +196,38 @@ void GammaComboEngine::scaleDownErrors()
 {
 	for ( int i=0; i<pdf.size(); i++ ){
 		// these are the PDFs for the full combination:
-	  if (! (i==61 || i==58 || i==60 || i==56 || i==54 || i==40 || i==43)  ) continue;
-		float scale = 3.;
-	  cout << "Configuration: Scaling down LHCb errors by a factor " << scale <<
+		//if (! (i==61 || i==58 || i==60 || i==56 || i==54 || i==40 || i==43)  ) continue;
+		float scale = 1.;
+		if ( i==25  ) scale = sqrt(5. * 50./3.);
+		if ( i==60  ) scale = sqrt(50./3.);
+		//if ( i==23  ) scale = sqrt(50.);
+		if ( scale==1. ) continue;
+		cout << "Configuration: Scaling down LHCb errors by a factor " << scale <<
 			": " << pdf[i]->getTitle() << endl;
 		for ( int iObs=0; iObs<pdf[i]->getNobs(); iObs++ ){
 			pdf[i]->StatErr[iObs] /= scale;
 			pdf[i]->SystErr[iObs] /= scale;
 		}
-	  pdf[i]->buildCov();
-	  pdf[i]->buildPdf();
+		pdf[i]->setErrorSourceString("Scaled!");
+		pdf[i]->buildCov();
+		pdf[i]->buildPdf();
 	}
+
+	int i=0;
+
+	// switch off Afav
+	i = 25;
+	pdf[i]->ScaleError("afav_dk_kpi_obs",200.);
+	pdf[i]->buildCov();
+	pdf[i]->buildPdf();
+
+	// scale dD_kpi
+	i = 7;
+	pdf[i]->ScaleError("dD_kpi_obs",1./20.);
+	pdf[i]->buildCov();
+	pdf[i]->buildPdf();
+
+	cout << endl;
 }
 
 ///
@@ -214,13 +235,13 @@ void GammaComboEngine::scaleDownErrors()
 ///
 void GammaComboEngine::disableSystematics()
 {
-  cout << "\nConfiguration: Setting ALL SYSTEMATICS TO ZERO.\n" << endl;
-  for ( int i=0; i<pdf.size(); i++ ){
-    if ( pdf[i]==0 ) continue;
-    for ( int iObs=0; iObs<pdf[i]->getNobs(); iObs++ ) pdf[i]->SystErr[iObs] = 0.;
-    pdf[i]->buildCov();
-    pdf[i]->buildPdf();
-  }
+	cout << "\nConfiguration: Setting ALL SYSTEMATICS TO ZERO.\n" << endl;
+	for ( int i=0; i<pdf.size(); i++ ){
+		if ( pdf[i]==0 ) continue;
+		for ( int iObs=0; iObs<pdf[i]->getNobs(); iObs++ ) pdf[i]->SystErr[iObs] = 0.;
+		pdf[i]->buildCov();
+		pdf[i]->buildPdf();
+	}
 }
 
 ///
@@ -228,12 +249,11 @@ void GammaComboEngine::disableSystematics()
 /// The Asimov point needs to be loaded in the combiner before.
 /// \param c - combiner which should be set to an asimov toy
 ///
-void GammaComboEngine::setAsimovToy(Combiner* c)
+void GammaComboEngine::setAsimovObservables(Combiner* c)
 {
-	cout << "\nModifying combination \"" << c->getName() << "\": Running an ASIMOV TOY.\n" << endl;
 	if ( !c->isCombined() ){
-		cout << "GammaComboEngine::setAsimovToy() : ERROR : Can't set an Asimov toy before "
-							    "the combiner is combined. Call combine() first." << endl;
+		cout << "GammaComboEngine::setAsimovObservables() : ERROR : Can't set an Asimov toy before "
+															"the combiner is combined. Call combine() first." << endl;
 		exit(1);
 	}
 
@@ -247,7 +267,7 @@ void GammaComboEngine::setAsimovToy(Combiner* c)
 		// get the theory relation
 		RooAbsReal* th = w->function(pThName);
 		if ( th==0 ){
-			cout << "GammaComboEngine::setAsimovToy() : ERROR : theory relation not found in workspace: " << pThName << endl;
+			cout << "GammaComboEngine::setAsimovObservables() : ERROR : theory relation not found in workspace: " << pThName << endl;
 			exit(1);
 		}
 		// set the observable to what the theory relation predicts
@@ -264,7 +284,7 @@ void GammaComboEngine::setAsimovToy(Combiner* c)
 		while(RooRealVar* pObs = (RooRealVar*) itObs->Next()){
 			RooAbsReal* obs =  w->var(pObs->GetName());
 			if ( obs==0 ){
-				cout << "GammaComboEngine::setAsimovToy() : ERROR : observable not found in workspace: " << pObs->GetName() << endl;
+				cout << "GammaComboEngine::setAsimovObservables() : ERROR : observable not found in workspace: " << pObs->GetName() << endl;
 				exit(1);
 			}
 			pdf->setObservable(pObs->GetName(), obs->getVal());
@@ -274,42 +294,133 @@ void GammaComboEngine::setAsimovToy(Combiner* c)
 }
 
 ///
-/// Make an Asimov toy: set all observables set to truth values.
-/// The truth values are loaded from a parameter file. If there
-/// are more than one points present in that file, the first one
-/// is used.
+/// Load start parameters.
 ///
-void GammaComboEngine::setAsimovToy(Combiner* c, int cId)
+/// \param cId - combiner id
+/// \param pCache - parameter cache
+///
+void GammaComboEngine::loadStartParameters(MethodProbScan *s, ParameterCache *pCache, int cId)
 {
-	if ( cId>=arg->asimov.size() ){
-		cout << "GammaComboEngine::setAsimovToy() : ERROR : requesting a non-existent asimov id." << endl;
-		return;
+	cout << "Start parameter configuration:\n" << endl;
+	TString startparfile;
+	TString startparfile2 = m_fnamebuilder->getFileNameStartPar(s);
+	TString startparfile3;
+	if ( arg->isAsimovCombiner(cId) ){
+		startparfile3= m_fnamebuilder->getFileNameStartPar(s); // this gets the start parameter file of the Asimov combiner
+		startparfile3.ReplaceAll(m_fnamebuilder->getAsimovCombinerNameAddition(arg->asimov[cId]),"");
 	}
-	if ( arg->asimov[cId]==0 ){
-		cout << "GammaComboEngine::setAsimovToy() : INFO : asimov id 0 = not running an asimov toy" << endl;
-		return;
+	bool filefound = false;
+	// try the file provided through --parfile
+	if ( arg->loadParamsFile.size()>cId && ! arg->loadParamsFile[cId].EqualTo("default") ) {
+		startparfile = arg->loadParamsFile[cId];
+		filefound = FileExists(startparfile);
 	}
-	// load truth values from file
-	ParameterCache *pCache = new ParameterCache(arg, getFileBaseName(c));
-	TString parfile = getStartParFileFromCommandLine(cId);
-	bool loaded = pCache->loadPoints(parfile);
+	// requested file not found, try default
+	if ( ! filefound ){
+		startparfile = startparfile2;
+		filefound = FileExists(startparfile);
+	}
+	// for Asimov combiners, also try non-Asimov start parameters file
+	if ( ! filefound && arg->isAsimovCombiner(cId) ){
+		startparfile = startparfile3;
+		filefound = FileExists(startparfile);
+	}
+	// still not found
+	if ( ! filefound ){
+		cout << "  No start parameter file was found, will use the default values" << endl;
+		cout << "  configured in ParameterAbs class. Start parameter files are searched" << endl;
+		cout << "  in the following order:" << endl;
+		cout << "  1. --parfile option" << endl;
+		cout << "  2. default start paramter file: " << startparfile2 << endl;
+		if ( arg->isAsimovCombiner(cId) ){
+			cout << "  3. for Asimov combiners: corresponding non-Asimov start parameter file: " << startparfile3 << endl;
+		}
+	}
+	else {
+		cout << "  Loading start parameters from file: " << startparfile << endl;
+		bool loaded = pCache->loadPoints(startparfile);
+		if ( !loaded ){
+			cout << "  Error loading file. Exit." << endl;
+			exit(1);
+		}
+	}
+	cout << endl;
+}
 
-	// If an asimov toy is configured, but no dedicated
-	// par file was given to configure the asimov point, and also no dedicated
-	// RO par file exists, we use the default par file without asimov.
-	if ( isAsimovCombiner(cId) && !loaded ){
-		cout << "GammaComboEngine::setAsimovToy() : Asimov parameter file not found. Trying non-Asimov parameter file." << endl;
-		TString nonAsimovDefaultFile = pCache->getDefaultFileName();
-		nonAsimovDefaultFile.ReplaceAll(Form("Asimov%i",arg->asimov[cId]),"");
-		pCache->loadPoints(nonAsimovDefaultFile);
+///
+/// Configure the names and titles of Asimov combiners.
+/// It adds things like "Asimov3" to the combiner name,
+/// where 3 means the 3rd Asimov point from the configured
+/// Asimov parameter file (typically *_genpoints.dat).
+///
+void GammaComboEngine::configureAsimovCombinerNames(Combiner* c, int i)
+{
+	if ( arg->asimov[i]==0 ){
+		cout << "\n--asimov 0 : ignoring generator point ID 0" << endl;
+		return;
 	}
-	if ( !loaded ){
-		cout << "GammaComboEngine::setAsimovToy() : non-Asimov parameter file not found. Using start values configured in ParameterAbs class." << endl;
+	cout << "\n--asimov : setting up an ASIMOV TOY based on combination \"" << c->getName() << "\"" << endl;
+	if ( arg->title[i]==TString("default") ) c->setTitle(c->getTitle()+" (Asimov)");
+	c->setName(c->getName() + m_fnamebuilder->getAsimovCombinerNameAddition(arg->asimov[i]));
+	cout <<   "           Asimov combiner name: \"" << c->getName() << "\"" << endl;
+}
+
+///
+/// Make an Asimov toy: set all observables set to truth values.
+/// The truth values are loaded from a parameter file.
+///
+void GammaComboEngine::loadAsimovPoint(Combiner* c, int cId)
+{
+	if ( arg->asimov[cId]==0 ) return;
+	cout << "\nAsimov point configuration:\n" << endl;
+	ParameterCache *pCache = new ParameterCache(arg);
+	TString asimovfile;
+	TString asimovfile2 = m_fnamebuilder->getFileNameAsimovPar(c);
+	TString asimovfile3 = m_fnamebuilder->getFileNameStartPar(c); // this gets the start parameter file of the Asimov combiner
+	asimovfile3.ReplaceAll(m_fnamebuilder->getAsimovCombinerNameAddition(arg->asimov[cId]),"");
+	TString asimovfile4 = m_fnamebuilder->getFileNamePar(c); // this gets the result parameter file of the Asimov combiner
+	asimovfile4.ReplaceAll(m_fnamebuilder->getAsimovCombinerNameAddition(arg->asimov[cId]),"");
+	bool filefound = false;
+	// try the file provided through --asimovfile
+	if ( arg->asimovfile.size()>cId && ! arg->asimovfile[cId].EqualTo("default") ) {
+		asimovfile = arg->loadParamsFile[cId];
+		filefound = FileExists(asimovfile);
 	}
-	else{
+	// requested file not found, try default
+	if ( ! filefound ){
+		asimovfile = asimovfile2;
+		filefound = FileExists(asimovfile);
+	}
+	// requested file not found, try the start parameter file of the corresponding non-Asimov combiner
+	if ( ! filefound ){
+		asimovfile = asimovfile3;
+		filefound = FileExists(asimovfile);
+	}
+	// requested file not found, try the result parameter file of the corresponding non-Asimov combiner
+	if ( ! filefound ){
+		asimovfile = asimovfile4;
+		filefound = FileExists(asimovfile);
+	}
+	// if no parameter file exits, we use point from the ParameterAbs class
+	if ( ! filefound ){
+		cout << "  No Asimov point parameter file found. Using start values configured in ParameterAbs class." << endl;
+		cout << "  Point files are looked for in the following order:" << endl;
+		cout << "  1. --asimovfile" << endl;
+		cout << "  2. " << asimovfile2 << endl;
+		cout << "  3. " << asimovfile3 << endl;
+		cout << "  4. " << asimovfile4 << endl;
+	}
+	else {
+		cout << "  Loading Asimov points from file: " << asimovfile << endl;
+		bool loaded = pCache->loadPoints(asimovfile);
+		if ( !loaded ){
+			cout << "  Error loading file. Exit." << endl;
+			exit(1);
+		}
+		cout << "  Setting point number: " << arg->asimov[cId] << endl;
 		pCache->setPoint(c,arg->asimov[cId]-1);
 	}
-	setAsimovToy(c);
+	setAsimovObservables(c);
 }
 
 ///
@@ -318,27 +429,27 @@ void GammaComboEngine::setAsimovToy(Combiner* c, int cId)
 void GammaComboEngine::usage()
 {
 	cout << "USAGE\n\n"
-	        "  # Compute combination 1, make a 1D Prob scan for variable a_gaus:\n"
+		"  # Compute combination 1, make a 1D Prob scan for variable a_gaus:\n"
 		"  " << execname << " -c 1 -i --var a_gaus --ps 1\n\n"
-	        "  # Add combinations 1, 2, 3, add to the same plot:\n"
+		"  # Add combinations 1, 2, 3, add to the same plot:\n"
 		"  " << execname << " -c 1 -c 2 -c 3 -i --var a_gaus --ps 1\n\n"
-		"  # Add or remove PDFs to/from existing cominers:\n"
+		"  # Add or remove measurements to/from existing cominers:\n"
 		"  " << execname << " -i --var a_gaus -c 3:+1,+2,-3\n\n"
 		"  # Make a 2D Prob scan\n"
 		"  " << execname << " -c 4 --var a_gaus --var b_gaus -i\n\n"
 		"  # Re-plot a previous 2D Prob scan with 2D CL and best fit points\n"
 		"  " << execname << " -c 4 --var a_gaus --var b_gaus -i -a plot --2dcl --ps 1\n" << endl;
 	//cout << "Available plugin toy control plots:\n"
-		//"===================================\n"
-		//"\n"
-		//"All control plots are produced when option --controlplots is given.\n"
-		//"If, in addition, -p <n> is given, only one specific plot is produced.\n"
-		//" (1) technical overview\n"
-		//" (2) summary\n"
-		//" (3) nuisances\n"
-		//" (4) observables\n"
-		//" (5) chi2 distributions\n"
-		//" (6) chi2 parabolas\n" << endl;
+	//"===================================\n"
+	//"\n"
+	//"All control plots are produced when option --controlplots is given.\n"
+	//"If, in addition, -p <n> is given, only one specific plot is produced.\n"
+	//" (1) technical overview\n"
+	//" (2) summary\n"
+	//" (3) nuisances\n"
+	//" (4) observables\n"
+	//" (5) chi2 distributions\n"
+	//" (6) chi2 parabolas\n" << endl;
 	print();
 	exit(0);
 }
@@ -348,11 +459,13 @@ void GammaComboEngine::usage()
 ///
 void GammaComboEngine::printPdfs()
 {
-	cout << "AVAILABLE PDFS" << endl;
+	cout << "AVAILABLE MEASUREMENTS" << endl;
 	cout << endl;
 	for ( int i=0; i<pdf.size(); i++ ){
 		if ( pdf[i]==0 ) continue;
-		printf(" (%2i) %s\n", i, pdf[i]->getTitle().Data());
+		if      ( i< 10 ) printf("   (%i) %s\n", i, pdf[i]->getTitle().Data());
+		else if ( i<100 ) printf("  (%2i) %s\n", i, pdf[i]->getTitle().Data());
+		else              printf( " (%3i) %s\n", i, pdf[i]->getTitle().Data());
 	}
 	cout << endl;
 }
@@ -366,7 +479,9 @@ void GammaComboEngine::printCombinations()
 	cout << endl;
 	for ( int i=0; i<cmb.size(); i++ ){
 		if ( cmb[i]==0 ) continue;
-		printf(" (%i) %s\n", i, cmb[i]->getTitle().Data());
+		if      ( i< 10 ) printf("   (%i) %s\n", i, cmb[i]->getTitle().Data());
+		else if ( i<100 ) printf("  (%2i) %s\n", i, cmb[i]->getTitle().Data());
+		else              printf( " (%3i) %s\n", i, cmb[i]->getTitle().Data());
 	}
 	cout << endl;
 }
@@ -401,6 +516,21 @@ void GammaComboEngine::checkCombinationArg()
 				<< "Use the -u option to print a list of available combinations." << endl;
 			exit(1);
 		}
+	}
+}
+
+///
+/// Check Asimov arg: when only one --asimov argument is given
+/// with the ID 0, it won't do anything. Print a warning in that
+/// case.
+///
+void GammaComboEngine::checkAsimovArg()
+{
+	if ( arg->asimov.size()==1 && arg->asimov[0]==0 ){
+		cout << "WARNING : --asimov 0 found, this won't do anything." << endl;
+		cout << "          To run an Asimov toy, the generation point ID" << endl;
+		cout << "          needs to be different from 0." << endl;
+		cout << endl;
 	}
 }
 
@@ -441,7 +571,7 @@ void GammaComboEngine::makeAddDelCombinations()
 	// be the same size
 	if ( arg->combmodifications.size() != arg->combid.size() ){
 		cout << "GammaComboEngine::makeAddDelCombinations() : ERROR : internal inconsistency. \n"
-		"combid and combmodifications vectors not of same size." << endl;
+															  "combid and combmodifications vectors not of same size." << endl;
 		assert(0);
 	}
 	// loop over list of modifications
@@ -458,18 +588,18 @@ void GammaComboEngine::makeAddDelCombinations()
 		for ( int j=0; j<arg->combmodifications[i].size(); j++ ){
 			int pdfId = abs(arg->combmodifications[i][j]);
 			if ( ! pdfExists(pdfId) ){
-				cout << "\nERROR: PDF of given ID does not exist: " << pdfId << endl;
-				cout << "       Here is a list of available PDFs:" << endl;
+				cout << "\nERROR: measurement of given ID does not exist: " << pdfId << endl;
+				cout << "       Here is a list of available measurements:" << endl;
 				printPdfs();
 				exit(1);
 			}
 			if ( arg->combmodifications[i][j]>0 ){
 				nameNew += Form("+%i",pdfId);
-				titleNew += Form(", + PDF%i",pdfId);
+				titleNew += Form(", + Meas.%i",pdfId);
 			}
 			else {
 				nameNew += Form("-%i",pdfId);
-				titleNew += Form(", w/o PDF%i",pdfId);
+				titleNew += Form(", w/o Meas.%i",pdfId);
 			}
 		}
 		// make the new combiner
@@ -478,11 +608,11 @@ void GammaComboEngine::makeAddDelCombinations()
 		for ( int j=0; j<arg->combmodifications[i].size(); j++ ){
 			int pdfId = abs(arg->combmodifications[i][j]);
 			if ( arg->combmodifications[i][j]>0 ){
-				cout << "... adding PDF " << pdfId << endl;
+				cout << "... adding measurement " << pdfId << endl;
 				cNew->addPdf(pdf[pdfId]);
 			}
 			else {
-				cout << "... deleting PDF " << pdfId << endl;
+				cout << "... deleting measurement " << pdfId << endl;
 				cNew->delPdf(pdf[pdfId]);
 			}
 		}
@@ -499,71 +629,38 @@ void GammaComboEngine::makeAddDelCombinations()
 void GammaComboEngine::printCombinerStructure()
 {
 	Graphviz gviz(arg);
-  for ( int i=0; i<arg->combid.size(); i++ ){
-    int combinerId = arg->combid[i];
-    gviz.printCombiner(cmb[combinerId]);
-    gviz.printCombinerLayer(cmb[combinerId]);
-  }
+	for ( int i=0; i<arg->combid.size(); i++ ){
+		int combinerId = arg->combid[i];
+		gviz.printCombiner(cmb[combinerId]);
+		gviz.printCombinerLayer(cmb[combinerId]);
+	}
 }
 
 ///
-/// Override default titles of the combinations, if requested.
+/// Override default titles of the combinations, if requested
+/// on the command line.
 ///
 void GammaComboEngine::customizeCombinerTitles()
 {
-	for ( int i=0; i<arg->combid.size(); i++ )
-  {
-    int combinerId = arg->combid[i];
-    Combiner *c = cmb[combinerId];
-    if ( i<arg->title.size() ){
-      if ( arg->title[i]!=TString("default") ) c->setTitle(arg->title[i]);
-    }
-  }
-}
-
-///
-/// Compute the file base name of individual combinations.
-///
-/// \param c - Combiner object
-/// \return the filename: basename_combinername[_addPdfN][_delPdfN]_var1[_var2]
-///
-TString GammaComboEngine::getFileBaseName(Combiner *c)
-{
-	TString name = basename;
-	name += "_"+c->getName();
-  name += "_"+arg->var[0];
-  if ( arg->var.size()==2 ) name += "_"+arg->var[1];
-	return name;
-}
-
-///
-/// Compute the file base name of when including several into one file.
-///
-/// \return the filename: basename_combiner1name[_addPdfN][_delPdfN][_combiner2name[_addPdfN][_delPdfN]]_var1[_var2]
-///
-TString GammaComboEngine::getFileBaseName()
-{
-	TString name = basename;
-  for ( int i=0; i<arg->combid.size(); i++ ){
-		name += "_"+cmb[arg->combid[i]]->getName();
-		if ( isAsimovCombiner(i) ) name += Form("Asimov%i",arg->asimov[i]);
+	for ( int i=0; i<arg->combid.size(); i++ ){
+		int combinerId = arg->combid[i];
+		Combiner *c = cmb[combinerId];
+		if ( i<arg->title.size() ){
+			if ( arg->title[i]!=TString("default") ) c->setTitle(arg->title[i]);
+		}
 	}
-  name += "_"+arg->var[0];
-  if ( arg->var.size()==2 ) name += "_"+arg->var[1];
-	return name;
 }
 
 ///
 /// Set up the plot.
 ///
-void GammaComboEngine::setUpPlot(TString name)
+void GammaComboEngine::setUpPlot()
 {
-	if ( arg->plotpluginonly ) name += "_pluginOnly";
-  if ( arg->var.size()==1 ){
-		plot = new OneMinusClPlot(arg, name);
+	if ( arg->var.size()==1 ){
+		plot = new OneMinusClPlot(arg, m_fnamebuilder->getFileNamePlot(cmb), "p-value curves");
 	}
-  else{
-		plot = new OneMinusClPlot2d(arg, name);
+	else{
+		plot = new OneMinusClPlot2d(arg, m_fnamebuilder->getFileNamePlot(cmb), "p-value contours");
 	}
 	plot->disableLegend(arg->plotlegend);
 }
@@ -586,17 +683,17 @@ void GammaComboEngine::defineColors()
 	// no --color option was given on the command line
 	if ( arg->color.size()==0 )
 	{
-	  // define line colors for 1-CL curves
-	  colorsLine.push_back(arg->combid.size()==1 ? kBlue-8 : kBlue-5);
-	  colorsLine.push_back(kGreen-8);
-	  colorsLine.push_back(kOrange-8);
-	  colorsLine.push_back(kViolet-7);
+		// define line colors for 1-CL curves
+		colorsLine.push_back(arg->combid.size()==1 ? kBlue-8 : kBlue-5);
+		colorsLine.push_back(kGreen-8);
+		colorsLine.push_back(kOrange-8);
+		colorsLine.push_back(kViolet-7);
 
-	  // define text colors for drawn central values
-	  colorsText.push_back(arg->combid.size()==1 ? kBlack : TColor::GetColor("#23236b"));
-	  colorsText.push_back(TColor::GetColor("#234723"));
-	  colorsText.push_back(kOrange+3);
-	  colorsText.push_back(kViolet-7);
+		// define text colors for drawn central values
+		colorsText.push_back(arg->combid.size()==1 ? kBlack : TColor::GetColor("#23236b"));
+		colorsText.push_back(TColor::GetColor("#234723"));
+		colorsText.push_back(kOrange+3);
+		colorsText.push_back(kViolet-7);
 	}
 	else
 	{
@@ -606,6 +703,11 @@ void GammaComboEngine::defineColors()
 		colorsLine.push_back(TColor::GetColor("#e7298a"));
 		colorsLine.push_back(TColor::GetColor("#66a61e"));
 		colorsLine.push_back(TColor::GetColor("#e6ab02"));
+
+		// from http://colorbrewer2.org with:
+		//   number of data classes: 6
+		//   nature of data:         qualitative
+		//   second colour scheme
 
 		ColorBuilder cb;
 		for ( int i=0; i<colorsLine.size(); i++ ){
@@ -625,74 +727,67 @@ void GammaComboEngine::defineColors()
 ///
 void GammaComboEngine::scanStrategy2d(MethodProbScan *scanner, ParameterCache *pCache)
 {
-  int nStartingPoints = pCache->getNPoints();
-  // if no starting values loaded do the default thing
-  if ( nStartingPoints==0 ){
-    cout << "\nPerforming default 2D scan:\n"
-      " 1. scan in first variable:  " + scanner->getScanVar1Name() + "\n"
-      " 2. scan in second variable: " + scanner->getScanVar2Name() + "\n"
-      " 3. scan starting from each solution found in 1. and 2." << endl;
-    Combiner *c = scanner->getCombiner();
-    cout << "\n1D scan for " + scanner->getScanVar1Name() + ":\n" << endl;
-    MethodProbScan *s1 = new MethodProbScan(c);
-    s1->setScanVar1(scanner->getScanVar1Name());
-    s1->initScan();
-    scanStrategy1d(s1,pCache);
-    if ( arg->verbose ) s1->printLocalMinima();
+	int nStartingPoints = pCache->getNPoints();
+	// if no starting values loaded do the default thing
+	if ( nStartingPoints==0 ){
+		cout << "\nPerforming default 2D scan:\n"
+			" 1. scan in first variable:  " + scanner->getScanVar1Name() + "\n"
+			" 2. scan in second variable: " + scanner->getScanVar2Name() + "\n"
+			" 3. scan starting from each solution found in 1. and 2." << endl;
+		Combiner *c = scanner->getCombiner();
+		cout << "\n1D scan for " + scanner->getScanVar1Name() + ":\n" << endl;
+		MethodProbScan *s1 = new MethodProbScan(c);
+		s1->setScanVar1(scanner->getScanVar1Name());
+		s1->initScan();
+		scanStrategy1d(s1,pCache);
+		if ( arg->verbose ) s1->printLocalMinima();
 
-    cout << "\n1D scan for " + scanner->getScanVar2Name() + ":\n" << endl;
-    MethodProbScan *s2 = new MethodProbScan(c);
-    s2->setScanVar1(scanner->getScanVar2Name());
-    s2->initScan();
-    scanStrategy1d(s2,pCache);
-    if ( arg->verbose ) s2->printLocalMinima();
+		cout << "\n1D scan for " + scanner->getScanVar2Name() + ":\n" << endl;
+		MethodProbScan *s2 = new MethodProbScan(c);
+		s2->setScanVar1(scanner->getScanVar2Name());
+		s2->initScan();
+		scanStrategy1d(s2,pCache);
+		if ( arg->verbose ) s2->printLocalMinima();
 
-    cout << "\n2D scan for " + scanner->getScanVar1Name() + " and " + scanner->getScanVar2Name() + ":\n" << endl;
-    vector<RooSlimFitResult*> solutions;
-    for ( int i=0; i<s1->getNSolutions(); i++ ) solutions.push_back(s1->getSolution(i));
-    for ( int i=0; i<s2->getNSolutions(); i++ ) solutions.push_back(s2->getSolution(i));
-    // \todo remove similar solutions from list
-    for ( int j=0; j<solutions.size(); j++ ){
-      cout << "2D scan " << j+1 << " of " << solutions.size() << " ..." << endl;
-      scanner->loadParameters(solutions[j]);
-      scanner->scan2d();
-    }
-  }
-  // otherwise load each starting value found
-  else {
-    cout << "\nPerforming 2D scan from provided starting points." << endl;
-    cout << "Number of scans to run: " << nStartingPoints << endl;
-    for (int i=0; i<nStartingPoints; i++){
-      pCache->setPoint(scanner,i);
-      scanner->scan2d();
-    }
-  }
+		cout << "\n2D scan for " + scanner->getScanVar1Name() + " and " + scanner->getScanVar2Name() + ":\n" << endl;
+		vector<RooSlimFitResult*> solutions;
+		for ( int i=0; i<s1->getNSolutions(); i++ ) solutions.push_back(s1->getSolution(i));
+		for ( int i=0; i<s2->getNSolutions(); i++ ) solutions.push_back(s2->getSolution(i));
+		// \todo remove similar solutions from list
+		for ( int j=0; j<solutions.size(); j++ ){
+			cout << "2D scan " << j+1 << " of " << solutions.size() << " ..." << endl;
+			scanner->loadParameters(solutions[j]);
+			scanner->scan2d();
+		}
+	}
+	// otherwise load each starting value found
+	else {
+		cout << "\nPerforming 2D scan from provided starting points." << endl;
+		cout << "Number of scans to run: " << nStartingPoints << endl;
+		for (int i=0; i<nStartingPoints; i++){
+			pCache->setPoint(scanner,i);
+			scanner->scan2d();
+		}
+	}
 }
+
 
 ///
 /// Perform the prob scan.
+///
 /// \param scanner - the scanner to run the scan with
 /// \param cId - the id of this combination on the command line
 ///
 void GammaComboEngine::make1dProbScan(MethodProbScan *scanner, int cId)
 {
 	// load start parameters
-	ParameterCache *pCache = new ParameterCache(arg, getFileBaseName(scanner->getCombiner()));
-	TString startparfile = getStartParFileFromCommandLine(cId);
-	bool loaded = pCache->loadPoints(startparfile);
-
-	// If an asimov toy is configured, but no dedicated
-	// par file was given to configure the asimov point, and also no dedicated
-	// RO par file exists, we use the default par file without asimov.
-	if ( isAsimovCombiner(cId) && !loaded ){
-		cout << "GammaComboEngine::make1dProbScan() : Asimov start parameters not found. Trying non-Asimov parameters." << endl;
-		TString nonAsimovDefaultFile = pCache->getDefaultFileName();
-		nonAsimovDefaultFile.ReplaceAll(Form("Asimov%i",arg->asimov[cId]),"");
-		pCache->loadPoints(nonAsimovDefaultFile);
-	}
+	ParameterCache *pCache = new ParameterCache(arg);
+	loadStartParameters(scanner, pCache, cId);
 
 	scanner->initScan();
 	scanStrategy1d(scanner, pCache);
+	cout << "\nResults:" << endl;
+	cout <<   "========\n" << endl;
 	scanner->printLocalMinima();
 	scanner->calcCLintervals();
 	if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
@@ -706,48 +801,56 @@ void GammaComboEngine::make1dProbScan(MethodProbScan *scanner, int cId)
 			plotter.plotObsScanCheck();
 		}
 		if (!arg->isAction("plugin")){
-			scanner->saveScanner(fb->getFileNameScanner(scanner));
-			pCache->cacheParameters(scanner);
+			scanner->saveScanner(m_fnamebuilder->getFileNameScanner(scanner));
+			pCache->cacheParameters(scanner,m_fnamebuilder->getFileNamePar(scanner));
 		}
 	}
 }
 
 ///
-/// Perform the 1d plugin scan. Runs toys in batch mode, and
+/// Perform the 1D plugin scan. Runs toys in batch mode, and
 /// reads them back in.
+///
 /// \param scannerPlugin - the scanner to run the scan with
 /// \param cId - the id of this combination on the command line
 ///
 void GammaComboEngine::make1dPluginScan(MethodPluginScan *scannerPlugin, int cId)
 {
 	scannerPlugin->initScan();
-  if ( arg->isAction("pluginbatch") ){
-    scannerPlugin->scan1d(arg->nrun);
-  }
-  else {
-		scannerPlugin->readScan1dTrees(arg->jmin[cId],arg->jmax[cId]);
+	if ( arg->isAction("pluginbatch") ){
+		scannerPlugin->scan1d(arg->nrun);
 	}
-  scannerPlugin->calcCLintervals();
+	else {
+		scannerPlugin->readScan1dTrees(arg->jmin[cId],arg->jmax[cId]);
+		scannerPlugin->calcCLintervals();
+	}
 	if ( !arg->isAction("pluginbatch") ){
-		scannerPlugin->saveScanner(fb->getFileNameScanner(scannerPlugin));
+		scannerPlugin->saveScanner(m_fnamebuilder->getFileNameScanner(scannerPlugin));
 	}
 }
 
 ///
-/// Perform the 2d plugin scan. Runs toys in batch mode, and
+/// Perform the 2D plugin scan. Runs toys in batch mode, and
 /// reads them back in.
+///
 /// \param scannerPlugin - the scanner to run the scan with
 /// \param cId - the id of this combination on the command line
 ///
 void GammaComboEngine::make2dPluginScan(MethodPluginScan *scannerPlugin, int cId)
 {
 	scannerPlugin->initScan();
-  if ( arg->isAction("pluginbatch") ){
-    scannerPlugin->scan2d(arg->nrun);
-  }
-  else {
+	if ( arg->isAction("pluginbatch") ){
+		scannerPlugin->scan2d(arg->nrun);
+	}
+	else {
 		scannerPlugin->readScan2dTrees(arg->jmin[cId],arg->jmax[cId]);
-		scannerPlugin->saveScanner(fb->getFileNameScanner(scannerPlugin));
+		scannerPlugin->saveScanner(m_fnamebuilder->getFileNameScanner(scannerPlugin));
+		// plot chi2
+		cout << "making full chi2 plot ..." << endl;
+		OneMinusClPlot2d* plotf = new OneMinusClPlot2d(arg, plot->getName()+"_plugin_full", "p-value histogram: "+scannerPlugin->getTitle());
+		scannerPlugin->plotOn(plotf);
+		plotf->DrawFull();
+		plotf->save();
 	}
 }
 
@@ -777,24 +880,27 @@ void GammaComboEngine::make1dProbPlot(MethodProbScan *scanner, int cId)
 ///
 void GammaComboEngine::scanStrategy1d(MethodProbScan *scanner, ParameterCache *pCache)
 {
+	cout << "Scan strategy:" << endl;
+	cout << "==============\n" << endl;
 	int nStartingPoints = pCache->getNPoints();
-	if (nStartingPoints==0) {
-		cout << "Scan strategy: Now performing the first scan." << endl;
+	if ( nStartingPoints==0 ) {
+		cout << "1. perform an initial scan" << endl;
+		cout << "2. perform an additional scan starting from each solution found\n" << endl;
+		cout << "first scan ..." << endl;
 		scanner->scan1d();
-		cout << "Scan strategy: Now performing an additional scan starting at each solution found." << endl;
-		cout << "Scan strategy: Number of scans to run: " << scanner->getNSolutions() << endl;
-		if ( !(scanner->getArg()->probforce) ){
-			for ( int j=0; j<scanner->getNSolutions(); j++ ){
-				scanner->loadSolution(j);
+		if ( !arg->probforce ){
+			for ( int i=0; i<scanner->getNSolutions(); i++ ){
+				cout << "rescan " << i+1 << " of " << scanner->getNSolutions() << " ..." << endl;
+				scanner->loadSolution(i);
 				scanner->scan1d(true);
 			}
 		}
 	}
 	// otherwise load each starting value found
 	else {
-		cout << "Scan strategy: Scanning from start points found in file." << endl;
-		cout << "Number of scans to run: " << nStartingPoints << endl;
+		cout << "Scanning from each point found in start parameter file.\n" << endl;
 		for (int i=0; i<nStartingPoints; i++){
+			cout << "scan " << i+1 << " of " << nStartingPoints << " ..." << endl;
 			pCache->setPoint(scanner,i);
 			scanner->scan1d();
 		}
@@ -802,8 +908,10 @@ void GammaComboEngine::scanStrategy1d(MethodProbScan *scanner, ParameterCache *p
 }
 
 ///
-/// Make the default 1d plugin plot that shows both the prob and the plugin
-/// as points with error bars.
+/// Make the default 1D plugin plot:
+///  - curve for the prob scan
+///  - points with error bars for the plugin scan
+///
 /// \param sPlugin - the plugin scanner
 /// \param sProb - the prob scanner
 /// \param cId - the id of this combination on the command line
@@ -812,27 +920,33 @@ void GammaComboEngine::make1dPluginPlot(MethodPluginScan *sPlugin, MethodProbSca
 {
 	make1dProbPlot(sProb, cId);
 	sPlugin->setLineColor(kBlack);
-  sPlugin->plotOn(plot);
+	sPlugin->plotOn(plot);
 	plot->Draw();
 }
 
 ///
-/// Make the default 2d plugin plot.
-/// \param sPlugin - the plugin scanner
+/// Make the default 2D plugin plot:
+///  - contours for the the prob scan
+///  - contours for the the plugin scan
 ///
-void GammaComboEngine::make2dPluginPlot(MethodPluginScan *sPlugin)
+/// \param sPlugin - the plugin scanner
+/// \param sProb - the prob scanner
+/// \param cId - the id of this combination on the command line
+///
+void GammaComboEngine::make2dPluginPlot(MethodPluginScan *sPlugin, MethodProbScan *sProb, int cId)
 {
+	sProb->setTitle( sProb->getTitle() + " (Prob)");
+	sProb->plotOn(plot);
+	sProb->setLineColor(colorsLine[cId]);
+	sPlugin->setTitle( sPlugin->getTitle() + " (Plugin)");
 	sPlugin->plotOn(plot);
-	// also save the full chi2 histogram
-	// OneMinusClPlot2d* plotf = new OneMinusClPlot2d(arg, getFileBaseName(c)+"_plugin_full");
-	// sPlugin->plotOn(plotf);
-	// plotf->DrawFull();
-	// plotf->save();
+	plot->Draw();
 }
 
 ///
 /// Make the plugin-only plot that only shows the plugin
 /// as continuous lines.
+///
 /// \param sPlugin - the plugin scanner
 /// \param cId - the id of this combination on the command line
 ///
@@ -848,44 +962,52 @@ void GammaComboEngine::make1dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId)
 }
 
 ///
+/// Make the plugin-only 2D plot.
+///
+/// \param sPlugin - the plugin scanner
+///
+void GammaComboEngine::make2dPluginOnlyPlot(MethodPluginScan *sPlugin)
+{
+	sPlugin->plotOn(plot);
+	plot->Draw();
+}
+
+///
 ///
 ///
 void GammaComboEngine::make2dProbScan(MethodProbScan *scanner, int cId)
 {
 	// load start parameters
-	ParameterCache *pCache = new ParameterCache(arg, getFileBaseName(scanner->getCombiner()));
-	TString startparfile = getStartParFileFromCommandLine(cId);
-	pCache->loadPoints(startparfile);
+	ParameterCache *pCache = new ParameterCache(arg);
+	pCache->loadPoints(getStartParFileName(cId));
 	// scan
 	scanner->initScan();
 	scanStrategy2d(scanner,pCache);
 	cout << endl;
 	scanner->printLocalMinima();
+	// save
+	scanner->saveScanner(m_fnamebuilder->getFileNameScanner(scanner));
+	pCache->cacheParameters(scanner, m_fnamebuilder->getFileNamePar(scanner));
 	// plot
 	if (!arg->isAction("pluginbatch")){
 		scanner->plotOn(plot);
 		scanner->setLineColor(colorsLine[cId]);
 		plot->Draw();
-		OneMinusClPlot2d* plotf = new OneMinusClPlot2d(arg, plot->getName()+"_full");
+		OneMinusClPlot2d* plotf = new OneMinusClPlot2d(arg, plot->getName()+"_full", "p-value histogram: "+scanner->getTitle());
 		scanner->plotOn(plotf);
 		plotf->DrawFull();
 		plotf->save();
-		scanner->saveScanner(fb->getFileNameScanner(scanner));
-		pCache->cacheParameters(scanner);
 	}
 }
 
 ///
-/// Remake a 2D plot from a saved scanner.
-/// If we did the scan before and just want to recreate the plot,
-/// we can do so using the hCL histograms that were saved in plots/hCL.
+/// Make the 2D plot for a prob scanner.
 ///
 void GammaComboEngine::make2dProbPlot(MethodProbScan *scanner, int cId)
 {
-  scanner->loadScanner(fb->getFileNameScanner(scanner));
-  scanner->plotOn(plot);
-  scanner->setLineColor(colorsLine[cId]);
-  plot->Draw();
+	scanner->plotOn(plot);
+	scanner->setLineColor(colorsLine[cId]);
+	plot->Draw();
 }
 
 ///
@@ -904,19 +1026,14 @@ void GammaComboEngine::fixParameters(Combiner *c, int cId)
 ///
 /// Helper function for scan(): Checks if for a given combid (the
 /// running index of the -c argument) a start parameter file was
-/// configured (-l) argument. If so, it is returned, else "default"
-/// is returned, causing the default start parameter file to
-/// be loaded.
+/// configured (-l) argument. If so, it is returned, else the default
+/// name is returned.
 ///
-TString GammaComboEngine::getStartParFileFromCommandLine(int i)
+TString GammaComboEngine::getStartParFileName(int cId)
 {
-	if ( arg->loadParamsFile.size()<=i ) return "default";
-	return arg->loadParamsFile[i];
-}
-
-bool GammaComboEngine::isAsimovCombiner(int i)
-{
-	return i<arg->asimov.size() && arg->asimov[i]>0;
+	if ( arg->loadParamsFile.size()<=cId ) return m_fnamebuilder->getFileNameStartPar(cmb[cId]);
+	if ( arg->loadParamsFile[cId].EqualTo("default") ) return m_fnamebuilder->getFileNameStartPar(cmb[cId]);
+	return arg->loadParamsFile[cId];
 }
 
 ///
@@ -938,6 +1055,28 @@ bool GammaComboEngine::isScanVarObservable(Combiner *c, TString scanVar)
 }
 
 ///
+/// Helper function to set up a scan for an observable, tightens
+/// the chi2 constraint.
+///
+/// \param c		- the combiner
+/// \param scanVar 	- the scan variable name (must be an observable)
+///
+void GammaComboEngine::tightenChi2Constraint(Combiner *c, TString scanVar)
+{
+	cout << "\n--var " << scanVar << ": Setting up a scan for an observable ..." << endl;
+	PDF_Abs* pdf = c->getPdfProvidingObservable(scanVar);
+	if ( pdf==0 ){
+		cout << "GammaComboEngine::tightenChi2Constraint() : ERROR : no PDF found that contains the observable '" << scanVar << "'. Exit." << endl;
+		exit(1);
+	}
+	float scale = 0.1;
+	cout << "... observable error is multiplied by a factor " << scale << endl;
+	pdf->ScaleError(scanVar, scale);
+	pdf->buildCov();
+	pdf->buildPdf();
+}
+
+///
 /// scan engine
 ///
 void GammaComboEngine::scan()
@@ -955,25 +1094,14 @@ void GammaComboEngine::scan()
 		if ( i<arg->fixParameters.size() ) fixParameters(c, i);
 
 		// configure names to run an Asimov toy - only possible before combining
-		if ( isAsimovCombiner(i) ){
-			if ( arg->title[i]==TString("default") ) c->setTitle(c->getTitle()+" (Asimov)");
-			c->setName(c->getName()+Form("Asimov%i",arg->asimov[i]));
-		}
+		if ( arg->isAsimovCombiner(i) ) configureAsimovCombinerNames(c, i);
 
-		// configure scans for observables - this is the part only possible before combining
+		// configure scans for observables - this part is only possible before combining
 		if ( isScanVarObservable(c, arg->var[0]) ){
-			cout << "\n--var " << arg->var[0] << ": Setting up a scan for an observable ..." << endl;
-			// 1. tighten the constraint on the observable
-			PDF_Abs* pdf = c->getPdfProvidingObservable(arg->var[0]);
-			if ( pdf==0 ){
-				cout << "GammaComboEngine::scan() : ERROR : no PDF found that contains the observable '" << arg->var[0] << "'. Exit." << endl;
-				exit(1);
-			}
-			float scale = 0.1;
-			cout << "... observable error is multiplied by a factor " << scale << endl;
-			pdf->ScaleError(arg->var[0], scale);
-			pdf->buildCov();
-			pdf->buildPdf();
+			tightenChi2Constraint(c, arg->var[0]);
+		}
+		if ( arg->var.size()==2 && isScanVarObservable(c, arg->var[1]) ){
+			tightenChi2Constraint(c, arg->var[1]);
 		}
 
 		// combine
@@ -981,12 +1109,15 @@ void GammaComboEngine::scan()
 		if ( !c->isCombined() ) continue; // error during combining
 
 		// set an asimov toy - only possible after combining
-		if ( isAsimovCombiner(i) ) setAsimovToy(c, i);
+		if ( arg->isAsimovCombiner(i) ) loadAsimovPoint(c, i);
 
-		// configure scans for observables - this is the part only possible after combining
+		// configure scans for observables - this part is only possible after combining
+		// add the observable(s) to the list of parameters
 		if ( isScanVarObservable(c, arg->var[0]) ){
-			// 2. add observable to the list of parameters
 			c->getWorkspace()->extendSet(c->getParsName(), arg->var[0]);
+		}
+		if ( arg->var.size()==2 && isScanVarObservable(c, arg->var[1]) ){
+			c->getWorkspace()->extendSet(c->getParsName(), arg->var[1]);
 		}
 
 		// printout
@@ -1003,10 +1134,9 @@ void GammaComboEngine::scan()
 		{
 			MethodProbScan *scannerProb = new MethodProbScan(c);
 			// pvalue corrector
-			PValueCorrection *pvalueCorrector;
-			if (arg->coverageCorrectionID>0) {
-				pvalueCorrector = new PValueCorrection(arg->coverageCorrectionID, arg->verbose);
-				pvalueCorrector->readFiles(getFileBaseName(c),arg->coverageCorrectionPoint,false); // false means for prob
+			if ( arg->coverageCorrectionID>0 ) {
+				PValueCorrection *pvalueCorrector = new PValueCorrection(arg->coverageCorrectionID, arg->verbose);
+				pvalueCorrector->readFiles(m_fnamebuilder->getFileBaseName(c),arg->coverageCorrectionPoint,false); // false means for prob
 				pvalueCorrector->write("root/pvalueCorrection_prob.root");
 				scannerProb->setPValueCorrector(pvalueCorrector);
 			}
@@ -1015,7 +1145,7 @@ void GammaComboEngine::scan()
 			if ( arg->var.size()==1 )
 			{
 				if ( arg->isAction("plot") ){
-					scannerProb->loadScanner(fb->getFileNameScanner(scannerProb));
+					scannerProb->loadScanner(m_fnamebuilder->getFileNameScanner(scannerProb));
 				}
 				else{
 					make1dProbScan(scannerProb, i);
@@ -1026,6 +1156,7 @@ void GammaComboEngine::scan()
 			else if ( arg->var.size()==2 )
 			{
 				if ( arg->isAction("plot") ){
+					scannerProb->loadScanner(m_fnamebuilder->getFileNameScanner(scannerProb));
 					make2dProbPlot(scannerProb, i);
 				}
 				else{
@@ -1042,66 +1173,96 @@ void GammaComboEngine::scan()
 
 		if ( arg->isAction("plugin") || arg->isAction("pluginbatch") )
 		{
-			MethodProbScan *scannerProb = new MethodProbScan(c);
-			if ( arg->isAction("plot") ){
-				scannerProb->loadScanner(fb->getFileNameScanner(scannerProb));
-			}
-			else{
-				make1dProbScan(scannerProb, i);
-			}
-			MethodPluginScan *scannerPlugin = new MethodPluginScan(scannerProb);
-			PValueCorrection *pvalueCorrector2;
-			if (arg->coverageCorrectionID>0) {
-				pvalueCorrector2 = new PValueCorrection(arg->coverageCorrectionID, arg->verbose);
-				pvalueCorrector2->readFiles(getFileBaseName(c),arg->coverageCorrectionPoint,true); // true means for plugin
-				pvalueCorrector2->write("root/pvalueCorrection_plugin.root");
-				scannerPlugin->setPValueCorrector(pvalueCorrector2);
-			}
-
-			//       // Hybrid Plugin: compute a second profile likelihood to define the parameter evolution
-			//       if ( arg->pevid.size()==1 )
-			//       {
-			//         cout << "HYBRID PLUGIN: preparing profile likelihood to be used for parameter evolution:" << endl;
-			// // load start parameters
-			// ParameterCache *pCache = new ParameterCache(arg, getFileBaseName(cmb[arg->pevid[0]]));
-			// pCache->loadPoints();
-			//         MethodProbScan *scanner3 = new MethodProbScan(cmb[arg->pevid[0]]);
-			//         scanner3->initScan();
-			// scanStrategy1d(scanner3,pCache);
-			//         scanner3->confirmSolutions();
-			//         scanner3->printLocalMinima();
-			//         scanner2->setParevolPLH(scanner3);
-			//       }
-
 			// 1D SCANS
 			if ( arg->var.size()==1 )
 			{
-				if ( arg->isAction("plot") ){
-					scannerPlugin->loadScanner(fb->getFileNameScanner(scannerPlugin));
-				}
-				else {
+				if ( arg->isAction("pluginbatch") ){
+					MethodProbScan *scannerProb = new MethodProbScan(c);
+					make1dProbScan(scannerProb, i);
+					MethodPluginScan *scannerPlugin = new MethodPluginScan(scannerProb);
 					make1dPluginScan(scannerPlugin, i);
 				}
-				if ( !arg->isAction("pluginbatch") ){
+				//if ( arg->isAction("pluginhybridbatch") ){
+				//// Hybrid Plugin: compute a second profile likelihood to define the parameter evolution
+				//cout << "HYBRID PLUGIN: preparing profile likelihood to be used for parameter evolution:" << endl;
+				//ParameterCache *pCache = new ParameterCache(arg, m_fnamebuilder->getFileBaseName(cmb[arg->pevid[0]]));
+				//pCache->loadPoints();
+				//MethodProbScan *scanner3 = new MethodProbScan(cmb[arg->pevid[0]]);
+				//scanner3->initScan();
+				//scanStrategy1d(scanner3,pCache);
+				//scanner3->confirmSolutions();
+				//scanner3->printLocalMinima();
+				//scanner2->setParevolPLH(scanner3);
+				//}
+				else if ( arg->isAction("plugin") ){
+					// create the Prob scanner: load from disc if it exists, else redo the scan
+					// we don't need the prob scanner for the plugin only plot, if we either just
+					// want to replot it, or if we use the external chi2 values directly from the toys
+					MethodProbScan *scannerProb = new MethodProbScan(c);
+					if ( ! ( arg->plotpluginonly && ( arg->isAction("plot") || !arg->intprob ) ) ){
+						if ( FileExists(m_fnamebuilder->getFileNameScanner(scannerProb)) ){
+							scannerProb->loadScanner(m_fnamebuilder->getFileNameScanner(scannerProb));
+						}
+						else {
+							cout << "\nWARNING : Couldn't load the Prob scanner, will rerun the Prob" << endl;
+							cout <<   "          scan now. You should have run the Prob scan locally" << endl;
+							cout <<   "          before running the Plugin scan." << endl;
+							cout <<   "          missing file: " << m_fnamebuilder->getFileNameScanner(scannerProb) << endl;
+							cout << endl;
+							make1dProbScan(scannerProb, i);
+						}
+					}
+					// create Plugin scanner
+					MethodPluginScan *scannerPlugin = new MethodPluginScan(scannerProb);
+					if ( arg->isAction("plot") ){
+						scannerPlugin->loadScanner(m_fnamebuilder->getFileNameScanner(scannerPlugin));
+					}
+					else {
+						if ( arg->coverageCorrectionID>0 ) {
+							PValueCorrection *pvalueCorrector= new PValueCorrection(arg->coverageCorrectionID, arg->verbose);
+							pvalueCorrector->readFiles(m_fnamebuilder->getFileBaseName(c),arg->coverageCorrectionPoint,true); // true means for plugin
+							pvalueCorrector->write("root/pvalueCorrection_plugin.root");
+							scannerPlugin->setPValueCorrector(pvalueCorrector);
+						}
+						make1dPluginScan(scannerPlugin, i);
+					}
 					if ( arg->plotpluginonly ){
 						make1dPluginOnlyPlot(scannerPlugin, i);
 					}
-					else{
+					else {
 						make1dPluginPlot(scannerPlugin, scannerProb, i);
 					}
 				}
+
+
 			}
 			// 2D SCANS
-			else if ( arg->var.size()==2 )
-			{
-				if ( arg->isAction("plot") ){
-					scannerPlugin->loadScanner(fb->getFileNameScanner(scannerPlugin));
-				}
-				else {
+			else if ( arg->var.size()==2 ) {
+				if ( arg->isAction("pluginbatch") ){
+					MethodProbScan *scannerProb = new MethodProbScan(c);
+					make2dProbScan(scannerProb, i);
+					MethodPluginScan *scannerPlugin = new MethodPluginScan(scannerProb);
 					make2dPluginScan(scannerPlugin, i);
 				}
-				if ( !arg->isAction("pluginbatch") ){
-					make2dPluginPlot(scannerPlugin);
+				else if ( arg->isAction("plugin") ){
+					MethodProbScan *scannerProb = new MethodProbScan(c);
+					if ( ! ( arg->isAction("plot") && arg->plotpluginonly ) ){
+						// we don't need the prob scanner if we just want to replot the plugin only
+						scannerProb->loadScanner(m_fnamebuilder->getFileNameScanner(scannerProb));
+					}
+					MethodPluginScan *scannerPlugin = new MethodPluginScan(scannerProb);
+					if ( arg->isAction("plot") ){
+						scannerPlugin->loadScanner(m_fnamebuilder->getFileNameScanner(scannerPlugin));
+					}
+					else {
+						make2dPluginScan(scannerPlugin, i);
+					}
+					if ( arg->plotpluginonly ){
+						make2dPluginOnlyPlot(scannerPlugin);
+					}
+					else {
+						make2dPluginPlot(scannerPlugin, scannerProb, i);
+					}
 				}
 			}
 		}
@@ -1120,7 +1281,10 @@ void GammaComboEngine::scan()
 ///
 void GammaComboEngine::runApplication()
 {
-	if ( arg->interactive ) theApp->Run();
+	if ( arg->interactive ){
+		cout << "Exit with Ctrl+c" << endl;
+		theApp->Run();
+	}
 }
 
 ///
@@ -1132,7 +1296,7 @@ void GammaComboEngine::printBanner()
 	cout << endl
 		<< "\033[1mGammaCombo v" << VTAG << " -- Developed by Till Moritz Karbach\033[0m " << endl
 		<< "                   Copyright (C) 2014, moritz.karbach@gmail.com" << endl
-		<< "                   All rights reserved under GPLv3, http://www.gnu.org/licenses/gpl.txt" << endl << endl ;	
+		<< "                   All rights reserved under GPLv3, http://www.gnu.org/licenses/gpl.txt" << endl << endl ;
 }
 
 ///
@@ -1141,17 +1305,19 @@ void GammaComboEngine::printBanner()
 void GammaComboEngine::run()
 {
 	if ( arg->usage ) usage(); // print usage and exit
-	defineColors();
 	checkCombinationArg();
 	checkColorArg();
+	checkAsimovArg();
+	//scaleDownErrors();
 	if ( arg->nosyst ) disableSystematics();
 	makeAddDelCombinations();
 	defineColors();
 	printCombinerStructure();
 	customizeCombinerTitles();
-	setUpPlot(getFileBaseName());
+	setUpPlot();
 	scan();
 	if (!arg->isAction("pluginbatch")) savePlot();
+	cout << endl;
 	t.Stop();
 	t.Print();
 	runApplication();

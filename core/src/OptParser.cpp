@@ -17,71 +17,72 @@
 ///
 OptParser::OptParser()
 {
-  defineOptions();
+	defineOptions();
 
-  // always book these options
-  bookedOptions.push_back("debug");
-  bookedOptions.push_back("interactive");
-  bookedOptions.push_back("usage");
-  bookedOptions.push_back("var");
-  bookedOptions.push_back("verbose");
+	// always book these options
+	bookedOptions.push_back("debug");
+	bookedOptions.push_back("interactive");
+	bookedOptions.push_back("usage");
+	bookedOptions.push_back("var");
+	bookedOptions.push_back("verbose");
 
-  // Initialize the variables.
+	// Initialize the variables.
 	// For more complex arguments these are also the default values.
-	cacheStartingValues = false;
-  controlplot = false;
+	controlplot = false;
 	coverageCorrectionID = 0;
 	coverageCorrectionPoint = 0;
-  debug = false;
-  digits = -99;
-  enforcePhysRange = false;
-  group = "GammaCombo";
-  groupPos = "";
-  id = -99;
-  importance = false;
-  interactive = false;
-  jobdir = ".";
-  largest = false;
-  lightfiles = false;
-  nBBpoints = -99;
-  ndiv = 407;
-  ndivy = 407;
-  nosyst = false;
-  npoints1d = -99;
-  npoints2dx = -99;
-  npoints2dy = -99;
-  npointstoy = -99;
-  nrun = -99;
-  ntoys = -99;
-	parsavefile = "";
-  parevol = false;
-  plotid = -99;
+	debug = false;
+	digits = -99;
+	enforcePhysRange = false;
+	group = "GammaCombo";
+	groupPos = "";
+	id = -99;
+	importance = false;
+	interactive = false;
+	jobdir = ".";
+	largest = false;
+	lightfiles = false;
+	nBBpoints = -99;
+	ndiv = 407;
+	ndivy = 407;
+	nosyst = false;
+	npoints1d = -99;
+	npoints2dx = -99;
+	npoints2dy = -99;
+	npointstoy = -99;
+	nrun = -99;
+	ntoys = -99;
+	parevol = false;
+	plotid = -99;
 	plotlegend = true;
-  plotlegx = -99;
-  plotlegy = -99;
-  plotgroupx = -99;
-  plotgroupy = -99;
-  plotlog = false;
-  plotmagnetic = false;
-  plotnsigmacont = 2;
-  plotpluginonly = false;
-  plotprelim = false;
-  plotpulls = false;
-  plotsolutions = -99;
-  plotunoff = false;
-  pluginPlotRangeMax = -99;
-  pluginPlotRangeMin = -99;
-  intprob = false;
-  probforce = false;
-  probimprove = false;
+	plotlegx = -99;
+	plotlegy = -99;
+	plotlegsizex = -99;
+	plotlegsizey = -99;
+	plotgroupx = -99;
+	plotgroupy = -99;
+	plotlog = false;
+	plotmagnetic = false;
+	plotnsigmacont = 2;
+	plotpluginonly = false;
+	plotprelim = false;
+	plotpulls = false;
+	plotsolutions = -99;
+	plotunoff = false;
+	pluginPlotRangeMax = -99;
+	pluginPlotRangeMin = -99;
+	intprob = false;
+	probforce = false;
+	probimprove = false;
 	printcor = false;
-  scanforce = false;
-  scanrangeMax = -99;
-  scanrangeMin = -99;
-  scanrangeyMax = -99;
-  scanrangeyMin = -99;
-  usage = false;
-  verbose = false;
+	scanforce = false;
+	scanrangeMax = -99;
+	scanrangeMin = -99;
+	scanrangeyMax = -99;
+	scanrangeyMin = -99;
+	smooth2d = false;
+	usage = false;
+	verbose = false;
 }
 
 ///
@@ -90,67 +91,69 @@ OptParser::OptParser()
 ///
 void OptParser::defineOptions()
 {
-  availableOptions.push_back("action");
-  availableOptions.push_back("asimov");
-	availableOptions.push_back("cacheStartingValues");
-  availableOptions.push_back("combid");
+	availableOptions.push_back("action");
+	availableOptions.push_back("asimov");
+	availableOptions.push_back("asimovfile");
+	availableOptions.push_back("combid");
 	availableOptions.push_back("color");
-  availableOptions.push_back("controlplots");
+	availableOptions.push_back("controlplots");
 	availableOptions.push_back("covCorrect");
 	availableOptions.push_back("covCorrectPoint");
-  availableOptions.push_back("debug");
-  availableOptions.push_back("digits");
-  availableOptions.push_back("evol");
+	availableOptions.push_back("debug");
+	availableOptions.push_back("digits");
+	availableOptions.push_back("evol");
 	availableOptions.push_back("fix");
-  availableOptions.push_back("id");
-  availableOptions.push_back("importance");
-  availableOptions.push_back("interactive");
-  //availableOptions.push_back("jobdir");
-  availableOptions.push_back("jobs");
-  availableOptions.push_back("largest");
-  availableOptions.push_back("leg");
-  availableOptions.push_back("group");
-  availableOptions.push_back("grouppos");
-  availableOptions.push_back("lightfiles");
+	availableOptions.push_back("ext");
+	availableOptions.push_back("id");
+	availableOptions.push_back("importance");
+	availableOptions.push_back("interactive");
+	//availableOptions.push_back("jobdir");
+	availableOptions.push_back("jobs");
+	availableOptions.push_back("largest");
+	availableOptions.push_back("leg");
+	availableOptions.push_back("legsize");
+	availableOptions.push_back("group");
+	availableOptions.push_back("grouppos");
+	availableOptions.push_back("lightfiles");
 	availableOptions.push_back("loadParamsFile");
-  availableOptions.push_back("log");
-  availableOptions.push_back("magnetic");
-  //availableOptions.push_back("nBBpoints");
-  availableOptions.push_back("nosyst");
-  availableOptions.push_back("npoints");
-  availableOptions.push_back("npoints2dx");
-  availableOptions.push_back("npoints2dy");
-  availableOptions.push_back("npointstoy");
-  availableOptions.push_back("nrun");
-  availableOptions.push_back("ntoys");
-	availableOptions.push_back("parsavefile");
-  //availableOptions.push_back("pevid");
-  availableOptions.push_back("physrange");
-  availableOptions.push_back("plotid");
-  availableOptions.push_back("intprob");
-  availableOptions.push_back("po");
-  availableOptions.push_back("prelim");
-  availableOptions.push_back("probforce");
-  //availableOptions.push_back("probimprove");
-  availableOptions.push_back("ps");
-  availableOptions.push_back("pulls");
-  availableOptions.push_back("qh");
+	availableOptions.push_back("log");
+	availableOptions.push_back("magnetic");
+	//availableOptions.push_back("nBBpoints");
+	availableOptions.push_back("nosyst");
+	availableOptions.push_back("npoints");
+	availableOptions.push_back("npoints2dx");
+	availableOptions.push_back("npoints2dy");
+	availableOptions.push_back("npointstoy");
+	availableOptions.push_back("nrun");
+	availableOptions.push_back("ntoys");
+	//availableOptions.push_back("pevid");
+	availableOptions.push_back("physrange");
+	availableOptions.push_back("plotid");
+	availableOptions.push_back("intprob");
+	availableOptions.push_back("po");
+	availableOptions.push_back("prelim");
+	availableOptions.push_back("probforce");
+	//availableOptions.push_back("probimprove");
+	availableOptions.push_back("ps");
+	availableOptions.push_back("pulls");
+	availableOptions.push_back("qh");
 	availableOptions.push_back("sn");
 	availableOptions.push_back("sn2d");
-  availableOptions.push_back("scanforce");
-  availableOptions.push_back("scanrange");
-  availableOptions.push_back("scanrangey");
-  availableOptions.push_back("title");
-  availableOptions.push_back("usage");
-  availableOptions.push_back("unoff");
-  availableOptions.push_back("var");
-  availableOptions.push_back("verbose");
-  //availableOptions.push_back("relation");
-  availableOptions.push_back("pluginplotrange");
-  availableOptions.push_back("plotnsigmacont");
-  availableOptions.push_back("plot2dcl");
-  availableOptions.push_back("ndiv");
-  availableOptions.push_back("ndivy");
+	availableOptions.push_back("scanforce");
+	availableOptions.push_back("scanrange");
+	availableOptions.push_back("scanrangey");
+	availableOptions.push_back("smooth2d");
+	availableOptions.push_back("title");
+	availableOptions.push_back("usage");
+	availableOptions.push_back("unoff");
+	availableOptions.push_back("var");
+	availableOptions.push_back("verbose");
+	//availableOptions.push_back("relation");
+	availableOptions.push_back("pluginplotrange");
+	availableOptions.push_back("plotnsigmacont");
+	availableOptions.push_back("plot2dcl");
+	availableOptions.push_back("ndiv");
+	availableOptions.push_back("ndivy");
 	availableOptions.push_back("printcor");
 }
 
@@ -159,8 +162,8 @@ void OptParser::defineOptions()
 ///
 void OptParser::bookAllOptions()
 {
-  for ( int i=0; i<availableOptions.size(); i++ )
-    bookedOptions.push_back(availableOptions[i]);
+	for ( int i=0; i<availableOptions.size(); i++ )
+		bookedOptions.push_back(availableOptions[i]);
 }
 
 ///
@@ -169,20 +172,22 @@ void OptParser::bookAllOptions()
 void OptParser::bookPlottingOptions()
 {
 	bookedOptions.push_back("color");
-  bookedOptions.push_back("digits");
-  bookedOptions.push_back("leg");
-  bookedOptions.push_back("group");
-  bookedOptions.push_back("grouppos");
-  bookedOptions.push_back("log");
-  bookedOptions.push_back("magnetic");
-  bookedOptions.push_back("prelim");
-  bookedOptions.push_back("ps");
-  bookedOptions.push_back("plotnsigmacont");
-  bookedOptions.push_back("plot2dcl");
-  bookedOptions.push_back("ndiv");
-  bookedOptions.push_back("ndivy");
-  bookedOptions.push_back("title");
-  bookedOptions.push_back("unoff");
+	bookedOptions.push_back("digits");
+	bookedOptions.push_back("ext");
+	bookedOptions.push_back("leg");
+	bookedOptions.push_back("legsize");
+	bookedOptions.push_back("group");
+	bookedOptions.push_back("grouppos");
+	bookedOptions.push_back("log");
+	bookedOptions.push_back("magnetic");
+	bookedOptions.push_back("prelim");
+	bookedOptions.push_back("ps");
+	bookedOptions.push_back("plotnsigmacont");
+	bookedOptions.push_back("plot2dcl");
+	bookedOptions.push_back("ndiv");
+	bookedOptions.push_back("ndivy");
+	bookedOptions.push_back("title");
+	bookedOptions.push_back("unoff");
 }
 
 ///
@@ -192,20 +197,20 @@ void OptParser::bookPlottingOptions()
 ///
 void OptParser::bookPluginOptions()
 {
-  bookedOptions.push_back("controlplots");
-  bookedOptions.push_back("id");
-  bookedOptions.push_back("importance");
-  bookedOptions.push_back("jobs");
-  bookedOptions.push_back("lightfiles");
-  //bookedOptions.push_back("nBBpoints");
-  bookedOptions.push_back("npointstoy");
-  bookedOptions.push_back("nrun");
-  bookedOptions.push_back("ntoys");
-  //bookedOptions.push_back("pevid");
-  bookedOptions.push_back("physrange");
-  bookedOptions.push_back("intprob");
-  bookedOptions.push_back("po");
-  bookedOptions.push_back("pluginplotrange");
+	bookedOptions.push_back("controlplots");
+	bookedOptions.push_back("id");
+	bookedOptions.push_back("importance");
+	bookedOptions.push_back("jobs");
+	bookedOptions.push_back("lightfiles");
+	//bookedOptions.push_back("nBBpoints");
+	bookedOptions.push_back("npointstoy");
+	bookedOptions.push_back("nrun");
+	bookedOptions.push_back("ntoys");
+	//bookedOptions.push_back("pevid");
+	bookedOptions.push_back("physrange");
+	bookedOptions.push_back("intprob");
+	bookedOptions.push_back("po");
+	bookedOptions.push_back("pluginplotrange");
 }
 
 ///
@@ -213,18 +218,19 @@ void OptParser::bookPluginOptions()
 ///
 void OptParser::bookProbOptions()
 {
-  bookedOptions.push_back("asimov");
-  bookedOptions.push_back("evol");
-  bookedOptions.push_back("npoints");
-  bookedOptions.push_back("npoints2dx");
-  bookedOptions.push_back("npoints2dy");
-  bookedOptions.push_back("physrange");
-  bookedOptions.push_back("sn");
-  bookedOptions.push_back("sn2d");
-  bookedOptions.push_back("probforce");
-  //bookedOptions.push_back("probimprove");
-  bookedOptions.push_back("pulls");
-  bookedOptions.push_back("scanforce");
+	bookedOptions.push_back("asimov");
+	bookedOptions.push_back("asimovfile");
+	bookedOptions.push_back("evol");
+	bookedOptions.push_back("npoints");
+	bookedOptions.push_back("npoints2dx");
+	bookedOptions.push_back("npoints2dy");
+	bookedOptions.push_back("physrange");
+	bookedOptions.push_back("sn");
+	bookedOptions.push_back("sn2d");
+	bookedOptions.push_back("probforce");
+	//bookedOptions.push_back("probimprove");
+	bookedOptions.push_back("pulls");
+	bookedOptions.push_back("scanforce");
 	bookedOptions.push_back("scanforce");
 }
 
@@ -246,11 +252,11 @@ void OptParser::bookFlowcontrolOptions()
 ///
 void OptParser::bookOption(TString opt)
 {
-  if ( !isIn<TString>(availableOptions, opt) ){
-    cout << "OptParser::bookOption() : ERROR : No such option! Check OptParser::defineOptions()." << endl;
-    return;
-  }
-  bookedOptions.push_back(opt);
+	if ( !isIn<TString>(availableOptions, opt) ){
+		cout << "OptParser::bookOption() : ERROR : No such option! Check OptParser::defineOptions()." << endl;
+		return;
+	}
+	bookedOptions.push_back(opt);
 }
 
 ///
@@ -258,7 +264,7 @@ void OptParser::bookOption(TString opt)
 ///
 bool OptParser::isAction(TString s)
 {
-  return isIn<TString>(action, s);
+	return isIn<TString>(action, s);
 }
 
 ///
@@ -266,7 +272,7 @@ bool OptParser::isAction(TString s)
 ///
 bool OptParser::isQuickhack(int id)
 {
-  return isIn<int>(qh, id);
+	return isIn<int>(qh, id);
 }
 
 ///
@@ -321,9 +327,13 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"Disable the legend with --leg off .\n"
 			"2d plots: set the position of the legend. "
 			"Format: --leg xmin:ymin in normalized coordinates [0,1]. Default: 0.17:0.75", false, "default", "string");
+	TCLAP::ValueArg<string> plotlegsizeArg("", "legsize", "Adjust the plot legend size.\n"
+			"2d plots: set the size of the legend. "
+			"Format: --legsize xsize:ysize in normalized coordinates [0,1]. Default: 0.38:0.15", false, "default", "string");
 	TCLAP::ValueArg<string> pluginplotrangeArg("", "pluginplotrange", "Restrict the Plugin plot to a given range to "
 			"rejcet low-statistics outliers. Format: --pluginplotrange min-max.", false, "default", "string");
 	TCLAP::ValueArg<int> plotnsigmacontArg("", "ncontours", "plot this many sigma contours in 2d plots (max 5)", false, 2, "int");
+	TCLAP::ValueArg<string> filenameadditionArg("","ext","Add this piece into the file name (in case you don't want files/plots to be overwritten", false, "", "string");
 	TCLAP::ValueArg<string> plotgroupArg("", "group", "Set the group logo. Use '--group off' to disable the logo. "
 			"See also --grouppos. Default: GammaCombo", false, "GammaCombo", "string");
 	TCLAP::ValueArg<string> plotgroupposArg("", "grouppos", "Set the position of the group logo. "
@@ -336,9 +346,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::ValueArg<int> ntoysArg("", "ntoys", "number of toy experiments per job. Default: 25", false, 25, "int");
 	TCLAP::ValueArg<int> nrunArg("", "nrun", "Number of toy run. To be used with --action pluginbatch.", false, 1, "int");
 	TCLAP::ValueArg<int> npointsArg("", "npoints", "Number of scan points used by the Prob method. \n"
-		"1D plots: Default 100 points. \n"
-		"2D plots: Default 50 points per axis. In the 2D case, equal number of points "
-		"for both axes are set. See also --npoints2dx and --npoints2dy.", false, -1, "int");
+			"1D plots: Default 100 points. \n"
+			"2D plots: Default 50 points per axis. In the 2D case, equal number of points "
+			"for both axes are set. See also --npoints2dx and --npoints2dy.", false, -1, "int");
 	TCLAP::ValueArg<int> npoints2dxArg("", "npoints2dx", "Number of 2D scan points, x axis. Default: 50", false, -1, "int");
 	TCLAP::ValueArg<int> npoints2dyArg("", "npoints2dy", "Number of 2D scan points, y axis. Default: 50", false, -1, "int");
 	TCLAP::ValueArg<int> npointstoyArg("", "npointstoy", "Number of scan points used by the plugin method. Default: 100", false, 100, "int");
@@ -382,6 +392,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::SwitchArg importanceArg("", "importance", "Enable importance sampling for plugin toys.", false);
 	TCLAP::SwitchArg nosystArg("", "nosyst", "Sets all systematic errors to zero.", false);
 	TCLAP::SwitchArg printcorArg("", "printcor", "Print the correlation matrix of each solution found.", false);
+	TCLAP::SwitchArg smooth2dArg("", "smooth2d", "Smooth 2D p-value or cl histograms for nicer contour (particularly useful for 2D plugin)", false);
 
 	// --------------- aruments that can be given multiple times
 	vector<string> vAction;
@@ -446,7 +457,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::MultiArg<string> loadParamsFileArg("", "parfile", "Load starting parameters for the corresponding "
 			"combination from this particular file. "
 			"If 'default' is given, the default file for that combination is used, which is found in "
-			"plots/par/*_RO.dat ."
+			"plots/par/*_start.dat ."
 			"Example: --parfile parsForFirstCombination.dat --parfile parsForSecondCombination.dat", false, "string");
 	TCLAP::MultiArg<int> asimovArg("", "asimov", "Run an Asimov toy, in which all observables are set to "
 			"truth values defined in a parameter .dat file. This can be the default one, or a configured one "
@@ -457,6 +468,13 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"This will run an Asimov toy for the first combination at point 2, and another one "
 			"for the second combination at point 1. If you only want to run an Asimov for the second "
 			"combination, select asimov point 0 for the first one.", false, "int");
+	TCLAP::MultiArg<string> asimovFileArg("", "asimovfile", "Load the parameter point to set an Asimov "
+			"toy from this file. "
+			"If 'default' is given, the default file for that combination is used, which is found in\n"
+			"plots/par/*_genpoints.dat\n"
+			"The argument can be given multiple times to configure different "
+			"files for different Asimov combiners. "
+			"Example: --asimovfile parameters.dat", false, "string");
 
 	//
 	// let TCLAP parse the command line
@@ -470,6 +488,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "title" ) ) cmd.add( titleArg );
 	if ( isIn<TString>(bookedOptions, "sn2d" ) ) cmd.add(sn2dArg);
 	if ( isIn<TString>(bookedOptions, "sn" ) ) cmd.add(snArg);
+	if ( isIn<TString>(bookedOptions, "smooth2d" ) ) cmd.add( smooth2dArg );
 	if ( isIn<TString>(bookedOptions, "scanrangey" ) ) cmd.add( scanrangeyArg );
 	if ( isIn<TString>(bookedOptions, "scanrange" ) ) cmd.add( scanrangeArg );
 	if ( isIn<TString>(bookedOptions, "scanforce" ) ) cmd.add( scanforceArg );
@@ -503,6 +522,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "log" ) ) cmd.add( plotlogArg );
 	if ( isIn<TString>(bookedOptions, "loadParamsFile" ) ) cmd.add( loadParamsFileArg );
 	if ( isIn<TString>(bookedOptions, "lightfiles" ) ) cmd.add( lightfilesArg );
+	if ( isIn<TString>(bookedOptions, "legsize" ) ) cmd.add( plotlegsizeArg );
 	if ( isIn<TString>(bookedOptions, "leg" ) ) cmd.add( plotlegArg );
 	if ( isIn<TString>(bookedOptions, "largest" ) ) cmd.add( largestArg );
 	if ( isIn<TString>(bookedOptions, "jobs" ) ) cmd.add(jobsArg);
@@ -513,6 +533,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "group" ) ) cmd.add( plotgroupArg );
 	if ( isIn<TString>(bookedOptions, "grouppos" ) ) cmd.add( plotgroupposArg );
 	if ( isIn<TString>(bookedOptions, "fix" ) ) cmd.add(fixArg);
+	if ( isIn<TString>(bookedOptions, "ext" ) ) cmd.add(filenameadditionArg);
 	if ( isIn<TString>(bookedOptions, "evol" ) ) cmd.add(parevolArg);
 	if ( isIn<TString>(bookedOptions, "digits" ) ) cmd.add(digitsArg);
 	if ( isIn<TString>(bookedOptions, "debug" ) ) cmd.add(debugArg);
@@ -521,6 +542,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "controlplots" ) ) cmd.add(controlplotArg);
 	if ( isIn<TString>(bookedOptions, "combid" ) ) cmd.add(combidArg);
 	if ( isIn<TString>(bookedOptions, "color" ) ) cmd.add(colorArg);
+	if ( isIn<TString>(bookedOptions, "asimovfile" ) ) cmd.add( asimovFileArg );
 	if ( isIn<TString>(bookedOptions, "asimov") ) cmd.add(asimovArg);
 	if ( isIn<TString>(bookedOptions, "action") ) cmd.add(actionArg);
 	cmd.parse( argc, argv );
@@ -533,6 +555,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	controlplot       = controlplotArg.getValue();
 	digits            = digitsArg.getValue();
 	enforcePhysRange  = physrangeArg.getValue();
+	filenameaddition  = filenameadditionArg.getValue();
 	group             = plotgroupArg.getValue();
 	id                = idArg.getValue();
 	importance        = importanceArg.getValue();
@@ -569,6 +592,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	qh                = qhArg.getValue();
 	savenuisances1d   = snArg.getValue();
 	scanforce         = scanforceArg.getValue();
+	smooth2d          = smooth2dArg.getValue();
 	usage             = usageArg.getValue();
 	verbose           = verboseArg.getValue();
 
@@ -621,10 +645,13 @@ void OptParser::parseArguments(int argc, char* argv[])
 	for ( int i = 0; i < tmp.size(); i++ ) title.push_back(tmp[i]);
 	if ( tmp.size()==0 ) title.push_back("default");
 
-	// --loadParamsFile
+	// --parfile
 	tmp = loadParamsFileArg.getValue();
 	for ( int i = 0; i < tmp.size(); i++ ) loadParamsFile.push_back(tmp[i]);
-	if ( tmp.size()==0 ) loadParamsFile.push_back("default");
+
+	// --asimovfile
+	tmp = asimovFileArg.getValue();
+	for ( int i = 0; i < tmp.size(); i++ ) asimovfile.push_back(tmp[i]);
 
 	// --debug
 	debug = debugArg.getValue();
@@ -704,6 +731,15 @@ void OptParser::parseArguments(int argc, char* argv[])
 		plotlegend = true;
 		parsePosition(plotlegArg.getValue(), plotlegx, plotlegy, usage);
 	}
+
+	// --legsize
+	usage = "";
+	usage += "Required format: '--legsize 0.a:0.b'\n";
+	usage += "  Examples:\n";
+	usage += "  --legsize 0.4:0.2\n";
+	usage += "  --legsize 0.4:def\n";
+	usage += "  --legsize def:0.2\n";
+	parsePosition(plotlegsizeArg.getValue(), plotlegsizex, plotlegsizey, usage);
 
 	// --grouppos
 	usage = "";
@@ -823,22 +859,22 @@ void OptParser::parsePosition(TString parseMe, float &x, float &y, TString usage
 ///
 void OptParser::parseRange(TString parseMe, float &min, float &max)
 {
-  if ( parseMe==TString("default") ){
-    min = -99;
-    max = -99;
-  }
-  else {
-    TString minStr = parseMe;
-    TString maxStr = parseMe;
-    minStr.Replace(minStr.Index(":"), minStr.Sizeof(), "");
-    maxStr.Replace(0, maxStr.Index(":")+1, "");
-    min = minStr.Atof();
-    max = maxStr.Atof();
-  }
-  if ( min>max ){
-    cout << "Argument error: plugin plot range min>max." << endl;
-    exit(1);
-  }
+	if ( parseMe==TString("default") ){
+		min = -99;
+		max = -99;
+	}
+	else {
+		TString minStr = parseMe;
+		TString maxStr = parseMe;
+		minStr.Replace(minStr.Index(":"), minStr.Sizeof(), "");
+		maxStr.Replace(0, maxStr.Index(":")+1, "");
+		min = minStr.Atof();
+		max = maxStr.Atof();
+	}
+	if ( min>max ){
+		cout << "Argument error: plugin plot range min>max." << endl;
+		exit(1);
+	}
 }
 
 ///
@@ -870,7 +906,7 @@ int OptParser::convertToIntWithCheck(TString parseMe, TString usage)
 		cout << usage << endl;
 		exit(1);
 	}
-	return parseMe.Atoi();	
+	return parseMe.Atoi();
 }
 
 ///
@@ -884,7 +920,7 @@ int OptParser::convertToDigitWithCheck(TString parseMe, TString usage)
 		cout << usage << endl;
 		exit(1);
 	}
-	return parseMe.Atoi();	
+	return parseMe.Atoi();
 }
 
 ///
@@ -897,7 +933,7 @@ int OptParser::convertToDigitWithCheck(TString parseMe, TString usage)
 ///
 /// \param parseMe		- the string provided to -c
 /// \param resultCmbId		- resulting combiner ID
-/// \param resultAddDelPdf	- vector of all PDF IDs, that are requested to be added or deleted 
+/// \param resultAddDelPdf	- vector of all PDF IDs, that are requested to be added or deleted
 /// 				 	to/from the combiner. If it is supposed to be added, a positive PDF ID
 ///					is stored, if it is supposed to be deleted, a negative PDF ID is stored
 ///
@@ -912,10 +948,10 @@ void OptParser::parseCombinerString(TString parseMe, int& resultCmbId, vector<in
 	usage += "  -c 26:+12\n";
 	usage += "  -c 26:+12,-3\n";
 	// simplest case, no modification
-	if ( !parseMe.Contains(":") ){ 
+	if ( !parseMe.Contains(":") ){
 		resultCmbId = convertToDigitWithCheck(parseMe, usage);
 		return;
-	}	
+	}
 	// advanced case, there are PDF modifications
 	// 1. parse leading combiner ID
 	TObjArray *array = parseMe.Tokenize(":"); // split string at ":"
@@ -938,5 +974,16 @@ void OptParser::parseCombinerString(TString parseMe, int& resultCmbId, vector<in
 	}
 	delete array;
 	delete arrayCommaList;
+}
+
+///
+/// Check if a combiner with a given ID is an Asimov combiner.
+/// The ID is the position of the -c argument on the command line.
+///
+/// \param id - position of -c argument
+///
+bool OptParser::isAsimovCombiner(int id)
+{
+	return id<asimov.size() && asimov[id]>0;
 }
 

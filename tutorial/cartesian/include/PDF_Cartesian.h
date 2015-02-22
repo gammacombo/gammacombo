@@ -18,7 +18,7 @@ using namespace Utils;
 class PDF_Cartesian : public PDF_Abs
 {
 	public:
-		PDF_Cartesian(TString cObs="lumi3fb", TString cErr="lumi3fb", TString cCor="lumi3fb");
+		PDF_Cartesian(TString cObs, TString cErr, TString cCor);
 		~PDF_Cartesian();
 		void          buildPdf();
 		void          initObservables();
