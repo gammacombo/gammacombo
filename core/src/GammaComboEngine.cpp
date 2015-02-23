@@ -759,6 +759,8 @@ void GammaComboEngine::scanStrategy2d(MethodProbScan *scanner, ParameterCache *p
 			scanner->loadParameters(solutions[j]);
 			scanner->scan2d();
 		}
+		delete s1;
+		delete s2;
 	}
 	// otherwise load each starting value found
 	else {
@@ -979,7 +981,7 @@ void GammaComboEngine::make2dProbScan(MethodProbScan *scanner, int cId)
 {
 	// load start parameters
 	ParameterCache *pCache = new ParameterCache(arg);
-	pCache->loadPoints(getStartParFileName(cId));
+	loadStartParameters(scanner, pCache, cId);
 	// scan
 	scanner->initScan();
 	scanStrategy2d(scanner,pCache);
@@ -1270,7 +1272,7 @@ void GammaComboEngine::scan()
 		/////////////////////////////////////////////////////
 
 		if ( i<arg->combid.size()-1 ) {
-			cout << "\n--------------------------------------------------\n" << endl;
+			cout << "\n--------------------------------------------------------------------\n" << endl;
 		}
 	}
 }

@@ -434,6 +434,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"4: move plotted numbers a bit to the left to not cover 1d plot axis.\n"
 			"5: Test toy generation in the 1d plugin method. At each scan point, 10 toys are printed out- but nothing is fit.\n"
 			"8: Switch on new CL interval maker output.\n"
+			"9: Don't remove duplicate/equivalent solutions.\n"
 			, false, "int");
 	TCLAP::MultiArg<string> titleArg("", "title", "Override the title of a combination. "
 			"If 'default' is given, the default title for that combination is used. "

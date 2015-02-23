@@ -22,7 +22,7 @@ void ParameterCache::printFitResultToOutStream(ofstream &out, RooSlimFitResult *
 
 	out << "### FCN: " << slimFitRes->minNll() << ", EDM: " << slimFitRes->edm() << endl;
 	out << "### COV quality: " << slimFitRes->covQual() << ", status: " << slimFitRes->status()
-		<< ", confirmed: " << (slimFitRes->_isConfirmed?"yes":"no") << endl;
+		<< ", confirmed: " << (slimFitRes->isConfirmed()?"yes":"no") << endl;
 	RooArgList argList = slimFitRes->floatParsFinal();
 	argList.add(slimFitRes->constPars());
 	argList.sort();

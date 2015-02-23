@@ -67,7 +67,6 @@ class RooSlimFitResult : public TObject
 		Double_t	      _minNLL;
 		Int_t           _covQual;
 		Int_t           _status;
-		bool            _isConfirmed;
 		TMatrixDSym     _correlationMatrix;
 
 		// dummy variables only needed for constPars() and floatParsFinal():
@@ -75,6 +74,9 @@ class RooSlimFitResult : public TObject
 		mutable RooArgList        _floatParsFinalDummy; //! mutables can be changed in const methods
 
 		ClassDef(RooSlimFitResult, 1) // defines version number, ClassDef is a macro
+
+	private:
+		bool            _isConfirmed;
 };
 
 //
@@ -116,6 +118,8 @@ template<class FitResult> void RooSlimFitResult::init(const FitResult *r, bool s
 		_correlationMatrix.ResizeTo(r->correlationMatrix());
 		_correlationMatrix = r->correlationMatrix();
 	}
+	// initialize other members
+	_isConfirmed = false;
 }
 
 #endif

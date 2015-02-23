@@ -329,16 +329,16 @@ bool MethodAbsScan::loadScanner(TString fName)
 		hChi2min = (TH1F*)obj;
 		hChi2min->SetName("hChi2min"+getUniqueRootName());
 	}
-	// load solutions: try the first ten
+	// load solutions: try the first one hundred
 	solutions.clear();
-	int nSol = 10;
+	int nSol = 100;
 	for ( int i=0; i<nSol; i++ ){
 		RooSlimFitResult *r = (RooSlimFitResult*)f->Get(Form("sol%i",i));
 		if ( !r ) break;
 		solutions.push_back(r);
 	}
 	if ( f->Get(Form("sol%i",nSol)) ){
-		cout << "MethodAbsScan::loadScanner() : WARNING : Not all solutions read from : " << fName << endl;
+		cout << "MethodAbsScan::loadScanner() : WARNING : Only the first 100 solutions read from: " << fName << endl;
 	}
 	return true;
 }
@@ -994,6 +994,7 @@ void MethodAbsScan::sortSolutions()
 		solutions.push_back(solutionsUnSorted[iMin]);
 		solutionsUnSorted.erase(solutionsUnSorted.begin()+iMin);
 	}
+	if ( arg->debug ) cout << "MethodAbsScan::sortSolutions() : solutions sorted: " << solutions.size() << endl;
 }
 
 ///
@@ -1113,6 +1114,7 @@ void MethodAbsScan::confirmSolutions()
 	// do NOT delete the old solutions! They are still in allResults and curveResults.
 	solutions = confirmedSolutions;
 	sortSolutions();
+	if ( arg->debug ) printLocalMinima();
 	removeDuplicateSolutions();
 	// reset parameters
 	setParameters(w, parsName, frCache.getParsAtFunctionCall());
@@ -1124,8 +1126,12 @@ void MethodAbsScan::confirmSolutions()
 /// unconfirmed solutions converge to the same true local minimum
 /// when refitted by confirmSolutions().
 ///
+/// No solutions will be removed if --qh 9 is given.
+/// \todo upgrade the quickhack to a proper option
+///
 void MethodAbsScan::removeDuplicateSolutions()
 {
+	if ( arg->isQuickhack(9) ) return;
 	vector<RooSlimFitResult*> solutionsNoDup;
 	for ( int i=0; i<solutions.size(); i++ ){
 		bool found = false;
@@ -1134,6 +1140,17 @@ void MethodAbsScan::removeDuplicateSolutions()
 			if ( found==true ) continue;
 		}
 		if ( !found ) solutionsNoDup.push_back(solutions[i]);
+		else{
+			if ( arg->debug ) cout << "MethodAbsScan::removeDuplicateSolutions() : removing duplicate solution " << i << endl;
+		}
+	}
+	if ( solutions.size()!=solutionsNoDup.size() ){
+		cout << endl;
+		if ( arg->debug ) cout << "MethodAbsScan::removeDuplicateSolutions() : ";
+		cout << "INFO : some equivalent solutions were removed. In case of 2D scans" << endl;
+		cout << "       many equivalent solutions may lay on a contour of constant chi2, in" << endl;
+		cout << "       that case removing them is perhaps not desired. You can keep all solutions" << endl;
+		cout << "       using --qh 9\n" << endl;
 	}
 	solutions = solutionsNoDup;
 }
