@@ -473,7 +473,10 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"2D plots: markers are plotted at the position of the solution.\n"
 			" 0: don't plot\n"
 			" 1: plot markers at all local minima\n"
-			" 2: plot markers only at best-fit point and equivalent ones (DeltaChi2<0.01).",
+			" 2: plot markers only at best-fit point and equivalent ones (DeltaChi2<0.01).\n"
+			"When --ps is only given once, its value will be used for all plotted "
+			"combiners. If given less than the number of combinations (-c), the "
+			"remaining ones will not plot any solution.",
 			false, "int");
 
 	//
