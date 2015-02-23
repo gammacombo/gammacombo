@@ -179,8 +179,9 @@ void MethodAbsScan::initScan()
 	// line argument is set.
 	RooRealVar *par1 = w->var(scanVar1);
 	if ( !par1 ){
-		cout << "MethodAbsScan::initScan() : ERROR : No such scan parameter: " << scanVar1 << endl;
-		cout << "MethodAbsScan::initScan() :         Choose an existing one using: --var par" << endl << endl;
+		if ( arg->debug ) cout << "MethodAbsScan::initScan() : ";
+		cout << "ERROR : No such scan parameter: " << scanVar1 << endl;
+		cout << "        Choose an existing one using: --var par" << endl << endl;
 		cout << "  Available parameters:" << endl;
 		cout << "  ---------------------" << endl << endl;
 		for ( int i=0; i<combiner->getParameterNames().size(); i++ ){
@@ -189,10 +190,8 @@ void MethodAbsScan::initScan()
 		cout << endl;
 		exit(1);
 	}
-	if ( arg->scanrangeMin != arg->scanrangeMax ){
-		RooMsgService::instance().setGlobalKillBelow(ERROR);
-		par1->setRange("scan", arg->scanrangeMin, arg->scanrangeMax);
-		RooMsgService::instance().setGlobalKillBelow(INFO);
+	if ( !m_xrangeset && arg->scanrangeMin != arg->scanrangeMax ){
+		setXscanRange(arg->scanrangeMin,arg->scanrangeMax);
 	}
 	setLimit(w, scanVar1, "scan");
 	float min1 = par1->getMin();
@@ -209,8 +208,9 @@ void MethodAbsScan::initScan()
 	{
 		RooRealVar *par2 = w->var(scanVar2);
 		if ( !par2 ){
-			cout << "MethodAbsScan::initScan() : ERROR : No such scan parameter: " << scanVar2 << endl;
-			cout << "MethodAbsScan::initScan() :         Choose an existing one using: --var par" << endl << endl;
+			if ( arg->debug ) cout << "MethodAbsScan::initScan() : ";
+			cout << "ERROR : No such scan parameter: " << scanVar2 << endl;
+			cout << "        Choose an existing one using: --var par" << endl << endl;
 			cout << "  Available parameters:" << endl;
 			cout << "  ---------------------" << endl << endl;
 			for ( int i=0; i<combiner->getParameterNames().size(); i++ ){
@@ -219,10 +219,8 @@ void MethodAbsScan::initScan()
 			cout << endl;
 			exit(1);
 		}
-		if ( arg->scanrangeyMin != arg->scanrangeyMax ){
-			RooMsgService::instance().setGlobalKillBelow(ERROR);
-			par2->setRange("scan", arg->scanrangeyMin, arg->scanrangeyMax);
-			RooMsgService::instance().setGlobalKillBelow(INFO);
+		if ( !m_yrangeset && arg->scanrangeyMin != arg->scanrangeyMax ){
+			setYscanRange(arg->scanrangeyMin,arg->scanrangeyMax);
 		}
 		setLimit(w, scanVar2, "scan");
 		float min2 = par2->getMin();
@@ -1230,3 +1228,24 @@ void MethodAbsScan::plotPulls(int nSolution)
 	p.loadParsFromSolution(nSolution);
 	p.plotPulls();
 }
+
+void MethodAbsScan::setXscanRange(float min, float max)
+{
+	RooRealVar *par1 = w->var(scanVar1);
+	assert(par1);
+	RooMsgService::instance().setGlobalKillBelow(ERROR);
+	par1->setRange("scan", min, max);
+	RooMsgService::instance().setGlobalKillBelow(INFO);
+	m_xrangeset = true;
+}
+
+void MethodAbsScan::setYscanRange(float min, float max)
+{
+	RooRealVar *par2 = w->var(scanVar2);
+	assert(par2);
+	RooMsgService::instance().setGlobalKillBelow(ERROR);
+	par2->setRange("scan", min, max);
+	RooMsgService::instance().setGlobalKillBelow(INFO);
+	m_yrangeset = true;
+}
+

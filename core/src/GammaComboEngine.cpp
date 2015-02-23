@@ -735,16 +735,17 @@ void GammaComboEngine::scanStrategy2d(MethodProbScan *scanner, ParameterCache *p
 			" 2. scan in second variable: " + scanner->getScanVar2Name() + "\n"
 			" 3. scan starting from each solution found in 1. and 2." << endl;
 		Combiner *c = scanner->getCombiner();
-		cout << "\n1D scan for " + scanner->getScanVar1Name() + ":\n" << endl;
+		cout << "\n1D scan for X variable, " + scanner->getScanVar1Name() + ":\n" << endl;
 		MethodProbScan *s1 = new MethodProbScan(c);
 		s1->setScanVar1(scanner->getScanVar1Name());
 		s1->initScan();
 		scanStrategy1d(s1,pCache);
 		if ( arg->verbose ) s1->printLocalMinima();
 
-		cout << "\n1D scan for " + scanner->getScanVar2Name() + ":\n" << endl;
+		cout << "\n1D scan for Y variable, " + scanner->getScanVar2Name() + ":\n" << endl;
 		MethodProbScan *s2 = new MethodProbScan(c);
 		s2->setScanVar1(scanner->getScanVar2Name());
+		s2->setXscanRange(arg->scanrangeyMin,arg->scanrangeyMax);
 		s2->initScan();
 		scanStrategy1d(s2,pCache);
 		if ( arg->verbose ) s2->printLocalMinima();

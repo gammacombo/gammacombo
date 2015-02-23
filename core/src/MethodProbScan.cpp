@@ -220,11 +220,14 @@ int MethodProbScan::scan1d(bool fast, bool reverse)
 			allResults.push_back(r);
 			bestMinFoundInScan = TMath::Min((double)chi2minScan, (double)bestMinFoundInScan);
 
+			TString warningChi2Neg;
 			if ( chi2minScan < 0 ){
 				float newChi2minScan = chi2minGlobal + 25.; // 5sigma more than best point
-				cout << "MethodProbScan::scan1d() : WARNING : " << title;
-				cout << " chi2 negative: " << chi2minScan;
-				cout << " setting to: " << newChi2minScan << endl;
+				warningChi2Neg = "MethodProbScan::scan1d() : WARNING : " + title;
+				warningChi2Neg += TString(Form(" chi2 negative for scan point %i: %f",i,chi2minScan));
+				warningChi2Neg += " setting to: " + TString(Form("%f",newChi2minScan));
+				//cout << warningChi2Neg << "\r" << flush;
+				cout << warningChi2Neg << endl;
 				chi2minScan = newChi2minScan;
 			}
 

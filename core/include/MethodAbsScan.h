@@ -117,6 +117,8 @@ class MethodAbsScan
 		void                            setChi2minGlobal(double x);
 		void                            setSolutions(vector<RooSlimFitResult*> s);
 		inline void                     setVerbose(bool yesNo=true){verbose = yesNo;};
+		void 							setXscanRange(float min, float max);
+		void 							setYscanRange(float min, float max);
 
 		vector<RooSlimFitResult*> allResults;           ///< All fit results we encounter along the scan.
 		vector<RooSlimFitResult*> curveResults;         ///< All fit results of the the points that make it into the 1-CL curve.
@@ -169,6 +171,8 @@ class MethodAbsScan
 		int nWarnings;              ///< number of warnings printed in getScanVarSolution()
 		OptParser* arg;             ///< command line options
 		Combiner* combiner;         ///< the combination
+		bool m_xrangeset; 			///< true if the x range was set manually (setXscanRange())
+		bool m_yrangeset; 			///< true if the y range was set manually (setYscanRange())
 
 	private:
 
