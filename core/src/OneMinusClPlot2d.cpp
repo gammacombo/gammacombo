@@ -708,7 +708,7 @@ void OneMinusClPlot2d::drawLegend()
 			g->SetMarkerStyle(markerstyle[styleId]);
 			g->SetMarkerSize(markersize[styleId]);
 			TString options = "f";
-			if ( arg->plotsolutions ) options += "p"; // only plot marker symbol when solutions are plotted
+			if ( scanners[i]->getDrawSolution() ) options += "p"; // only plot marker symbol when solutions are plotted
 			leg->AddEntry(g, scanners[i]->getTitle(), options);
 		}
 	}
@@ -909,8 +909,8 @@ void OneMinusClPlot2d::drawSolutions()
 		if ( arg->debug ) cout << "OneMinusClPlot2d::drawSolutions() : adding solutions for scanner " << i << " ..." << endl;
 		if ( scanners[i]->getNSolutions()==0 ){
 			cout << "OneMinusClPlot2d::drawSolutions() : WARNING : \n"
-								     "        Plot solutions requested but no solutions found!\n"
-													"        Perform a 1d scan first or use MethodAbsScan::setSolutions()." << endl;
+					"        Plot solutions requested but no solutions found!\n"
+					"        Perform a 1d scan first or use MethodAbsScan::setSolutions()." << endl;
 		}
 		int markerColor = 0;
 		int styleId = i;
@@ -927,7 +927,7 @@ void OneMinusClPlot2d::drawSolutions()
 		for ( int iSol=0; iSol<scanners[i]->getNSolutions(); iSol++ )
 		{
 			/// if option 2 is given, only plot best fit points and equivalent ones
-			if ( arg->plotsolutions==2
+			if ( scanners[i]->getDrawSolution()==2
 					&& iSol>0
 					&& scanners[i]->getSolution(iSol)->minNll() - scanners[i]->getSolution(0)->minNll() > 0.01 ) continue;
 			float xSol = scanners[i]->getScanVar1Solution(iSol);

@@ -41,7 +41,7 @@ MethodProbScan::MethodProbScan(PDF_Generic_Abs* PDF, OptParser* opt, TH1F* hcl, 
 	scanVar1            = arg->var[0];
 	if ( arg->var.size()>1 ) scanVar2 = arg->var[1];
 	verbose             = arg->verbose;
-	drawSolution        = arg->plotsolutions;
+	drawSolution        = 0;
 	nPoints1d           = arg->npoints1d;
 	nPoints2dx          = arg->npoints2dx;
 	nPoints2dy          = arg->npoints2dy;

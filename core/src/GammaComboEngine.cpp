@@ -865,6 +865,7 @@ void GammaComboEngine::make2dPluginScan(MethodPluginScan *scannerPlugin, int cId
 void GammaComboEngine::make1dProbPlot(MethodProbScan *scanner, int cId)
 {
 	if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
+		scanner->setDrawSolution(arg->plotsolutions[cId]);
 		scanner->plotOn(plot);
 		int colorId = cId;
 		if ( arg->color.size()>cId ) colorId = arg->color[cId];
@@ -922,6 +923,7 @@ void GammaComboEngine::make1dPluginPlot(MethodPluginScan *sPlugin, MethodProbSca
 {
 	make1dProbPlot(sProb, cId);
 	sPlugin->setLineColor(kBlack);
+	sPlugin->setDrawSolution(arg->plotsolutions[cId]);
 	sPlugin->plotOn(plot);
 	plot->Draw();
 }
@@ -937,10 +939,12 @@ void GammaComboEngine::make1dPluginPlot(MethodPluginScan *sPlugin, MethodProbSca
 ///
 void GammaComboEngine::make2dPluginPlot(MethodPluginScan *sPlugin, MethodProbScan *sProb, int cId)
 {
-	sProb->setTitle( sProb->getTitle() + " (Prob)");
+	sProb->setTitle(sProb->getTitle() + " (Prob)");
+	sProb->setDrawSolution(arg->plotsolutions[cId]);
 	sProb->plotOn(plot);
 	sProb->setLineColor(colorsLine[cId]);
-	sPlugin->setTitle( sPlugin->getTitle() + " (Plugin)");
+	sPlugin->setTitle(sPlugin->getTitle() + " (Plugin)");
+	sPlugin->setDrawSolution(arg->plotsolutions[cId]);
 	sPlugin->plotOn(plot);
 	plot->Draw();
 }
@@ -959,6 +963,7 @@ void GammaComboEngine::make1dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId)
 	if ( arg->color.size()>cId ) colorId = arg->color[cId];
 	sPlugin->setLineColor(colorsLine[colorId]);
 	sPlugin->setTextColor(colorsText[colorId]);
+	sPlugin->setDrawSolution(arg->plotsolutions[cId]);
 	sPlugin->plotOn(plot);
 	plot->Draw();
 }
@@ -968,8 +973,9 @@ void GammaComboEngine::make1dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId)
 ///
 /// \param sPlugin - the plugin scanner
 ///
-void GammaComboEngine::make2dPluginOnlyPlot(MethodPluginScan *sPlugin)
+void GammaComboEngine::make2dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId)
 {
+	sPlugin->setDrawSolution(arg->plotsolutions[cId]);
 	sPlugin->plotOn(plot);
 	plot->Draw();
 }
@@ -1007,6 +1013,7 @@ void GammaComboEngine::make2dProbScan(MethodProbScan *scanner, int cId)
 ///
 void GammaComboEngine::make2dProbPlot(MethodProbScan *scanner, int cId)
 {
+	scanner->setDrawSolution(arg->plotsolutions[cId]);
 	scanner->plotOn(plot);
 	scanner->setLineColor(colorsLine[cId]);
 	plot->Draw();
@@ -1260,7 +1267,7 @@ void GammaComboEngine::scan()
 						make2dPluginScan(scannerPlugin, i);
 					}
 					if ( arg->plotpluginonly ){
-						make2dPluginOnlyPlot(scannerPlugin);
+						make2dPluginOnlyPlot(scannerPlugin, i);
 					}
 					else {
 						make2dPluginPlot(scannerPlugin, scannerProb, i);

@@ -67,7 +67,6 @@ OptParser::OptParser()
 	plotpluginonly = false;
 	plotprelim = false;
 	plotpulls = false;
-	plotsolutions = -99;
 	plotunoff = false;
 	pluginPlotRangeMax = -99;
 	pluginPlotRangeMin = -99;
@@ -311,18 +310,6 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"Available IDs are 1-6. If not given, all control plots are made.", false, 0, "int");
 	TCLAP::ValueArg<int> digitsArg("s", "digits", "Set the number of printed"
 			" digits right of the decimal point. Default is automatic.", false, -1, "int");
-	TCLAP::ValueArg<int> plotsolutionsArg("", "ps", "Include solutions in the plots.\n"
-			"1d plots: the numerical value and 1sigma errors are plotted.\n"
-			" 0: don't plot\n"
-			" 1: at central value\n"
-			" 2: at left interval boundary\n"
-			" 3: at right interval boundary.\n"
-			" 4: a little more left of the left interval boundary.\n"
-			"2d plots: markers are plotted at the position of the solution.\n"
-			" 0: don't plot\n"
-			" 1: plot markers at local minima\n"
-			" 2: plot markers only at best-fit point.",
-			false, 0, "int");
 	TCLAP::ValueArg<string> plotlegArg("", "leg", "Adjust the plot legend.\n"
 			"Disable the legend with --leg off .\n"
 			"2d plots: set the position of the legend. "
@@ -476,6 +463,18 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"The argument can be given multiple times to configure different "
 			"files for different Asimov combiners. "
 			"Example: --asimovfile parameters.dat", false, "string");
+	TCLAP::MultiArg<int> plotsolutionsArg("", "ps", "Include solutions in the plots.\n"
+			"1D plots: the numerical value and 1sigma errors are plotted.\n"
+			" 0: don't plot\n"
+			" 1: at central value\n"
+			" 2: at left interval boundary\n"
+			" 3: at right interval boundary.\n"
+			" 4: a little more left of the left interval boundary.\n"
+			"2D plots: markers are plotted at the position of the solution.\n"
+			" 0: don't plot\n"
+			" 1: plot markers at all local minima\n"
+			" 2: plot markers only at best-fit point and equivalent ones (DeltaChi2<0.01).",
+			false, "int");
 
 	//
 	// let TCLAP parse the command line
@@ -585,7 +584,6 @@ void OptParser::parseArguments(int argc, char* argv[])
 	plotpluginonly    = plotpluginonlyArg.getValue();
 	plotprelim        = plotprelimArg.getValue();
 	plotpulls         = plotpullsArg.getValue();
-	plotsolutions     = plotsolutionsArg.getValue();
 	plotunoff         = plotunoffArg.getValue();
 	printcor          = printcorArg.getValue();
 	probforce         = probforceArg.getValue();
@@ -789,6 +787,23 @@ void OptParser::parseArguments(int argc, char* argv[])
 	// 	}
 	// }
 	// exit(0);
+
+	// --po
+	// If --po is only given once, apply the given setting to all
+	// combiners.
+	plotsolutions     = plotsolutionsArg.getValue();
+	if ( plotsolutions.size()==1 && combid.size()>1 ){
+		for ( int i=1; i<combid.size(); i++ ){
+			plotsolutions.push_back(plotsolutions[0]);
+		}
+	}
+	// If --po is given more than once, but not for every combiner,
+	// fill the remaining ones up with 0=don't plot solution
+	else if ( plotsolutions.size() < combid.size() ){
+		for ( int i=plotsolutions.size(); i<combid.size(); i++ ){
+			plotsolutions.push_back(0);
+		}
+	}
 
 	// check --po argument
 	if ( plotpluginonly && !isAction("plugin") ){

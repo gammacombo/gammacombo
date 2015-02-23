@@ -79,7 +79,7 @@ class GammaComboEngine
 		void			make1dPluginScan(MethodPluginScan *scannerPlugin, int cId);
 		void			make1dProbPlot(MethodProbScan *scanner, int cId);
 		void			make1dProbScan(MethodProbScan *scanner, int cId);
-		void			make2dPluginOnlyPlot(MethodPluginScan *sPlugin);
+		void			make2dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId);
 		void			make2dPluginPlot(MethodPluginScan *sPlugin, MethodProbScan *sProb, int cId);
 		void			make2dPluginScan(MethodPluginScan *scannerPlugin, int cId);
 		void			make2dProbPlot(MethodProbScan *scanner, int cId);

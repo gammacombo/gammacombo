@@ -90,7 +90,7 @@ class OptParser
 		bool            plotpluginonly;
 		bool            plotpulls;
 		bool            plotprelim;
-		int             plotsolutions;
+		vector<int>     plotsolutions;
 		bool            plotunoff;
 		bool            intprob;
 		float           pluginPlotRangeMin;

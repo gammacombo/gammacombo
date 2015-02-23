@@ -80,7 +80,7 @@ class MethodAbsScan
 		TString													getScanVar1Name();
 		float                           getScanVar1Solution(int i=0);
 		RooRealVar*                     getScanVar2();
-		TString													getScanVar2Name();
+		TString							getScanVar2Name();
 		float                           getScanVar2Solution(int i=0);
 		inline vector<RooSlimFitResult*>    getSolutions(){return solutions;};
 		RooSlimFitResult*                   getSolution(int i=0);
@@ -103,7 +103,7 @@ class MethodAbsScan
 		virtual int                     scan1d();
 		virtual int                     scan2d();
 		inline void                     setDrawSolution(int code=0){drawSolution = code;};
-		inline void 										setPValueCorrector(PValueCorrection *pvalCor) { pvalueCorrector = pvalCor; pvalueCorrectorSet=true; }
+		inline void 					setPValueCorrector(PValueCorrection *pvalCor) { pvalueCorrector = pvalCor; pvalueCorrectorSet=true; }
 		inline void                     setScanVar1(TString var){scanVar1 = var;};
 		inline void                     setScanVar2(TString var){scanVar2 = var;};
 		inline void                     setNPoints1d(int n){nPoints1d = n;};
