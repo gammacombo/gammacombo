@@ -53,6 +53,8 @@
 	globalMin = 0;
 	nWarnings = 0;
 	drawFilled = true;
+	m_xrangeset = false;
+	m_yrangeset = false;
 
 	// check workspace content
 	if ( !w->pdf(pdfName) ) { cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << pdfName  << endl; exit(1); }
