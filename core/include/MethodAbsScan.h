@@ -173,6 +173,7 @@ class MethodAbsScan
 		Combiner* combiner;         ///< the combination
 		bool m_xrangeset; 			///< true if the x range was set manually (setXscanRange())
 		bool m_yrangeset; 			///< true if the y range was set manually (setYscanRange())
+		bool m_initialized; 		///< true if initScan() was called
 
 	private:
 

@@ -68,17 +68,17 @@ OptParser::OptParser()
 	plotprelim = false;
 	plotpulls = false;
 	plotunoff = false;
-	pluginPlotRangeMax = -99;
-	pluginPlotRangeMin = -99;
+	pluginPlotRangeMax = -100;
+	pluginPlotRangeMin = -100;
 	intprob = false;
 	probforce = false;
 	probimprove = false;
 	printcor = false;
 	scanforce = false;
-	scanrangeMax = -99;
-	scanrangeMin = -99;
-	scanrangeyMax = -99;
-	scanrangeyMin = -99;
+	scanrangeMax = -101;
+	scanrangeMin = -101;
+	scanrangeyMax = -102;
+	scanrangeyMin = -102;
 	smooth2d = false;
 	usage = false;
 	verbose = false;
@@ -879,8 +879,8 @@ void OptParser::parsePosition(TString parseMe, float &x, float &y, TString usage
 void OptParser::parseRange(TString parseMe, float &min, float &max)
 {
 	if ( parseMe==TString("default") ){
-		min = -99;
-		max = -99;
+		min = -104;
+		max = -104;
 	}
 	else {
 		TString minStr = parseMe;

@@ -6,6 +6,7 @@
  */
 
 #include "MethodAbsScan.h"
+
 ///
 /// 'Default Constructor'
 /// Introduced so that inherited classes do not have to call an
@@ -14,6 +15,7 @@
 	MethodAbsScan::MethodAbsScan()
 : rndm()
 {
+	exit(1);
 	methodName = "Abs";
 	drawFilled = true;
 };
@@ -55,6 +57,7 @@
 	drawFilled = true;
 	m_xrangeset = false;
 	m_yrangeset = false;
+	m_initialized = false;
 
 	// check workspace content
 	if ( !w->pdf(pdfName) ) { cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << pdfName  << endl; exit(1); }
@@ -175,6 +178,10 @@ void MethodAbsScan::setChi2minGlobal(double x)
 void MethodAbsScan::initScan()
 {
 	if ( arg->debug ) cout << "MethodAbsScan::initScan() : initializing ..." << endl;
+	if ( m_initialized ) {
+		cout << "MethodAbsScan::initScan() : already initialized." << endl;
+		exit(1);
+	}
 
 	// Init the 1-CL histograms. Range is taken from the scan range defined in
 	// the ParameterAbs class (and derived ones), unless the --scanrange command
@@ -256,6 +263,7 @@ void MethodAbsScan::initScan()
 	// turn off some messages
 	RooMsgService::instance().setStreamStatus(0,kFALSE);
 	RooMsgService::instance().setStreamStatus(1,kFALSE);
+	m_initialized = true;
 }
 
 ///
@@ -1233,6 +1241,7 @@ void MethodAbsScan::plotPulls(int nSolution)
 
 void MethodAbsScan::setXscanRange(float min, float max)
 {
+	if ( min==max ) return;
 	RooRealVar *par1 = w->var(scanVar1);
 	assert(par1);
 	RooMsgService::instance().setGlobalKillBelow(ERROR);
@@ -1243,6 +1252,7 @@ void MethodAbsScan::setXscanRange(float min, float max)
 
 void MethodAbsScan::setYscanRange(float min, float max)
 {
+	if ( min==max ) return;
 	RooRealVar *par2 = w->var(scanVar2);
 	assert(par2);
 	RooMsgService::instance().setGlobalKillBelow(ERROR);
