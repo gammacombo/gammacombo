@@ -84,7 +84,7 @@ class GammaComboEngine
 		void			make2dPluginScan(MethodPluginScan *scannerPlugin, int cId);
 		void			make2dProbPlot(MethodProbScan *scanner, int cId);
 		void			make2dProbScan(MethodProbScan *scanner, int cId);
-		void			printCombinerStructure();
+		void			printCombinerStructure(Combiner *c);
 		void			printBanner();
 		bool			pdfExists(int id);
 		void			savePlot();

@@ -552,8 +552,9 @@ void GammaComboEngine::checkColorArg()
 		}
 		// colors for two-dimensional plots
 		else if ( arg->var.size()==2 ){
-			int nMaxColors = 4;
-			if ( nMaxColors<=arg->color[i] ){
+			OneMinusClPlot2d p(arg);
+			int nMaxColors = p.getNumberOfDefinedColors();
+			if ( nMaxColors<arg->color[i] ){
 				cout << "Argument error --color: No such color for two-dimensional plots. Please choose a color between 0 and " << nMaxColors-1 << endl;
 				exit(1);
 			}
@@ -626,14 +627,11 @@ void GammaComboEngine::makeAddDelCombinations()
 /// print parameter structure of the combinations into
 /// .dot file
 ///
-void GammaComboEngine::printCombinerStructure()
+void GammaComboEngine::printCombinerStructure(Combiner *c)
 {
 	Graphviz gviz(arg);
-	for ( int i=0; i<arg->combid.size(); i++ ){
-		int combinerId = arg->combid[i];
-		gviz.printCombiner(cmb[combinerId]);
-		gviz.printCombinerLayer(cmb[combinerId]);
-	}
+	gviz.printCombiner(c);
+	gviz.printCombinerLayer(c);
 }
 
 ///
@@ -1118,6 +1116,9 @@ void GammaComboEngine::scan()
 		c->combine();
 		if ( !c->isCombined() ) continue; // error during combining
 
+		// make graphviz dot files
+		printCombinerStructure(c);
+
 		// set an asimov toy - only possible after combining
 		if ( arg->isAsimovCombiner(i) ) loadAsimovPoint(c, i);
 
@@ -1280,7 +1281,7 @@ void GammaComboEngine::scan()
 		/////////////////////////////////////////////////////
 
 		if ( i<arg->combid.size()-1 ) {
-			cout << "\n--------------------------------------------------------------------\n" << endl;
+			cout << "\n-- now starting -c " << arg->combid[i+1] << " ------------------------------------------------------------------\n" << endl;
 		}
 	}
 }
@@ -1322,7 +1323,6 @@ void GammaComboEngine::run()
 	if ( arg->nosyst ) disableSystematics();
 	makeAddDelCombinations();
 	defineColors();
-	printCombinerStructure();
 	customizeCombinerTitles();
 	setUpPlot();
 	scan();
