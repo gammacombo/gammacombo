@@ -511,8 +511,8 @@ bool PDF_Abs::checkConsistency()
 		TString pObsName = observables->at(i)->GetName();
 		pObsName.ReplaceAll(uniqueID,"");
 		if ( pObsName != base+"_obs"){
-			cout << "PDF_Abs::checkConsistency() : " << name << " : " << pTh->GetName() << " doesn't match its observable.\n"
-			cout << "                              Expected '" << base+"_obs" << "'. Found '" << pObsName << "'.\n"
+			cout << "PDF_Abs::checkConsistency() : " << name << " : " << pTh->GetName() << " doesn't match its observable." << endl;
+			cout << "                              Expected '" << base+"_obs" << "'. Found '" << pObsName << "'." << endl;
 			cout << "                              Check ordering of the 'theory' and 'observables' lists!" << endl;
 			allOk = false;
 		}
