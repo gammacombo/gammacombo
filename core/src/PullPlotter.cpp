@@ -202,7 +202,8 @@ void PullPlotter::plotPullsCanvas(vector<TString>& observables, int currentid, i
 ///
 void PullPlotter::plotPulls()
 {
-	cout << "PullPlotter::plotPulls() : making pull plot  (" << cmb->getTitle() << ", solution " << nSolution << ")" << endl;
+	if ( arg->debug ) cout << "PullPlotter::plotPulls() : ";
+	cout << "making pull plot  (" << cmb->getTitle() << ", solution " << nSolution << ") ..." << endl;
 
 	// add any observables that are not in the ordered list defined above,
 	// where the order of certain observables is defined manually
