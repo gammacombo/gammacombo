@@ -5,7 +5,7 @@ ParameterEvolutionPlotter::ParameterEvolutionPlotter(MethodProbScan *scanner):
 	curveResults(scanner->getCurveResults())
 {
 	// copy over the command line arguments
-	arg = scanner->getArg();	
+	arg = scanner->getArg();
 
 	// clone the workspace so we don't mess with the original one
 	w = (RooWorkspace*)scanner->getWorkspace()->Clone();
