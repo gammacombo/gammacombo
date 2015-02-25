@@ -33,11 +33,13 @@ class OneMinusClPlot2d : public OneMinusClPlotAbs
 		void            drawMarker(float x, float y, int color=0, int style=3, float size=2.0);
 		void            drawGroup();
 		void            drawSolutions();
+		inline int      getNumberOfDefinedColors(){return linecolor.size();}
 		void            save();
 		inline void     setContoursOnly(){contoursOnly = true;};
 		inline void     setXaxisTitle(TString s){xTitle=s;};
 		inline void     setYaxisTitle(TString s){yTitle=s;};
 
+	protected:
 		vector<TH2F*>	histos;
 		TString		xTitle;
 		TString 	yTitle;
@@ -53,7 +55,7 @@ class OneMinusClPlot2d : public OneMinusClPlotAbs
 		enum 		histogramType { kChi2, kPvalue };
 
 		TGraph*         changePointOrder(TGraph *g, int pointId);
-		void            drawContour(TMultiGraph *mg, TList* contour, int linewidth, int linecolor, 
+		void            drawContour(TMultiGraph *mg, TList* contour, int linewidth, int linecolor,
 				int linestyle, int fillcolor, int fillstyle, int linestylelast, bool last, bool plotFilled);
 		void            drawLegend();
 		void            findClosestPoints(TGraph *g1, TGraph *g2, int &i1, int &i2);

@@ -139,7 +139,7 @@
 	fillcolor[4].push_back(cb.lightcolor(fillcolor[3][3]));
 	fillstyle[4].push_back(1001);
 
-	// 4th scanner
+	// 5th scanner
 	markerstyle.push_back(22);
 	markersize.push_back(1.1);
 
@@ -158,14 +158,43 @@
 	fillcolor[2].push_back(kGray-9);
 	fillstyle[2].push_back(1001);
 
-	linecolor[3].push_back(cb.lightcolor(linecolor[2][3]));
+	linecolor[3].push_back(cb.lightcolor(linecolor[2][4]));
 	linestyle[3].push_back(kSolid);
-	fillcolor[3].push_back(cb.lightcolor(fillcolor[2][3]));
+	fillcolor[3].push_back(cb.lightcolor(fillcolor[2][4]));
 	fillstyle[3].push_back(1001);
 
-	linecolor[4].push_back(cb.lightcolor(linecolor[3][3]));
+	linecolor[4].push_back(cb.lightcolor(linecolor[3][4]));
 	linestyle[4].push_back(kSolid);
-	fillcolor[4].push_back(cb.lightcolor(fillcolor[3][3]));
+	fillcolor[4].push_back(cb.lightcolor(fillcolor[3][4]));
+	fillstyle[4].push_back(1001);
+
+	// 6th scanner
+	markerstyle.push_back(3);
+	markersize.push_back(1.6);
+	// 1 simga
+	linecolor[0].push_back(cb.darklightcolor(TColor::GetColor("#e6ab02"),0.9));
+	linestyle[0].push_back(kSolid);
+	fillcolor[0].push_back(TColor::GetColor("#e6ab02"));
+	fillstyle[0].push_back(3005);
+	// 2 sigma
+	linecolor[1].push_back(cb.darklightcolor(linecolor[0][5],1.1));
+	linestyle[1].push_back(kSolid);
+	fillcolor[1].push_back(cb.darklightcolor(fillcolor[0][5],1.1));
+	fillstyle[1].push_back(1001);
+	// 3 sigma
+	linecolor[2].push_back(cb.darklightcolor(linecolor[1][5],1.1));
+	linestyle[2].push_back(kSolid);
+	fillcolor[2].push_back(cb.darklightcolor(fillcolor[1][5],1.1));
+	fillstyle[2].push_back(1001);
+	// 4 sigma
+	linecolor[3].push_back(cb.darklightcolor(linecolor[2][5],1.1));
+	linestyle[3].push_back(kSolid);
+	fillcolor[3].push_back(cb.darklightcolor(fillcolor[2][5],1.1));
+	fillstyle[3].push_back(1001);
+	// 5 sigma
+	linecolor[4].push_back(cb.darklightcolor(linecolor[3][5],1.1));
+	linestyle[4].push_back(kSolid);
+	fillcolor[4].push_back(cb.darklightcolor(fillcolor[3][5],1.1));
 	fillstyle[4].push_back(1001);
 }
 
@@ -754,9 +783,9 @@ void OneMinusClPlot2d::Draw()
 	// make new scanner styles if we're plotting more scanners
 	// than styles defined in the constructor.
 	if ( linecolor[0].size()<histos.size() ){
-		cout << "OneMinusClPlot2d::makeNewPlotStyle() : WARNING : making a new plot style" << endl;
-		cout << "OneMinusClPlot2d::makeNewPlotStyle() :   for a new scanner that doesn't have" << endl;
-		cout << "OneMinusClPlot2d::makeNewPlotStyle() :   a style defined in the constructor." << endl;
+		cout << "OneMinusClPlot2d::Draw() : WARNING : making a new plot style" << endl;
+		cout << "OneMinusClPlot2d::Draw() :   for a new scanner that doesn't have" << endl;
+		cout << "OneMinusClPlot2d::Draw() :   a style defined in the constructor." << endl;
 	}
 	for ( int i=linecolor[0].size(); i<histos.size(); i++ ){
 		makeNewPlotStyle();
