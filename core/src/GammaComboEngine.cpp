@@ -314,6 +314,10 @@ void GammaComboEngine::loadStartParameters(MethodProbScan *s, ParameterCache *pC
 	if ( arg->loadParamsFile.size()>cId && ! arg->loadParamsFile[cId].EqualTo("default") ) {
 		startparfile = arg->loadParamsFile[cId];
 		filefound = FileExists(startparfile);
+		if ( !filefound ){
+			cout << "\n ERROR: --parfile not found: " << startparfile << endl;
+			cout << "  Will now look for default files.\n" << endl;
+		}
 	}
 	// requested file not found, try default
 	if ( ! filefound ){
