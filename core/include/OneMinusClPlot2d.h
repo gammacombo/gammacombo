@@ -53,7 +53,6 @@ class OneMinusClPlot2d : public OneMinusClPlotAbs
 		vector<float>        markersize;
 
 	private:
-		enum 		histogramType { kChi2, kPvalue };
 
 		TGraph*         changePointOrder(TGraph *g, int pointId);
 		void            drawContour(TMultiGraph *mg, TList* contour, int linewidth, int linecolor,

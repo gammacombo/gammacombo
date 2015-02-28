@@ -45,6 +45,7 @@ namespace Utils
 		bool useValue;
 	};
 
+	enum          histogramType { kChi2, kPvalue };
 	inline double sq(double x){return x*x;}
 	inline double RadToDeg(double rad){return rad/TMath::Pi()*180.;}
 	inline double DegToRad(double deg){return deg/180.*TMath::Pi();}

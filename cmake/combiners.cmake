@@ -11,13 +11,13 @@
 ###############################################
 
 SET( COMBINER_MODULES
-	tutorial
+	#tutorial
 	#cartesian
-	belle2
+	#belle2
 	belle2_Vub
 	#biggammacombo
 	#bsmumu
-	gammacombo
+	#gammacombo
 	#hfag
 )
 
