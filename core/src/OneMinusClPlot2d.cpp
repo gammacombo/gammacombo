@@ -244,7 +244,7 @@ void OneMinusClPlot2d::addScanner(MethodAbsScan* s)
 		histosType.push_back(kPvalue);
 		histos.push_back(s->getHCL2d());
 	}
-  if ( arg->smooth2d ) histos[histos.size()-1]->Smooth();
+	if ( arg->smooth2d ) histos[histos.size()-1]->Smooth();
 	title = s->getTitle();
 }
 
@@ -259,7 +259,7 @@ void OneMinusClPlot2d::addFile(TString fName)
 		return;
 	}
 	histos.push_back(hCL);
-  if ( arg->smooth2d ) histos[histos.size()-1]->Smooth();
+	if ( arg->smooth2d ) histos[histos.size()-1]->Smooth();
 	histosType.push_back(kPvalue);
 }
 
@@ -476,7 +476,7 @@ TMultiGraph* OneMinusClPlot2d::makeContours(int hCLid, int nContours, bool plotF
 {
 	if ( arg->debug ) {
 		cout << "OneMinusClPlot2d::makeContours() : making contours of histogram id " << hCLid
-		<< ", type " << (histosType[hCLid]==kChi2?"kChi2":"kPvalue") << endl;
+													<< ", type " << (histosType[hCLid]==kChi2?"kChi2":"kPvalue") << endl;
 	}
 	TH2F* h = histos[hCLid];
 
@@ -783,26 +783,34 @@ void OneMinusClPlot2d::Draw()
 		makeNewPlotStyle("ROOT");
 	}
 
+	// make contours
+	for ( int i=0; i < histos.size(); i++ ){
+		if ( m_contours_computed[i] ) continue;
+		ConfidenceContours* cont = new ConfidenceContours(m_arg);
+		cont->computeContours(histos[i], histosType[i]);
+		m_contours[i] = cont;
+		m_contours_computed[i] = true;
+	}
+
 	// draw filled contours first
-	vector<TMultiGraph*> gFirst;
-	if ( ! contoursOnly )
-		for ( int i = 0; i < histos.size(); i++ ){
-			gFirst.push_back(makeContours(i, arg->plotnsigmacont));
-			gFirst[i]->Draw();
+	if ( ! contoursOnly ){
+		for ( int i=0; i < m_contours.size(); i++ ){
+			m_contours[i]->Draw();
 		}
+	}
 
 	// draw a second time, this time only the lines
-	vector<TMultiGraph*> gSecond;
-	for ( int i = 0; i < histos.size(); i++ ){
-		gSecond.push_back(makeContours(i, arg->plotnsigmacont, false, true));
-		gSecond[i]->Draw();
-	}
+	//vector<TMultiGraph*> gSecond;
+	//for ( int i = 0; i < histos.size(); i++ ){
+	//gSecond.push_back(makeContours(i, arg->plotnsigmacont, false, true));
+	//gSecond[i]->Draw();
+	//}
 
-	// draw a third time, one sigma only, to get objects for the legend
-	vector<TMultiGraph*> gLegend;
-	for ( int i = 0; i < histos.size(); i++ ){
-		gLegend.push_back(makeContours(i, 1));
-	}
+	//// draw a third time, one sigma only, to get objects for the legend
+	//vector<TMultiGraph*> gLegend;
+	//for ( int i = 0; i < histos.size(); i++ ){
+	//gLegend.push_back(makeContours(i, 1));
+	//}
 
 	gPad->Update();
 	float ymin = gPad->GetUymin();
@@ -930,8 +938,8 @@ void OneMinusClPlot2d::drawSolutions()
 		if ( arg->debug ) cout << "OneMinusClPlot2d::drawSolutions() : adding solutions for scanner " << i << " ..." << endl;
 		if ( scanners[i]->getNSolutions()==0 ){
 			cout << "OneMinusClPlot2d::drawSolutions() : WARNING : \n"
-					"        Plot solutions requested but no solutions found!\n"
-					"        Perform a 1d scan first or use MethodAbsScan::setSolutions()." << endl;
+														 "        Plot solutions requested but no solutions found!\n"
+																						  "        Perform a 1d scan first or use MethodAbsScan::setSolutions()." << endl;
 		}
 		int markerColor = 0;
 		int styleId = i;
