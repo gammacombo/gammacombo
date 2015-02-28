@@ -168,72 +168,64 @@
 	fillcolor[4].push_back(cb.lightcolor(fillcolor[3][4]));
 	fillstyle[4].push_back(1001);
 
-	// 6th scanner
-	markerstyle.push_back(3);
-	markersize.push_back(1.6);
-	// 1 simga
-	linecolor[0].push_back(cb.darklightcolor(TColor::GetColor("#e6ab02"),0.9));
-	linestyle[0].push_back(kSolid);
-	fillcolor[0].push_back(TColor::GetColor("#e6ab02"));
-	fillstyle[0].push_back(3005);
-	// 2 sigma
-	linecolor[1].push_back(cb.darklightcolor(linecolor[0][5],1.1));
-	linestyle[1].push_back(kSolid);
-	fillcolor[1].push_back(cb.darklightcolor(fillcolor[0][5],1.1));
-	fillstyle[1].push_back(1001);
-	// 3 sigma
-	linecolor[2].push_back(cb.darklightcolor(linecolor[1][5],1.1));
-	linestyle[2].push_back(kSolid);
-	fillcolor[2].push_back(cb.darklightcolor(fillcolor[1][5],1.1));
-	fillstyle[2].push_back(1001);
-	// 4 sigma
-	linecolor[3].push_back(cb.darklightcolor(linecolor[2][5],1.1));
-	linestyle[3].push_back(kSolid);
-	fillcolor[3].push_back(cb.darklightcolor(fillcolor[2][5],1.1));
-	fillstyle[3].push_back(1001);
-	// 5 sigma
-	linecolor[4].push_back(cb.darklightcolor(linecolor[3][5],1.1));
-	linestyle[4].push_back(kSolid);
-	fillcolor[4].push_back(cb.darklightcolor(fillcolor[3][5],1.1));
-	fillstyle[4].push_back(1001);
+	// scanners 6-10
+	// colors based on http://colorbrewer2.org/, six classes, qualitative, second scheme
+	makeNewPlotStyle("#1b9e77");
+	makeNewPlotStyle("#d95f02");
+	makeNewPlotStyle("#7570b3");
+	makeNewPlotStyle("#e7298a");
+	makeNewPlotStyle("#66a61e");
+	makeNewPlotStyle("#e6ab02");
+
+	// if requested, remove any fill pattern to make cleaner plots
+	if ( arg->isQuickhack(10) ){
+		for ( int iScanners=0; iScanners<fillstyle.size(); iScanners++ ){
+			for ( int iContours=0; iContours<fillstyle[iScanners].size(); iContours++ ){
+				fillstyle[iScanners][iContours] = 1001;
+			}
+		}
+	}
 }
 
 ///
-/// The plot style of the first 3 scanners is defined in the constructor.
-/// To be able to plot more scanners, we here define a new style based
-/// on the existing 3rd scanner. We just make it a little bit darker.
+/// The plot style of the first N scanners is defined in the constructor.
+/// To be able to plot more scanners, we here define a generic new style
+/// based on the provided HTML color.
 ///
-void OneMinusClPlot2d::makeNewPlotStyle()
+/// \param htmlColor - an HTML color, e.g. "#e6ab02". If ROOT is provided,
+/// the new scanner will be based on a predefined ROOT color.
+///
+void OneMinusClPlot2d::makeNewPlotStyle(TString htmlColor)
 {
 	int currentNumberOfStyles = linecolor[0].size();
+	// get index of new color. Either use the provided HTML color, or
+	// take a predefined ROOT color.
+	int newColor;
+	if ( htmlColor.EqualTo("ROOT") ) newColor = currentNumberOfStyles;
+	else newColor = TColor::GetColor(htmlColor);
 	markerstyle.push_back(20);
 	markersize.push_back(1.1);
 	ColorBuilder cb;
-	float thisMuchDarker = 0.8;
-
-	linecolor[0].push_back(cb.darklightcolor(linecolor[0][currentNumberOfStyles-1],thisMuchDarker));
+	float thisMuchDarker = 1.1;
+	linecolor[0].push_back(cb.darklightcolor(newColor,0.7));
 	linestyle[0].push_back(kSolid);
-	fillcolor[0].push_back(cb.darklightcolor(fillcolor[0][currentNumberOfStyles-1],thisMuchDarker));
-	fillstyle[0].push_back(3013);
-
-	linecolor[1].push_back(cb.darklightcolor(linecolor[1][currentNumberOfStyles-1],thisMuchDarker));
+	fillcolor[0].push_back(newColor);
+	fillstyle[0].push_back(3005);
+	linecolor[1].push_back(cb.darklightcolor(linecolor[0][currentNumberOfStyles],thisMuchDarker));
 	linestyle[1].push_back(kSolid);
-	fillcolor[1].push_back(cb.darklightcolor(fillcolor[1][currentNumberOfStyles-1],thisMuchDarker));
+	fillcolor[1].push_back(cb.darklightcolor(fillcolor[0][currentNumberOfStyles],thisMuchDarker));
 	fillstyle[1].push_back(1001);
-
-	linecolor[2].push_back(cb.darklightcolor(linecolor[2][currentNumberOfStyles-1],thisMuchDarker));
+	linecolor[2].push_back(cb.darklightcolor(linecolor[1][currentNumberOfStyles],thisMuchDarker));
 	linestyle[2].push_back(kSolid);
-	fillcolor[2].push_back(cb.darklightcolor(fillcolor[2][currentNumberOfStyles-1],thisMuchDarker));
+	fillcolor[2].push_back(cb.darklightcolor(fillcolor[1][currentNumberOfStyles],thisMuchDarker));
 	fillstyle[2].push_back(1001);
-
-	linecolor[3].push_back(cb.darklightcolor(linecolor[3][currentNumberOfStyles-1],thisMuchDarker));
+	linecolor[3].push_back(cb.darklightcolor(linecolor[2][currentNumberOfStyles],thisMuchDarker));
 	linestyle[3].push_back(kSolid);
-	fillcolor[3].push_back(cb.darklightcolor(fillcolor[3][currentNumberOfStyles-1],thisMuchDarker));
+	fillcolor[3].push_back(cb.darklightcolor(fillcolor[2][currentNumberOfStyles],thisMuchDarker));
 	fillstyle[3].push_back(1001);
-
-	linecolor[4].push_back(cb.darklightcolor(linecolor[4][currentNumberOfStyles-1],thisMuchDarker));
+	linecolor[4].push_back(cb.darklightcolor(linecolor[3][currentNumberOfStyles],thisMuchDarker));
 	linestyle[4].push_back(kSolid);
-	fillcolor[4].push_back(cb.darklightcolor(fillcolor[4][currentNumberOfStyles-1],thisMuchDarker));
+	fillcolor[4].push_back(cb.darklightcolor(fillcolor[3][currentNumberOfStyles],thisMuchDarker));
 	fillstyle[4].push_back(1001);
 }
 
@@ -788,7 +780,7 @@ void OneMinusClPlot2d::Draw()
 		cout << "OneMinusClPlot2d::Draw() :   a style defined in the constructor." << endl;
 	}
 	for ( int i=linecolor[0].size(); i<histos.size(); i++ ){
-		makeNewPlotStyle();
+		makeNewPlotStyle("ROOT");
 	}
 
 	// draw filled contours first

@@ -33,7 +33,7 @@ class OneMinusClPlot2d : public OneMinusClPlotAbs
 		void            drawMarker(float x, float y, int color=0, int style=3, float size=2.0);
 		void            drawGroup();
 		void            drawSolutions();
-		inline int      getNumberOfDefinedColors(){return linecolor.size();}
+		inline int      getNumberOfDefinedColors(){return linecolor[0].size();}
 		void            save();
 		inline void     setContoursOnly(){contoursOnly = true;};
 		inline void     setXaxisTitle(TString s){xTitle=s;};
@@ -64,7 +64,7 @@ class OneMinusClPlot2d : public OneMinusClPlotAbs
 		TGraph*         joinIfInside(TGraph *g1, TGraph *g2);
 		TMultiGraph*    makeContours(int hCLid, int nContours, bool plotFilled=true, bool last=false);
 		TList*          makeHoles(TList *contour);
-		void            makeNewPlotStyle();
+		void            makeNewPlotStyle(TString htmlColor);
 
 		vector<histogramType>	histosType; /// defines if histogram is interpreted as p-value or chi2
 };
