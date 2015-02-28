@@ -15,6 +15,7 @@
 #include "OneMinusClPlotAbs.h"
 #include "Utils.h"
 #include "ColorBuilder.h"
+#include "ConfidenceContours.h"
 
 using namespace Utils;
 using namespace RooFit;
