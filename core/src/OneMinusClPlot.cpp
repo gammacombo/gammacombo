@@ -495,7 +495,9 @@ void OneMinusClPlot::Draw()
 {
 	bool plotSimple = false;//arg->debug; ///< set to true to use a simpler plot function
 	///< which directly plots the 1-CL histograms without beautification
-	if ( m_mainCanvas==0 ) m_mainCanvas = new TCanvas(name+getUniqueRootName(), title, 800, 600);
+	if ( m_mainCanvas==0 ){
+		m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, 600);
+	}
 	if ( arg->plotlog ){
 		m_mainCanvas->SetLogy();
 		this->name = this->name + "_log";

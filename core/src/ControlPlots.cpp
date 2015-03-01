@@ -23,7 +23,7 @@ ControlPlots::~ControlPlots()
 void ControlPlots::ctrlPlotPvalue()
 {
 	gStyle->SetOptStat(1111);
-	TCanvas *c2 = new TCanvas(getUniqueRootName(), name + " P-value Plots", 900, 600);
+	TCanvas *c2 = newNoWarnTCanvas(getUniqueRootName(), name + " P-value Plots", 900, 600);
 	c2->Divide(1,1);
 	int ip = 1;
 	TPad *pad;
@@ -83,7 +83,7 @@ void ControlPlots::ctrlPlotPvalue()
 	leg->SetFillStyle(0);
 	leg->Draw();
 	c2->Update();
-	
+
 	// // plot 6: log version of bg subtracted 1-CL plot
 	// pad = (TPad*)c2->cd(ip++);
 	// hBetter = (TH1D*)hBetter->Clone("hBetter2");
@@ -106,7 +106,7 @@ void ControlPlots::ctrlPlotPvalue()
 void ControlPlots::ctrlPlotChi2()
 {
 	gStyle->SetOptStat(1111);
-	TCanvas *c2 = new TCanvas(getUniqueRootName(), name + " Chi2 Plots", 900, 600);
+	TCanvas *c2 = newNoWarnTCanvas(getUniqueRootName(), name + " Chi2 Plots", 900, 600);
 	c2->Divide(3,2);
 	int ip = 1;
 	TPad *pad;
@@ -568,7 +568,7 @@ void ControlPlots::ctrlPlotMore(MethodProbScan* profileLH)
 TCanvas* ControlPlots::selectNewCanvas(TString title)
 {
 	title.ReplaceAll(name+" ","");
-	TCanvas* c1 = new TCanvas(getUniqueRootName(), name+" "+title, 1200, 900);
+	TCanvas* c1 = newNoWarnTCanvas(getUniqueRootName(), name+" "+title, 1200, 900);
 	c1->Divide(4,3);
 	ctrlPlotCanvases.push_back(c1);
 	ctrlPadId = 0;

@@ -92,7 +92,7 @@ void PullPlotter::plotPullsCanvas(vector<TString>& observables, int currentid, i
 	// pull axis
 	float xminPullAxis = -pullRange;
 	float xmaxPullAxis = +pullRange;
-	TCanvas *cPulls = new TCanvas("cPulls"+getUniqueRootName(), cmb->getTitle(), 0, 0, 600, 40*observables.size()+120);
+	TCanvas *cPulls = newNoWarnTCanvas("cPulls"+getUniqueRootName(), cmb->getTitle(), 0, 0, 600, 40*observables.size()+120);
 	cPulls->Range(xminCoords,yminCoords,xmaxCoords,ymaxCoords);
 
 	// compute (5 of 7) string

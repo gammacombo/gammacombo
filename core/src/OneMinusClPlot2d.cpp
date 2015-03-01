@@ -14,6 +14,7 @@
 	xTitle = "";
 	yTitle = "";
 	ColorBuilder cb;
+	m_legend = 0;
 
 	// ==== define style ====
 	for ( int i=0; i<5; i++ ){
@@ -329,17 +330,21 @@ void OneMinusClPlot2d::drawCLcontent()
 	t1->Draw();
 }
 
-
 ///
 /// Draw the full DeltaChi2 histogram of the first scanner.
 ///
 void OneMinusClPlot2d::DrawFull()
 {
+	if ( arg->debug ){
+		cout << "OneMinusClPlot2d::DrawFull() : drawing ..." << endl;
+	}
 	if ( histos.size()>1 ){
 		cout << "OneMinusClPlot2d::DrawFull() : WARNING : can only draw the full histogram of the first" << endl;
 		cout << "                                         scanner." << endl;
 	}
-	if ( m_mainCanvas==0 ) m_mainCanvas = new TCanvas(name+getUniqueRootName(), title, 800, 600);
+	if ( m_mainCanvas==0 ){
+		m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, 600);
+	}
 	m_mainCanvas->cd();
 	m_mainCanvas->SetMargin(0.1,0.15,0.1,0.1);
 	TH2F *hChi2 = histos[0];
@@ -364,23 +369,27 @@ void OneMinusClPlot2d::DrawFull()
 ///
 void OneMinusClPlot2d::drawLegend()
 {
+	if ( arg->debug ){
+		cout << "OneMinusClPlot2d::drawLegend() : drawing legend ..." << endl;
+	}
 	// set up the legend
 	float legendXmin = arg->plotlegx!=-1. ? arg->plotlegx : 0.17;
 	float legendYmin = arg->plotlegy!=-1. ? arg->plotlegy : 0.75;
 	float legendXmax = legendXmin + (arg->plotlegsizex!=-1. ? arg->plotlegsizex : 0.38) ;
 	float legendYmax = legendYmin + (arg->plotlegsizey!=-1. ? arg->plotlegsizey : 0.15) ;
-	TLegend* leg = new TLegend(legendXmin,legendYmin,legendXmax,legendYmax);
-	leg->SetFillColor(0);
-	leg->SetFillStyle(0);
-	leg->SetBorderSize(0);
-	leg->SetTextFont(font);
-	leg->SetTextSize(legendsize);
+	if ( m_legend ) delete m_legend;
+	m_legend = new TLegend(legendXmin,legendYmin,legendXmax,legendYmax);
+	m_legend->SetFillColor(0);
+	m_legend->SetFillStyle(0);
+	m_legend->SetBorderSize(0);
+	m_legend->SetTextFont(font);
+	m_legend->SetTextSize(legendsize);
 
 	// build legend
 	for ( int i = 0; i < histos.size(); i++ ){
 		if ( histos.size()==1 ){
 			// no legend symbol if only one scanner to be drawn
-			leg->AddEntry((TObject*)0, scanners[i]->getTitle(), "");
+			m_legend->AddEntry((TObject*)0, scanners[i]->getTitle(), "");
 		}
 		else{
 			// construct a dummy TGraph that uses the style of the 1sigma line
@@ -397,20 +406,25 @@ void OneMinusClPlot2d::drawLegend()
 			g->SetMarkerSize(markersize[styleId]);
 			TString options = "f";
 			if ( scanners[i]->getDrawSolution() ) options += "p"; // only plot marker symbol when solutions are plotted
-			leg->AddEntry(g, scanners[i]->getTitle(), options);
+			m_legend->AddEntry(g, scanners[i]->getTitle(), options);
 		}
 	}
-	leg->Draw();
+	m_legend->Draw();
 }
 
 
 void OneMinusClPlot2d::Draw()
 {
+	if ( arg->debug ){
+		cout << "OneMinusClPlot2d::Draw() : drawing ..." << endl;
+	}
 	if ( scanners.size()==0 ){
 		cout << "OneMinusClPlot2d::Draw() : ERROR : cannot draw " << name << " : No plots were added!" << endl;
 		return;
 	}
-	if ( m_mainCanvas==0 ) m_mainCanvas = new TCanvas(name+getUniqueRootName(), title, 800, 600);
+	if ( m_mainCanvas==0 ){
+		m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, 600);
+	}
 
 	TH2F *hCL = histos[0];
 	float min1 = arg->scanrangeMin  == arg->scanrangeMax  ? hCL->GetXaxis()->GetXmin() : arg->scanrangeMin;

@@ -304,7 +304,7 @@ RooFitResult* Utils::fitToMinImprove(RooWorkspace *w, TString name)
 		//     w->var("r_dk")->setVal(y);
 		//     histo->SetBinContent(ix+1,iy+1,ll.getVal());
 		//   }
-		//   new TCanvas("c2");
+		//   newNoWarnTCanvas("c2");
 		//   histo->GetZaxis()->SetRangeUser(0,20);
 		//   histo->Draw("colz");
 		//   setParameters(w, parsName, r1);
@@ -354,7 +354,7 @@ RooFitResult* Utils::fitToMinImprove(RooWorkspace *w, TString name)
 		//     wImprove->var("r_dk")->setVal(y);
 		//     histo->SetBinContent(ix+1,iy+1,ll.getVal());
 		//   }
-		//   new TCanvas("c7");
+		//   newNoWarnTCanvas("c7");
 		//   histo->GetZaxis()->SetRangeUser(0,20);
 		//   histo->Draw("colz");
 		//   // setParameters(wImprove, parsName, r1);
@@ -1112,4 +1112,21 @@ std::vector<std::vector<int> > Utils::transpose(std::vector<std::vector<int> >& 
 	}
 	return newVector;
 }
+
+TCanvas* Utils::newNoWarnTCanvas(TString name, TString title, int width, int height)
+{
+	gErrorIgnoreLevel=kError;
+	TCanvas* c = new TCanvas(name, title, width, height);
+	gErrorIgnoreLevel=kInfo;
+	return c;
+}
+
+TCanvas* Utils::newNoWarnTCanvas(TString name, TString title, int x, int y, int width, int height)
+{
+	gErrorIgnoreLevel=kError;
+	TCanvas* c = new TCanvas(name, title, x, y, width, height);
+	gErrorIgnoreLevel=kInfo;
+	return c;
+}
+
 

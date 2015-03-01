@@ -119,6 +119,8 @@ namespace Utils
 	void dump_matrix(const std::vector<std::vector<int> >& l);
 
 	std::vector<std::vector<int> > transpose(std::vector<std::vector<int> >& v);
+	TCanvas* newNoWarnTCanvas(TString name="NoWarnTCanvas", TString title="NoWarnTCanvas", int width=800, int height=600);
+	TCanvas* newNoWarnTCanvas(TString name, TString title, int x, int y, int width, int height);
 }
 
 #endif

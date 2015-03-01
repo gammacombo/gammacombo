@@ -47,11 +47,11 @@ class OneMinusClPlot2d : public OneMinusClPlotAbs
 		TString		xTitle;
 		TString 	yTitle;
 		bool		contoursOnly;
-		vector<vector<int> > linecolor;   /// defines colors of 1 sigma lines and solutions of different scanners
-		vector<vector<int> > fillcolor;   /// defines colors of 1 sigma areas of different scanners
-		vector<vector<int> > linestyle;   /// defines the style of 1 sigma line of different scanners
+		vector<vector<int> > linecolor;   ///< defines colors of 1 sigma lines and solutions of different scanners
+		vector<vector<int> > fillcolor;   ///< defines colors of 1 sigma areas of different scanners
+		vector<vector<int> > linestyle;   ///< defines the style of 1 sigma line of different scanners
 		vector<vector<int> > fillstyle;
-		vector<int>          markerstyle; /// defines marker styles of the solutions of different scanners
+		vector<int>          markerstyle; ///< defines marker styles of the solutions of different scanners
 		vector<float>        markersize;
 
 	private:
@@ -60,9 +60,10 @@ class OneMinusClPlot2d : public OneMinusClPlotAbs
 		bool 		    hasHistoType(histogramType t);
 		void            makeNewPlotStyle(TString htmlColor);
 
-		vector<histogramType>       histosType; /// defines if histogram is interpreted as p-value or chi2
-		vector<ConfidenceContours*> m_contours; /// holds the contours for each scanner
-		vector<bool>                m_contours_computed; /// true if the contours were computed for that scanner by computeContours()
+		vector<histogramType>       histosType; ///< defines if histogram is interpreted as p-value or chi2
+		vector<ConfidenceContours*> m_contours; ///< holds the contours for each scanner
+		vector<bool>                m_contours_computed; ///< true if the contours were computed for that scanner by computeContours()
+		TLegend*                    m_legend;   ///< pointer to the plot legend. Filled by drawLegend().
 };
 
 #endif

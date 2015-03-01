@@ -158,7 +158,7 @@ void ConfidenceContours::computeContours(TH2F* hist, histogramType type)
 
 	// create and access the contours
 	gROOT->SetBatch(true); // don't display the temporary canvas
-	TCanvas *ctmp = new TCanvas(getUniqueRootName(), "ctmp");
+	TCanvas *ctmp = newNoWarnTCanvas(getUniqueRootName(), "ctmp");
 	histb->Draw("contlist");
 	gPad->Update();	// needed to be able to access the contours as TGraphs
 	TObjArray *contours = (TObjArray*)gROOT->GetListOfSpecials()->FindObject("contours");

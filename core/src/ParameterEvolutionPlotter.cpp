@@ -62,7 +62,7 @@ void ParameterEvolutionPlotter::plotParEvolution()
 	vector<RooSlimFitResult*> results = curveResults;
 
 	cout << "ParameterEvolutionPlotter::plotParEvolution() : plotting ..." << endl;
-	TCanvas *c2 = new TCanvas("plotParEvolution"+getUniqueRootName(), title, 2000,1600);
+	TCanvas *c2 = newNoWarnTCanvas("plotParEvolution"+getUniqueRootName(), title, 2000,1600);
 	c2->Divide(7,5);
 	int iPad = 1;
 
@@ -156,7 +156,7 @@ void ParameterEvolutionPlotter::plotObsScanCheck()
 	vector<RooSlimFitResult*> results = curveResults;
 
 	cout << "ParameterEvolutionPlotter::plotObsScanCheck() : plotting ..." << endl;
-	TCanvas *c2 = new TCanvas("plotObsScanCheck"+getUniqueRootName(), title, 800,600);
+	TCanvas *c2 = newNoWarnTCanvas("plotObsScanCheck"+getUniqueRootName(), title, 800,600);
 	c2->SetLeftMargin(0.2);
 
 	// get observable

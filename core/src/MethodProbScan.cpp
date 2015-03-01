@@ -432,7 +432,7 @@ int MethodProbScan::scan2d()
 
 	// initialize some control plots
 	gStyle->SetOptTitle(1);
-	TCanvas *cDbg = new TCanvas(getUniqueRootName(), Form("DeltaChi2 for 2D scan %i",nScansDone));
+	TCanvas *cDbg = newNoWarnTCanvas(getUniqueRootName(), Form("DeltaChi2 for 2D scan %i",nScansDone));
 	cDbg->SetMargin(0.1,0.15,0.1,0.1);
 	float hChi2min2dMin = hChi2min2d->GetMinimum();
 	bool firstScanDone = hChi2min2dMin<1e5;

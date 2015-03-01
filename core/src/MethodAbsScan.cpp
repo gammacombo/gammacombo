@@ -453,7 +453,7 @@ bool MethodAbsScan::interpolate(TH1F* h, int i, float y, float central, bool upp
 	// {
 	//   TString debugTitle = methodName + Form(" y=%.2f ",y);
 	//   debugTitle += upper?Form("%f upper",central):Form("%f lower",central);
-	//   TCanvas *c = new TCanvas(getUniqueRootName(), debugTitle);
+	//   TCanvas *c = newNoWarnTCanvas(getUniqueRootName(), debugTitle);
 	//   g->SetMarkerStyle(3);
 	//   g->SetHistogram(h);
 	//   h->Draw();
@@ -822,7 +822,7 @@ void MethodAbsScan::plot1d(TString var)
 	//   RooNLLVar nll("nll", "nll", *(w->pdf(pdfName)), *(w->data(dataName))) ;
 	//
 	//   TString plotName = "plot1d_"+name+"_"+var;
-	//   TCanvas *c1 = new TCanvas();
+	//   TCanvas *c1 = newNoWarnTCanvas();
 	//   RooPlot *frame = vx->frame();
 	//   // w->pdf(pdfName)->plotOn(frame);
 	//   nll.plotOn(frame);
@@ -861,7 +861,7 @@ void MethodAbsScan::plot2d(TString varx, TString vary)
 	gStyle->SetPalette(1);
 
 	TString plotName = "plot2d_"+name+"_"+varx+"_"+vary;
-	TCanvas *c1 = new TCanvas(plotName, plotName);
+	TCanvas *c1 = newNoWarnTCanvas(plotName, plotName);
 	TH1* h = w->pdf(pdfName)->createHistogram(plotName, *vx, YVar(*vy));
 	h->Draw("colz");
 

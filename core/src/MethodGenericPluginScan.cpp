@@ -542,14 +542,14 @@ void MethodGenericPluginScan::readScan1dTrees(int runMin, int runMax, TString fi
       cout << std::resetiosflags(std::ios::right);
     }
   }
-  TCanvas* cans = new TCanvas("cans","cans",1024,786);
+  TCanvas* cans = newNoWarnTCanvas("cans","cans",1024,786);
   cans->cd();
   h_fracGoodToys->SetXTitle("BR(B_{d})");
   h_fracGoodToys->SetYTitle("fraction of good toys");
   h_fracGoodToys->Draw();
 
   if(arg->debug || drawPlots){
-    TCanvas* can = new TCanvas("can","can",1024,786);
+    TCanvas* can = newNoWarnTCanvas("can","can",1024,786);
     can->cd();
     gStyle->SetOptTitle(0);
     //gStyle->SetOptStat(0);
@@ -562,7 +562,7 @@ void MethodGenericPluginScan::readScan1dTrees(int runMin, int runMax, TString fi
     h_fracGoodToys->SetXTitle("BR(B_{d})");
     h_fracGoodToys->SetYTitle("fraction of good toys");
     h_fracGoodToys->Draw();
-    TCanvas *canvas = new TCanvas("canvas","canvas",1200,1000);
+    TCanvas *canvas = newNoWarnTCanvas("canvas","canvas",1200,1000);
     canvas->Divide(2,2);
     canvas->cd(1);
     h_all->SetXTitle("h_all");
@@ -580,10 +580,10 @@ void MethodGenericPluginScan::readScan1dTrees(int runMin, int runMax, TString fi
     h_background->Draw();
   }
 
-  TCanvas* can1 = new TCanvas("can1","can1",1024,786);
+  TCanvas* can1 = newNoWarnTCanvas("can1","can1",1024,786);
   can1->cd();
   h_pVals->Draw();
-  TCanvas* can11 = new TCanvas("can11","can11",1024,786);
+  TCanvas* can11 = newNoWarnTCanvas("can11","can11",1024,786);
   can11->cd();
   h_background->Draw();
 
@@ -1338,11 +1338,11 @@ void MethodGenericPluginScan::drawDebugPlots(int runMin, int runMax, TString fil
 
   TString cut = "scanpoint == 0 && statusScan == 0 && statusFree == 0 && abs(chi2minToy)<300e3 && abs(chi2minGlobalToy)<300e3";
   TString isphysical = "(chi2minToy-chi2minGlobalToy)>=0";
-  TCanvas* can = new TCanvas("can","DChi2Nominal",1024,786);
-  TCanvas* can1 = new TCanvas("can1","BR_{Bd}",1024,786);
-  TCanvas* can3 = new TCanvas("can3","Chi2distr",1024,786);
+  TCanvas* can = newNoWarnTCanvas("can","DChi2Nominal",1024,786);
+  TCanvas* can1 = newNoWarnTCanvas("can1","BR_{Bd}",1024,786);
+  TCanvas* can3 = newNoWarnTCanvas("can3","Chi2distr",1024,786);
 
-  TCanvas* can2 = new TCanvas("can2","DChi2False",1024,786);
+  TCanvas* can2 = newNoWarnTCanvas("can2","DChi2False",1024,786);
   can->cd();
   chain->Draw("chi2minToy-chi2minGlobalToy", cut + "&&" + isphysical + " && abs(chi2minToy-chi2minGlobalToy)<1e2", "norm");
   can1->cd();
@@ -1437,7 +1437,7 @@ void MethodGenericPluginScan::performBootstrapTest(int nSamples, const TString& 
     hist->Fill(p);
     if(i % 100 == 0) cout << i << " Samples from " << nSamples << " done. p Value: " << p << " with " << nbetter << " Toys of " << numberOfToys << " total" << endl;
   }
-  TCanvas* c = new TCanvas("c","c",1024,768);
+  TCanvas* c = newNoWarnTCanvas("c","c",1024,768);
   hist->SetLineColor(kRed+2);
   hist->SetLineWidth(2);
   hist->Fit("gaus");

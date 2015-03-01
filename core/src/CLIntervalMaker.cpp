@@ -43,13 +43,13 @@ void CLIntervalMaker::provideMorePreciseMaximum(float value, TString method)
 /// _clintervals1sigma and _clintervals2sigma. Only accepts
 /// maxima that are not similar to existing ones, that were, e.g.,
 /// set by addMaximum().
-/// \param pValueThreshold - ignore maxima under this pvalue threshold 
+/// \param pValueThreshold - ignore maxima under this pvalue threshold
 /// 				to reject low statistics plugin crap
 ///
 void CLIntervalMaker::findMaxima(float pValueThreshold)
 {
 	for ( int i=2; i<_pvalues.GetNbinsX()-1; i++ ){
-		if ( _pvalues.GetBinContent(i-1) < _pvalues.GetBinContent(i) 
+		if ( _pvalues.GetBinContent(i-1) < _pvalues.GetBinContent(i)
 			&& _pvalues.GetBinContent(i)   > _pvalues.GetBinContent(i+1) ){
 			if ( _pvalues.GetBinContent(i) > pValueThreshold ){
 				CLInterval cli;
@@ -66,9 +66,9 @@ void CLIntervalMaker::findMaxima(float pValueThreshold)
 // void CLIntervalMaker::findMaxima(float pValueThreshold)
 // {
 // 	for ( int i=3; i<_pvalues.GetNbinsX()-2; i++ ){
-// 		if ( _pvalues.GetBinContent(i-1) < _pvalues.GetBinContent(i) 
-// 			&& _pvalues.GetBinContent(i)   > _pvalues.GetBinContent(i+1) 
-// 			&& _pvalues.GetBinContent(i-2) < _pvalues.GetBinContent(i-1) 
+// 		if ( _pvalues.GetBinContent(i-1) < _pvalues.GetBinContent(i)
+// 			&& _pvalues.GetBinContent(i)   > _pvalues.GetBinContent(i+1)
+// 			&& _pvalues.GetBinContent(i-2) < _pvalues.GetBinContent(i-1)
 // 			&& _pvalues.GetBinContent(i+1) > _pvalues.GetBinContent(i+2)
 // 			){
 // 			if ( _pvalues.GetBinContent(i) > pValueThreshold ){
@@ -118,7 +118,7 @@ void CLIntervalMaker::findRawIntervals(float pvalue, vector<CLInterval> &clis) c
         break;
       }
    	}
-		
+
 		// check if both boundaries were found
 		clis[i].closed = ( clis[i].min != _pvalues.GetXaxis()->GetXmin()
 			              && clis[i].max != _pvalues.GetXaxis()->GetXmax() );
@@ -208,7 +208,7 @@ void CLIntervalMaker::improveIntervalsLine(vector<CLInterval> &clis) const
 		if ( wasImproved ){
 			clis[i].minmethod = "line";
 			clis[i].min = newMin;
-		}		
+		}
 		// improve upper boundary
 		binMax = checkNeighboringBins(valueToBin(clis[i].max), clis[i].pvalue);
 		wasImproved = interpolateLine(&_pvalues, binMax, clis[i].pvalue, newMax);
@@ -245,7 +245,7 @@ void CLIntervalMaker::improveIntervalsPol2fit(vector<CLInterval> &clis) const
 		}
 	}
 }
-	
+
 ///
 /// Solve a quadratic equation by means of a modified pq formula:
 /// @f[x^2 + \frac{p_1}{p_2} x + \frac{p_0-y}{p2} = 0@f]
@@ -271,7 +271,7 @@ float CLIntervalMaker::pq(float p0, float p1, float p2, float y, int whichSol) c
 /// \param err - Return value: estimated interpolation error
 /// \return true, if inpterpolation was performed, false, if conditions were not met
 ///
-bool CLIntervalMaker::interpolatePol2fit(const TH1F* h, int i, float y, float central, bool upper, 
+bool CLIntervalMaker::interpolatePol2fit(const TH1F* h, int i, float y, float central, bool upper,
 	float &val, float &err) const
 {
 	// cout << "CLIntervalMaker::interpolatePol2fit(): i=" << i << " y=" << y << " central=" << central << endl;
@@ -309,7 +309,7 @@ bool CLIntervalMaker::interpolatePol2fit(const TH1F* h, int i, float y, float ce
 	    g->SetPoint(g->GetN()-1, h->GetBinCenter(i+2), h->GetBinContent(i+2));
 	  }
 	}
-	
+
   // debug: show fitted 1-CL histogram
   // if ( y<0.1 )
   // // if ( methodName == TString("Plugin") && y<0.1 )
@@ -317,7 +317,7 @@ bool CLIntervalMaker::interpolatePol2fit(const TH1F* h, int i, float y, float ce
   //   // TString debugTitle = methodName + Form(" y=%.2f ",y);
   //   // debugTitle += upper?Form("%f upper",central):Form("%f lower",central);
   // 		TString debugTitle = "honk";
-  //   TCanvas *c = new TCanvas(getUniqueRootName(), debugTitle);
+  //   TCanvas *c = newNoWarnTCanvas(getUniqueRootName(), debugTitle);
   //   g->SetMarkerStyle(3);
   //   g->SetHistogram(const_cast<TH1F*>(h));
   //   const_cast<TH1F*>(h)->Draw();
@@ -389,7 +389,7 @@ void CLIntervalMaker::print()
 	clp.addIntervals(_clintervals1sigma);
 	clp.addIntervals(_clintervals2sigma);
 	clp.print();
-	cout << endl;	
+	cout << endl;
 }
 
 ///
@@ -417,12 +417,12 @@ void CLIntervalMaker::calcCLintervals()
 	// cout << "removeBadIntervals()" << endl;
 	removeBadIntervals();
 	// print();
-	
+
 	// cout << "improveIntervalsLine()" << endl;
 	improveIntervalsLine(_clintervals1sigma);
 	improveIntervalsLine(_clintervals2sigma);
 	// print();
-	
+
 	// cout << "improveIntervalsPol2fit()" << endl;
 	improveIntervalsPol2fit(_clintervals1sigma);
 	improveIntervalsPol2fit(_clintervals2sigma);
