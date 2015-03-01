@@ -2,8 +2,9 @@
 
 ConfidenceContours::ConfidenceContours(OptParser *arg)
 {
-  assert(arg);
-  m_arg = arg;
+	assert(arg);
+	m_arg = arg;
+	m_transparency = 0.;
 }
 
 ConfidenceContours::~ConfidenceContours()
@@ -153,6 +154,7 @@ void ConfidenceContours::Draw()
 	//cout << "ConfidenceContours::Draw() : drawing ..." << endl;
 	for ( int i=m_arg->plotnsigmacont-1; i>=0; i-- ) {
 		m_contours[i]->setStyle(m_linecolor[i], m_linestyle[i], m_linewidth[i], m_fillcolor[i], m_fillstyle[i]);
+		m_contours[i]->setTransparency(m_transparency);
 		m_contours[i]->Draw();
 	}
 }

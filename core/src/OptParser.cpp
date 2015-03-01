@@ -414,7 +414,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::MultiArg<int> pevidArg("", "pevid", "ID of combination used for the profile likelihood"
 			"that determines the parameter evolution for the Plugin toy generation. If not given, "
 			"the --combid will be used. Use -u to get a list of possible choices.", false, "int");
-	TCLAP::MultiArg<int> qhArg("", "qh", "Quick hacks. \n"
+	TCLAP::MultiArg<int> qhArg("", "qh", "Quick hacks.\n"
 			"1: Move up the printed solutions in 1d log plots such that they don't clash with the 95% clabel.\n"
 			"2: Move the CL labels to the middle of the 1d plots.\n"
 			"3: add 180 deg to the d_dpi axis and solution in the 1d plot.\n"
@@ -423,6 +423,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"8: Switch on new CL interval maker output.\n"
 			"9: Don't remove duplicate/equivalent solutions.\n"
 			"10: Don't plot fill pattern for 2D contours to make cleaner looking plots.\n"
+			"11: Don't plot dashed lines of 2D contours.\n"
+			"12: Use transpareny for 2D contours.\n"
+			"13: Don't use transparency for the last plotted 2D contour.\n"
 			, false, "int");
 	TCLAP::MultiArg<string> titleArg("", "title", "Override the title of a combination. "
 			"If 'default' is given, the default title for that combination is used. "

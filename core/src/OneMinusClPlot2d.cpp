@@ -464,6 +464,15 @@ void OneMinusClPlot2d::Draw()
 	}
 	m_mainCanvas->cd(); // ConfidenceContours::computeContours() creates a temporary canvas
 
+	// set transparency
+	if ( arg->isQuickhack(12) ){
+		for ( int i=0; i < histos.size(); i++ ){
+			m_contours[i]->setTransparency(0.2);
+			// don't use transparency for the last scanner
+			if ( arg->isQuickhack(13) && i==histos.size()-1 ) m_contours[i]->setTransparency(0.);
+		}
+	}
+
 	// draw filled contours first
 	if ( ! contoursOnly ){
 		for ( int i=0; i < m_contours.size(); i++ ){
@@ -472,8 +481,10 @@ void OneMinusClPlot2d::Draw()
 	}
 
 	// draw a second time, this time only the lines
-	for ( int i=0; i < m_contours.size(); i++ ){
-		m_contours[i]->DrawDashedLine();
+	if ( ! arg->isQuickhack(11) ){
+		for ( int i=0; i < m_contours.size(); i++ ){
+			m_contours[i]->DrawDashedLine();
+		}
 	}
 
 	gPad->Update();

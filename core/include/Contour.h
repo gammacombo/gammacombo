@@ -29,6 +29,7 @@ class Contour
 		void               magneticBoundaries(const TH2F* hCL);
 		inline void        setSigma(int s){m_sigma=s;};
 		void               setStyle(int linecolor, int linestyle, int linewidth, int fillcolor, int fillstyle);
+		void               setTransparency(float percent);
 
 	private:
 
@@ -46,6 +47,7 @@ class Contour
 		int                m_fillcolor;
 		int                m_fillstyle;
 		int                m_linewidth;
+		float              m_alpha;
 };
 
 #endif

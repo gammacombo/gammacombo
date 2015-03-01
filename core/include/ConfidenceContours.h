@@ -28,18 +28,20 @@ class ConfidenceContours
 		void                     Draw();
 		void                     DrawDashedLine();
 		void                     setStyle(vector<int>& linecolor, vector<int>& linestyle, vector<int>& fillcolor, vector<int>& fillstyle);
+		inline void              setTransparency(float percent){m_transparency = percent;};
 
 	private:
 
 		TH2F*                    addBoundaryBins(TH2F* hist);
 		void                     transformChi2valleyToHill(TH2F* hist,float offset);
-		OptParser*               m_arg;      ///< command line arguments
-		vector<Contour*>         m_contours; ///< container for the 1,...,N sigma contours
+		OptParser*               m_arg;       ///< command line arguments
+		vector<Contour*>         m_contours;  ///< container for the 1,...,N sigma contours
 		vector<int>              m_linecolor; ///< style for the 1,...,N sigma contours
 		vector<int>              m_linestyle;
 		vector<int>              m_fillcolor;
 		vector<int>              m_fillstyle;
 		vector<int>              m_linewidth;
+		float                    m_transparency;
 };
 
 #endif

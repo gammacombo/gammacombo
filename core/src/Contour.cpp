@@ -20,6 +20,7 @@ Contour::Contour(OptParser *arg, TList *listOfGraphs)
 	m_fillcolor = 2;
 	m_fillstyle = 1001;
 	m_linewidth = 1;
+	m_alpha = 1.;
 
 	// compute holes in the contours
 	m_contoursHoles = makeHoles(m_contours);
@@ -54,8 +55,8 @@ void Contour::DrawFilled()
 	for ( int i=0; i<m_contoursHoles.size(); i++ ) {
 		TGraph* g = (TGraph*)m_contoursHoles[i]->Clone();
 		g->SetFillStyle(1001); // solid
-		g->SetFillColor(m_fillcolor);
-		//g->SetFillColorAlpha(m_fillcolor,0.8); // transparency!
+		//g->SetFillColor(m_fillcolor);
+		g->SetFillColorAlpha(m_fillcolor,m_alpha); // transparency!
 		g->Draw("F");
 		if ( m_fillstyle!=1001 ){ // if not solid, add the pattern in the line color
 			g = (TGraph*)m_contoursHoles[i]->Clone();
@@ -261,4 +262,18 @@ void Contour::magneticBoundaries(const TH2F* hCL)
 			if ( abs(pointy-ymax)<hCL->GetYaxis()->GetBinWidth(1)*magneticRange ) g->SetPoint(i, pointx, ymax);
 		}
 	}
+}
+
+///
+/// Set transparency.
+///
+/// \param percent - 0% means intransparent
+///
+void Contour::setTransparency(float percent)
+{
+	if ( ! ( 0. <= percent && percent <= 1. ) ){
+		cout << "Contour::setTransparency() : ERROR : percent not in [0,1]. Skipping." << endl;
+		return;
+	}
+	m_alpha = 1.-percent;
 }
