@@ -185,6 +185,10 @@ void ConfidenceContours::setStyle(vector<int>& linecolor, vector<int>& linestyle
 		cout << "Reusing style of " << m_linestyle.size() << " sigma contour." << endl;
 		for ( int i=m_linestyle.size(); i<m_arg->plotnsigmacont; i++ ){
 			int laststyle = m_linestyle.size()-1;
+			if ( laststyle<0 ){
+				cout << "ConfidenceContours::setStyle() : ERROR : linestyle is empty. Exit." << endl;
+				exit(1);
+			}
 			m_linecolor.push_back(m_linecolor[laststyle]);
 			m_linestyle.push_back(m_linestyle[laststyle]);
 			m_fillcolor.push_back(m_fillcolor[laststyle]);

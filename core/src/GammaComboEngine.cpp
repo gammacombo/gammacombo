@@ -558,7 +558,7 @@ void GammaComboEngine::checkColorArg()
 		else if ( arg->var.size()==2 ){
 			OneMinusClPlot2d p(arg);
 			int nMaxColors = p.getNumberOfDefinedColors();
-			if ( nMaxColors<arg->color[i] ){
+			if ( nMaxColors<=arg->color[i] ){
 				cout << "Argument error --color: No such color for two-dimensional plots. Please choose a color between 0 and " << nMaxColors-1 << endl;
 				exit(1);
 			}
