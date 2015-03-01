@@ -24,6 +24,7 @@ using namespace std;
 class OneMinusClPlot2d : public OneMinusClPlotAbs
 {
 	public:
+
 		OneMinusClPlot2d(OptParser *arg, TString name="c1", TString title="c1");
 
 		void            addScanner(MethodAbsScan* s);
@@ -41,6 +42,7 @@ class OneMinusClPlot2d : public OneMinusClPlotAbs
 		inline void     setYaxisTitle(TString s){yTitle=s;};
 
 	protected:
+
 		vector<TH2F*>	histos;
 		TString		xTitle;
 		TString 	yTitle;
@@ -54,16 +56,8 @@ class OneMinusClPlot2d : public OneMinusClPlotAbs
 
 	private:
 
-		TGraph*         changePointOrder(TGraph *g, int pointId);
-		void            drawContour(TMultiGraph *mg, TList* contour, int linewidth, int linecolor,
-				int linestyle, int fillcolor, int fillstyle, int linestylelast, bool last, bool plotFilled);
 		void            drawLegend();
-		void            findClosestPoints(TGraph *g1, TGraph *g2, int &i1, int &i2);
-		bool 		hasHistoType(histogramType t);
-		void            magneticBoundaries(TGraph *g, const TH2F* hCL);
-		TGraph*         joinIfInside(TGraph *g1, TGraph *g2);
-		TMultiGraph*    makeContours(int hCLid, int nContours, bool plotFilled=true, bool last=false);
-		TList*          makeHoles(TList *contour);
+		bool 		    hasHistoType(histogramType t);
 		void            makeNewPlotStyle(TString htmlColor);
 
 		vector<histogramType>       histosType; /// defines if histogram is interpreted as p-value or chi2
