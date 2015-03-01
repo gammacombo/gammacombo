@@ -88,18 +88,22 @@ TH2F* ConfidenceContours::addBoundaryBins(TH2F* hist)
 ///
 /// Helper function for computeContours():
 /// Transforms the chi2 valley into a hill to help ROOTs contour mechanism
+/// Caller assumes ownership.
 ///
 /// \param hist - the 2D histogram
+/// \return - the transformed 2D histogram
 ///
-void ConfidenceContours::transformChi2valleyToHill(TH2F* hist, float offset)
+TH2F* ConfidenceContours::transformChi2valleyToHill(TH2F* hist, float offset)
 {
 	float chi2min = hist->GetMinimum();
 	//cout << "ConfidenceContours::transformChi2valleyToHill() : chi2min=" << chi2min << endl;
+	TH2F* newHist = histHardCopy(hist, false, true);
 	for ( int ix=1; ix<=hist->GetXaxis()->GetNbins(); ix++ ){
 		for ( int iy=1; iy<=hist->GetYaxis()->GetNbins(); iy++ ){
-			hist->SetBinContent(ix,iy,-hist->GetBinContent(ix,iy)+offset+chi2min);
+			newHist->SetBinContent(ix,iy,-hist->GetBinContent(ix,iy)+offset+chi2min);
 		}
 	}
+	return newHist;
 }
 
 ///
@@ -122,7 +126,7 @@ void ConfidenceContours::computeContours(TH2F* hist, histogramType type)
 
 	// transform chi2 from valley to hill
 	float offset = 30.;
-	if ( type==kChi2 ) transformChi2valleyToHill(hist,offset);
+	if ( type==kChi2 ) hist = transformChi2valleyToHill(hist,offset);
 
 	// add boundaries
 	TH2F* histb = addBoundaryBins(hist);
@@ -188,6 +192,9 @@ void ConfidenceContours::computeContours(TH2F* hist, histogramType type)
 			m_contours[ic]->magneticBoundaries(hist);
 		}
 	}
+
+	// clean up
+	if ( type==kChi2 ) delete hist; // a copy was made earlier in this case
 }
 
 ///

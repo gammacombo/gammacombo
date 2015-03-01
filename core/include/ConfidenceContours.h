@@ -33,7 +33,7 @@ class ConfidenceContours
 	private:
 
 		TH2F*                    addBoundaryBins(TH2F* hist);
-		void                     transformChi2valleyToHill(TH2F* hist,float offset);
+		TH2F*                    transformChi2valleyToHill(TH2F* hist,float offset);
 		OptParser*               m_arg;       ///< command line arguments
 		vector<Contour*>         m_contours;  ///< container for the 1,...,N sigma contours
 		vector<int>              m_linecolor; ///< style for the 1,...,N sigma contours
