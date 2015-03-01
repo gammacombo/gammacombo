@@ -13,11 +13,55 @@ ConfidenceContours::~ConfidenceContours()
 ///
 /// Helper function for computeContours():
 /// Constructs a new 2D histogram that contains 2 more bins in each
-/// direction that are set to 0, so that the contours will always close.
+/// direction that are set to the minimum, so that the contours will always close.
 ///
 /// \param hist - the 2D histogram
 /// \return new 2D histogram. Caller assumes ownership.
 ///
+//TH2F* ConfidenceContours::addBoundaryBins(TH2F* hist)
+//{
+	//float boundary = hist->GetMinimum();
+	//TH2F* hBoundaries = new TH2F(getUniqueRootName(),getUniqueRootName(),
+			//hist->GetNbinsX()+4,
+			//hist->GetXaxis()->GetXmin() - 2*hist->GetXaxis()->GetBinWidth(1),
+			//hist->GetXaxis()->GetXmax() + 2*hist->GetXaxis()->GetBinWidth(1),
+			//hist->GetNbinsY()+4,
+			//hist->GetYaxis()->GetXmin() - 2*hist->GetYaxis()->GetBinWidth(1),
+			//hist->GetYaxis()->GetXmax() + 2*hist->GetYaxis()->GetBinWidth(1));
+	//for ( int ix=1; ix<=hBoundaries->GetXaxis()->GetNbins(); ix++ ){
+		//for ( int iy=1; iy<=hBoundaries->GetYaxis()->GetNbins(); iy++ ){
+			//// fill outmost extra bins with the boundary value
+			//if ( ix==1 || ix==hBoundaries->GetXaxis()->GetNbins()
+			  //|| iy==1 || iy==hBoundaries->GetYaxis()->GetNbins() )
+				//hBoundaries->SetBinContent(ix,iy,boundary);
+			//// fill the outer 4 bins of the inner extra bins with the boundary value
+			//else if ( (ix==2                                     && iy==hBoundaries->GetYaxis()->GetNbins()-1)
+					//||(ix==hBoundaries->GetXaxis()->GetNbins()-1 && iy==hBoundaries->GetYaxis()->GetNbins()-1)
+					//||(ix==2                                     && iy==2)
+					//||(ix==hBoundaries->GetXaxis()->GetNbins()-1 && iy==2) ){
+				//hBoundaries->SetBinContent(ix,iy,boundary);
+			//}
+			//// fill the rest of the inner bins with the adjacent values of the original histogram
+			//else if ( ix==2 && (iy>=3 || iy<=hBoundaries->GetYaxis()->GetNbins()-2) ){
+				//hBoundaries->SetBinContent(ix,iy,hist->GetBinContent(ix-1,iy-2));
+			//}
+			//else if ( ix==hBoundaries->GetXaxis()->GetNbins()-1 && (iy>=3 || iy<=hBoundaries->GetYaxis()->GetNbins()-2) ){
+				//hBoundaries->SetBinContent(ix,iy,hist->GetBinContent(ix-3,iy-2));
+			//}
+			//else if ( iy==2 && (ix>=3 || ix<=hBoundaries->GetXaxis()->GetNbins()-2) ){
+				//hBoundaries->SetBinContent(ix,iy,hist->GetBinContent(ix-2,iy-1));
+			//}
+			//else if ( iy==hBoundaries->GetYaxis()->GetNbins()-1 && (ix>=3 || ix<=hBoundaries->GetXaxis()->GetNbins()-2) ){
+				//hBoundaries->SetBinContent(ix,iy,hist->GetBinContent(ix-2,iy-3));
+			//}
+			//// copy the inner part from the original histogram
+			//else{
+				//hBoundaries->SetBinContent(ix,iy,hist->GetBinContent(ix-2,iy-2));
+			//}
+		//}
+	//}
+	//return hBoundaries;
+//}
 TH2F* ConfidenceContours::addBoundaryBins(TH2F* hist)
 {
 	float boundary = hist->GetMinimum();

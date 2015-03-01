@@ -237,6 +237,17 @@ void Contour::findClosestPoints(TGraph *g1, TGraph *g2, int &i1, int &i2)
 	//   x1, y1, i1, x2, y2, i2);
 }
 
+
+//float Contour::getXBoundary(float p1x, float p1y, float p2x, float p2y, float ymax)
+//{
+	//return p1x + (ymax-p1y)/(p2y-p1y)*(p2x-p1x);
+//}
+
+//float Contour::getYBoundary(float p1x, float p1y, float p2x, float p2y, float xmax)
+//{
+	//return p1y + (xmax-p1x)/(p2x-p1x)*(p2y-p1y);
+//}
+
 ///
 /// Magnetic boundaries. If a contour is closer than half a binwidth
 /// to a boundary, adjust it to be actually the boundary.
