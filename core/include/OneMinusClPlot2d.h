@@ -66,7 +66,9 @@ class OneMinusClPlot2d : public OneMinusClPlotAbs
 		TList*          makeHoles(TList *contour);
 		void            makeNewPlotStyle(TString htmlColor);
 
-		vector<histogramType>	histosType; /// defines if histogram is interpreted as p-value or chi2
+		vector<histogramType>       histosType; /// defines if histogram is interpreted as p-value or chi2
+		vector<ConfidenceContours*> m_contours; /// holds the contours for each scanner
+		vector<bool>                m_contours_computed; /// true if the contours were computed for that scanner by computeContours()
 };
 
 #endif

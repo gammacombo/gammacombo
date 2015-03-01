@@ -1062,6 +1062,14 @@ void Utils::dump_vector(const std::vector<float>& l) {
 		cout << *it << endl;
 	}
 }
+void Utils::dump_matrix(const std::vector<std::vector<int> >& l) {
+	for ( int ix=0; ix<l.size(); ix++ ) {
+		for ( int iy=0; iy<l[0].size(); iy++ ) {
+			cout << printf("%5i",l[ix][iy]) << " ";
+		}
+		cout << endl;
+	}
+}
 
 ///
 /// Debug tools: print the content of a 2d map to stdout.
@@ -1072,5 +1080,36 @@ void Utils::dump_map(const std::map<int, std::vector<int> >& map) {
 		cout << "Values" << endl;
 		dump_vector(it->second);
 	}
+}
+
+std::vector<std::vector<int> > Utils::transpose(std::vector<std::vector<int> >& v)
+{
+	std::vector<std::vector<int> > newVector;
+	int oldNx = v.size();
+	if ( oldNx==0 ){
+		cout << "Utils::transpose() : ERROR : x dimension is 0" << endl;
+		return newVector;
+	}
+	int oldNy = v[0].size();
+	if ( oldNy==0 ){
+		cout << "Utils::transpose() : ERROR : y dimension is 0" << endl;
+		return newVector;
+	}
+	// check if rectangular
+	for ( int j=1; j<oldNx; j++ ){
+		if ( v[j].size()!=oldNy ){
+			cout << "Utils::transpose() : ERROR : vector not rectangular" << endl;
+			return newVector;
+		}
+	}
+	// transpose
+	for ( int iy=0; iy<oldNy; iy++ ){
+		std::vector<int> tmp;
+		for ( int ix=0; ix<oldNx; ix++ ){
+			tmp.push_back(v[ix][iy]);
+		}
+		newVector.push_back(tmp);
+	}
+	return newVector;
 }
 

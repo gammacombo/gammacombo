@@ -246,6 +246,8 @@ void OneMinusClPlot2d::addScanner(MethodAbsScan* s)
 	}
 	if ( arg->smooth2d ) histos[histos.size()-1]->Smooth();
 	title = s->getTitle();
+	m_contours.push_back(0);
+	m_contours_computed.push_back(false);
 }
 
 
@@ -261,6 +263,8 @@ void OneMinusClPlot2d::addFile(TString fName)
 	histos.push_back(hCL);
 	if ( arg->smooth2d ) histos[histos.size()-1]->Smooth();
 	histosType.push_back(kPvalue);
+	m_contours.push_back(0);
+	m_contours_computed.push_back(false);
 }
 
 ///
@@ -546,7 +550,7 @@ TMultiGraph* OneMinusClPlot2d::makeContours(int hCLid, int nContours, bool plotF
 	gPad->Update();	// access contours as TGraphs
 	TObjArray *contours = (TObjArray*)gROOT->GetListOfSpecials()->FindObject("contours");
 	delete ctmp;
-	c1->cd();
+	m_mainCanvas->cd();
 
 	// access contours. They get filled in reverse order,
 	// and depend on how many are actually present. If all 5
@@ -673,8 +677,9 @@ void OneMinusClPlot2d::DrawFull()
 		cout << "OneMinusClPlot2d::DrawFull() : WARNING : can only draw the full histogram of the first" << endl;
 		cout << "                                         scanner." << endl;
 	}
-	c1->cd();
-	c1->SetMargin(0.1,0.15,0.1,0.1);
+	if ( m_mainCanvas==0 ) m_mainCanvas = new TCanvas(name+getUniqueRootName(), title, 800, 600);
+	m_mainCanvas->cd();
+	m_mainCanvas->SetMargin(0.1,0.15,0.1,0.1);
 	TH2F *hChi2 = histos[0];
 	hChi2->SetContour(95);
 	hChi2->GetXaxis()->SetTitle(xTitle!="" ? xTitle : (TString)scanners[0]->getScanVar1()->GetTitle());
@@ -689,7 +694,7 @@ void OneMinusClPlot2d::DrawFull()
 	title->SetTextFont(133);
 	title->SetTextSize(35);
 	title->Draw();
-	c1->Update();
+	m_mainCanvas->Update();
 }
 
 ///
@@ -743,7 +748,8 @@ void OneMinusClPlot2d::Draw()
 		cout << "OneMinusClPlot2d::Draw() : ERROR : cannot draw " << name << " : No plots were added!" << endl;
 		return;
 	}
-	c1->cd();
+	if ( m_mainCanvas==0 ) m_mainCanvas = new TCanvas(name+getUniqueRootName(), title, 800, 600);
+
 	TH2F *hCL = histos[0];
 	float min1 = arg->scanrangeMin  == arg->scanrangeMax  ? hCL->GetXaxis()->GetXmin() : arg->scanrangeMin;
 	float max1 = arg->scanrangeMin  == arg->scanrangeMax  ? hCL->GetXaxis()->GetXmax() : arg->scanrangeMax;
@@ -786,11 +792,15 @@ void OneMinusClPlot2d::Draw()
 	// make contours
 	for ( int i=0; i < histos.size(); i++ ){
 		if ( m_contours_computed[i] ) continue;
-		ConfidenceContours* cont = new ConfidenceContours(m_arg);
+		ConfidenceContours* cont = new ConfidenceContours(arg);
 		cont->computeContours(histos[i], histosType[i]);
+		int styleId = i;
+		if ( arg->color.size()>i ) styleId = arg->color[i];
+		cont->setStyle(transpose(linecolor)[styleId], transpose(linestyle)[styleId], transpose(fillcolor)[styleId], transpose(fillstyle)[styleId]);
 		m_contours[i] = cont;
 		m_contours_computed[i] = true;
 	}
+	m_mainCanvas->cd(); // ConfidenceContours::computeContours() creates a temporary canvas
 
 	// draw filled contours first
 	if ( ! contoursOnly ){
@@ -800,17 +810,9 @@ void OneMinusClPlot2d::Draw()
 	}
 
 	// draw a second time, this time only the lines
-	//vector<TMultiGraph*> gSecond;
-	//for ( int i = 0; i < histos.size(); i++ ){
-	//gSecond.push_back(makeContours(i, arg->plotnsigmacont, false, true));
-	//gSecond[i]->Draw();
-	//}
-
-	//// draw a third time, one sigma only, to get objects for the legend
-	//vector<TMultiGraph*> gLegend;
-	//for ( int i = 0; i < histos.size(); i++ ){
-	//gLegend.push_back(makeContours(i, 1));
-	//}
+	for ( int i=0; i < m_contours.size(); i++ ){
+		m_contours[i]->DrawDashedLine();
+	}
 
 	gPad->Update();
 	float ymin = gPad->GetUymin();
@@ -905,8 +907,8 @@ void OneMinusClPlot2d::Draw()
 	drawLegend();
 	drawGroup();
 	drawCLcontent();
-	c1->Update();
-	c1->Show();
+	m_mainCanvas->Update();
+	m_mainCanvas->Show();
 }
 
 
@@ -925,8 +927,8 @@ void OneMinusClPlot2d::drawMarker(float x, float y, int color, int style, float 
 ///
 void OneMinusClPlot2d::drawSolutions()
 {
-	c1->cd();
-	c1->Update();
+	m_mainCanvas->cd();
+	m_mainCanvas->Update();
 	float ymin = gPad->GetUymin();
 	float ymax = gPad->GetUymax();
 	float xmin = gPad->GetUxmin();
@@ -972,5 +974,5 @@ void OneMinusClPlot2d::drawSolutions()
 ///
 void OneMinusClPlot2d::save()
 {
-	savePlot(c1, name);
+	savePlot(m_mainCanvas, name);
 }

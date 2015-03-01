@@ -11,7 +11,7 @@
 ###############################################
 
 SET( COMBINER_MODULES
-	#tutorial
+	tutorial
 	#cartesian
 	#belle2
 	belle2_Vub

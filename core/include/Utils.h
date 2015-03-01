@@ -103,7 +103,7 @@ namespace Utils
 	template<class T> inline bool isIn(vector<T> vec, T var){return (find(vec.begin(), vec.end(), var) != vec.end());};
 
 	static int uniqueRootNameId = 0;
-	inline TString          getUniqueRootName(){return (TString)Form("UID%i", ++        uniqueRootNameId);}
+	inline TString          getUniqueRootName(){return (TString)Form("UID%i", ++uniqueRootNameId);}
 	void                    fillArgList(RooArgList* list, RooWorkspace* w, std::vector<TString> names);
 	void                    getParameters(const RooFitResult &result, std::vector<TString> &names);
 	std::vector<TString>    getParsWithName(const TString& subString, const RooArgSet& set);
@@ -116,6 +116,9 @@ namespace Utils
 	void dump_vector(const std::vector<int>& l);
 	void dump_vector(const std::vector<float>& l);
 	void dump_map(const std::map<int, std::vector<int> >& map);
+	void dump_matrix(const std::vector<std::vector<int> >& l);
+
+	std::vector<std::vector<int> > transpose(std::vector<std::vector<int> >& v);
 }
 
 #endif

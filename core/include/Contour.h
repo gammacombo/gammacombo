@@ -23,13 +23,29 @@ class Contour
 		Contour(OptParser *arg, TList *listOfGraphs);
 		~Contour();
 		void               Draw();
+		void               DrawFilled();
+		void               DrawLine();
+		inline int         getSigma(){return m_sigma;};
+		void               magneticBoundaries(const TH2F* hCL);
 		inline void        setSigma(int s){m_sigma=s;};
+		void               setStyle(int linecolor, int linestyle, int linewidth, int fillcolor, int fillstyle);
 
 	private:
 
-		OptParser*         m_arg;         ///< command line arguments
-		vector<TGraph*>    m_contours;     ///< container for the several disjoint subcontours
-		int                m_sigma;       ///< sigma level of the contour
+		TGraph*            changePointOrder(TGraph *g, int pointId);
+		void               findClosestPoints(TGraph *g1, TGraph *g2, int &i1, int &i2);
+		TGraph*            joinIfInside(TGraph *g1, TGraph *g2);
+		vector<TGraph*>    makeHoles(vector<TGraph*>& contours);
+
+		OptParser*         m_arg;           ///< command line arguments
+		vector<TGraph*>    m_contours;      ///< container for the several disjoint subcontours. Used by DrawLine().
+		vector<TGraph*>    m_contoursHoles; ///< container for contours with holes. Filled by makeHoles(). Used by DrawFilled().
+		int                m_sigma;         ///< sigma level of the contour
+		int                m_linecolor;     ///< style for the contour
+		int                m_linestyle;
+		int                m_fillcolor;
+		int                m_fillstyle;
+		int                m_linewidth;
 };
 
 #endif

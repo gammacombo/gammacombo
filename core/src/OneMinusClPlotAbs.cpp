@@ -26,12 +26,8 @@ OneMinusClPlotAbs::OneMinusClPlotAbs(OptParser *arg, TString name, TString title
 	this->arg = arg;
 	this->name = name;
 	this->title = title;
-	c1 = new TCanvas(name+getUniqueRootName(), title, 800, 600);
+	m_mainCanvas = 0;
 
-	if ( arg->plotlog ){
-		c1->SetLogy();
-		this->name = this->name + "_log";
-	}
 	if ( arg->plotprelim ){
 		this->name = this->name + "_prelim";
 	}
@@ -39,7 +35,11 @@ OneMinusClPlotAbs::OneMinusClPlotAbs(OptParser *arg, TString name, TString title
 	plotSolution  = true;
 	plotLogYMin   = 1.e-3;
 	plotLogYMax   = 1;
+}
 
+OneMinusClPlotAbs::~OneMinusClPlotAbs()
+{
+	if ( m_mainCanvas!=0 ) delete m_mainCanvas;
 }
 
 ///
@@ -57,7 +57,7 @@ void OneMinusClPlotAbs::addScanner(MethodAbsScan* s)
 void OneMinusClPlotAbs::save()
 {
 	TString saveName = name;
-	savePlot(c1, saveName);
+	savePlot(m_mainCanvas, saveName);
 }
 
 ///

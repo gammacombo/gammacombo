@@ -28,7 +28,8 @@ class OneMinusClPlotAbs
 {
 public:
     OneMinusClPlotAbs(OptParser *arg, TString name="c1", TString title="c1");
-    
+	~OneMinusClPlotAbs();
+
     virtual void    addScanner(MethodAbsScan* s);
     inline void     disableLegend(bool yesNo=false){plotLegend = yesNo;};
     inline void     disableSolution(bool yesNo=false){plotSolution = yesNo;};
@@ -50,7 +51,7 @@ public:
 
     vector<MethodAbsScan*> scanners;
     OptParser*  arg; ///< command line options
-    TCanvas*    c1;
+    TCanvas*    m_mainCanvas;
     TString     name;
     TString     title;
     TString     label;
