@@ -1,29 +1,28 @@
 # - Finds ROOT instalation
-# This module sets up ROOT information 
+# This module sets up ROOT information
 # It defines:
 # ROOT_FOUND          If the ROOT is found
 # ROOT_INCLUDE_DIR    PATH to the include directory
 # ROOT_LIBRARIES      Most common libraries
 # ROOT_GUI_LIBRARIES  Most common gui libraries
-# ROOT_LIBRARY_DIR    PATH to the library directory 
+# ROOT_LIBRARY_DIR    PATH to the library directory
 #
 #Last updated by K. Smith (ksmit218@utk.edu) on Apr 10, 2014
 
 #Find the root-config executable
-find_program(ROOT_CONFIG_EXECUTABLE root-config
-  PATHS $ENV{ROOTSYS}/bin)
+find_program(ROOT_CONFIG_EXECUTABLE root-config PATHS $ENV{ROOTSYS}/bin)
 find_program(ROOTCINT_EXECUTABLE rootcint PATHS $ENV{ROOTSYS}/bin)
 find_program(GENREFLEX_EXECUTABLE genreflex PATHS $ENV{ROOTSYS}/bin)
 
 #If we found root-config then get all relevent varaiables
 if(ROOT_CONFIG_EXECUTABLE)
   execute_process(
-    COMMAND ${ROOT_CONFIG_EXECUTABLE} --prefix 
-    OUTPUT_VARIABLE ROOTSYS 
+    COMMAND ${ROOT_CONFIG_EXECUTABLE} --prefix
+    OUTPUT_VARIABLE ROOTSYS
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
   execute_process(
-    COMMAND ${ROOT_CONFIG_EXECUTABLE} --version 
+    COMMAND ${ROOT_CONFIG_EXECUTABLE} --version
     OUTPUT_VARIABLE ROOT_VERSION
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
@@ -49,24 +48,24 @@ endif()
 
 #---Report the status of finding ROOT-------------------
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(ROOT DEFAULT_MSG 
+find_package_handle_standard_args(ROOT DEFAULT_MSG
 		ROOTSYS ROOT_CONFIG_EXECUTABLE ROOTCINT_EXECUTABLE GENREFLEX_EXECUTABLE
 		ROOT_VERSION ROOT_INCLUDE_DIR ROOT_LIBRARIES ROOT_LIBRARY_DIR)
 
 mark_as_advanced(ROOTSYS ROOT_LIBRARIES ROOT_GUI_LIBRARIES)
 
 #----------------------------------------------------------------------------
-# function ROOT_GENERATE_DICTIONARY( dictionary   
-#                                    header1 header2 ... 
-#                                    LINKDEF linkdef1 ... 
+# function ROOT_GENERATE_DICTIONARY( dictionary
+#                                    header1 header2 ...
+#                                    LINKDEF linkdef1 ...
 #                                    OPTIONS opt1...)
 function(ROOT_GENERATE_DICTIONARY dictionary)
 	include(CMakeParseArguments)
 	CMAKE_PARSE_ARGUMENTS(ARG "" "" "LINKDEF;OPTIONS" "" ${ARGN})
 	#---Get the list of include directories------------------
 	get_directory_property(incdirs INCLUDE_DIRECTORIES)
-	set(includedirs) 
-	foreach( d ${incdirs})    
+	set(includedirs)
+	foreach( d ${incdirs})
 		set(includedirs ${includedirs} -I${d})
 	endforeach()
 	#---Get LinkDef.h file------------------------------------
@@ -85,23 +84,23 @@ function(ROOT_GENERATE_DICTIONARY dictionary)
 	endforeach()
 	#---call rootcint------------------------------------------
 	add_custom_command(OUTPUT ${dictionary}.cxx ${dictionary}.h
-		     COMMAND ${ROOTCINT_EXECUTABLE} -cint -f ${dictionary}.cxx 
-		     -c -p ${ARG_OPTIONS} ${includedirs} ${headerfiles} ${linkdefs} 
+		     COMMAND ${ROOTCINT_EXECUTABLE} -cint -f ${dictionary}.cxx
+		     -c -p ${ARG_OPTIONS} ${includedirs} ${headerfiles} ${linkdefs}
 		     DEPENDS ${headerfiles} ${linkdefs} VERBATIM)
 endfunction()
 
 #----------------------------------------------------------------------------
-# function REFLEX_GENERATE_DICTIONARY(dictionary   
-#                                     header1 header2 ... 
-#                                     SELECTION selectionfile ... 
+# function REFLEX_GENERATE_DICTIONARY(dictionary
+#                                     header1 header2 ...
+#                                     SELECTION selectionfile ...
 #                                     OPTIONS opt1...)
-function(REFLEX_GENERATE_DICTIONARY dictionary)  
+function(REFLEX_GENERATE_DICTIONARY dictionary)
   include(CMakeParseArguments)
   CMAKE_PARSE_ARGUMENTS(ARG "" "" "SELECTION;OPTIONS" "" ${ARGN})
   #---Get the list of include directories------------------
   get_directory_property(incdirs INCLUDE_DIRECTORIES)
-  set(includedirs) 
-  foreach( d ${incdirs})    
+  set(includedirs)
+  foreach( d ${incdirs})
   	set(includedirs ${includedirs} -I${d})
   endforeach()
   #---Get the list of header files-------------------------
@@ -114,12 +113,12 @@ function(REFLEX_GENERATE_DICTIONARY dictionary)
   #---Get Selection file------------------------------------
   if(IS_ABSOLUTE ${ARG_SELECTION})
     set(selectionfile ${ARG_SELECTION})
-  else() 
+  else()
     set(selectionfile ${CMAKE_CURRENT_SOURCE_DIR}/${ARG_SELECTION})
   endif()
   #---Get preprocessor definitions--------------------------
   get_directory_property(defs COMPILE_DEFINITIONS)
-  foreach( d ${defs})    
+  foreach( d ${defs})
    set(definitions ${definitions} -D${d})
   endforeach()
   #---Nanes and others---------------------------------------
@@ -128,19 +127,19 @@ function(REFLEX_GENERATE_DICTIONARY dictionary)
     set(gccxmlopts "--gccxmlopt=\"--gccxml-compiler cl\"")
   else()
     set(gccxmlopts)
-  endif()  
+  endif()
   #---Check GCCXML and get path-----------------------------
   find_package(GCCXML)
-  
+
   if(GCCXML)
     get_filename_component(gccxmlpath ${GCCXML} PATH)
   else()
     message(WARNING "GCCXML not found. Install and setup your environment to find 'gccxml' executable")
   endif()
   #---Actual command----------------------------------------
-  add_custom_command(OUTPUT ${gensrcdict} ${rootmapname}     
+  add_custom_command(OUTPUT ${gensrcdict} ${rootmapname}
                      COMMAND ${GENREFLEX_EXECUTABLE} ${headerfiles} -o ${gensrcdict} ${gccxmlopts} ${rootmapopts} --select=${selectionfile}
                              --gccxmlpath=${gccxmlpath} ${ARG_OPTIONS} ${includedirs} ${definitions}
                      DEPENDS ${headerfiles} ${selectionfile})
 endfunction()
-  
+

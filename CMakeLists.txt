@@ -32,12 +32,12 @@ FIND_PACKAGE(ROOT REQUIRED)
 # ROOT_INCLUDE_DIR    PATH to the include directory
 # ROOT_LIBRARIES      Most common libraries
 # ROOT_GUI_LIBRARIES  Most common gui libraries
-# ROOT_LIBRARY_DIR    PATH to the library directory 
+# ROOT_LIBRARY_DIR    PATH to the library directory
 #MESSAGE("ROOT_FOUND: " ${ROOT_FOUND})
-#MESSAGE("ROOT_INCLUDE_DIR: " ${ROOT_INCLUDE_DIR})
-#MESSAGE("ROOT_LIBRARIES: " ${ROOT_LIBRARIES})
-#MESSAGE("ROOT_GUI_LIBRARIES: " ${ROOT_GUI_LIBRARIES})
-#MESSAGE("ROOT_LIBRARY_DIR: " ${ROOT_LIBRARY_DIR})
+MESSAGE("ROOT_INCLUDE_DIR: " ${ROOT_INCLUDE_DIR})
+MESSAGE("ROOT_LIBRARIES: " ${ROOT_LIBRARIES})
+MESSAGE("ROOT_GUI_LIBRARIES: " ${ROOT_GUI_LIBRARIES})
+MESSAGE("ROOT_LIBRARY_DIR: " ${ROOT_LIBRARY_DIR})
 
 # find Boost
 FIND_PACKAGE(Boost REQUIRED)
@@ -53,7 +53,7 @@ if(DOXYGEN_FOUND)
 	# add combiner modules to Doxygen
 	set(COMBINER_MODULES_DOXYGEN_SOURCES)
 	foreach( dir ${COMBINER_MODULES} )
-		set(COMBINER_MODULES_DOXYGEN_SOURCES "${COMBINER_MODULES_DOXYGEN_SOURCES} 
+		set(COMBINER_MODULES_DOXYGEN_SOURCES "${COMBINER_MODULES_DOXYGEN_SOURCES}
 			INPUT += ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/include
 			INPUT += ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/src"
 		)
@@ -117,9 +117,9 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++11-extensions"   )
 # Set core include directory
 SET( CORE_INC_DIR ./core/include/ )
 
-# include directories 
-INCLUDE_DIRECTORIES( 
-	BEFORE 
+# include directories
+INCLUDE_DIRECTORIES(
+	BEFORE
 	${CORE_INC_DIR}
 	${ROOT_INCLUDE_DIR}
 )
@@ -138,12 +138,12 @@ AUX_SOURCE_DIRECTORY( ./core/src          CORE_LIB_SOURCES )
 SET(CORE_DICTIONARY_SOURCES
 	RooBinned2DBicubicBase.h
 	RooCrossCorPdf.h
-	#RooHistInterpol.h      
+	#RooHistInterpol.h
 	RooHistPdfAngleVar.h
 	RooHistPdfVar.h
 	RooPoly3Var.h
 	RooPoly4Var.h
-	RooSlimFitResult.h      
+	RooSlimFitResult.h
 )
 # add a make rule for the dictionary
 ROOT_GENERATE_DICTIONARY(${PROJECT_NAME}Dict
