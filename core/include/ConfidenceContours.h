@@ -10,7 +10,7 @@
 #ifndef ConfidenceContours_h
 #define ConfidenceContours_h
 
-#include "TRoot.h"
+#include "TROOT.h"
 #include "OptParser.h"
 #include "Contour.h"
 #include "Utils.h"
