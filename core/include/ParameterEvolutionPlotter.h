@@ -11,7 +11,7 @@
 #ifndef ParameterEvolutionPlotter_h
 #define ParameterEvolutionPlotter_h
 
-#include "TRoot.h"
+#include "TROOT.h"
 #include "TCanvas.h"
 #include "TGraphErrors.h"
 #include "MethodProbScan.h"

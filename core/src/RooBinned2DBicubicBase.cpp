@@ -107,7 +107,7 @@ RooBinned2DBicubicBase<BASE>::RooBinned2DBicubicBase(
     ymax(h.GetYaxis()->GetBinCenter(nBinsY - 1) + binSizeY),
     coeffs(CoeffRecLen * nBinsX * nBinsY)
 {
-    TAxis *xaxis = h.GetXaxis(), *yaxis = h.GetYaxis();
+    const TAxis *xaxis = h.GetXaxis(), *yaxis = h.GetYaxis();
     // verify that all bins have same size
     for (int i = 1; i < nBinsX; ++i) {
 	if (std::abs(xaxis->GetBinWidth(i) / binSizeX - 1.) > 1e-9)
