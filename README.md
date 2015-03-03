@@ -27,7 +27,7 @@ Get the source code from GitHub:
 To create the library, create a build directory and change into it. E.g.
 
     mkdir build; cd build
- 
+
 Now create the Makefiles:
 
     cmake ..
@@ -40,7 +40,7 @@ To install the libraries and copy all header files into the directories lib/ and
 include/ in the root directory of the project:
 
     make install
- 
+
 To build the Doxygen documentation, which will create an HTML class documentation in
 the doc/html subdirectory, do:
 
@@ -48,6 +48,6 @@ the doc/html subdirectory, do:
 
 Follow the tutorial in the [manual](https://github.com/mkarbach/gammacombo/blob/master/manual/GammaComboManual.pdf):
 
-    cd tutorial
+    cd ../tutorial
     bin/tutorial
 
