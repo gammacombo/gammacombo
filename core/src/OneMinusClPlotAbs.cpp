@@ -72,6 +72,7 @@ void OneMinusClPlotAbs::save()
 void OneMinusClPlotAbs::drawGroup(float yPos)
 {
 	if ( arg->group==TString("off") ) return;
+	m_mainCanvas->cd();
 	float xPos = 0.5;
 	float xLow, yLow;
 	if ( arg->plotgroupx==-1 ) xLow = xPos; else xLow = arg->plotgroupx;

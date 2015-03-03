@@ -37,8 +37,11 @@
 ///
 TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool filled)
 {
-	if ( arg->debug ) cout << "OneMinusClPlot::scan1dPlot() : plotting "
-															  << s->getName() << " (" << s->getMethodName() << ")" << endl;
+	if ( arg->debug ){
+		cout << "OneMinusClPlot::scan1dPlot() : plotting ";
+		cout << s->getName() << " (" << s->getMethodName() << ")" << endl;
+	}
+	m_mainCanvas->cd();
 	bool plotPoints = ( s->getMethodName()=="Plugin" || s->getMethodName()=="BergerBoos" || s->getMethodName()=="GenericPlugin" ) && plotPluginMarkers;
 	TH1F *hCL = (TH1F*)s->getHCL()->Clone(getUniqueRootName());
 	// fix inf and nan entries
@@ -286,9 +289,12 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 ///
 void OneMinusClPlot::scan1dPlotSimple(MethodAbsScan* s, bool first)
 {
-	if ( arg->debug ) cout << "OneMinusClPlot::scan1dPlotSimple() : plotting "
-																	<< s->getName() << " (" << s->getMethodName() << ")" << endl;
-
+	if ( arg->debug ){
+		cout << "OneMinusClPlot::scan1dPlotSimple() : plotting ";
+		cout << s->getName() << " (" << s->getMethodName() << ")" << endl;
+	}
+	m_mainCanvas->cd();
+	// get rit of nan and inf
 	for ( int i=1; i<=s->getHCL()->GetNbinsX(); i++ ){
 		if ( s->getHCL()->GetBinContent(i)!=s->getHCL()->GetBinContent(i)
 				|| std::isinf(s->getHCL()->GetBinContent(i)) ) s->getHCL()->SetBinContent(i, 0.0);
@@ -329,6 +335,7 @@ void OneMinusClPlot::scan1dPlotSimple(MethodAbsScan* s, bool first)
 
 void OneMinusClPlot::drawVerticalLine(float x, int color, int style)
 {
+	m_mainCanvas->cd();
 	TLine* l1 = new TLine(x, 0., x, 1.);
 	l1->SetLineWidth(1);
 	l1->SetLineColor(color);
@@ -398,8 +405,8 @@ void OneMinusClPlot::drawSolutions()
 			xNumberMax = xCLmin+(xmax-xmin)*0.0;
 		}
 		else {
-			cout << "OneMinusClPlot::drawSolutions() : ERROR : --ps code "
-													   << scanners[i]->getDrawSolution() << " not found! Use [0,1,2,3]." << endl;
+			cout << "OneMinusClPlot::drawSolutions() : ERROR : --ps code ";
+			cout << scanners[i]->getDrawSolution() << " not found! Use [0,1,2,3]." << endl;
 			continue;
 		}
 
@@ -502,6 +509,7 @@ void OneMinusClPlot::Draw()
 		m_mainCanvas->SetLogy();
 		this->name = this->name + "_log";
 	}
+	m_mainCanvas->cd();
 
 	// Legend:
 	// make the legend short, the text will extend over the boundary, but the symbol will be shorter
