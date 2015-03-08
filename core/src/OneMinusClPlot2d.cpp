@@ -169,14 +169,16 @@
 	fillcolor[4].push_back(cb.lightcolor(fillcolor[3][4]));
 	fillstyle[4].push_back(1001);
 
-	// scanners 6-10
+	// scanners 6-12
 	// colors based on http://colorbrewer2.org/, six classes, qualitative, second scheme
-	makeNewPlotStyle("#1b9e77");
-	makeNewPlotStyle("#d95f02");
-	makeNewPlotStyle("#7570b3");
-	makeNewPlotStyle("#e7298a");
-	makeNewPlotStyle("#66a61e");
-	makeNewPlotStyle("#e6ab02");
+	makeNewPlotStyle("#1b9e77"); // sea green
+	makeNewPlotStyle("#d95f02"); // dark orange
+	makeNewPlotStyle("#7570b3"); // medium purple
+	makeNewPlotStyle("#e7298a"); // medium violet red
+	makeNewPlotStyle("#66a61e"); // forest green
+	makeNewPlotStyle("#e6ab02"); // goldenrod
+	makeNewPlotStyle("#a6761d"); // chocolate
+	makeNewPlotStyle("#e31a1c"); // red
 
 	// if requested, remove any fill pattern to make cleaner plots
 	if ( arg->isQuickhack(10) ){
@@ -426,6 +428,10 @@ void OneMinusClPlot2d::Draw()
 		m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, 600);
 	}
 
+	if ( arg->isQuickhack(14) ){
+		m_mainCanvas->GetPad(0)->SetLeftMargin(0.14);
+	}
+
 	TH2F *hCL = histos[0];
 	float min1 = arg->scanrangeMin  == arg->scanrangeMax  ? hCL->GetXaxis()->GetXmin() : arg->scanrangeMin;
 	float max1 = arg->scanrangeMin  == arg->scanrangeMax  ? hCL->GetXaxis()->GetXmax() : arg->scanrangeMax;
@@ -441,7 +447,12 @@ void OneMinusClPlot2d::Draw()
 	haxes->GetXaxis()->SetTitleFont(font);
 	haxes->GetYaxis()->SetTitleFont(font);
 	haxes->GetXaxis()->SetTitleOffset(0.85);
-	haxes->GetYaxis()->SetTitleOffset(0.95);
+	if ( arg->isQuickhack(14) ){
+		haxes->GetYaxis()->SetTitleOffset(0.65);
+	}
+	else {
+		haxes->GetYaxis()->SetTitleOffset(0.95);
+	}
 	haxes->GetXaxis()->SetLabelSize(labelsize);
 	haxes->GetYaxis()->SetLabelSize(labelsize);
 	haxes->GetXaxis()->SetTitleSize(titlesize);

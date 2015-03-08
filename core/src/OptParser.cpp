@@ -426,6 +426,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"11: Don't plot dashed lines of 2D contours.\n"
 			"12: Use transpareny for 2D contours.\n"
 			"13: Don't use transparency for the last plotted 2D contour.\n"
+			"14: In 2D plots, reduce the y title offset and enlarge the pad accordingly.\n"
 			, false, "int");
 	TCLAP::MultiArg<string> titleArg("", "title", "Override the title of a combination. "
 			"If 'default' is given, the default title for that combination is used. "
