@@ -604,7 +604,7 @@ void OneMinusClPlot2d::Draw()
 	drawSolutions();
 	drawLegend();
 	drawGroup();
-	drawCLcontent();
+	if ( !arg->isQuickhack(15) ) drawCLcontent();
 	m_mainCanvas->Update();
 	m_mainCanvas->Show();
 }
