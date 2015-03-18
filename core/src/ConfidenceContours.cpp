@@ -221,6 +221,7 @@ void ConfidenceContours::computeContours(TH2F* hist, histogramType type)
 	// magnetic boundaries
 	if ( m_arg->plotmagnetic ) {
 		for ( int ic=4; ic>=0; ic-- ){
+			if ( ic>=m_contours.size() ) continue;
 			m_contours[ic]->magneticBoundaries(hist);
 		}
 	}
