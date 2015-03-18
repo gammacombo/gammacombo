@@ -107,6 +107,32 @@ TH2F* ConfidenceContours::transformChi2valleyToHill(TH2F* hist, float offset)
 }
 
 ///
+/// Add a new contour that is just the plotted area.
+///
+/// \param hist - histogram providing the dimensions of the plotted area
+///
+void ConfidenceContours::addFilledPlotArea(TH2F* hist)
+{
+	// get boundaries
+	float xmin = hist->GetXaxis()->GetXmin();
+	float xmax = hist->GetXaxis()->GetXmax();
+	float ymin = hist->GetYaxis()->GetXmin();
+	float ymax = hist->GetYaxis()->GetXmax();
+	// make new graph covering the plotted area
+	TGraph *g = new TGraph(5);
+	g->SetPoint(0, xmin, ymin);
+	g->SetPoint(1, xmin, ymax);
+	g->SetPoint(2, xmax, ymax);
+	g->SetPoint(3, xmax, ymin);
+	g->SetPoint(4, xmin, ymin);
+	// make a new Contour object from it
+	TList *l = new TList();
+	l->Add(g);
+	Contour *c = new Contour(m_arg, l);
+	m_contours.push_back(c);
+}
+
+///
 /// Compute the raw N sigma confidence contours from a 2D histogram
 /// holding either the chi2 or the p-value curve. The resulting
 /// contours are stored into the m_contours member.
@@ -186,6 +212,12 @@ void ConfidenceContours::computeContours(TH2F* hist, histogramType type)
 		}
 	}
 
+	// add the entire plotted area, if one requested contour
+	// is empty, i.e. it contains the entire plot range
+	if ( nEmptyContours>0 ){
+		addFilledPlotArea(hist);
+	}
+
 	// magnetic boundaries
 	if ( m_arg->plotmagnetic ) {
 		for ( int ic=4; ic>=0; ic-- ){
@@ -204,6 +236,7 @@ void ConfidenceContours::Draw()
 {
 	//cout << "ConfidenceContours::Draw() : drawing ..." << endl;
 	for ( int i=m_arg->plotnsigmacont-1; i>=0; i-- ) {
+		if ( i>=m_contours.size() ) continue;
 		m_contours[i]->setStyle(m_linecolor[i], m_linestyle[i], m_linewidth[i], m_fillcolor[i], m_fillstyle[i]);
 		m_contours[i]->setTransparency(m_transparency);
 		m_contours[i]->Draw();
@@ -217,6 +250,7 @@ void ConfidenceContours::DrawDashedLine()
 {
 	//cout << "ConfidenceContours::DrawDashedLine() : drawing ..." << endl;
 	for ( int i=m_arg->plotnsigmacont-1; i>=0; i-- ) {
+		if ( i>=m_contours.size() ) continue;
 		m_contours[i]->setStyle(m_linecolor[i], kDashed, m_linewidth[i], 0, 0);
 		m_contours[i]->DrawLine();
 	}
