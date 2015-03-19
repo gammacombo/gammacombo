@@ -1211,11 +1211,12 @@ void GammaComboEngine::scan()
 				//scanner2->setParevolPLH(scanner3);
 				//}
 				else if ( arg->isAction("plugin") ){
-					// create the Prob scanner: load from disc if it exists, else redo the scan
-					// we don't need the prob scanner for the plugin only plot, if we either just
-					// want to replot it, or if we use the external chi2 values directly from the toys
+					// Create the Prob scanner: load from disc if it exists, else redo the scan.
+					// We don't need the prob scanner for the plugin only plot, if we either just
+					// want to replot it.
 					MethodProbScan *scannerProb = new MethodProbScan(c);
-					if ( ! ( arg->plotpluginonly && ( arg->isAction("plot") || !arg->intprob ) ) ){
+					if (    !arg->plotpluginonly
+						|| ( arg->plotpluginonly && !arg->isAction("plot") ) ){
 						if ( FileExists(m_fnamebuilder->getFileNameScanner(scannerProb)) ){
 							scannerProb->loadScanner(m_fnamebuilder->getFileNameScanner(scannerProb));
 						}
