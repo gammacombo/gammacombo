@@ -2,12 +2,13 @@
 
 CLInterval::CLInterval()
 {
-  pvalue = -1.;
+	pvalue = -1.;
 	pvalueAtCentral = -1.;
-  min = -1.;
-  max = -1.;
-  central = -1.;
-	closed = false;
+	min = -1.;
+	max = -1.;
+	central = -1.;
+	minclosed = false;
+	maxclosed = false;
 	minmethod = "n/a";
 	maxmethod = "n/a";
 	centralmethod = "n/a";
@@ -20,7 +21,8 @@ CLInterval::CLInterval(const CLInterval &other)
 	min = other.min;
 	max = other.max;
 	central = other.central;
-	closed = other.closed;
+	minclosed = other.minclosed;
+	maxclosed = other.maxclosed;
 	minmethod = other.minmethod;
 	maxmethod = other.maxmethod;
 	centralmethod = other.centralmethod;
@@ -32,13 +34,14 @@ CLInterval::~CLInterval()
 void CLInterval::print()
 {
 	cout << "pvalue=" << pvalue
-	<< " pvalueAtCentral=" << pvalueAtCentral
-	<< " min=" << min
-	<< " max=" << max
-	<< " central=" << central
-	<< " closed=" << closed
-	<< " minmethod=" << minmethod
-	<< " maxmethod=" << maxmethod
-	<< " centralmethod=" << centralmethod
-	<< endl;
+		<< " pvalueAtCentral=" << pvalueAtCentral
+		<< " min=" << min
+		<< " max=" << max
+		<< " central=" << central
+		<< " minclosed=" << minclosed
+		<< " maxclosed=" << maxclosed
+		<< " minmethod=" << minmethod
+		<< " maxmethod=" << maxmethod
+		<< " centralmethod=" << centralmethod
+		<< endl;
 }

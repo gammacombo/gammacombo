@@ -86,6 +86,92 @@ void CLIntervalMaker::findMaxima(float pValueThreshold)
 // 	}
 // }
 
+
+///
+/// Checks if a bin is in a CL interval: it is, when it's pvalue
+/// is above the provided threshold.
+///
+/// \param binid - bin id of _pvalues histogram
+/// \param pvalue - the p value threshold
+/// \return - true, if bin is in interval
+///
+bool CLIntervalMaker::isInInterval(int binid, float pvalue) const
+{
+	return _pvalues.GetBinContent(binid) > pvalue;
+}
+
+///
+/// Stores a confidence interval found by findRawIntervalsForCentralValues().
+///
+/// \param binidHi - bin id of _pvalues histogram
+/// \param binidLo - bin id of _pvalues histogram
+/// \param clis - vector of confidence intervals, usually _clintervals1sigma or _clintervals2sigma
+///
+void CLIntervalMaker::storeRawInterval(int binidLo, int binidHi, float pvalue, vector<CLInterval> &clis)
+{
+	CLInterval c;
+	c.pvalue = pvalue;
+	// use the histogram border for non-closed intervals,
+	// else the bin center
+	if ( binidLo==1 ){
+		c.min = _pvalues.GetXaxis()->GetXmin();
+		c.minmethod = "border";
+		c.minclosed = false;
+	}
+	else {
+		c.min = binToValue(binidLo);
+		c.minmethod = "raw";
+		c.minclosed = true;
+	}
+	if ( binidHi==_pvalues.GetNbinsX() ){
+		c.max = _pvalues.GetXaxis()->GetXmax();
+		c.maxmethod = "border";
+		c.maxclosed = false;
+	}
+	else {
+		c.max = binToValue(binidHi);
+		c.maxmethod = "raw";
+		c.maxclosed = true;
+	}
+	c.central = (c.max-c.min)/2.;
+	c.centralmethod = "middle";
+	clis.push_back(c);
+}
+
+///
+/// Finds the raw interval boundaries corresponding to the provided p-value
+/// The raw intervals are just connected sections where all bins of the p-value
+/// histogram _pvalues lie above the given threshold.
+/// Saves the result into the intevals in
+/// _clintervals1sigma or _clintervals2sigma.
+///
+/// \param pvalue - pvalue of the intervals to find
+///
+void CLIntervalMaker::findRawIntervals(float pvalue, vector<CLInterval> &clis)
+{
+	bool intervalIsOpened = false;
+	int intervalBinLo = 1;
+	int intervalBinHi = _pvalues.GetNbinsX();
+
+	// check if we start with an opened interval
+	if ( isInInterval(1, pvalue) ) intervalIsOpened = true;
+
+	// loop over the pvalue histogram and find the intervals
+	for ( int j=1; j<=_pvalues.GetNbinsX(); j++ ){
+		if ( intervalIsOpened ){
+			if ( isInInterval(j, pvalue) && j!=_pvalues.GetNbinsX() ) continue; // right border will close!
+			intervalBinHi = j;
+			intervalIsOpened = false;
+			storeRawInterval(intervalBinLo, intervalBinHi, pvalue, clis);
+		}
+		else{
+			if ( !isInInterval(j, pvalue) ) continue;
+			intervalBinLo = j;
+			intervalIsOpened = true;
+		}
+	}
+}
+
 ///
 /// Find the interval boundaries corresponding to the central values
 /// already saved in _clintervals1sigma or _clintervals2sigma, and to
@@ -95,7 +181,7 @@ void CLIntervalMaker::findMaxima(float pValueThreshold)
 /// \param pvalue - pvalue of the intervals to find
 /// \param clis - list of confidence intervals holding the central value
 ///
-void CLIntervalMaker::findRawIntervals(float pvalue, vector<CLInterval> &clis) const
+void CLIntervalMaker::findRawIntervalsForCentralValues(float pvalue, vector<CLInterval> &clis)
 {
 	for ( int i=0; i<clis.size(); i++ ){
 		if ( clis[i].pvalueAtCentral<pvalue ) continue; // skip central values that will not going to be included in an interval at this pvalue
@@ -123,13 +209,13 @@ void CLIntervalMaker::findRawIntervals(float pvalue, vector<CLInterval> &clis) c
 		}
 
 		// check if both boundaries were found
-		clis[i].closed = ( clis[i].min != _pvalues.GetXaxis()->GetXmin()
-				&& clis[i].max != _pvalues.GetXaxis()->GetXmax() );
+		clis[i].minclosed = clis[i].min != _pvalues.GetXaxis()->GetXmin();
+		clis[i].maxclosed = clis[i].max != _pvalues.GetXaxis()->GetXmax();
 	}
 }
 
 ///
-/// Remove bad intervals, where findRawIntervals() couldn't find
+/// Remove bad intervals, where findRawIntervalsForCentralValues() couldn't find
 /// interval boundaries corresponding to the central value and pvalue
 /// given.
 ///
@@ -221,18 +307,22 @@ void CLIntervalMaker::improveIntervalsLine(vector<CLInterval> &clis) const
 		float newMin, newMax;
 		int binMin, binMax;
 		// improve lower boundary
-		binMin = checkNeighboringBins(valueToBin(clis[i].min), clis[i].pvalue);
-		wasImproved = interpolateLine(&_pvalues, binMin, clis[i].pvalue, newMin);
-		if ( wasImproved ){
-			clis[i].minmethod = "line";
-			clis[i].min = newMin;
+		if ( clis[i].minclosed ){
+			binMin = checkNeighboringBins(valueToBin(clis[i].min), clis[i].pvalue);
+			wasImproved = interpolateLine(&_pvalues, binMin, clis[i].pvalue, newMin);
+			if ( wasImproved ){
+				clis[i].minmethod = "line";
+				clis[i].min = newMin;
+			}
 		}
 		// improve upper boundary
-		binMax = checkNeighboringBins(valueToBin(clis[i].max), clis[i].pvalue);
-		wasImproved = interpolateLine(&_pvalues, binMax, clis[i].pvalue, newMax);
-		if ( wasImproved ){
-			clis[i].maxmethod = "line";
-			clis[i].max = newMax;
+		if ( clis[i].maxclosed ){
+			binMax = checkNeighboringBins(valueToBin(clis[i].max), clis[i].pvalue);
+			wasImproved = interpolateLine(&_pvalues, binMax, clis[i].pvalue, newMax);
+			if ( wasImproved ){
+				clis[i].maxmethod = "line";
+				clis[i].max = newMax;
+			}
 		}
 	}
 }
@@ -249,18 +339,22 @@ void CLIntervalMaker::improveIntervalsPol2fit(vector<CLInterval> &clis) const
 		float newMin, newMax, newMinErr, newMaxErr;
 		int binMin, binMax;
 		// improve lower boundary
-		binMin = checkNeighboringBins(valueToBin(clis[i].min), clis[i].pvalue);
-		wasImproved = interpolatePol2fit(&_pvalues, binMin, clis[i].pvalue, clis[i].central, false, newMin, newMinErr);
-		if ( wasImproved ){
-			clis[i].minmethod = "pol2";
-			clis[i].min = newMin;
+		if ( clis[i].minclosed ){
+			binMin = checkNeighboringBins(valueToBin(clis[i].min), clis[i].pvalue);
+			wasImproved = interpolatePol2fit(&_pvalues, binMin, clis[i].pvalue, clis[i].central, false, newMin, newMinErr);
+			if ( wasImproved ){
+				clis[i].minmethod = "pol2";
+				clis[i].min = newMin;
+			}
 		}
 		// improve upper boundary
-		binMax = checkNeighboringBins(valueToBin(clis[i].max), clis[i].pvalue);
-		wasImproved = interpolatePol2fit(&_pvalues, binMax, clis[i].pvalue, clis[i].central, true, newMax, newMaxErr);
-		if ( wasImproved ){
-			clis[i].maxmethod = "pol2";
-			clis[i].max = newMax;
+		if ( clis[i].maxclosed ){
+			binMax = checkNeighboringBins(valueToBin(clis[i].max), clis[i].pvalue);
+			wasImproved = interpolatePol2fit(&_pvalues, binMax, clis[i].pvalue, clis[i].central, true, newMax, newMaxErr);
+			if ( wasImproved ){
+				clis[i].maxmethod = "pol2";
+				clis[i].max = newMax;
+			}
 		}
 	}
 }
@@ -397,14 +491,16 @@ int CLIntervalMaker::valueToBin(float val) const
 	return _pvalues.GetXaxis()->FindBin(val);
 }
 
+
 float	CLIntervalMaker::binToValue(int bin) const
 {
 	return _pvalues.GetBinCenter(bin);
 }
 
+
 void CLIntervalMaker::print()
 {
-	CLIntervalPrinter clp(_arg, "test", "var", "", "n/a");
+	CLIntervalPrinter clp(_arg, "test", "var", "", "CLMaker's print()");
 	clp.setDegrees(false);
 	clp.addIntervals(_clintervals1sigma);
 	clp.addIntervals(_clintervals2sigma);
@@ -422,21 +518,18 @@ void CLIntervalMaker::calcCLintervals()
 	// findMaxima(0.04); // ignore maxima under pvalue=0.04
 	// print();
 
-	// cout << "findRawIntervals()" << endl;
-	findRawIntervals(1.-0.6827, _clintervals1sigma);
-	findRawIntervals(1.-0.9545, _clintervals2sigma);
+	// cout << "findRawIntervalsForCentralValues()" << endl;
+	findRawIntervalsForCentralValues(1.-0.6827, _clintervals1sigma);
+	findRawIntervalsForCentralValues(1.-0.9545, _clintervals2sigma);
 	// print();
-
-	// for ( int i=0; i<_clintervals1sigma.size(); i++ ){
-	// 	_clintervals1sigma[i].print();
-	// }
-	// for ( int i=0; i<_clintervals2sigma.size(); i++ ){
-	// 	_clintervals2sigma[i].print();
-	// }
 
 	// cout << "removeBadIntervals()" << endl;
 	removeBadIntervals();
 	// print();
+
+	// find raw intervals independently from any central values
+	findRawIntervals(1.-0.6827, _clintervals1sigma);
+	findRawIntervals(1.-0.9545, _clintervals2sigma);
 
 	// cout << "improveIntervalsLine()" << endl;
 	improveIntervalsLine(_clintervals1sigma);
@@ -446,5 +539,5 @@ void CLIntervalMaker::calcCLintervals()
 	// cout << "improveIntervalsPol2fit()" << endl;
 	improveIntervalsPol2fit(_clintervals1sigma);
 	improveIntervalsPol2fit(_clintervals2sigma);
-	print();
+	//print();
 }

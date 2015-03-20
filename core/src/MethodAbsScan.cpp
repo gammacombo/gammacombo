@@ -523,7 +523,7 @@ void MethodAbsScan::calcCLintervals()
 	if ( arg->isQuickhack(8) ){
 		// \todo Switch to the new CLIntervalMaker mechanism. It can be activated
 		// already using --qh 8, but it really is in beta stage still
-		cout << "\nMethodAbsScan::calcCLintervals() : NEW : " << name << endl << endl;
+		cout << "\nMethodAbsScan::calcCLintervals() : USING NEW CLIntervalMaker for " << name << endl << endl;
 		CLIntervalMaker clm(arg, *hCL);
 		clm.findMaxima(0.04); // ignore maxima under pvalue=0.04
 		for ( int iSol=0; iSol<solutions.size(); iSol++ ){
@@ -531,6 +531,14 @@ void MethodAbsScan::calcCLintervals()
 			clm.provideMorePreciseMaximum(sol, "max PLH");
 		}
 		clm.calcCLintervals();
+		// print
+		TString unit = w->var(scanVar1)->getUnit();
+		CLIntervalPrinter clp(arg, name, scanVar1, unit, methodName);
+		clp.setDegrees(isAngle(w->var(scanVar1)));
+		clp.addIntervals(clm.getClintervals1sigma());
+		clp.addIntervals(clm.getClintervals2sigma());
+		clp.print();
+		cout << endl;
 	}
 
 	cout << endl;
