@@ -15,6 +15,7 @@ CLIntervalMaker::~CLIntervalMaker()
 ///
 /// Add a maximum (e.g. found by the Prob method) to calculate the
 /// confidence intervals around it.
+///
 /// \param value - parameter value at the maximum
 /// \param method - details on how this maximum was found
 ///
@@ -43,6 +44,7 @@ void CLIntervalMaker::provideMorePreciseMaximum(float value, TString method)
 /// _clintervals1sigma and _clintervals2sigma. Only accepts
 /// maxima that are not similar to existing ones, that were, e.g.,
 /// set by addMaximum().
+///
 /// \param pValueThreshold - ignore maxima under this pvalue threshold
 /// 				to reject low statistics plugin crap
 ///
@@ -89,6 +91,7 @@ void CLIntervalMaker::findMaxima(float pValueThreshold)
 /// already saved in _clintervals1sigma or _clintervals2sigma, and to
 /// the number of sigmas given. Saves the result into the intevals in
 /// _clintervals1sigma or _clintervals2sigma.
+///
 /// \param pvalue - pvalue of the intervals to find
 /// \param clis - list of confidence intervals holding the central value
 ///
@@ -145,24 +148,37 @@ void CLIntervalMaker::removeBadIntervals()
 }
 
 ///
-/// Check if both bins i and i+1 of the _pvalues histogram
+/// Check if the two bins i and (i+1) of the _pvalues histogram
 /// are on the same side of y.
+///
 /// \param i - bin
 /// \param y - y value
+/// \return - true if i and i+1 are on the same side
 ///
 bool CLIntervalMaker::binsOnSameSide(int i, float y) const
 {
 	return (  (_pvalues.GetBinContent(i)>y && _pvalues.GetBinContent(i+1)>y)
-			|| (_pvalues.GetBinContent(i)<y && _pvalues.GetBinContent(i+1)<y) );
+	       || (_pvalues.GetBinContent(i)<y && _pvalues.GetBinContent(i+1)<y) );
 }
 
+///
+/// Tries to find a bin i such that the two bins i and (i+1) are not on the
+/// same side of y. If i does already satisfy the requirement, i is returned.
+/// Else also the left and right neighbor of i are checked, and returned if
+/// they satisfy the requirement.
+///
+/// \param i - bin ID of _pvalues histogram
+/// \param y - y value
+/// \return - bin ID of _pvalues histogram
+///
 int CLIntervalMaker::checkNeighboringBins(int i, float y) const
 {
-	// cout << "CLIntervalMaker::checkNeighboringBins() : " << i << " " << y << endl;
 	if ( !binsOnSameSide(i, y) ) return i;
 	if ( 1 < i+1 && i+1 <= _pvalues.GetNbinsX()-1 && !binsOnSameSide(i+1, y) ) return i+1;
 	if ( 1 < i-1 && i-1 <= _pvalues.GetNbinsX()-1 && !binsOnSameSide(i-1, y) ) return i-1;
-	// cout << "CLIntervalMaker::checkNeighboringBins() : WARNING : couldn't find better bin: " << i << endl;
+	cout << "CLIntervalMaker::checkNeighboringBins() : WARNING : ";
+	cout << "no direct neighbor of bin " << i << " lies on different sides of y=" << y;
+	cout << " Using bin " << i << "." << endl;
 	return i;
 }
 
@@ -170,6 +186,7 @@ int CLIntervalMaker::checkNeighboringBins(int i, float y) const
 /// Find an interpolated x value near a certain bin position of a histogram that is the
 /// best estimate for h(x)=y. Interpolates by means of a straight line between two
 /// known points.
+///
 /// \param h - the histogram to be interpolated
 /// \param i - interpolate around this bin. Must be a bin such that i and i+1 are above and below val
 /// \param y - the y position we want to find the interpolated x for
@@ -194,6 +211,7 @@ bool CLIntervalMaker::interpolateLine(const TH1F* h, int i, float y, float &val)
 
 ///
 /// Improve the intervals through an interpolation with a straight line.
+///
 /// \param clis - list of confidence intervals holding the central value and min and max boundaries
 ///
 void CLIntervalMaker::improveIntervalsLine(vector<CLInterval> &clis) const
@@ -221,6 +239,7 @@ void CLIntervalMaker::improveIntervalsLine(vector<CLInterval> &clis) const
 
 ///
 /// Improve the intervals through an fit with a pol2.
+///
 /// \param clis - list of confidence intervals holding the central value and min and max boundaries
 ///
 void CLIntervalMaker::improveIntervalsPol2fit(vector<CLInterval> &clis) const
@@ -262,6 +281,7 @@ float CLIntervalMaker::pq(float p0, float p1, float p2, float y, int whichSol) c
 /// to up to five adjacent points. Because that's giving us two solutions, we use the central
 /// value and knowledge about if it is supposed to be an upper or lower boundary to pick
 /// one.
+///
 /// \param h - the histogram to be interpolated
 /// \param i - interpolate around this bin. Must be a bin such that i and i+1 are above and below val
 /// \param y - the y position we want to find the interpolated x for
