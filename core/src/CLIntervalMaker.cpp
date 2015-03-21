@@ -389,9 +389,12 @@ bool CLIntervalMaker::interpolatePol2fit(const TH1F* h, int i, float y, float ce
 		float &val, float &err) const
 {
 	// cout << "CLIntervalMaker::interpolatePol2fit(): i=" << i << " y=" << y << " central=" << central << endl;
+	// check if too close to border so we don't have enough bins to fit
 	if ( !( 2 <= i && i <= h->GetNbinsX()-1 ) ) return false;
+	// check if all necessary bins are on the same side. They are not always,
+	// if e.g. in a plugin there's statistical fluctuations
 	if ( binsOnSameSide(i-1, y) && binsOnSameSide(i, y) ){
-		cout << "CLIntervalMaker::interpolatePol2fit() : ERROR : bins i-1, i, and i+1 on same side of y" << endl;
+		//cout << "CLIntervalMaker::interpolatePol2fit() : ERROR : bins i-1, i, and i+1 on same side of y" << endl;
 		return false;
 	}
 
@@ -402,10 +405,10 @@ bool CLIntervalMaker::interpolatePol2fit(const TH1F* h, int i, float y, float ce
 	g->SetPoint(2, h->GetBinCenter(i+1), h->GetBinContent(i+1));
 
 	// see if we can add a 4th and 5th point:
-	// add a point to the beginning
 	if ( 3 <= i && i <= h->GetNbinsX()-2 ){
+		// add a point to the beginning
 		if ( (h->GetBinContent(i-2) < h->GetBinContent(i-1) && h->GetBinContent(i-1) < h->GetBinContent(i))
-				|| (h->GetBinContent(i-2) > h->GetBinContent(i-1) && h->GetBinContent(i-1) > h->GetBinContent(i)) ){
+		  || (h->GetBinContent(i-2) > h->GetBinContent(i-1) && h->GetBinContent(i-1) > h->GetBinContent(i)) ){
 			TGraph *gNew = new TGraph(g->GetN()+1);
 			gNew->SetPoint(0, h->GetBinCenter(i-2), h->GetBinContent(i-2));
 			Double_t pointx, pointy;
@@ -418,7 +421,7 @@ bool CLIntervalMaker::interpolatePol2fit(const TH1F* h, int i, float y, float ce
 		}
 		// add a point to the end
 		if ( (h->GetBinContent(i+2) < h->GetBinContent(i+1) && h->GetBinContent(i+1) < h->GetBinContent(i))
-				|| (h->GetBinContent(i+2) > h->GetBinContent(i+1) && h->GetBinContent(i+1) > h->GetBinContent(i)) ){
+		  || (h->GetBinContent(i+2) > h->GetBinContent(i+1) && h->GetBinContent(i+1) > h->GetBinContent(i)) ){
 			g->Set(g->GetN()+1);
 			g->SetPoint(g->GetN()-1, h->GetBinCenter(i+2), h->GetBinContent(i+2));
 		}
@@ -435,7 +438,7 @@ bool CLIntervalMaker::interpolatePol2fit(const TH1F* h, int i, float y, float ce
 	//   g->SetMarkerStyle(3);
 	//   g->SetHistogram(const_cast<TH1F*>(h));
 	//   const_cast<TH1F*>(h)->Draw();
-	//   g->Draw("p");
+	//   g->DrawClone("p");
 	// }
 
 	// fit
@@ -454,21 +457,25 @@ bool CLIntervalMaker::interpolatePol2fit(const TH1F* h, int i, float y, float ce
 
 	// decide which of both solutions to use based on the position of
 	// the central value
+	// \todo we probably don't need the central value to decide which solution
+	// to use. Just take the one closest to the original bin! Can't think of a
+	// situation where this should fail. So we don't need the central value in
+	// this method at all, to be removed.
 	int useSol = 0;
-	if ( (sol0<central && sol1>central) || (sol1<central && sol0>central) ){
-		if ( upper ){
-			if ( sol0<sol1 ) useSol = 1;
-			else             useSol = 0;
-		}
-		else{
-			if ( sol0<sol1 ) useSol = 0;
-			else             useSol = 1;
-		}
-	}
-	else{
+	//if ( (sol0<central && sol1>central) || (sol1<central && sol0>central) ){
+		//if ( upper ){
+			//if ( sol0<sol1 ) useSol = 1;
+			//else             useSol = 0;
+		//}
+		//else{
+			//if ( sol0<sol1 ) useSol = 0;
+			//else             useSol = 1;
+		//}
+	//}
+	//else{
 		if ( fabs(h->GetBinCenter(i)-sol0) < fabs(h->GetBinCenter(i)-sol1) ) useSol = 0;
 		else useSol = 1;
-	}
+	//}
 	if ( useSol==0 ) val = sol0;
 	else             val = sol1;
 
@@ -481,7 +488,7 @@ bool CLIntervalMaker::interpolatePol2fit(const TH1F* h, int i, float y, float ce
 	// printf("%f %f %f\n", val, pq(p[0], p[1]+e[1], p[2], y, useSol), pq(p[0], p[1]-e[1], p[2], y, useSol));
 	// printf("%f %f %f\n", val, pq(p[0], p[1], p[2]+e[2], y, useSol), pq(p[0], p[1], p[2]-e[2], y, useSol));
 	err = 0.0;
-	// delete g;
+	delete g;
 	return true;
 }
 
