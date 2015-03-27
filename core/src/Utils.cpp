@@ -727,57 +727,6 @@ void Utils::mergeNamedSets(RooWorkspace *w, TString mergedSet, TString set1, TSt
 	w->defineSet(mergedSet, varsCommaList);
 }
 
-///
-/// Combine PDFs!
-///
-TString Utils::combine(RooWorkspace *w, TString pdf1, TString pdf2)
-{
-	// cout << "Utils::combine() : combining " << pdf1 << " and " << pdf2 << " ..." << endl;
-	TString name = Form("%s_%s", pdf1.Data(), pdf2.Data());
-	if ( w->pdf("pdf_"+name) )
-	{
-		// cout << "Utils::combine() : skip existing combination : " << name << endl;
-		return name;
-	}
-
-	// multiply both pdfs:
-	w->factory(Form("PROD::pdf_%s(pdf_%s, pdf_%s)", name.Data(), pdf1.Data(), pdf2.Data()));
-
-	// define sets of combined parameters
-	mergeNamedSets(w, "par_"+name, "par_"+pdf1, "par_"+pdf2);
-	mergeNamedSets(w, "obs_"+name, "obs_"+pdf1, "obs_"+pdf2);
-	mergeNamedSets(w, "th_"+name, "th_"+pdf1, "th_"+pdf2);
-	return name;
-}
-
-TString Utils::combine(RooWorkspace *w, TString pdf1, TString pdf2, TString pdf3)
-{
-	// cout << "Utils::combine() : combining " << pdf1 << ", " << pdf2 << ", " << pdf3 << " ..." << endl;
-	return combine(w, combine(w, pdf1, pdf2), pdf3);
-}
-
-TString Utils::combine(RooWorkspace *w, TString pdf1, TString pdf2, TString pdf3, TString pdf4)
-{
-	// cout << "Utils::combine() : combining " << pdf1 << ", " << pdf2 << ", " << pdf3 << ", " << pdf4 << " ..." << endl;
-	return combine(w, combine(w, combine(w, pdf1, pdf2), pdf3), pdf4);
-}
-
-TString Utils::combine(RooWorkspace *w, TString pdf1, TString pdf2, TString pdf3, TString pdf4, TString pdf5)
-{
-	// cout << "Utils::combine() : combining " << pdf1 << ", " << pdf2 << ", " << pdf3 << ", " << pdf4 << ", " << pdf5 << " ..." << endl;
-	return combine(w, combine(w, combine(w, combine(w, pdf1, pdf2), pdf3), pdf4), pdf5);
-}
-
-TString Utils::combine(RooWorkspace *w, TString pdf1, TString pdf2, TString pdf3, TString pdf4, TString pdf5, TString pdf6)
-{
-	return combine(w, combine(w, combine(w, combine(w, combine(w, pdf1, pdf2), pdf3), pdf4), pdf5), pdf6);
-}
-
-TString Utils::combine(RooWorkspace *w, TString pdf1, TString pdf2, TString pdf3, TString pdf4, TString pdf5, TString pdf6, TString pdf7)
-{
-	return combine(w, combine(w, combine(w, combine(w, combine(w, combine(w, pdf1, pdf2), pdf3), pdf4), pdf5), pdf6), pdf7);
-}
-
 /*
  * doesn't work with 3GB files.
  *

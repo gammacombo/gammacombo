@@ -65,13 +65,6 @@ namespace Utils
 	TH1F*           histHardCopy(const TH1F* h, bool copyContent=true, bool uniqueName=true);
 	TH2F*           histHardCopy(const TH2F* h, bool copyContent=true, bool uniqueName=true);
 
-	TString combine(RooWorkspace *w, TString pdf1, TString pdf2);
-	TString combine(RooWorkspace *w, TString pdf1, TString pdf2, TString pdf3);
-	TString combine(RooWorkspace *w, TString pdf1, TString pdf2, TString pdf3, TString pdf4);
-	TString combine(RooWorkspace *w, TString pdf1, TString pdf2, TString pdf3, TString pdf4, TString pdf5);
-	TString combine(RooWorkspace *w, TString pdf1, TString pdf2, TString pdf3, TString pdf4, TString pdf5, TString pdf6);
-	TString combine(RooWorkspace *w, TString pdf1, TString pdf2, TString pdf3, TString pdf4, TString pdf5, TString pdf6, TString pdf7);
-
 	TTree*  convertRooDatasetToTTree(RooDataSet *d);
 
 	void mergeNamedSets(RooWorkspace *w, TString mergedSet, TString set1, TString set2);
