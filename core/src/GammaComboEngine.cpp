@@ -1033,6 +1033,19 @@ void GammaComboEngine::fixParameters(Combiner *c, int cId)
 }
 
 ///
+/// Helper function for scan(). Adjusts ranges, if requested
+/// (only possible before combining).
+///
+void GammaComboEngine::adjustRanges(Combiner *c, int cId)
+{
+	if ( cId<arg->physRanges.size() ){
+		for ( int j=0; j<arg->physRanges[cId].size(); j++ ){
+			c->adjustPhysRange(arg->physRanges[cId][j].name, arg->physRanges[cId][j].min, arg->physRanges[cId][j].max);
+		}
+	}
+}
+
+///
 /// Helper function for scan(): Checks if for a given combid (the
 /// running index of the -c argument) a start parameter file was
 /// configured (-l) argument. If so, it is returned, else the default
@@ -1099,8 +1112,8 @@ void GammaComboEngine::scan()
 		// same combination in twice (once with asimov, for example)
 		c = c->Clone(c->getName(), c->getTitle());
 
-		// fix parameters - only possible before combining
-		if ( i<arg->fixParameters.size() ) fixParameters(c, i);
+		// fix parameters according to the command line - only possible before combining
+		fixParameters(c, i);
 
 		// configure names to run an Asimov toy - only possible before combining
 		if ( arg->isAsimovCombiner(i) ) configureAsimovCombinerNames(c, i);
@@ -1116,6 +1129,9 @@ void GammaComboEngine::scan()
 		// combine
 		c->combine();
 		if ( !c->isCombined() ) continue; // error during combining
+
+		// adjust ranges according to the command line - only possible before combining
+		adjustRanges(c, i);
 
 		// make graphviz dot files
 		printCombinerStructure(c);

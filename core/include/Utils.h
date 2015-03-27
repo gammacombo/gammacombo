@@ -45,6 +45,14 @@ namespace Utils
 		bool useValue;
 	};
 
+	// used to adjust ranges in the combination, see e.g. Combiner::adjustRange()
+	struct RangePar
+	{
+		TString name;
+		float min;
+		float max;
+	};
+
 	enum          histogramType { kChi2, kPvalue };
 	inline double sq(double x){return x*x;}
 	inline double RadToDeg(double rad){return rad/TMath::Pi()*180.;}

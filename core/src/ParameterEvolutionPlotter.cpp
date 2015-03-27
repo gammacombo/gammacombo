@@ -97,7 +97,6 @@ TGraph* ParameterEvolutionPlotter::makeEvolutionGraph(vector<RooSlimFitResult*> 
 	int iGraph = 0;
 	for ( int i=0; i<results.size(); i++ ){
 		assert(results[i]);
-		results[i]->Print();
 		//g->SetPoint(iGraph, iGraph, results[i]->getParVal(p->GetName()));
 		g->SetPoint(iGraph, results[i]->getParVal(scanVar1), results[i]->getParVal(parName));
 		iGraph++;

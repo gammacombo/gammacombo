@@ -41,6 +41,7 @@ class GammaComboEngine
 		GammaComboEngine(TString name, int argc, char* argv[]);
 		~GammaComboEngine();
 
+		void            adjustRanges(Combiner *c, int cId);
 		void			addPdf(int id, PDF_Abs* pdf, TString title="");
 		void			addCombiner(int id, Combiner* cmb);
 		void			cloneCombiner(int newId, int oldId, TString name, TString title);

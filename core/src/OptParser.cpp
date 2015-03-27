@@ -126,6 +126,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("nrun");
 	availableOptions.push_back("ntoys");
 	//availableOptions.push_back("pevid");
+	availableOptions.push_back("pr");
 	availableOptions.push_back("physrange");
 	availableOptions.push_back("plotid");
 	availableOptions.push_back("intprob");
@@ -206,6 +207,7 @@ void OptParser::bookPluginOptions()
 	bookedOptions.push_back("nrun");
 	bookedOptions.push_back("ntoys");
 	//bookedOptions.push_back("pevid");
+	bookedOptions.push_back("pr");
 	bookedOptions.push_back("physrange");
 	bookedOptions.push_back("intprob");
 	bookedOptions.push_back("po");
@@ -223,6 +225,7 @@ void OptParser::bookProbOptions()
 	bookedOptions.push_back("npoints");
 	bookedOptions.push_back("npoints2dx");
 	bookedOptions.push_back("npoints2dy");
+	bookedOptions.push_back("pr");
 	bookedOptions.push_back("physrange");
 	bookedOptions.push_back("sn");
 	bookedOptions.push_back("sn2d");
@@ -373,7 +376,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::SwitchArg plotprelimArg("", "prelim", "Plot 'Preliminiary' into the plots. See also --unoff .", false);
 	TCLAP::SwitchArg plotunoffArg("", "unoff", "Plot 'Unofficial' into the plots. See also --prelim .", false);
 	TCLAP::SwitchArg plot2dclArg("", "2dcl", "Plot '2d' confidence level contours in 2d plots.", false);
-	TCLAP::SwitchArg physrangeArg("", "pr", "Enforce the physical range on all parameters (needed to reproduce "
+	TCLAP::SwitchArg prArg("", "pr", "Enforce the physical range on all parameters (needed to reproduce "
 			"the standard Feldman-Cousins with boundary example). If set, no nuisance will be allowed outside the "
 			"'phys' limit. However, toy generation of observables is not affected.", false);
 	TCLAP::SwitchArg importanceArg("", "importance", "Enable importance sampling for plugin toys.", false);
@@ -440,7 +443,17 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"If given a single time, it is applied to all combinations. \n"
 			"Example: --fix 'g=1.7,r_dk=-0.09' \n"
 			"To fix just the parameters in the second combination, do\n"
-			"Example: --fix 'none' --fix 'g=1.7,r_dk=-0.09' \n"
+			"Example: --fix none --fix 'g=1.7,r_dk=0.09' \n"
+			, false, "string");
+	TCLAP::MultiArg<string> physrangeArg("", "prange", "Adjust the physical range of one or more parameters in a combination. "
+			"The ranges are enforced through the --pr option. "
+			"If 'def' is given, the default ranges are used. "
+			"If given multiple times, the first --fix argument refers to the first combination, "
+			"the second one to the second and so on. "
+			"If given a single time, it is applied to all combinations. \n"
+			"Example: --prange 'g=1.7:1.9,r_dk=0.09:0.2' \n"
+			"To modify only the parameters in the second combination, do\n"
+			"Example: --prange def --prange 'g=1.7:1.9,r_dk=0.09:0.2' \n"
 			, false, "string");
 	TCLAP::MultiArg<float> snArg("", "sn", "--sn x. Save nuisances to parameter cache file at certain points after a "
 			"1d scan was performed. This can be used to set these as starting points "
@@ -516,7 +529,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "plotnsigmacont" ) ) cmd.add(plotnsigmacontArg);
 	if ( isIn<TString>(bookedOptions, "plotid" ) ) cmd.add(plotidArg);
 	if ( isIn<TString>(bookedOptions, "plot2dcl" ) ) cmd.add( plot2dclArg );
-	if ( isIn<TString>(bookedOptions, "physrange" ) ) cmd.add( physrangeArg );
+	if ( isIn<TString>(bookedOptions, "pr" ) ) cmd.add( prArg );
+	if ( isIn<TString>(bookedOptions, "physrange" ) ) cmd.add(physrangeArg);
 	if ( isIn<TString>(bookedOptions, "pevid" ) ) cmd.add( pevidArg );
 	if ( isIn<TString>(bookedOptions, "ntoys" ) ) cmd.add(ntoysArg);
 	if ( isIn<TString>(bookedOptions, "nrun" ) ) cmd.add(nrunArg);
@@ -564,7 +578,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	color             = colorArg.getValue();
 	controlplot       = controlplotArg.getValue();
 	digits            = digitsArg.getValue();
-	enforcePhysRange  = physrangeArg.getValue();
+	enforcePhysRange  = prArg.getValue();
 	filenameaddition  = filenameadditionArg.getValue();
 	group             = plotgroupArg.getValue();
 	id                = idArg.getValue();
@@ -766,6 +780,39 @@ void OptParser::parseArguments(int argc, char* argv[])
 	parseRange(scanrangeArg.getValue(), scanrangeMin, scanrangeMax);
 	parseRange(scanrangeyArg.getValue(), scanrangeyMin, scanrangeyMax);
 
+	// --prange
+	tmp = physrangeArg.getValue();
+	for ( int i = 0; i < tmp.size(); i++ ){ // loop over instances of --prange
+		vector<RangePar> ranges;
+		// parse default string
+		if ( TString(tmp[i])==TString("def") ){
+			physRanges.push_back(ranges);
+			continue;
+		}
+		// parse list of ranges: "foopar=5:6.2,barpar=7.4:8.5"
+		TObjArray *rangesArray = TString(tmp[i]).Tokenize(","); // split string at ","
+		for ( int j=0; j<rangesArray->GetEntries(); j++ ){ // loop over ranges
+			TString rangeString = ((TObjString*)rangesArray->At(j))->GetString();
+			RangePar p;
+			TString parsedRangeStr;
+			bool check = parseAssignment(rangeString, p.name, parsedRangeStr);
+			check = check && parseRange(parsedRangeStr, p.min, p.max);
+			if ( check ) ranges.push_back(p);
+			else{
+				cout << "ERROR : parse error in --prange argument: " << rangeString << endl << endl;
+			}
+		}
+		physRanges.push_back(ranges);
+	}
+	// test code for --prange
+	//for ( int i = 0; i < physRanges.size(); i++ ){
+		//cout << "combination " << i << endl;
+		//for ( int j = 0; j < physRanges[i].size(); j++ ){
+			//cout << physRanges[i][j].name << " = " << physRanges[i][j].min << " ... " << physRanges[i][j].max << endl;
+		//}
+	//}
+	//exit(0);
+
 	// --fix
 	tmp = fixArg.getValue();
 	for ( int i = 0; i < tmp.size(); i++ ){ // loop over instances of --fix
@@ -883,7 +930,7 @@ void OptParser::parsePosition(TString parseMe, float &x, float &y, TString usage
 /// \param min return value
 /// \param max return value
 ///
-void OptParser::parseRange(TString parseMe, float &min, float &max)
+bool OptParser::parseRange(TString parseMe, float &min, float &max)
 {
 	if ( parseMe==TString("default") ){
 		min = -104;
@@ -898,9 +945,27 @@ void OptParser::parseRange(TString parseMe, float &min, float &max)
 		max = maxStr.Atof();
 	}
 	if ( min>max ){
-		cout << "Argument error: plugin plot range min>max." << endl;
-		exit(1);
+		return false;
 	}
+	return true;
+}
+
+///
+/// Parse a variable assignment string.
+/// \param parseMe Format: "foovar=3.14"
+/// \param name return string
+/// \param value return value
+///
+bool OptParser::parseAssignment(TString parseMe, TString &name, TString &value)
+{
+	TString nameStr = parseMe;
+	TString valueStr = parseMe;
+	if ( parseMe.Index("=") == -1 ) return false; // parse error: '=' not found
+	nameStr.Replace(nameStr.Index("="), nameStr.Sizeof(), "");
+	valueStr.Replace(0, valueStr.Index("=")+1, "");
+	name = nameStr;
+	value = valueStr;
+	return true;
 }
 
 ///
@@ -911,12 +976,8 @@ void OptParser::parseRange(TString parseMe, float &min, float &max)
 ///
 bool OptParser::parseAssignment(TString parseMe, TString &name, float &value)
 {
-	TString nameStr = parseMe;
-	TString valueStr = parseMe;
-	if ( parseMe.Index("=") == -1 ) return false; // parse error: '=' not found
-	nameStr.Replace(nameStr.Index("="), nameStr.Sizeof(), "");
-	valueStr.Replace(0, valueStr.Index("=")+1, "");
-	name = nameStr;
+	TString valueStr;
+	parseAssignment(parseMe, name, valueStr);
 	value = valueStr.Atof();
 	return true;
 }

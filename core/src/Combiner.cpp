@@ -377,12 +377,32 @@ void Combiner::print()
 }
 
 ///
-/// Fix a parameters in the fit to the specified value.
-/// To do that, add the parameters to
-/// the list of constant parameters.
-/// \param vars Comma separated list of parameters to fix.
+/// Adjust the physical range of a parameter as requested. Only possible
+/// after combining.
 ///
+void Combiner::adjustPhysRange(TString varName, float min, float max)
+{
+	if ( !_isCombined ){
+		cout << "Combiner::adjustPhysRange() : ERROR : Can't adjust parameters range before ";
+		cout <<	                                      "combine() was called. Skipping." << endl;
+		return;
+	}
+	if ( !w->var(varName) ){
+		cout << "Combiner::adjustPhysRange() : ERROR : requesting to set a parameter constant\n";
+		cout << "                                      which is not in the workspace: ";
+		cout << varName << ". Skipping." << endl;
+		return;
+	}
+	w->var(varName)->setRange("phys", min, max);
+}
 
+///
+/// Fix a parameter in the fit to the specified value.
+/// To do that, add the parameter to the list of constant parameters.
+///
+/// \param var - the parameter name
+/// \param value - the value to fix the parameter to
+///
 void Combiner::fixParameter(TString var, float value)
 {
 	if ( _isCombined ){
@@ -411,6 +431,7 @@ void Combiner::fixParameter(TString var, float value)
 /// (the start parameters, if no user code modifies them before
 /// calling combine()). To do that, add the parameters to
 /// the list of constant parameters.
+///
 /// \param vars Comma separated list of parameteters to fix.
 ///
 void Combiner::fixParameters(TString vars)
