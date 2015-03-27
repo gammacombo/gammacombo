@@ -428,6 +428,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"13: Don't use transparency for the last plotted 2D contour.\n"
 			"14: In 2D plots, reduce the y title offset and enlarge the pad accordingly.\n"
 			"15: In 2D plots, remove the X% CL content line.\n"
+			"16: In parameter evolution plots, add also the full evolution over the scan, in addition to just plotting the best evolution.\n"
 			, false, "int");
 	TCLAP::MultiArg<string> titleArg("", "title", "Override the title of a combination. "
 			"If 'default' is given, the default title for that combination is used. "

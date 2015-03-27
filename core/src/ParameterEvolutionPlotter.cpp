@@ -18,7 +18,10 @@ ParameterEvolutionPlotter::ParameterEvolutionPlotter(MethodProbScan *scanner):
 	scanVar1 = scanner->getScanVar1()->GetName();
 
 	// get the chi2 values at the local minima
-	localChi2 = getLocalMinimaY(scanner->getHchisq());
+	getLocalMinPositions();
+
+	// canvas handling
+	m_padId = 0;
 }
 
 
@@ -27,26 +30,95 @@ ParameterEvolutionPlotter::~ParameterEvolutionPlotter()
 	delete w;
 }
 
-
 ///
-/// Find the Y coordinates of all local minima of a histogram.
-/// We use it to quickly find the chi2 values at the local minima.
-/// \return vector of the Y values of all local minima.
+/// Compute the positions of the local minima, in terms of scan steps, store it in
+/// m_localMinPositions. This will then be used to plot a red line
+/// at the position of the local minima.
 ///
-vector<float> ParameterEvolutionPlotter::getLocalMinimaY(TH1F* h)
+void ParameterEvolutionPlotter::getLocalMinPositions()
 {
-	vector<float> yvalues;
-	for ( int i=2; i<h->GetNbinsX()-1; i++ )
-	{
-		if ( h->GetBinContent(i-1) > h->GetBinContent(i)
-		  && h->GetBinContent(i) < h->GetBinContent(i+1) )
-		{
-			yvalues.push_back(h->GetBinContent(i));
+	m_localMinPositions.clear();
+	for ( int i=1; i<curveResults.size()-1; i++ ){
+		if ( curveResults[i-1]->minNll() > curveResults[i]->minNll()
+		  && curveResults[i]->minNll() < curveResults[i+1]->minNll() ){
+			m_localMinPositions.push_back(curveResults[i]->getParVal(scanVar1));
 		}
 	}
-	return yvalues;
 }
 
+void ParameterEvolutionPlotter::drawLinesAtMinima(TVirtualPad *pad)
+{
+	for ( int i=0; i<m_localMinPositions.size(); i++ ){
+		drawVerticalRedLine(pad, m_localMinPositions[i]);
+	}
+}
+
+///
+/// Draw a vertical red line into the current pad at position i.
+///
+void ParameterEvolutionPlotter::drawVerticalRedLine(TVirtualPad *pad, float xpos)
+{
+	pad->cd();
+	pad->Update();
+	float ymin = pad->GetUymin();
+	float ymax = pad->GetUymax();
+	float xmin = pad->GetUxmin();
+	float xmax = pad->GetUxmax();
+	TLine* l1 = new TLine(xpos, ymin, xpos, ymax);
+	l1->SetLineWidth(1);
+	l1->SetLineColor(kRed);
+	l1->SetLineStyle(kSolid);
+	l1->Draw();
+}
+
+///
+/// Make an evolution graph for one parameter.
+///
+TGraphErrors* ParameterEvolutionPlotter::makeEvolutionGraphErrors(vector<RooSlimFitResult*> results, TString parName)
+{
+	TGraphErrors *g = new TGraphErrors(results.size());
+	int iGraph = 0;
+	for ( int i=0; i<results.size(); i++ ){
+		assert(results[i]);
+		//g->SetPoint(iGraph, iGraph, results[i]->getParVal(p->GetName()));
+		g->SetPoint(iGraph, results[i]->getParVal(scanVar1), results[i]->getParVal(parName));
+		g->SetPointError(iGraph, 0, results[i]->getParErr(parName));
+		iGraph++;
+	}
+	return g;
+}
+
+///
+/// Make an evolution graph for one parameter.
+///
+TGraph* ParameterEvolutionPlotter::makeEvolutionGraph(vector<RooSlimFitResult*> results, TString parName)
+{
+	TGraph *g = new TGraph(results.size());
+	int iGraph = 0;
+	for ( int i=0; i<results.size(); i++ ){
+		assert(results[i]);
+		results[i]->Print();
+		//g->SetPoint(iGraph, iGraph, results[i]->getParVal(p->GetName()));
+		g->SetPoint(iGraph, results[i]->getParVal(scanVar1), results[i]->getParVal(parName));
+		iGraph++;
+	}
+	return g;
+}
+
+///
+/// Make a chi2 graph.
+///
+TGraph* ParameterEvolutionPlotter::makeChi2Graph(vector<RooSlimFitResult*> results)
+{
+	TGraph *g = new TGraph(results.size());
+	int iGraph = 0;
+	for ( int i=0; i<results.size(); i++ ){
+		assert(results[i]);
+		g->SetPoint(iGraph, results[i]->getParVal(scanVar1), results[i]->minNll());
+		iGraph++;
+	}
+	return g;
+}
 
 ///
 /// Plot the evolution of best fit nuisance paramters
@@ -58,92 +130,82 @@ vector<float> ParameterEvolutionPlotter::getLocalMinimaY(TH1F* h)
 ///
 void ParameterEvolutionPlotter::plotParEvolution()
 {
-	// vector<RooSlimFitResult*> results = allResults;
-	vector<RooSlimFitResult*> results = curveResults;
+	vector<RooSlimFitResult*> results = allResults;
+	// vector<RooSlimFitResult*> results = curveResults;
 
 	cout << "ParameterEvolutionPlotter::plotParEvolution() : plotting ..." << endl;
-	TCanvas *c2 = newNoWarnTCanvas("plotParEvolution"+getUniqueRootName(), title, 2000,1600);
-	c2->Divide(7,5);
-	int iPad = 1;
+	selectNewCanvas(title+" 1");
 
 	// get all parameters, loop over them
 	TIterator* it = w->set(parsName)->createIterator();
 	while ( RooRealVar* p = (RooRealVar*)it->Next() )
 	{
 		if ( p->isConstant() && p->GetName()!=scanVar1 ) continue;
-		if ( arg->verbose ) cout << "ParameterEvolutionPlotter::plotParEvolution() : var = " << p->GetName() << endl;
-		TGraph *g = new TGraph(results.size());
-		int iGraph = 0;
-
-		for ( int i=0; i<results.size(); i++ ){
-			assert(results[i]);
-			g->SetPoint(iGraph, iGraph, results[i]->getParVal(p->GetName()));
-			iGraph++;
-		}
-
-		TPad *pad = (TPad*)c2->cd(iPad);
+		if ( arg->debug ) cout << "ParameterEvolutionPlotter::plotParEvolution() : var = " << p->GetName() << endl;
+		TVirtualPad *pad = selectNewPad();
 		pad->SetLeftMargin(0.25);
-		g->SetTitle(p->GetName());
-		g->GetXaxis()->SetTitle("scan step");
-		g->GetYaxis()->SetTitleSize(0.09);
-		g->GetYaxis()->SetLabelSize(0.07);
-		g->GetYaxis()->SetTitleOffset(1.5);
+		pad->SetTopMargin(0.10);
+		// create a graph of the nominal evolution of one parameter
+		TGraph *g = makeEvolutionGraph(curveResults, p->GetName());
+		g->SetTitle(p->GetTitle());
+		g->GetXaxis()->SetTitle(scanVar1);
+		g->GetXaxis()->SetTitleSize(0.08);
+		g->GetXaxis()->SetLabelSize(0.06);
+		g->GetXaxis()->SetNdivisions(-406);
+		g->GetYaxis()->SetTitleSize(0.08);
+		g->GetYaxis()->SetLabelSize(0.06);
+		g->GetYaxis()->SetTitleOffset(1.4);
 		g->GetYaxis()->SetTitle(p->GetName());
+		g->SetLineColor(kBlue);
+		g->SetLineWidth(2);
+		TGaxis::SetMaxDigits(3); // forces scienfific notation
 		g->Draw("al");
-		c2->Update();
-		iPad += 1;
+		// add error bands
+		TGraphErrors *g2 = makeEvolutionGraphErrors(curveResults, p->GetName());
+		g2->SetFillColorAlpha(kBlue,0.15);
+		g2->Draw("3");
+		// create a graph of the full evolution of one parameter
+		if ( arg->isQuickhack(16) ){
+			TGraph *g3 = makeEvolutionGraph(allResults, p->GetName());
+			g3->Draw("l");
+		}
+		updateCurrentCanvas();
+		// plot a red line at minimum
+		drawLinesAtMinima(pad);
 	}
 
 	// plot the chi2 to the last pad
-	TPad *pad = (TPad*)c2->cd(iPad++);
+	TVirtualPad *pad = selectNewPad();
 	pad->SetLeftMargin(0.25);
-	TGraph *g = new TGraph(results.size()-1);
-	int iGraph = 0;
-	for ( int i=0; i<results.size(); i++ )
-	{
-		if ( !results[i] ) continue;
-		g->SetPoint(iGraph, iGraph, results[i]->minNll());
-		iGraph++;
-	}
+	TGraph *g = makeChi2Graph(curveResults);
+	g->SetLineWidth(2);
 	g->SetTitle("chi2");
-	g->GetXaxis()->SetTitle("scan step");
-	g->GetYaxis()->SetTitleSize(0.09);
-	g->GetYaxis()->SetLabelSize(0.07);
-	g->GetYaxis()->SetTitleOffset(1.5);
-	g->GetYaxis()->SetTitle("chi2");
+	g->GetXaxis()->SetTitle(scanVar1);
+	g->GetXaxis()->SetTitleSize(0.08);
+	g->GetXaxis()->SetLabelSize(0.06);
+	g->GetXaxis()->SetNdivisions(-406);
+	g->GetYaxis()->SetTitleSize(0.08);
+	g->GetYaxis()->SetLabelSize(0.06);
+	g->GetYaxis()->SetTitleOffset(1.4);
+	g->GetYaxis()->SetTitle("#chi^{2}");
 	g->Draw("al");
-	c2->Update();
-
-	// print a red line at the position of the local solutions
-	for ( int i=0; i<localChi2.size(); i++ )
-	{
-		iGraph = 0;
-		for ( int j=0; j<results.size(); j++ )
-		{
-			if ( !results[j] ) continue;
-			iGraph++;
-			if ( !(fabs(results[j]->minNll() - localChi2[i])<0.001) ) continue;
-
-			for ( int p=1; p<iPad; p++ )
-			{
-				TPad *pad = (TPad*)c2->cd(p);
-				float ymin = pad->GetUymin();
-				float ymax = pad->GetUymax();
-				float xmin = pad->GetUxmin();
-				float xmax = pad->GetUxmax();
-
-				TLine* l1 = new TLine(iGraph, ymin, iGraph, ymax);
-				l1->SetLineWidth(1);
-				l1->SetLineColor(kRed);
-				l1->SetLineStyle(kDashed);
-				l1->Draw();
-			}
-		}
-	}
-
-	savePlot(c2, "parEvolution_"+name+"_"+scanVar1);
+	drawLinesAtMinima(pad);
+	updateCurrentCanvas();
+	// save plots
+	saveEvolutionPlots();
 }
 
+///
+/// Save all parameter evolution plots that were created so far.
+///
+void ParameterEvolutionPlotter::saveEvolutionPlots()
+{
+	for ( int i=0; i<m_canvases.size(); i++ ) {
+		TString fName = "parEvolution_"+name+"_"+scanVar1;
+		fName += Form("_%i",i+1);
+		savePlot(m_canvases[i], fName);
+	}
+}
 
 ///
 /// Plot the discrepancy between the observable and the predicted
@@ -199,3 +261,44 @@ void ParameterEvolutionPlotter::plotObsScanCheck()
 
 	savePlot(c2, "parEvolutionObsSanCheck_"+name+"_"+scanVar1);
 }
+
+///
+/// Create a new canvas and add it to the list of canvases.
+///
+/// \return pointer to the new canvas. Caller assumes ownership
+///
+TCanvas* ParameterEvolutionPlotter::selectNewCanvas(TString title)
+{
+	title.ReplaceAll(name+" ","");
+	TCanvas* c1 = newNoWarnTCanvas(getUniqueRootName(), name+" "+title, 1200, 900);
+	c1->Divide(3,2);
+	m_canvases.push_back(c1);
+	m_padId = 0;
+	return c1;
+}
+
+
+TVirtualPad* ParameterEvolutionPlotter::selectNewPad()
+{
+	TCanvas* c1 = m_canvases[m_canvases.size()-1];
+	if ( m_padId>=6 ){
+		// Create a new canvas that has the old title "foo 3" but with
+		// incremented number: "foo 4". Only one-digit numbers are supported.
+		TString title = c1->GetTitle();
+		int oldNumber = TString(title[title.Sizeof()-2]).Atoi(); // get last character and turn into integer
+		title.Replace(title.Sizeof()-2,1,Form("%i",++oldNumber)); // replace last character with incremented integer
+		c1 = selectNewCanvas(title);
+	}
+	m_padId+=1;
+	return c1->cd(m_padId);
+}
+
+///
+/// Update the current control plot canvas.
+///
+void ParameterEvolutionPlotter::updateCurrentCanvas()
+{
+	TCanvas* c1 = m_canvases[m_canvases.size()-1];
+	c1->Update();
+}
+
