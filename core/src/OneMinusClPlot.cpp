@@ -507,7 +507,7 @@ void OneMinusClPlot::Draw()
 	}
 	if ( arg->plotlog ){
 		m_mainCanvas->SetLogy();
-		this->name = this->name + "_log";
+		if ( !this->name.EndsWith("_log") ) this->name = this->name + "_log";
 	}
 	m_mainCanvas->cd();
 
