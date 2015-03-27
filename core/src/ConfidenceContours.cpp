@@ -187,14 +187,14 @@ void ConfidenceContours::computeContours(TH2F* hist, histogramType type)
 	}
 
 	// create and access the contours
-	gROOT->SetBatch(true); // don't display the temporary canvas
+	if ( m_arg->interactive ) gROOT->SetBatch(true); // don't display the temporary canvas
 	TCanvas *ctmp = newNoWarnTCanvas(getUniqueRootName(), "ctmp");
 	histb->Draw("contlist");
 	gPad->Update();	// needed to be able to access the contours as TGraphs
 	TObjArray *contours = (TObjArray*)gROOT->GetListOfSpecials()->FindObject("contours");
 	delete ctmp;
 	delete histb;
-	gROOT->SetBatch(false);
+	if ( m_arg->interactive ) gROOT->SetBatch(false); // it's important to only unset batch mode if we're interactive! Else some canvases get screwed up badly resulting in corrupted PDF files.
 
 	// access contours. They get filled in reverse order,
 	// and depend on how many are actually present. If all 5

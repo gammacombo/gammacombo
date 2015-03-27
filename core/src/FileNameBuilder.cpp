@@ -170,7 +170,26 @@ TString FileNameBuilder::getFileNamePlot(const vector<Combiner*>& cmb)
 	}
 	name += "_"+m_arg->var[0];
 	if ( m_arg->var.size()==2 ) name += "_"+m_arg->var[1];
-	if ( m_arg->plotpluginonly ) name += "_pluginonly";
+	if ( m_arg->plotpluginonly ) name += "_"+getPluginOnlyNameAddition();
+	return name;
+}
+
+///
+/// Compute the file name for plots holding a single combiner, in particular
+/// the full likelihood plots.
+/// Format of the file name:
+///
+/// basename_combinername[_+/-N]_var1[_var2][_pluginonly]
+///
+/// \return - the filename
+///
+TString FileNameBuilder::getFileNamePlotSingle(const vector<Combiner*>& cmb, int cId)
+{
+	TString name = m_basename;
+	name += "_"+cmb[m_arg->combid[cId]]->getName();
+	name += "_"+m_arg->var[0];
+	if ( m_arg->var.size()==2 ) name += "_"+m_arg->var[1];
+	if ( m_arg->plotpluginonly ) name += "_"+getPluginOnlyNameAddition();
 	return name;
 }
 
@@ -180,5 +199,13 @@ TString FileNameBuilder::getFileNamePlot(const vector<Combiner*>& cmb)
 TString FileNameBuilder::getAsimovCombinerNameAddition(int id)
 {
 	return m_asimov + Form("%i", id);
+}
+
+///
+/// Define the addition for plugin-only plots.
+///
+TString FileNameBuilder::getPluginOnlyNameAddition()
+{
+	return "pluginonly";
 }
 

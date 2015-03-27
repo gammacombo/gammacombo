@@ -39,6 +39,7 @@ OneMinusClPlotAbs::OneMinusClPlotAbs(OptParser *arg, TString name, TString title
 
 OneMinusClPlotAbs::~OneMinusClPlotAbs()
 {
+	cout << "OneMinusClPlotAbs::~OneMinusClPlotAbs()" << endl;
 	if ( m_mainCanvas!=0 ) delete m_mainCanvas;
 }
 
@@ -56,8 +57,11 @@ void OneMinusClPlotAbs::addScanner(MethodAbsScan* s)
 ///
 void OneMinusClPlotAbs::save()
 {
-	TString saveName = name;
-	savePlot(m_mainCanvas, saveName);
+	if ( m_mainCanvas==0 ){
+		cout << "OneMinusClPlotAbs::save() : ERROR : Empty canvas. Call Draw() or DrawFull() before saving!" << endl;
+		return;
+	}
+	savePlot(m_mainCanvas, name);
 }
 
 ///

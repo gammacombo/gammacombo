@@ -1000,16 +1000,6 @@ void GammaComboEngine::make2dProbScan(MethodProbScan *scanner, int cId)
 	// save
 	scanner->saveScanner(m_fnamebuilder->getFileNameScanner(scanner));
 	pCache->cacheParameters(scanner, m_fnamebuilder->getFileNamePar(scanner));
-	// plot
-	if (!arg->isAction("pluginbatch")){
-		scanner->plotOn(plot);
-		scanner->setLineColor(colorsLine[cId]);
-		plot->Draw();
-		OneMinusClPlot2d* plotf = new OneMinusClPlot2d(arg, plot->getName()+"_full", "p-value histogram: "+scanner->getTitle());
-		scanner->plotOn(plotf);
-		plotf->DrawFull();
-		plotf->save();
-	}
 }
 
 ///
@@ -1021,6 +1011,12 @@ void GammaComboEngine::make2dProbPlot(MethodProbScan *scanner, int cId)
 	scanner->plotOn(plot);
 	scanner->setLineColor(colorsLine[cId]);
 	plot->Draw();
+	// plot full
+	OneMinusClPlot2d* plotf = new OneMinusClPlot2d(arg, m_fnamebuilder->getFileNamePlotSingle(cmb, cId)+"_full", "p-value histogram: "+scanner->getTitle());
+	scanner->plotOn(plotf);
+	plotf->DrawFull();
+	plotf->save();
+	plot->Show();
 }
 
 ///
@@ -1173,11 +1169,11 @@ void GammaComboEngine::scan()
 			{
 				if ( arg->isAction("plot") ){
 					scannerProb->loadScanner(m_fnamebuilder->getFileNameScanner(scannerProb));
-					make2dProbPlot(scannerProb, i);
 				}
 				else{
 					make2dProbScan(scannerProb, i);
 				}
+				make2dProbPlot(scannerProb, i);
 			}
 		}
 

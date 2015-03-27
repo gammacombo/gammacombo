@@ -36,7 +36,6 @@ class OneMinusClPlot2d : public OneMinusClPlotAbs
 		void            drawGroup();
 		void            drawSolutions();
 		inline int      getNumberOfDefinedColors(){return linecolor[0].size();}
-		void            save();
 		inline void     setContoursOnly(){contoursOnly = true;};
 		inline void     setXaxisTitle(TString s){xTitle=s;};
 		inline void     setYaxisTitle(TString s){yTitle=s;};
