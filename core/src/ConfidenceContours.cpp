@@ -91,6 +91,7 @@ TH2F* ConfidenceContours::addBoundaryBins(TH2F* hist)
 /// Caller assumes ownership.
 ///
 /// \param hist - the 2D histogram
+/// \param offset - a chi2 offset, usually 30 units
 /// \return - the transformed 2D histogram
 ///
 TH2F* ConfidenceContours::transformChi2valleyToHill(TH2F* hist, float offset)

@@ -1,6 +1,4 @@
 /**
- * @file SharedArray.cxx
- *
  * @author Manuel Tobias Schiller <manuel.schiller@nikhef.nl>
  * @date 2012-08-29
  */
@@ -12,7 +10,7 @@ SharedArray<TYPE>::~SharedArray()
 
 template <class TYPE>
 SharedArray<TYPE>* SharedArray<TYPE>::Clone(const char*) const
-{ return new SharedArray<TYPE>(*this); } 
+{ return new SharedArray<TYPE>(*this); }
 
 template <class TYPE>
 SharedArray<TYPE>& SharedArray<TYPE>::operator=(
@@ -37,7 +35,7 @@ SharedArrayImp<TYPE>::~SharedArrayImp()
 
 template <class TYPE>
 SharedArrayImp<TYPE>* SharedArrayImp<TYPE>::Clone(const char*) const
-{ return new SharedArrayImp<TYPE>(*this); } 
+{ return new SharedArrayImp<TYPE>(*this); }
 
 template <class TYPE>
 SharedArrayImp<TYPE>::SharedArrayImp(

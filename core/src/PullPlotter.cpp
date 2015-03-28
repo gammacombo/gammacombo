@@ -75,8 +75,11 @@ void PullPlotter::defineOrder()
 ///
 /// Plot up to 10 pulls into one canvas. If less pulls are plotted,
 /// the canvas is scaled smaller. This is to be called from plotPulls().
-/// \param currentid Define the current index for the "(3 of 7)" statement
-/// \param maxid Define the max index for the "(3 of 7)" statement
+///
+/// \param observables - vector of observable names, plot pulls for these observables
+/// \param currentid - Define the current index for the "(3 of 7)" statement
+/// \param maxid - Define the max index for the "(3 of 7)" statement
+/// \param nObs - total number of observables
 ///
 void PullPlotter::plotPullsCanvas(vector<TString>& observables, int currentid, int maxid, int nObs)
 {
@@ -265,8 +268,9 @@ void PullPlotter::plotPulls()
 
 ///
 /// Check pulls using the current values of the parameters.
-/// \return True, if one pull is above N sigma.
-/// \param aboveNsigma
+///
+/// \param nsigma - threshold value
+/// \return - True, if one pull is above N sigma.
 ///
 bool PullPlotter::hasPullsAboveNsigma(float nsigma)
 {

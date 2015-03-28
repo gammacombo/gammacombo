@@ -75,8 +75,9 @@ double Utils::bringBackAngle(double angle)
 ///
 /// Compute the difference between 2 angles. This will never be
 /// larger than pi because they wrap around!
+///
 /// \param angle1 - first angle
-/// \param angle1 - first angle
+/// \param angle2 - second angle
 /// \return difference
 ///
 double Utils::angularDifference(double angle1, double angle2)
@@ -495,6 +496,7 @@ void Utils::setParameters(RooWorkspace* w, TString parname, const RooAbsCollecti
 /// Set each floating parameter in the named set parname inside workspace w
 /// to the value found in set. Do nothing if a parameter is present
 /// in the parname set, but not found in set.
+///
 /// \param w workspace containing a parameter set of name parname
 /// \param parname Name of the parameter set containing the "destination" parameters.
 /// \param set parameter set holding the "from" parameters.
@@ -508,9 +510,13 @@ void Utils::setParametersFloating(RooWorkspace* w, TString parname, const RooAbs
 /// Set each parameter in the named set parname inside workspace w
 /// to the value found in the final set of floating (or floating and constant)
 /// fit parameters in r.
-/// \param constAndFloat If set to true, parameter values will be copied from both
-///                      constant and floating fit parameters in the RooFitResult.
-///                      Default is false.
+///
+/// \param w - workspace containing a parameter set of name parname
+/// \param parname - Name of the parameter set containing the "destination" parameters.
+/// \param r - a fit result holding the parameter values to be set
+/// \param constAndFloat - If set to true, parameter values will be copied from both
+///                        constant and floating fit parameters in the RooFitResult.
+///                        Default is false.
 ///
 void Utils::setParameters(RooWorkspace* w, TString parname, RooFitResult* r, bool constAndFloat)
 {
@@ -599,6 +605,7 @@ void Utils::floatParameters(const RooAbsCollection* set)
 
 ///
 /// Load a named parameter range for a certain parameter.
+///
 /// \param v - The parameter which will get the limit set.
 /// \param limitname - Name of the limit to set.
 ///
@@ -612,6 +619,7 @@ void Utils::setLimit(RooRealVar* v, TString limitname)
 ///
 /// Load a named parameter range for a certain parameter,
 /// which is found inside a workspace.
+///
 /// \param w - The workspace holding the parameter.
 /// \param parname - The name of the parameter.
 /// \param limitname - Name of the limit to set.
@@ -625,8 +633,8 @@ void Utils::setLimit(RooWorkspace* w, TString parname, TString limitname)
 
 ///
 /// Load a named parameter range for a list of parameters.
+///
 /// \param set - The list holding the parameters.
-/// \param parname - The name of the parameter.
 /// \param limitname - Name of the limit to set.
 ///
 void Utils::setLimit(const RooAbsCollection* set, TString limitname)
@@ -844,8 +852,11 @@ TTree* Utils::convertRooDatasetToTTree(RooDataSet *d)
 /// Creates a fresh, independent copy of the input histogram.
 /// We cannot use Root's Clone() or the like, because that
 /// crap always copies Draw options and whatnot.
-/// \param copyContent true: also copy content. false: initialize with zeroes
-/// \param uniqueName true: append a unique string to the histogram name
+///
+/// \param h - the input histogram
+/// \param copyContent - true: also copy content. false: initialize with zeroes
+/// \param uniqueName - true: append a unique string to the histogram name
+/// \return a new histogram. Caller assumes ownership.
 ///
 TH1F* Utils::histHardCopy(const TH1F* h, bool copyContent, bool uniqueName)
 {

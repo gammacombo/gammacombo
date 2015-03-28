@@ -484,7 +484,7 @@ void PDF_Abs::setObservable(TString obsName, float value)
 /// This function fills the StatErr and SystErr arrays
 /// in the correct place.
 ///
-/// \param name - observable name
+/// \param obsName - observable name
 /// \param stat - statistical error
 /// \param syst - systematic error
 ///

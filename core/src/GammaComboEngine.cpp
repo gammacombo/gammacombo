@@ -297,6 +297,7 @@ void GammaComboEngine::setAsimovObservables(Combiner* c)
 ///
 /// Load start parameters.
 ///
+/// \param s - the scanner
 /// \param cId - combiner id
 /// \param pCache - parameter cache
 ///
@@ -976,6 +977,7 @@ void GammaComboEngine::make1dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId)
 /// Make the plugin-only 2D plot.
 ///
 /// \param sPlugin - the plugin scanner
+/// \param cId - the id of this combination on the command line
 ///
 void GammaComboEngine::make2dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId)
 {
@@ -985,7 +987,13 @@ void GammaComboEngine::make2dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId)
 }
 
 ///
+/// Make a 2D prob scan.
+/// - load start parameters
+/// - perform scan
+/// - save scanner and parameters
 ///
+/// \param scanner - the scanner
+/// \param cId - the id of this combination on the command line
 ///
 void GammaComboEngine::make2dProbScan(MethodProbScan *scanner, int cId)
 {

@@ -105,6 +105,7 @@ bool CLIntervalMaker::isInInterval(int binid, float pvalue) const
 ///
 /// \param binidHi - bin id of _pvalues histogram
 /// \param binidLo - bin id of _pvalues histogram
+/// \param pvalue - p-value threshold, accept points into interval if their p-value is above
 /// \param clis - vector of confidence intervals, usually _clintervals1sigma or _clintervals2sigma
 ///
 void CLIntervalMaker::storeRawInterval(int binidLo, int binidHi, float pvalue, vector<CLInterval> &clis)
@@ -142,10 +143,9 @@ void CLIntervalMaker::storeRawInterval(int binidLo, int binidHi, float pvalue, v
 /// Finds the raw interval boundaries corresponding to the provided p-value
 /// The raw intervals are just connected sections where all bins of the p-value
 /// histogram _pvalues lie above the given threshold.
-/// Saves the result into the intevals in
-/// _clintervals1sigma or _clintervals2sigma.
 ///
 /// \param pvalue - pvalue of the intervals to find
+/// \param clis - saves intervals into this vector of confidence intervals, usually _clintervals1sigma or _clintervals2sigma
 ///
 void CLIntervalMaker::findRawIntervals(float pvalue, vector<CLInterval> &clis)
 {

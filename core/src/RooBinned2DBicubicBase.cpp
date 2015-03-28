@@ -1,6 +1,4 @@
 /**
- * @file RooBinned2DBicubicBase.cxx
- *
  * @author Manuel Tobias Schiller <manuel.schiller@nikhef.nl>
  * @date 2012-08-29
  */
