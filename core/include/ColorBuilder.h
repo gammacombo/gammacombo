@@ -1,7 +1,7 @@
 /**
- * Gamma Combination
- * Author: Till Moritz Karbach, moritz.karbach@cern.ch
- * Date: August 2014
+ * \author Till Moritz Karbach, moritz.karbach@cern.ch
+ * \date August 2014
+ * \brief Class that can make new darker or lighter colors.
  *
  **/
 
@@ -12,9 +12,6 @@
 #include <TObjArray.h>
 #include <TColor.h>
 
-///
-/// Class that can make new darker or lighter colors.
-///
 class ColorBuilder
 {
 	public:
