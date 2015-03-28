@@ -166,7 +166,7 @@ void ParameterEvolutionPlotter::plotParEvolution()
 		// create a graph of the full evolution of one parameter
 		if ( arg->isQuickhack(16) ){
 			TGraph *g3 = makeEvolutionGraph(allResults, p->GetName());
-			g3->Draw("l");
+			g3->Draw("p");
 		}
 		updateCurrentCanvas();
 		// plot a red line at minimum
