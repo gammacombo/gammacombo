@@ -25,14 +25,16 @@ public:
 
 	CLIntervalPrinter(OptParser *arg, TString name, TString var, TString unit, TString method);
 	~CLIntervalPrinter();
-    
+
 	void				print();
 	void				savePython();
 	inline void	setDegrees(bool yesno=true){_degrees=yesno;};
 	void 				addIntervals(vector<CLInterval> &intervals);
-    
+
 private:
-      
+
+	static bool         compareByMin(const CLInterval &a, const CLInterval &b);
+
 	OptParser *_arg;		///< command line arguments
 	TString _name;			///< name of combination
 	TString _var;			///< name of scan variable

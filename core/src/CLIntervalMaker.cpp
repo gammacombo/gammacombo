@@ -134,8 +134,9 @@ void CLIntervalMaker::storeRawInterval(int binidLo, int binidHi, float pvalue, v
 		c.maxmethod = "raw";
 		c.maxclosed = true;
 	}
-	c.central = (c.max-c.min)/2.;
-	c.centralmethod = "middle";
+	c.central = c.min+(c.max-c.min)/2.;
+	c.centralmethod = "raw mid";
+	c.pvalueAtCentral = _pvalues.GetBinContent(_pvalues.GetXaxis()->FindBin(c.central));
 	clis.push_back(c);
 }
 
