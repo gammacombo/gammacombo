@@ -1015,16 +1015,22 @@ void GammaComboEngine::make2dProbScan(MethodProbScan *scanner, int cId)
 ///
 void GammaComboEngine::make2dProbPlot(MethodProbScan *scanner, int cId)
 {
-	scanner->setDrawSolution(arg->plotsolutions[cId]);
-	scanner->plotOn(plot);
-	scanner->setLineColor(colorsLine[cId]);
-	plot->Draw();
 	// plot full
 	OneMinusClPlot2d* plotf = new OneMinusClPlot2d(arg, m_fnamebuilder->getFileNamePlotSingle(cmb, cId)+"_full", "p-value histogram: "+scanner->getTitle());
 	scanner->plotOn(plotf);
 	plotf->DrawFull();
 	plotf->save();
-	plot->Show();
+	// contour plot
+	scanner->setDrawSolution(arg->plotsolutions[cId]);
+	scanner->setLineColor(colorsLine[cId]);
+	scanner->plotOn(plot);
+	// only draw the plot once when multiple scanners are plotted,
+	// else we end up with too many graphs, and the transparency setting
+	// gets screwed up
+	if ( cId==arg->combid.size()-1 ){
+		plot->Draw();
+		plot->Show();
+	}
 }
 
 ///

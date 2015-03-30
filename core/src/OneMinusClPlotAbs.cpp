@@ -39,7 +39,6 @@ OneMinusClPlotAbs::OneMinusClPlotAbs(OptParser *arg, TString name, TString title
 
 OneMinusClPlotAbs::~OneMinusClPlotAbs()
 {
-	cout << "OneMinusClPlotAbs::~OneMinusClPlotAbs()" << endl;
 	if ( m_mainCanvas!=0 ) delete m_mainCanvas;
 }
 
