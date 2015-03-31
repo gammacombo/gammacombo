@@ -12,13 +12,5 @@
 
 SET( COMBINER_MODULES
 	tutorial
-	#cartesian
-	#belle2
-	belle2_Vub
-	#biggammacombo
-	#bsmumu
-	gammacombo
-	#hfag
-	tests
 )
 
