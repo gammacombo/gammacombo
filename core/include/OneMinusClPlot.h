@@ -9,6 +9,7 @@
 #define OneMinusClPlot_h
 
 #include "OneMinusClPlotAbs.h"
+#include "TGraphTools.h"
 #include "Utils.h"
 #include "Rounder.h"
 
@@ -27,7 +28,6 @@ class OneMinusClPlot : public OneMinusClPlotAbs
 		inline TString  getName(){return name;};
 		inline void     setPluginMarkers(bool yesNo=true){plotPluginMarkers = yesNo;};
 		void            Draw();
-		TGraph*         addPointToGraphAtFirstMatchingX(TGraph* g, float xNew, float yNew);
 
 	private:
 		void            drawCLguideLine(float pvalue);
