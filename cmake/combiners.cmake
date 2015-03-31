@@ -19,5 +19,6 @@ SET( COMBINER_MODULES
 	#bsmumu
 	gammacombo
 	#hfag
+	tests
 )
 
