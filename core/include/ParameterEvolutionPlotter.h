@@ -45,8 +45,8 @@ class ParameterEvolutionPlotter
 
 		OptParser 	*arg;			///< command line arguments
 		RooWorkspace 	*w;			///< a clone of the scanner's workspace
-		const vector<RooSlimFitResult*>&	allResults;		///< all results of all scan points
-		const vector<RooSlimFitResult*>&	curveResults;		///< only the results of scan points that were accepted into the CL curve
+		vector<RooSlimFitResult*>	allResults;		///< all results of all scan points
+		vector<RooSlimFitResult*>	curveResults;		///< only the results of scan points that were accepted into the CL curve
 		TString		title;			///< canvas title
 		TString		name;			///< scanner name, part of the file name of the plots
 		TString		parsName;		///< name of parameter set inside the workspace

@@ -1,8 +1,6 @@
 #include "ParameterEvolutionPlotter.h"
 
-ParameterEvolutionPlotter::ParameterEvolutionPlotter(MethodProbScan *scanner):
-	allResults(scanner->getAllResults()), // provide a link to the scan curve results
-	curveResults(scanner->getCurveResults())
+ParameterEvolutionPlotter::ParameterEvolutionPlotter(MethodProbScan *scanner)
 {
 	// copy over the command line arguments
 	arg = scanner->getArg();
@@ -16,6 +14,14 @@ ParameterEvolutionPlotter::ParameterEvolutionPlotter(MethodProbScan *scanner):
 	parsName = scanner->getParsName();
 	obsName = scanner->getObsName();
 	scanVar1 = scanner->getScanVar1()->GetName();
+
+	// copy over non-empty curve results
+	for ( int i=0; i<scanner->getAllResults().size(); i++ ){
+		if ( scanner->getAllResults()[i] ) allResults.push_back(scanner->getAllResults()[i]);
+	}
+	for ( int i=0; i<scanner->getCurveResults().size(); i++ ){
+		if ( scanner->getCurveResults()[i] ) curveResults.push_back(scanner->getCurveResults()[i]);
+	}
 
 	// get the chi2 values at the local minima
 	getLocalMinPositions();
@@ -39,6 +45,7 @@ void ParameterEvolutionPlotter::getLocalMinPositions()
 {
 	m_localMinPositions.clear();
 	for ( int i=1; i<curveResults.size()-1; i++ ){
+		if ( curveResults[i-1]==0 || curveResults[i]==0 ) continue;
 		if ( curveResults[i-1]->minNll() > curveResults[i]->minNll()
 		  && curveResults[i]->minNll() < curveResults[i+1]->minNll() ){
 			m_localMinPositions.push_back(curveResults[i]->getParVal(scanVar1));
@@ -79,11 +86,11 @@ TGraphErrors* ParameterEvolutionPlotter::makeEvolutionGraphErrors(vector<RooSlim
 	TGraphErrors *g = new TGraphErrors(results.size());
 	int iGraph = 0;
 	for ( int i=0; i<results.size(); i++ ){
-		assert(results[i]);
-		//g->SetPoint(iGraph, iGraph, results[i]->getParVal(p->GetName()));
-		g->SetPoint(iGraph, results[i]->getParVal(scanVar1), results[i]->getParVal(parName));
-		g->SetPointError(iGraph, 0, results[i]->getParErr(parName));
-		iGraph++;
+		if ( results[i] ){
+			g->SetPoint(iGraph, results[i]->getParVal(scanVar1), results[i]->getParVal(parName));
+			g->SetPointError(iGraph, 0, results[i]->getParErr(parName));
+			iGraph++;
+		}
 	}
 	return g;
 }
@@ -96,10 +103,10 @@ TGraph* ParameterEvolutionPlotter::makeEvolutionGraph(vector<RooSlimFitResult*> 
 	TGraph *g = new TGraph(results.size());
 	int iGraph = 0;
 	for ( int i=0; i<results.size(); i++ ){
-		assert(results[i]);
-		//g->SetPoint(iGraph, iGraph, results[i]->getParVal(p->GetName()));
-		g->SetPoint(iGraph, results[i]->getParVal(scanVar1), results[i]->getParVal(parName));
-		iGraph++;
+		if ( results[i] ){
+			g->SetPoint(iGraph, results[i]->getParVal(scanVar1), results[i]->getParVal(parName));
+			iGraph++;
+		}
 	}
 	return g;
 }
@@ -112,9 +119,10 @@ TGraph* ParameterEvolutionPlotter::makeChi2Graph(vector<RooSlimFitResult*> resul
 	TGraph *g = new TGraph(results.size());
 	int iGraph = 0;
 	for ( int i=0; i<results.size(); i++ ){
-		assert(results[i]);
-		g->SetPoint(iGraph, results[i]->getParVal(scanVar1), results[i]->minNll());
-		iGraph++;
+		if ( results[i] ){
+			g->SetPoint(iGraph, results[i]->getParVal(scanVar1), results[i]->minNll());
+			iGraph++;
+		}
 	}
 	return g;
 }
