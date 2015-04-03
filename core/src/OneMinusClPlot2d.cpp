@@ -308,26 +308,17 @@ void OneMinusClPlot2d::drawCLcontent()
 	t1->SetTextSize(labelsize*0.6);
 	t1->SetTextColor(kGray+1);
 	TString text;
-	if ( histos.size()>1 && hasHistoType(kPvalue) && !arg->plot2dcl ){
-		cout << endl;
-		cout << "OneMinusClPlot2d::drawCLcontent() : WARNING : plotting contours of inconsistent CL content." << endl;
-		cout << "                                              Use --2dcl to restore consitency." << endl;
-		cout << endl;
-		text = "contours have inconsistent CL content";
+	text = "contours hold ";
+	if ( arg->plot2dcl || (histos.size()==1 && hasHistoType(kPvalue)) ){
+		if ( arg->plotnsigmacont>0 ) text += "68%";
+		if ( arg->plotnsigmacont>1 ) text += ", 95%";
 	}
-	else {
-		text = "contours hold ";
-		if ( arg->plot2dcl || (histos.size()==1 && hasHistoType(kPvalue)) ){
-			if ( arg->plotnsigmacont>0 ) text += "68%";
-			if ( arg->plotnsigmacont>1 ) text += ", 95%";
-		}
-		else{
-			if ( arg->plotnsigmacont>0 ) text += "39%";
-			if ( arg->plotnsigmacont>1 ) text += ", 87%";
-		}
-		text += " CL";
-		if ( arg->plotnsigmacont>2 ) text += " (etc.)";
+	else{
+		if ( arg->plotnsigmacont>0 ) text += "39%";
+		if ( arg->plotnsigmacont>1 ) text += ", 87%";
 	}
+	text += " CL";
+	if ( arg->plotnsigmacont>2 ) text += " (etc.)";
 	t1->AddText(text);
 	t1->Draw();
 }

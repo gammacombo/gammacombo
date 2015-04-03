@@ -180,11 +180,20 @@ void ConfidenceContours::computeContours(TH2F* hist, histogramType type)
 	}
 	else {
 		// p-value units
-		histb->SetContourLevel(4, 0.3173);
-		histb->SetContourLevel(3, 4.55e-2);
-		histb->SetContourLevel(2, 2.7e-3);
-		histb->SetContourLevel(1, 6.3e-5);
-		histb->SetContourLevel(0, 5.7e-7);
+		if ( m_arg->plot2dcl ){
+			histb->SetContourLevel(4, 0.3173);
+			histb->SetContourLevel(3, 4.55e-2);
+			histb->SetContourLevel(2, 2.7e-3);
+			histb->SetContourLevel(1, 6.3e-5);
+			histb->SetContourLevel(0, 5.7e-7);
+		}
+		else{
+			histb->SetContourLevel(4, 1.-0.39);
+			histb->SetContourLevel(3, 1.-0.87);
+			histb->SetContourLevel(2, 1.-0.989);
+			histb->SetContourLevel(1, 1.-0.9997);
+			histb->SetContourLevel(0, 1.-0.999997);
+		}
 	}
 
 	// create and access the contours
