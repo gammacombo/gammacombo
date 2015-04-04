@@ -28,9 +28,6 @@ OneMinusClPlotAbs::OneMinusClPlotAbs(OptParser *arg, TString name, TString title
 	this->title = title;
 	m_mainCanvas = 0;
 
-	if ( arg->plotprelim ){
-		this->name = this->name + "_prelim";
-	}
 	plotLegend    = true;
 	plotSolution  = true;
 	plotLogYMin   = 1.e-3;

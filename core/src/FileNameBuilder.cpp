@@ -169,8 +169,10 @@ TString FileNameBuilder::getFileNamePlot(const vector<Combiner*>& cmb)
 		//if ( m_arg->isAsimovCombiner(i) ) name += Form("Asimov%i",m_arg->asimov[i]);
 	}
 	name += "_"+m_arg->var[0];
-	if ( m_arg->var.size()==2 ) name += "_"+m_arg->var[1];
-	if ( m_arg->plotpluginonly ) name += "_"+getPluginOnlyNameAddition();
+	if ( m_arg->var.size()==2 )           name += "_"+m_arg->var[1];
+	if ( m_arg->plotpluginonly )          name += "_"+getPluginOnlyNameAddition();
+	else if ( m_arg->isAction("plugin") ) name += "_"+getPluginNameAddition();
+	if ( m_arg->plotprelim )              name += "_"+getPreliminaryNameAddition();
 	return name;
 }
 
@@ -188,8 +190,10 @@ TString FileNameBuilder::getFileNamePlotSingle(const vector<Combiner*>& cmb, int
 	TString name = m_basename;
 	name += "_"+cmb[m_arg->combid[cId]]->getName();
 	name += "_"+m_arg->var[0];
-	if ( m_arg->var.size()==2 ) name += "_"+m_arg->var[1];
-	if ( m_arg->plotpluginonly ) name += "_"+getPluginOnlyNameAddition();
+	if ( m_arg->var.size()==2 )           name += "_"+m_arg->var[1];
+	if ( m_arg->plotpluginonly )          name += "_"+getPluginOnlyNameAddition();
+	else if ( m_arg->isAction("plugin") ) name += "_"+getPluginNameAddition();
+	if ( m_arg->plotprelim )              name += "_"+getPreliminaryNameAddition();
 	return name;
 }
 
@@ -202,10 +206,26 @@ TString FileNameBuilder::getAsimovCombinerNameAddition(int id)
 }
 
 ///
+/// Define the addition for plugin plots.
+///
+TString FileNameBuilder::getPluginNameAddition()
+{
+	return "plugin";
+}
+
+///
 /// Define the addition for plugin-only plots.
 ///
 TString FileNameBuilder::getPluginOnlyNameAddition()
 {
 	return "pluginonly";
+}
+
+///
+/// Define the addition for preliminary plots.
+///
+TString FileNameBuilder::getPreliminaryNameAddition()
+{
+	return "prelim";
 }
 

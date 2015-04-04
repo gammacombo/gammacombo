@@ -43,7 +43,9 @@ class FileNameBuilder
 		TString getFileNameAsimovPar(const Combiner *c);
 		TString getFileNameAsimovPar(const MethodAbsScan *s);
 		TString getAsimovCombinerNameAddition(int id);
+		TString getPluginNameAddition();
 		TString getPluginOnlyNameAddition();
+		TString getPreliminaryNameAddition();
 
 	private:
 
