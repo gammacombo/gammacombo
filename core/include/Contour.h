@@ -37,6 +37,7 @@ class Contour
 		void               findClosestPoints(TGraph *g1, TGraph *g2, int &i1, int &i2);
 		TGraph*            joinIfInside(TGraph *g1, TGraph *g2);
 		vector<TGraph*>    makeHoles(vector<TGraph*>& contours);
+		void               magneticBoundaries(vector<TGraph*>& contours, const TH2F* hCL);
 
 		OptParser*         m_arg;           ///< command line arguments
 		vector<TGraph*>    m_contours;      ///< container for the several disjoint subcontours. Used by DrawLine().

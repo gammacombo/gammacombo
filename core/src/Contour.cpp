@@ -252,27 +252,38 @@ void Contour::findClosestPoints(TGraph *g1, TGraph *g2, int &i1, int &i2)
 /// Magnetic boundaries. If a contour is closer than half a binwidth
 /// to a boundary, adjust it to be actually the boundary.
 ///
-void Contour::magneticBoundaries(const TH2F* hCL)
+/// \param contour - input contours
+/// \param hCL - a histogram defining the boundaries
+///
+void Contour::magneticBoundaries(vector<TGraph*>& contours, const TH2F* hCL)
 {
 	float magneticRange = 0.75;
 	float xmin = hCL->GetXaxis()->GetXmin();
 	float xmax = hCL->GetXaxis()->GetXmax();
 	float ymin = hCL->GetYaxis()->GetXmin();
 	float ymax = hCL->GetYaxis()->GetXmax();
+	float xbinwidth = hCL->GetXaxis()->GetBinWidth(1);
+	float ybinwidth = hCL->GetYaxis()->GetBinWidth(1);
 	Double_t pointx, pointy;
-	for ( int j=0; j<m_contours.size(); j++ ) {
-		TGraph* g = (TGraph*)m_contours[j];
+	for ( int j=0; j<contours.size(); j++ ) {
+		TGraph* g = (TGraph*)contours[j];
 		for ( int i=0; i<g->GetN(); i++) {
 			g->GetPoint(i, pointx, pointy);
-			if ( abs(pointx-xmin)<hCL->GetXaxis()->GetBinWidth(1)*magneticRange ) g->SetPoint(i, xmin, pointy);
+			if ( abs(pointx-xmin) < xbinwidth*magneticRange ) g->SetPoint(i, xmin, pointy);
 			g->GetPoint(i, pointx, pointy);
-			if ( abs(pointx-xmax)<hCL->GetXaxis()->GetBinWidth(1)*magneticRange ) g->SetPoint(i, xmax, pointy);
+			if ( abs(pointx-xmax) < xbinwidth*magneticRange ) g->SetPoint(i, xmax, pointy);
 			g->GetPoint(i, pointx, pointy);
-			if ( abs(pointy-ymin)<hCL->GetYaxis()->GetBinWidth(1)*magneticRange ) g->SetPoint(i, pointx, ymin);
+			if ( abs(pointy-ymin) < ybinwidth*magneticRange ) g->SetPoint(i, pointx, ymin);
 			g->GetPoint(i, pointx, pointy);
-			if ( abs(pointy-ymax)<hCL->GetYaxis()->GetBinWidth(1)*magneticRange ) g->SetPoint(i, pointx, ymax);
+			if ( abs(pointy-ymax) < ybinwidth*magneticRange ) g->SetPoint(i, pointx, ymax);
 		}
 	}
+}
+
+void Contour::magneticBoundaries(const TH2F* hCL)
+{
+	magneticBoundaries(m_contours, hCL);
+	magneticBoundaries(m_contoursHoles, hCL);
 }
 
 ///
