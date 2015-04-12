@@ -471,6 +471,29 @@ void PDF_Abs::setObservable(TString name, float value)
 	obs->setVal(value);
 }
 
+void PDF_Abs::setUncertainty(TString obsname, float stat, float syst)
+{
+	// find the index of the observable - if it exists at all!
+	if ( !hasObservable(obsname) ){
+		cout << "PDF_Abs::setUncertainty() : ERROR : observable '" << obsname << "' not found." << endl;
+    assert(0);
+	}
+	int index = -1;
+	for ( int i=0; i<getNobs(); i++ ){
+		if ( observables->at(i)->GetName()==obsname ){
+			index = i;
+			break;
+		}
+	}
+	if ( index==-1 ){
+		// this should never happen...
+		cout << "PDF_Abs::setUncertainty() : ERROR : internal self inconsistency discovered. Exit." << endl;
+		assert(0);
+	}
+  StatErr[index] = stat;
+  SystErr[index] = syst;
+}
+
 ///
 /// Perform a couple of consistency checks to make it easier
 /// to find bugs.
