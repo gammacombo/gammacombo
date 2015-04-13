@@ -88,7 +88,6 @@ class PDF_Abs
 		inline void			setErrorSourceString(TString source){obsErrSource=source;};
 		inline void			setGcId(int id){gcId=id;};
 		void                setObservable(TString name, float value);
-    void                setUncertainty(TString name, float stat, float syst);
 		virtual void        setObservables(TString c);
 		void                setObservablesTruth();
 		void                setObservablesToy();
