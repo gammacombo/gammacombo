@@ -37,6 +37,7 @@ TString Utils::ConfigToTString(config s)
 	if ( s == hfag )                 return "hfag";
 	if ( s == highrb )               return "highrb";
 	if ( s == highstattoy )          return "highstattoy";
+	if ( s == lhcb)                  return "lhcb";
 	if ( s == lhcb2011 )             return "lhcb2011";
 	if ( s == lhcb2012 )             return "lhcb2012";
 	if ( s == lhcb2013 )             return "lhcb2013";

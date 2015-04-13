@@ -31,19 +31,22 @@
 /// For the angle variables, a new axis is painted that is in Deg.
 ///
 /// \param s The scanner to plot.
-/// \param first 
+/// \param first
 /// \param last
 /// \param filled
 ///
 TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool filled)
 {
-	if ( arg->debug ) cout << "OneMinusClPlot::scan1dPlot() : plotting " 
-															  << s->getName() << " (" << s->getMethodName() << ")" << endl;
+	if ( arg->debug ){
+		cout << "OneMinusClPlot::scan1dPlot() : plotting ";
+		cout << s->getName() << " (" << s->getMethodName() << ")" << endl;
+	}
+	m_mainCanvas->cd();
 	bool plotPoints = ( s->getMethodName()=="Plugin" || s->getMethodName()=="BergerBoos" || s->getMethodName()=="GenericPlugin" ) && plotPluginMarkers;
 	TH1F *hCL = (TH1F*)s->getHCL()->Clone(getUniqueRootName());
 	// fix inf and nan entries
 	for ( int i=1; i<=s->getHCL()->GetNbinsX(); i++ ){
-		if ( s->getHCL()->GetBinContent(i)!=s->getHCL()->GetBinContent(i) 
+		if ( s->getHCL()->GetBinContent(i)!=s->getHCL()->GetBinContent(i)
 				|| std::isinf(s->getHCL()->GetBinContent(i)) ) s->getHCL()->SetBinContent(i, 0.0);
 	}
 
@@ -62,43 +65,13 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	for ( int i=0; i<hCL->GetNbinsX(); i++ ){
 		g->SetPoint(i, hCL->GetBinCenter(i+1), hCL->GetBinContent(i+1));
 		if ( plotPoints ) ((TGraphErrors*)g)->SetPointError(i, 0.0, hCL->GetBinError(i+1));
-	}  
+	}
 
-	if ( plotSolution ){
-		// add solution
-		TGraph *gNew;
-		if ( plotPoints ) gNew = new TGraphErrors(g->GetN()+1);
-		else              gNew = new TGraph(g->GetN()+1);
-		gNew->SetName(getUniqueRootName());
-		Double_t pointx0, pointx1, pointy0, pointy1, err0, err1;
-		for ( int i=0; i<g->GetN()-1; i++)
-		{
-			g->GetPoint(i, pointx0, pointy0);
-			g->GetPoint(i+1, pointx1, pointy1);
-			if ( plotPoints )
-			{
-				err0 = g->GetErrorY(i);
-				err1 = g->GetErrorY(i+1);
-			}
-
-			if ( pointx0 < s->getScanVar1Solution(0) )
-			{
-				gNew->SetPoint(i, pointx0, pointy0);
-				if ( plotPoints ) ((TGraphErrors*)gNew)->SetPointError(i, 0.0, err0);
-			}  
-			if ( pointx0 < s->getScanVar1Solution(0) && s->getScanVar1Solution(0) < pointx1 )
-			{
-				gNew->SetPoint(i+1, s->getScanVar1Solution(0), 1.001);  ///< put the point slightly above 1 to avoid Root a drawing artifact
-				if ( plotPoints ) ((TGraphErrors*)gNew)->SetPointError(i+1, 0.0, 0.0);
-			}
-			if ( s->getScanVar1Solution(0) < pointx0 )
-			{
-				gNew->SetPoint(i+1, pointx0, pointy0);
-				if ( plotPoints ) ((TGraphErrors*)gNew)->SetPointError(i+1, 0.0, err0);
-			}
-		}
-		gNew->SetPoint(gNew->GetN()-1, pointx1, pointy1);
-		if ( plotPoints ) ((TGraphErrors*)gNew)->SetPointError(gNew->GetN()-1, 0.0, err1);
+	// add solution
+	if ( s->getNSolutions()>0 ){
+		TGraphTools t;
+		TGraph *gNew = t.addPointToGraphAtFirstMatchingX(g, s->getScanVar1Solution(0), 1.0);
+		delete g;
 		g = gNew;
 	}
 
@@ -128,7 +101,7 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 		}
 
 		// add origin
-		gNew->SetPoint(0, hCL->GetXaxis()->GetXmin(), 0); 
+		gNew->SetPoint(0, hCL->GetXaxis()->GetXmin(), 0);
 
 		// add a point at first y height but at x=origin.
 		g->GetPoint(0, pointx0, pointy0);
@@ -138,7 +111,7 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 		g->GetPoint(g->GetN()-1, pointx0, pointy0);
 		gNew->SetPoint(gNew->GetN()-2, hCL->GetXaxis()->GetXmax(), pointy0);
 
-		// add a point at xmax, 0  
+		// add a point at xmax, 0
 		gNew->SetPoint(gNew->GetN()-1, hCL->GetXaxis()->GetXmax(), 0);
 		g = gNew;
 	}
@@ -154,7 +127,7 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	else{
 		g->SetLineWidth(2);
 		g->SetLineStyle(s->getLineStyle());
-	}	
+	}
 
 	if ( plotPoints ){
 		g->SetLineWidth(1);
@@ -286,11 +259,14 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 ///
 void OneMinusClPlot::scan1dPlotSimple(MethodAbsScan* s, bool first)
 {
-	if ( arg->debug ) cout << "OneMinusClPlot::scan1dPlotSimple() : plotting " 
-																	<< s->getName() << " (" << s->getMethodName() << ")" << endl;
-
+	if ( arg->debug ){
+		cout << "OneMinusClPlot::scan1dPlotSimple() : plotting ";
+		cout << s->getName() << " (" << s->getMethodName() << ")" << endl;
+	}
+	m_mainCanvas->cd();
+	// get rit of nan and inf
 	for ( int i=1; i<=s->getHCL()->GetNbinsX(); i++ ){
-		if ( s->getHCL()->GetBinContent(i)!=s->getHCL()->GetBinContent(i) 
+		if ( s->getHCL()->GetBinContent(i)!=s->getHCL()->GetBinContent(i)
 				|| std::isinf(s->getHCL()->GetBinContent(i)) ) s->getHCL()->SetBinContent(i, 0.0);
 	}
 
@@ -307,7 +283,7 @@ void OneMinusClPlot::scan1dPlotSimple(MethodAbsScan* s, bool first)
 	s->getHCL()->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
 	s->getHCL()->GetYaxis()->SetTitle("1-CL");
 	s->getHCL()->GetXaxis()->SetLabelFont(font);
-	s->getHCL()->GetYaxis()->SetLabelFont(font);	
+	s->getHCL()->GetYaxis()->SetLabelFont(font);
 	s->getHCL()->GetXaxis()->SetTitleFont(font);
 	s->getHCL()->GetYaxis()->SetTitleFont(font);
 	s->getHCL()->GetXaxis()->SetTitleOffset(0.9);
@@ -329,6 +305,7 @@ void OneMinusClPlot::scan1dPlotSimple(MethodAbsScan* s, bool first)
 
 void OneMinusClPlot::drawVerticalLine(float x, int color, int style)
 {
+	m_mainCanvas->cd();
 	TLine* l1 = new TLine(x, 0., x, 1.);
 	l1->SetLineWidth(1);
 	l1->SetLineColor(color);
@@ -343,8 +320,8 @@ void OneMinusClPlot::drawVerticalLine(float x, int color, int style)
 ///
 void OneMinusClPlot::drawSolutions()
 {
-	c1->cd();
-	c1->Update();
+	m_mainCanvas->cd();
+	m_mainCanvas->Update();
 	float ymin = gPad->GetUymin();
 	float ymax = gPad->GetUymax();
 	float xmin = gPad->GetUxmin();
@@ -398,8 +375,8 @@ void OneMinusClPlot::drawSolutions()
 			xNumberMax = xCLmin+(xmax-xmin)*0.0;
 		}
 		else {
-			cout << "OneMinusClPlot::drawSolutions() : ERROR : --ps code " 
-													   << scanners[i]->getDrawSolution() << " not found! Use [0,1,2,3]." << endl;
+			cout << "OneMinusClPlot::drawSolutions() : ERROR : --ps code ";
+			cout << scanners[i]->getDrawSolution() << " not found! Use [0,1,2,3]." << endl;
 			continue;
 		}
 
@@ -425,13 +402,13 @@ void OneMinusClPlot::drawSolutions()
 		int d = myRounder.getNsubdigits();
 		float xCentralRd = myRounder.central();
 		if ( arg->isQuickhack(3) ) xCentralRd += 180.; ///< see documentation of --qh option in OptParser.cpp
-		t1->AddText(Form("%.*f^{+%.*f}_{#font[122]{-}%.*f}", 
-					d, xCentralRd, 
-					d, myRounder.errPos(), 
+		t1->AddText(Form("%.*f^{+%.*f}_{#font[122]{-}%.*f}",
+					d, xCentralRd,
+					d, myRounder.errPos(),
 					d, myRounder.errNeg()))->SetTextSize(labelsize);
 		t1->Draw();
 		iDrawn += 1;
-	}  
+	}
 }
 
 ///
@@ -440,8 +417,8 @@ void OneMinusClPlot::drawSolutions()
 ///
 void OneMinusClPlot::drawCLguideLine(float pvalue)
 {
-	c1->cd();
-	c1->Update();
+	m_mainCanvas->cd();
+	m_mainCanvas->Update();
 	float ymin = gPad->GetUymin();
 	float ymax = gPad->GetUymax();
 	float xmin = gPad->GetUxmin();
@@ -493,9 +470,16 @@ void OneMinusClPlot::drawCLguideLines()
 
 void OneMinusClPlot::Draw()
 {
-	bool plotSimple = false;//arg->debug; ///< set to true to use a simpler plot function 
+	bool plotSimple = false;//arg->debug; ///< set to true to use a simpler plot function
 	///< which directly plots the 1-CL histograms without beautification
-	c1->cd();
+	if ( m_mainCanvas==0 ){
+		m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, 600);
+	}
+	if ( arg->plotlog ){
+		m_mainCanvas->SetLogy();
+		if ( !this->name.EndsWith("_log") ) this->name = this->name + "_log";
+	}
+	m_mainCanvas->cd();
 
 	// Legend:
 	// make the legend short, the text will extend over the boundary, but the symbol will be shorter
@@ -509,9 +493,9 @@ void OneMinusClPlot::Draw()
 	for ( int i = 0; i < scanners.size(); i++ )
 	{
 		TString legDrawOption = "l";
-		if ( plotPluginMarkers 
-				&& ( scanners[i]->getMethodName()=="Plugin" 
-					|| scanners[i]->getMethodName()=="BergerBoos" 
+		if ( plotPluginMarkers
+				&& ( scanners[i]->getMethodName()=="Plugin"
+					|| scanners[i]->getMethodName()=="BergerBoos"
 					|| scanners[i]->getMethodName()=="GenericPlugin" ) )
 		{
 			legDrawOption = "p";
@@ -524,7 +508,7 @@ void OneMinusClPlot::Draw()
 		}
 		else
 		{
-			TGraph* g = scan1dPlot(scanners[i], i==0, false, scanners[i]->getFilled());  
+			TGraph* g = scan1dPlot(scanners[i], i==0, false, scanners[i]->getFilled());
 			leg->AddEntry(g, scanners[i]->getTitle(), legDrawOption);
 		}
 	}
@@ -538,7 +522,7 @@ void OneMinusClPlot::Draw()
 		}
 	drawSolutions();
 	if ( plotLegend ) leg->Draw();
-	c1->Update();
+	m_mainCanvas->Update();
 	drawCLguideLines();
 
 	// draw the logo
@@ -555,6 +539,6 @@ void OneMinusClPlot::Draw()
 	}
 	drawGroup(yGroup);
 
-	c1->Update();
-	c1->Show();
+	m_mainCanvas->Update();
+	m_mainCanvas->Show();
 }

@@ -10,7 +10,7 @@
 	PDF_Gaus::PDF_Gaus(TString cObs, TString cErr, TString cCor)
 : PDF_Abs(1)
 {
-	name = "gaus";
+	name = "Gaus";
 	initParameters();
 	initRelations();
 	initObservables();
@@ -57,7 +57,7 @@ void PDF_Gaus::setObservables(TString c)
 	}
 	else if ( c.EqualTo("year2013") ){
 		obsValSource = c;
-		setObservable("a_gaus_obs",-0.5);
+		setObservable("a_gaus_obs",-1.5);
 	}
 	else if ( c.EqualTo("year2014") ){
 		obsValSource = c;
@@ -98,9 +98,9 @@ void PDF_Gaus::setCorrelations(TString c)
 	else if ( c.EqualTo("year2014") ){
 		corSource = "no correlations for 1 obs";
 	}
-	else{ 
+	else{
 		cout << "PDF_Gaus::setCorrelations() : ERROR : config "+c+" not found." << endl;
-		exit(1);    
+		exit(1);
 	}
 }
 

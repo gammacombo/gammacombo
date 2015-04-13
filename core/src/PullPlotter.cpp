@@ -75,8 +75,11 @@ void PullPlotter::defineOrder()
 ///
 /// Plot up to 10 pulls into one canvas. If less pulls are plotted,
 /// the canvas is scaled smaller. This is to be called from plotPulls().
-/// \param currentid Define the current index for the "(3 of 7)" statement
-/// \param maxid Define the max index for the "(3 of 7)" statement
+///
+/// \param observables - vector of observable names, plot pulls for these observables
+/// \param currentid - Define the current index for the "(3 of 7)" statement
+/// \param maxid - Define the max index for the "(3 of 7)" statement
+/// \param nObs - total number of observables
 ///
 void PullPlotter::plotPullsCanvas(vector<TString>& observables, int currentid, int maxid, int nObs)
 {
@@ -92,7 +95,7 @@ void PullPlotter::plotPullsCanvas(vector<TString>& observables, int currentid, i
 	// pull axis
 	float xminPullAxis = -pullRange;
 	float xmaxPullAxis = +pullRange;
-	TCanvas *cPulls = new TCanvas("cPulls"+getUniqueRootName(), cmb->getTitle(), 0, 0, 600, 40*observables.size()+120);
+	TCanvas *cPulls = newNoWarnTCanvas("cPulls"+getUniqueRootName(), cmb->getTitle(), 0, 0, 600, 40*observables.size()+120);
 	cPulls->Range(xminCoords,yminCoords,xmaxCoords,ymaxCoords);
 
 	// compute (5 of 7) string
@@ -202,7 +205,8 @@ void PullPlotter::plotPullsCanvas(vector<TString>& observables, int currentid, i
 ///
 void PullPlotter::plotPulls()
 {
-	cout << "PullPlotter::plotPulls() : making pull plot  (" << cmb->getTitle() << ", solution " << nSolution << ")" << endl;
+	if ( arg->debug ) cout << "PullPlotter::plotPulls() : ";
+	cout << "making pull plot  (" << cmb->getTitle() << ", solution " << nSolution << ") ..." << endl;
 
 	// add any observables that are not in the ordered list defined above,
 	// where the order of certain observables is defined manually
@@ -264,8 +268,9 @@ void PullPlotter::plotPulls()
 
 ///
 /// Check pulls using the current values of the parameters.
-/// \return True, if one pull is above N sigma.
-/// \param aboveNsigma
+///
+/// \param nsigma - threshold value
+/// \return - True, if one pull is above N sigma.
 ///
 bool PullPlotter::hasPullsAboveNsigma(float nsigma)
 {

@@ -210,9 +210,7 @@ RooDataSet* MethodPluginScan::generateToys(int nToys)
 ///                 are being generated at this point. It also defines the
 ///                 value of the scan parameter and provides the "scan"
 ///                 chi2 value of "the data".
-/// \param plhFree  Defines the best fit point of "the data" in parameter
-///                 space. Here we only need its chi2 value to compute
-///                 the Delta chi2 for "the data".
+/// \param chi2minGlobal chi2 value at global minimum
 /// \param t        Stores all toys and fit results that are being generated.
 ///                 If a ToyTree is provided, entries will be added to the
 ///                 existing tree, and all new entries will have the
@@ -228,6 +226,7 @@ RooDataSet* MethodPluginScan::generateToys(int nToys)
 ///                 It may be useful to use an external fitter so that the
 ///                 fitter object can compute some fit statistics for an entire
 ///                 1-CL scan.
+/// \param pb       A progress bar object used to print nice progress output.
 /// \return         the p-value.
 ///
 void MethodPluginScan::computePvalue1d(RooSlimFitResult* plhScan, double chi2minGlobal, ToyTree* t, int id,

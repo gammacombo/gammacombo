@@ -67,19 +67,18 @@ OptParser::OptParser()
 	plotpluginonly = false;
 	plotprelim = false;
 	plotpulls = false;
-	plotsolutions = -99;
 	plotunoff = false;
-	pluginPlotRangeMax = -99;
-	pluginPlotRangeMin = -99;
+	pluginPlotRangeMax = -100;
+	pluginPlotRangeMin = -100;
 	intprob = false;
 	probforce = false;
 	probimprove = false;
 	printcor = false;
 	scanforce = false;
-	scanrangeMax = -99;
-	scanrangeMin = -99;
-	scanrangeyMax = -99;
-	scanrangeyMin = -99;
+	scanrangeMax = -101;
+	scanrangeMin = -101;
+	scanrangeyMax = -102;
+	scanrangeyMin = -102;
 	smooth2d = false;
 	usage = false;
 	verbose = false;
@@ -127,6 +126,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("nrun");
 	availableOptions.push_back("ntoys");
 	//availableOptions.push_back("pevid");
+	availableOptions.push_back("pr");
 	availableOptions.push_back("physrange");
 	availableOptions.push_back("plotid");
 	availableOptions.push_back("intprob");
@@ -207,6 +207,7 @@ void OptParser::bookPluginOptions()
 	bookedOptions.push_back("nrun");
 	bookedOptions.push_back("ntoys");
 	//bookedOptions.push_back("pevid");
+	bookedOptions.push_back("pr");
 	bookedOptions.push_back("physrange");
 	bookedOptions.push_back("intprob");
 	bookedOptions.push_back("po");
@@ -224,6 +225,7 @@ void OptParser::bookProbOptions()
 	bookedOptions.push_back("npoints");
 	bookedOptions.push_back("npoints2dx");
 	bookedOptions.push_back("npoints2dy");
+	bookedOptions.push_back("pr");
 	bookedOptions.push_back("physrange");
 	bookedOptions.push_back("sn");
 	bookedOptions.push_back("sn2d");
@@ -311,18 +313,6 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"Available IDs are 1-6. If not given, all control plots are made.", false, 0, "int");
 	TCLAP::ValueArg<int> digitsArg("s", "digits", "Set the number of printed"
 			" digits right of the decimal point. Default is automatic.", false, -1, "int");
-	TCLAP::ValueArg<int> plotsolutionsArg("", "ps", "Include solutions in the plots.\n"
-			"1d plots: the numerical value and 1sigma errors are plotted.\n"
-			" 0: don't plot\n"
-			" 1: at central value\n"
-			" 2: at left interval boundary\n"
-			" 3: at right interval boundary.\n"
-			" 4: a little more left of the left interval boundary.\n"
-			"2d plots: markers are plotted at the position of the solution.\n"
-			" 0: don't plot\n"
-			" 1: plot markers at local minima\n"
-			" 2: plot markers only at best-fit point.",
-			false, 0, "int");
 	TCLAP::ValueArg<string> plotlegArg("", "leg", "Adjust the plot legend.\n"
 			"Disable the legend with --leg off .\n"
 			"2d plots: set the position of the legend. "
@@ -386,7 +376,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::SwitchArg plotprelimArg("", "prelim", "Plot 'Preliminiary' into the plots. See also --unoff .", false);
 	TCLAP::SwitchArg plotunoffArg("", "unoff", "Plot 'Unofficial' into the plots. See also --prelim .", false);
 	TCLAP::SwitchArg plot2dclArg("", "2dcl", "Plot '2d' confidence level contours in 2d plots.", false);
-	TCLAP::SwitchArg physrangeArg("", "pr", "Enforce the physical range on all parameters (needed to reproduce "
+	TCLAP::SwitchArg prArg("", "pr", "Enforce the physical range on all parameters (needed to reproduce "
 			"the standard Feldman-Cousins with boundary example). If set, no nuisance will be allowed outside the "
 			"'phys' limit. However, toy generation of observables is not affected.", false);
 	TCLAP::SwitchArg importanceArg("", "importance", "Enable importance sampling for plugin toys.", false);
@@ -427,13 +417,21 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::MultiArg<int> pevidArg("", "pevid", "ID of combination used for the profile likelihood"
 			"that determines the parameter evolution for the Plugin toy generation. If not given, "
 			"the --combid will be used. Use -u to get a list of possible choices.", false, "int");
-	TCLAP::MultiArg<int> qhArg("", "qh", "Quick hacks. \n"
+	TCLAP::MultiArg<int> qhArg("", "qh", "Quick hacks.\n"
 			"1: Move up the printed solutions in 1d log plots such that they don't clash with the 95% clabel.\n"
 			"2: Move the CL labels to the middle of the 1d plots.\n"
 			"3: add 180 deg to the d_dpi axis and solution in the 1d plot.\n"
 			"4: move plotted numbers a bit to the left to not cover 1d plot axis.\n"
 			"5: Test toy generation in the 1d plugin method. At each scan point, 10 toys are printed out- but nothing is fit.\n"
 			"8: Switch on new CL interval maker output.\n"
+			"9: Don't remove duplicate/equivalent solutions.\n"
+			"10: Don't plot fill pattern for 2D contours to make cleaner looking plots.\n"
+			"11: Don't plot dashed lines of 2D contours.\n"
+			"12: Use transpareny for 2D contours.\n"
+			"13: Don't use transparency for the last plotted 2D contour.\n"
+			"14: In 2D plots, reduce the y title offset and enlarge the pad accordingly.\n"
+			"15: In 2D plots, remove the X% CL content line.\n"
+			"16: In parameter evolution plots, add also the full evolution over the scan, in addition to just plotting the best evolution.\n"
 			, false, "int");
 	TCLAP::MultiArg<string> titleArg("", "title", "Override the title of a combination. "
 			"If 'default' is given, the default title for that combination is used. "
@@ -445,7 +443,17 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"If given a single time, it is applied to all combinations. \n"
 			"Example: --fix 'g=1.7,r_dk=-0.09' \n"
 			"To fix just the parameters in the second combination, do\n"
-			"Example: --fix 'none' --fix 'g=1.7,r_dk=-0.09' \n"
+			"Example: --fix none --fix 'g=1.7,r_dk=0.09' \n"
+			, false, "string");
+	TCLAP::MultiArg<string> physrangeArg("", "prange", "Adjust the physical range of one or more parameters in a combination. "
+			"The ranges are enforced through the --pr option. "
+			"If 'def' is given, the default ranges are used. "
+			"If given multiple times, the first --fix argument refers to the first combination, "
+			"the second one to the second and so on. "
+			"If given a single time, it is applied to all combinations. \n"
+			"Example: --prange 'g=1.7:1.9,r_dk=0.09:0.2' \n"
+			"To modify only the parameters in the second combination, do\n"
+			"Example: --prange def --prange 'g=1.7:1.9,r_dk=0.09:0.2' \n"
 			, false, "string");
 	TCLAP::MultiArg<float> snArg("", "sn", "--sn x. Save nuisances to parameter cache file at certain points after a "
 			"1d scan was performed. This can be used to set these as starting points "
@@ -475,6 +483,21 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"The argument can be given multiple times to configure different "
 			"files for different Asimov combiners. "
 			"Example: --asimovfile parameters.dat", false, "string");
+	TCLAP::MultiArg<int> plotsolutionsArg("", "ps", "Include solutions in the plots.\n"
+			"1D plots: the numerical value and 1sigma errors are plotted.\n"
+			" 0: don't plot\n"
+			" 1: at central value\n"
+			" 2: at left interval boundary\n"
+			" 3: at right interval boundary.\n"
+			" 4: a little more left of the left interval boundary.\n"
+			"2D plots: markers are plotted at the position of the solution.\n"
+			" 0: don't plot\n"
+			" 1: plot markers at all local minima\n"
+			" 2: plot markers only at best-fit point and equivalent ones (DeltaChi2<0.01).\n"
+			"When --ps is only given once, its value will be used for all plotted "
+			"combiners. If given less than the number of combinations (-c), the "
+			"remaining ones will not plot any solution.",
+			false, "int");
 
 	//
 	// let TCLAP parse the command line
@@ -506,7 +529,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "plotnsigmacont" ) ) cmd.add(plotnsigmacontArg);
 	if ( isIn<TString>(bookedOptions, "plotid" ) ) cmd.add(plotidArg);
 	if ( isIn<TString>(bookedOptions, "plot2dcl" ) ) cmd.add( plot2dclArg );
-	if ( isIn<TString>(bookedOptions, "physrange" ) ) cmd.add( physrangeArg );
+	if ( isIn<TString>(bookedOptions, "pr" ) ) cmd.add( prArg );
+	if ( isIn<TString>(bookedOptions, "physrange" ) ) cmd.add(physrangeArg);
 	if ( isIn<TString>(bookedOptions, "pevid" ) ) cmd.add( pevidArg );
 	if ( isIn<TString>(bookedOptions, "ntoys" ) ) cmd.add(ntoysArg);
 	if ( isIn<TString>(bookedOptions, "nrun" ) ) cmd.add(nrunArg);
@@ -554,7 +578,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	color             = colorArg.getValue();
 	controlplot       = controlplotArg.getValue();
 	digits            = digitsArg.getValue();
-	enforcePhysRange  = physrangeArg.getValue();
+	enforcePhysRange  = prArg.getValue();
 	filenameaddition  = filenameadditionArg.getValue();
 	group             = plotgroupArg.getValue();
 	id                = idArg.getValue();
@@ -584,7 +608,6 @@ void OptParser::parseArguments(int argc, char* argv[])
 	plotpluginonly    = plotpluginonlyArg.getValue();
 	plotprelim        = plotprelimArg.getValue();
 	plotpulls         = plotpullsArg.getValue();
-	plotsolutions     = plotsolutionsArg.getValue();
 	plotunoff         = plotunoffArg.getValue();
 	printcor          = printcorArg.getValue();
 	probforce         = probforceArg.getValue();
@@ -757,6 +780,39 @@ void OptParser::parseArguments(int argc, char* argv[])
 	parseRange(scanrangeArg.getValue(), scanrangeMin, scanrangeMax);
 	parseRange(scanrangeyArg.getValue(), scanrangeyMin, scanrangeyMax);
 
+	// --prange
+	tmp = physrangeArg.getValue();
+	for ( int i = 0; i < tmp.size(); i++ ){ // loop over instances of --prange
+		vector<RangePar> ranges;
+		// parse default string
+		if ( TString(tmp[i])==TString("def") ){
+			physRanges.push_back(ranges);
+			continue;
+		}
+		// parse list of ranges: "foopar=5:6.2,barpar=7.4:8.5"
+		TObjArray *rangesArray = TString(tmp[i]).Tokenize(","); // split string at ","
+		for ( int j=0; j<rangesArray->GetEntries(); j++ ){ // loop over ranges
+			TString rangeString = ((TObjString*)rangesArray->At(j))->GetString();
+			RangePar p;
+			TString parsedRangeStr;
+			bool check = parseAssignment(rangeString, p.name, parsedRangeStr);
+			check = check && parseRange(parsedRangeStr, p.min, p.max);
+			if ( check ) ranges.push_back(p);
+			else{
+				cout << "ERROR : parse error in --prange argument: " << rangeString << endl << endl;
+			}
+		}
+		physRanges.push_back(ranges);
+	}
+	// test code for --prange
+	//for ( int i = 0; i < physRanges.size(); i++ ){
+		//cout << "combination " << i << endl;
+		//for ( int j = 0; j < physRanges[i].size(); j++ ){
+			//cout << physRanges[i][j].name << " = " << physRanges[i][j].min << " ... " << physRanges[i][j].max << endl;
+		//}
+	//}
+	//exit(0);
+
 	// --fix
 	tmp = fixArg.getValue();
 	for ( int i = 0; i < tmp.size(); i++ ){ // loop over instances of --fix
@@ -788,6 +844,23 @@ void OptParser::parseArguments(int argc, char* argv[])
 	// 	}
 	// }
 	// exit(0);
+
+	// --po
+	// If --po is only given once, apply the given setting to all
+	// combiners.
+	plotsolutions     = plotsolutionsArg.getValue();
+	if ( plotsolutions.size()==1 && combid.size()>1 ){
+		for ( int i=1; i<combid.size(); i++ ){
+			plotsolutions.push_back(plotsolutions[0]);
+		}
+	}
+	// If --po is given more than once, but not for every combiner,
+	// fill the remaining ones up with 0=don't plot solution
+	else if ( plotsolutions.size() < combid.size() ){
+		for ( int i=plotsolutions.size(); i<combid.size(); i++ ){
+			plotsolutions.push_back(0);
+		}
+	}
 
 	// check --po argument
 	if ( plotpluginonly && !isAction("plugin") ){
@@ -857,11 +930,11 @@ void OptParser::parsePosition(TString parseMe, float &x, float &y, TString usage
 /// \param min return value
 /// \param max return value
 ///
-void OptParser::parseRange(TString parseMe, float &min, float &max)
+bool OptParser::parseRange(TString parseMe, float &min, float &max)
 {
 	if ( parseMe==TString("default") ){
-		min = -99;
-		max = -99;
+		min = -104;
+		max = -104;
 	}
 	else {
 		TString minStr = parseMe;
@@ -872,9 +945,27 @@ void OptParser::parseRange(TString parseMe, float &min, float &max)
 		max = maxStr.Atof();
 	}
 	if ( min>max ){
-		cout << "Argument error: plugin plot range min>max." << endl;
-		exit(1);
+		return false;
 	}
+	return true;
+}
+
+///
+/// Parse a variable assignment string.
+/// \param parseMe Format: "foovar=3.14"
+/// \param name return string
+/// \param value return value
+///
+bool OptParser::parseAssignment(TString parseMe, TString &name, TString &value)
+{
+	TString nameStr = parseMe;
+	TString valueStr = parseMe;
+	if ( parseMe.Index("=") == -1 ) return false; // parse error: '=' not found
+	nameStr.Replace(nameStr.Index("="), nameStr.Sizeof(), "");
+	valueStr.Replace(0, valueStr.Index("=")+1, "");
+	name = nameStr;
+	value = valueStr;
+	return true;
 }
 
 ///
@@ -885,12 +976,8 @@ void OptParser::parseRange(TString parseMe, float &min, float &max)
 ///
 bool OptParser::parseAssignment(TString parseMe, TString &name, float &value)
 {
-	TString nameStr = parseMe;
-	TString valueStr = parseMe;
-	if ( parseMe.Index("=") == -1 ) return false; // parse error: '=' not found
-	nameStr.Replace(nameStr.Index("="), nameStr.Sizeof(), "");
-	valueStr.Replace(0, valueStr.Index("=")+1, "");
-	name = nameStr;
+	TString valueStr;
+	parseAssignment(parseMe, name, valueStr);
 	value = valueStr.Atof();
 	return true;
 }

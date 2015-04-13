@@ -20,6 +20,7 @@ GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[])
 
 	// run ROOT in interactive mode, if requested (-i)
 	if ( arg->interactive ) theApp = new TApplication("App", &argc, argv);
+	else gROOT->SetBatch(false);
 
 	// initialize members
 	plot = 0;
@@ -296,6 +297,7 @@ void GammaComboEngine::setAsimovObservables(Combiner* c)
 ///
 /// Load start parameters.
 ///
+/// \param s - the scanner
 /// \param cId - combiner id
 /// \param pCache - parameter cache
 ///
@@ -314,6 +316,10 @@ void GammaComboEngine::loadStartParameters(MethodProbScan *s, ParameterCache *pC
 	if ( arg->loadParamsFile.size()>cId && ! arg->loadParamsFile[cId].EqualTo("default") ) {
 		startparfile = arg->loadParamsFile[cId];
 		filefound = FileExists(startparfile);
+		if ( !filefound ){
+			cout << "\n ERROR: --parfile not found: " << startparfile << endl;
+			cout << "  Will now look for default files.\n" << endl;
+		}
 	}
 	// requested file not found, try default
 	if ( ! filefound ){
@@ -552,7 +558,8 @@ void GammaComboEngine::checkColorArg()
 		}
 		// colors for two-dimensional plots
 		else if ( arg->var.size()==2 ){
-			int nMaxColors = 4;
+			OneMinusClPlot2d p(arg);
+			int nMaxColors = p.getNumberOfDefinedColors();
 			if ( nMaxColors<=arg->color[i] ){
 				cout << "Argument error --color: No such color for two-dimensional plots. Please choose a color between 0 and " << nMaxColors-1 << endl;
 				exit(1);
@@ -626,14 +633,11 @@ void GammaComboEngine::makeAddDelCombinations()
 /// print parameter structure of the combinations into
 /// .dot file
 ///
-void GammaComboEngine::printCombinerStructure()
+void GammaComboEngine::printCombinerStructure(Combiner *c)
 {
 	Graphviz gviz(arg);
-	for ( int i=0; i<arg->combid.size(); i++ ){
-		int combinerId = arg->combid[i];
-		gviz.printCombiner(cmb[combinerId]);
-		gviz.printCombinerLayer(cmb[combinerId]);
-	}
+	gviz.printCombiner(c);
+	gviz.printCombinerLayer(c);
 }
 
 ///
@@ -735,16 +739,17 @@ void GammaComboEngine::scanStrategy2d(MethodProbScan *scanner, ParameterCache *p
 			" 2. scan in second variable: " + scanner->getScanVar2Name() + "\n"
 			" 3. scan starting from each solution found in 1. and 2." << endl;
 		Combiner *c = scanner->getCombiner();
-		cout << "\n1D scan for " + scanner->getScanVar1Name() + ":\n" << endl;
+		cout << "\n1D scan for X variable, " + scanner->getScanVar1Name() + ":\n" << endl;
 		MethodProbScan *s1 = new MethodProbScan(c);
 		s1->setScanVar1(scanner->getScanVar1Name());
 		s1->initScan();
 		scanStrategy1d(s1,pCache);
 		if ( arg->verbose ) s1->printLocalMinima();
 
-		cout << "\n1D scan for " + scanner->getScanVar2Name() + ":\n" << endl;
+		cout << "\n1D scan for Y variable, " + scanner->getScanVar2Name() + ":\n" << endl;
 		MethodProbScan *s2 = new MethodProbScan(c);
 		s2->setScanVar1(scanner->getScanVar2Name());
+		s2->setXscanRange(arg->scanrangeyMin,arg->scanrangeyMax);
 		s2->initScan();
 		scanStrategy1d(s2,pCache);
 		if ( arg->verbose ) s2->printLocalMinima();
@@ -759,6 +764,8 @@ void GammaComboEngine::scanStrategy2d(MethodProbScan *scanner, ParameterCache *p
 			scanner->loadParameters(solutions[j]);
 			scanner->scan2d();
 		}
+		delete s1;
+		delete s2;
 	}
 	// otherwise load each starting value found
 	else {
@@ -863,6 +870,7 @@ void GammaComboEngine::make2dPluginScan(MethodPluginScan *scannerPlugin, int cId
 void GammaComboEngine::make1dProbPlot(MethodProbScan *scanner, int cId)
 {
 	if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
+		scanner->setDrawSolution(arg->plotsolutions[cId]);
 		scanner->plotOn(plot);
 		int colorId = cId;
 		if ( arg->color.size()>cId ) colorId = arg->color[cId];
@@ -920,6 +928,7 @@ void GammaComboEngine::make1dPluginPlot(MethodPluginScan *sPlugin, MethodProbSca
 {
 	make1dProbPlot(sProb, cId);
 	sPlugin->setLineColor(kBlack);
+	sPlugin->setDrawSolution(arg->plotsolutions[cId]);
 	sPlugin->plotOn(plot);
 	plot->Draw();
 }
@@ -935,10 +944,12 @@ void GammaComboEngine::make1dPluginPlot(MethodPluginScan *sPlugin, MethodProbSca
 ///
 void GammaComboEngine::make2dPluginPlot(MethodPluginScan *sPlugin, MethodProbScan *sProb, int cId)
 {
-	sProb->setTitle( sProb->getTitle() + " (Prob)");
+	sProb->setTitle(sProb->getTitle() + " (Prob)");
+	sProb->setDrawSolution(arg->plotsolutions[cId]);
 	sProb->plotOn(plot);
 	sProb->setLineColor(colorsLine[cId]);
-	sPlugin->setTitle( sPlugin->getTitle() + " (Plugin)");
+	sPlugin->setTitle(sPlugin->getTitle() + " (Plugin)");
+	sPlugin->setDrawSolution(arg->plotsolutions[cId]);
 	sPlugin->plotOn(plot);
 	plot->Draw();
 }
@@ -957,6 +968,7 @@ void GammaComboEngine::make1dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId)
 	if ( arg->color.size()>cId ) colorId = arg->color[cId];
 	sPlugin->setLineColor(colorsLine[colorId]);
 	sPlugin->setTextColor(colorsText[colorId]);
+	sPlugin->setDrawSolution(arg->plotsolutions[cId]);
 	sPlugin->plotOn(plot);
 	plot->Draw();
 }
@@ -965,21 +977,29 @@ void GammaComboEngine::make1dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId)
 /// Make the plugin-only 2D plot.
 ///
 /// \param sPlugin - the plugin scanner
+/// \param cId - the id of this combination on the command line
 ///
-void GammaComboEngine::make2dPluginOnlyPlot(MethodPluginScan *sPlugin)
+void GammaComboEngine::make2dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId)
 {
+	sPlugin->setDrawSolution(arg->plotsolutions[cId]);
 	sPlugin->plotOn(plot);
 	plot->Draw();
 }
 
 ///
+/// Make a 2D prob scan.
+/// - load start parameters
+/// - perform scan
+/// - save scanner and parameters
 ///
+/// \param scanner - the scanner
+/// \param cId - the id of this combination on the command line
 ///
 void GammaComboEngine::make2dProbScan(MethodProbScan *scanner, int cId)
 {
 	// load start parameters
 	ParameterCache *pCache = new ParameterCache(arg);
-	pCache->loadPoints(getStartParFileName(cId));
+	loadStartParameters(scanner, pCache, cId);
 	// scan
 	scanner->initScan();
 	scanStrategy2d(scanner,pCache);
@@ -988,16 +1008,6 @@ void GammaComboEngine::make2dProbScan(MethodProbScan *scanner, int cId)
 	// save
 	scanner->saveScanner(m_fnamebuilder->getFileNameScanner(scanner));
 	pCache->cacheParameters(scanner, m_fnamebuilder->getFileNamePar(scanner));
-	// plot
-	if (!arg->isAction("pluginbatch")){
-		scanner->plotOn(plot);
-		scanner->setLineColor(colorsLine[cId]);
-		plot->Draw();
-		OneMinusClPlot2d* plotf = new OneMinusClPlot2d(arg, plot->getName()+"_full", "p-value histogram: "+scanner->getTitle());
-		scanner->plotOn(plotf);
-		plotf->DrawFull();
-		plotf->save();
-	}
 }
 
 ///
@@ -1005,9 +1015,22 @@ void GammaComboEngine::make2dProbScan(MethodProbScan *scanner, int cId)
 ///
 void GammaComboEngine::make2dProbPlot(MethodProbScan *scanner, int cId)
 {
-	scanner->plotOn(plot);
+	// plot full
+	OneMinusClPlot2d* plotf = new OneMinusClPlot2d(arg, m_fnamebuilder->getFileNamePlotSingle(cmb, cId)+"_full", "p-value histogram: "+scanner->getTitle());
+	scanner->plotOn(plotf);
+	plotf->DrawFull();
+	plotf->save();
+	// contour plot
+	scanner->setDrawSolution(arg->plotsolutions[cId]);
 	scanner->setLineColor(colorsLine[cId]);
-	plot->Draw();
+	scanner->plotOn(plot);
+	// only draw the plot once when multiple scanners are plotted,
+	// else we end up with too many graphs, and the transparency setting
+	// gets screwed up
+	if ( cId==arg->combid.size()-1 ){
+		plot->Draw();
+		plot->Show();
+	}
 }
 
 ///
@@ -1019,6 +1042,19 @@ void GammaComboEngine::fixParameters(Combiner *c, int cId)
 	if ( cId<arg->fixParameters.size() ){
 		for ( int j=0; j<arg->fixParameters[cId].size(); j++ ){
 			c->fixParameter(arg->fixParameters[cId][j].name,arg->fixParameters[cId][j].value);
+		}
+	}
+}
+
+///
+/// Helper function for scan(). Adjusts ranges, if requested
+/// (only possible before combining).
+///
+void GammaComboEngine::adjustRanges(Combiner *c, int cId)
+{
+	if ( cId<arg->physRanges.size() ){
+		for ( int j=0; j<arg->physRanges[cId].size(); j++ ){
+			c->adjustPhysRange(arg->physRanges[cId][j].name, arg->physRanges[cId][j].min, arg->physRanges[cId][j].max);
 		}
 	}
 }
@@ -1090,8 +1126,8 @@ void GammaComboEngine::scan()
 		// same combination in twice (once with asimov, for example)
 		c = c->Clone(c->getName(), c->getTitle());
 
-		// fix parameters - only possible before combining
-		if ( i<arg->fixParameters.size() ) fixParameters(c, i);
+		// fix parameters according to the command line - only possible before combining
+		fixParameters(c, i);
 
 		// configure names to run an Asimov toy - only possible before combining
 		if ( arg->isAsimovCombiner(i) ) configureAsimovCombinerNames(c, i);
@@ -1107,6 +1143,12 @@ void GammaComboEngine::scan()
 		// combine
 		c->combine();
 		if ( !c->isCombined() ) continue; // error during combining
+
+		// adjust ranges according to the command line - only possible before combining
+		adjustRanges(c, i);
+
+		// make graphviz dot files
+		printCombinerStructure(c);
 
 		// set an asimov toy - only possible after combining
 		if ( arg->isAsimovCombiner(i) ) loadAsimovPoint(c, i);
@@ -1157,11 +1199,11 @@ void GammaComboEngine::scan()
 			{
 				if ( arg->isAction("plot") ){
 					scannerProb->loadScanner(m_fnamebuilder->getFileNameScanner(scannerProb));
-					make2dProbPlot(scannerProb, i);
 				}
 				else{
 					make2dProbScan(scannerProb, i);
 				}
+				make2dProbPlot(scannerProb, i);
 			}
 		}
 
@@ -1195,11 +1237,12 @@ void GammaComboEngine::scan()
 				//scanner2->setParevolPLH(scanner3);
 				//}
 				else if ( arg->isAction("plugin") ){
-					// create the Prob scanner: load from disc if it exists, else redo the scan
-					// we don't need the prob scanner for the plugin only plot, if we either just
-					// want to replot it, or if we use the external chi2 values directly from the toys
+					// Create the Prob scanner: load from disc if it exists, else redo the scan.
+					// We don't need the prob scanner for the plugin only plot, if we either just
+					// want to replot it.
 					MethodProbScan *scannerProb = new MethodProbScan(c);
-					if ( ! ( arg->plotpluginonly && ( arg->isAction("plot") || !arg->intprob ) ) ){
+					if (    !arg->plotpluginonly
+						|| ( arg->plotpluginonly && !arg->isAction("plot") ) ){
 						if ( FileExists(m_fnamebuilder->getFileNameScanner(scannerProb)) ){
 							scannerProb->loadScanner(m_fnamebuilder->getFileNameScanner(scannerProb));
 						}
@@ -1258,7 +1301,7 @@ void GammaComboEngine::scan()
 						make2dPluginScan(scannerPlugin, i);
 					}
 					if ( arg->plotpluginonly ){
-						make2dPluginOnlyPlot(scannerPlugin);
+						make2dPluginOnlyPlot(scannerPlugin, i);
 					}
 					else {
 						make2dPluginPlot(scannerPlugin, scannerProb, i);
@@ -1270,7 +1313,7 @@ void GammaComboEngine::scan()
 		/////////////////////////////////////////////////////
 
 		if ( i<arg->combid.size()-1 ) {
-			cout << "\n--------------------------------------------------\n" << endl;
+			cout << "\n-- now starting -c " << arg->combid[i+1] << " ------------------------------------------------------------------\n" << endl;
 		}
 	}
 }
@@ -1312,7 +1355,6 @@ void GammaComboEngine::run()
 	if ( arg->nosyst ) disableSystematics();
 	makeAddDelCombinations();
 	defineColors();
-	printCombinerStructure();
 	customizeCombinerTitles();
 	setUpPlot();
 	scan();

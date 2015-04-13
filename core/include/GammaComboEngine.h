@@ -23,6 +23,7 @@
 #include "ParameterEvolutionPlotter.h"
 #include "TApplication.h"
 #include "TColor.h"
+#include "TDatime.h"
 #include "Utils.h"
 
 using namespace std;
@@ -40,6 +41,7 @@ class GammaComboEngine
 		GammaComboEngine(TString name, int argc, char* argv[]);
 		~GammaComboEngine();
 
+		void            adjustRanges(Combiner *c, int cId);
 		void			addPdf(int id, PDF_Abs* pdf, TString title="");
 		void			addCombiner(int id, Combiner* cmb);
 		void			cloneCombiner(int newId, int oldId, TString name, TString title);
@@ -79,12 +81,12 @@ class GammaComboEngine
 		void			make1dPluginScan(MethodPluginScan *scannerPlugin, int cId);
 		void			make1dProbPlot(MethodProbScan *scanner, int cId);
 		void			make1dProbScan(MethodProbScan *scanner, int cId);
-		void			make2dPluginOnlyPlot(MethodPluginScan *sPlugin);
+		void			make2dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId);
 		void			make2dPluginPlot(MethodPluginScan *sPlugin, MethodProbScan *sProb, int cId);
 		void			make2dPluginScan(MethodPluginScan *scannerPlugin, int cId);
 		void			make2dProbPlot(MethodProbScan *scanner, int cId);
 		void			make2dProbScan(MethodProbScan *scanner, int cId);
-		void			printCombinerStructure();
+		void			printCombinerStructure(Combiner *c);
 		void			printBanner();
 		bool			pdfExists(int id);
 		void			savePlot();

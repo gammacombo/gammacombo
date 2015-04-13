@@ -464,10 +464,17 @@ void PDF_Abs::setSystCorrelation(TMatrixDSym &corSystMatrix)
 	corSource = corSource + " (syst. cor. set manually)";
 }
 
-void PDF_Abs::setObservable(TString name, float value)
+///
+/// Set the observed central value of an observable. To be used
+/// in setObservables() of the derived PDF classes.
+///
+/// \param obsName - observable name
+/// \param value - central value
+///
+void PDF_Abs::setObservable(TString obsName, float value)
 {
-	RooRealVar* obs = (RooRealVar*)observables->find(name);
-	if ( obs==0 ) { cout << "PDF_Abs::setObservable() : ERROR : observable "+name+" not found!" << endl; exit(1); }
+	RooRealVar* obs = (RooRealVar*)observables->find(obsName);
+	if ( obs==0 ) { cout << "PDF_Abs::setObservable() : ERROR : observable "+obsName+" not found!" << endl; exit(1); }
 	obs->setVal(value);
 }
 
@@ -495,8 +502,35 @@ void PDF_Abs::setUncertainty(TString obsname, float stat, float syst)
 }
 
 ///
+/// Set the uncertainties of an observable. To be used
+/// in setUncertainties() of the derived PDF classes.
+/// This function fills the StatErr and SystErr arrays
+/// in the correct place.
+///
+/// \param obsName - observable name
+/// \param stat - statistical error
+/// \param syst - systematic error
+///
+void PDF_Abs::setUncertainty(TString obsName, float stat, float syst)
+{
+	for ( int i=0; i<nObs; i++ ){
+		RooRealVar* obs = (RooRealVar*)observables->at(i);
+		if ( TString(obs->GetName()).EqualTo(obsName) ){
+			StatErr[i] = stat;
+			SystErr[i] = syst;
+			return;
+		}
+	}
+	cout << "PDF_Abs::setUncertainty() : ERROR : observable "+name+" not found!" << endl;
+	exit(1);
+}
+
+///
 /// Perform a couple of consistency checks to make it easier
-/// to find bugs.
+/// to find bugs:
+/// - check if all observables end with '_obs'
+/// - check if all predicted observables end with '_th'
+/// - check if the 'observables' and 'theory' lists are correctly ordered
 ///
 bool PDF_Abs::checkConsistency()
 {
@@ -534,9 +568,9 @@ bool PDF_Abs::checkConsistency()
 		TString pObsName = observables->at(i)->GetName();
 		pObsName.ReplaceAll(uniqueID,"");
 		if ( pObsName != base+"_obs"){
-			cout << "PDF_Abs::checkConsistency() : " << name << " : " << pTh->GetName() << " doesn't match its observable.\n"
-														"                              Expected '" << base+"_obs" << "'. Found '" << pObsName << "'.\n"
-																						 "                              Check ordering of the 'theory' and 'observables' lists!" << endl;
+			cout << "PDF_Abs::checkConsistency() : " << name << " : " << pTh->GetName() << " doesn't match its observable." << endl;
+			cout << "                              Expected '" << base+"_obs" << "'. Found '" << pObsName << "'." << endl;
+			cout << "                              Check ordering of the 'theory' and 'observables' lists!" << endl;
 			allOk = false;
 		}
 	}

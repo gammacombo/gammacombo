@@ -4,7 +4,7 @@
  * Date: November 2013
  *
  * DEBUG mode produces a lot of output, do not use with many toys!
- * 
+ *
  * ToDo:
  *      - come up with smarter way to fill probValue histo in readScan1dTrees()
  */
@@ -30,7 +30,7 @@ MethodGenericPluginScan::MethodGenericPluginScan(PDF_Generic_Abs* PDF, OptParser
   scanVar1            = arg->var[0];
   if ( arg->var.size()>1 ) scanVar2 = arg->var[1];
   verbose             = arg->verbose;
-  drawSolution        = arg->plotsolutions;
+  drawSolution        = 1; //\todo this property now needs to be set through setDrawSolution(), as --ps is now a vector
   nToys               = arg->ntoys;
   nPoints1d           = arg->npoints1d;
   nPoints2dx          = arg->npoints2dx;
@@ -57,7 +57,7 @@ MethodGenericPluginScan::MethodGenericPluginScan(PDF_Generic_Abs* PDF, OptParser
   doProbScanOnly      = false;
   externalProfileLH   = false;
   dataFreeFitResult   = NULL;
-  inputFiles.clear();         
+  inputFiles.clear();
   if(provideFitResult){
     chi2minGlobal      = 2*result->minNll();
     std::cout << "=============== Global Minimum (2*-Log(Likelihood)) set to: 2*" << result->minNll() << " = " << chi2minGlobal << endl;
@@ -79,12 +79,12 @@ float MethodGenericPluginScan::getParValAtScanpoint(float point, TString parName
     TLeaf* l          = b->GetLeaf("scanpoint");
     float treePoint   = l->GetValue();
     float diff = (point != 0) ? fabs((treePoint-point)/point) : fabs((treePoint-point)/1e-10);
-    
+
     if(diff < 1e-5){
       TLeaf* var      = this->profileLHPoints->GetLeaf(parName);
       if(!var){
         cout << "MethodGenericPluginScan::getParValAtScanpoint() : ERROR : variable (" << parName << ") found!" << endl;
-        return -1e12; 
+        return -1e12;
       }
       return var->GetValue();
       }
@@ -118,12 +118,12 @@ void MethodGenericPluginScan::initScan(){
   float min1 = par1->getMin();
   float max1 = par1->getMax();
   hCL = new TH1F("hCL"+getUniqueRootName(), "hCL"+pdfName, nPoints1d, min1, max1);
-  if ( hChi2min ) delete hChi2min; 
+  if ( hChi2min ) delete hChi2min;
   hChi2min = new TH1F("hChi2min"+getUniqueRootName(), "hChi2min"+pdfName, nPoints1d, min1, max1);
-  
+
   // fill the chi2 histogram with very unlikely values such
   // that inside scan1d() the if clauses work correctly
-  for ( int i=1; i<=nPoints1d; i++ ) hChi2min->SetBinContent(i,1e6);  
+  for ( int i=1; i<=nPoints1d; i++ ) hChi2min->SetBinContent(i,1e6);
 
   if ( scanVar2!="" )
   {
@@ -141,7 +141,7 @@ void MethodGenericPluginScan::initScan(){
     for ( int i=1; i<=nPoints2dx; i++ )
       for ( int j=1; j<=nPoints2dy; j++ ) hChi2min2d->SetBinContent(i,j,1e6);
   }
-  
+
   // Set up storage for the fit results.
   // Clear before so we can call initScan() multiple times.
   // Note that allResults still needs to hold all results, so don't delete the RooFitResults.
@@ -149,7 +149,7 @@ void MethodGenericPluginScan::initScan(){
   // 1d:
   curveResults.clear();
   for ( int i=0; i<nPoints1d; i++ ) curveResults.push_back(0);
-  
+
   // 2d:
   curveResults2d.clear();
   for ( int i=0; i<nPoints2dx; i++ )
@@ -161,13 +161,13 @@ void MethodGenericPluginScan::initScan(){
   if(arg->debug){
     std::cout << "DEBUG in MethodGenericPluginScan::initScan() - Global Minimum externally provided: " << std::endl;
     std::cout << "DEBUG in MethodGenericPluginScan::initScan() - Minimum: " << getChi2minGlobal() << std::endl << std::endl;
-  }  
+  }
   // turn off some messages
   RooMsgService::instance().setStreamStatus(0,kFALSE);
   RooMsgService::instance().setStreamStatus(1,kFALSE);
   if(arg->debug){
     std::cout << "DEBUG in MethodGenericPluginScan::initScan() - Scan initialized successfully!\n" << std::endl;
-  }     
+  }
 }
 
 ///
@@ -183,14 +183,14 @@ void MethodGenericPluginScan::loadParameterLimits(){
 }
 
 ///
-/// If an external profile likelihood is given the 
+/// If an external profile likelihood is given the
 /// parameter evolution point do have to get loaded
 ///
 /// Method looks up the external tree index or compares scanpoint values
 ///
-/// \param point    value of the current scanpoint 
+/// \param point    value of the current scanpoint
 ///
-/// \param index    load Entry of the external TTree (if the entry does not match 
+/// \param index    load Entry of the external TTree (if the entry does not match
 ///                 scanpoint, Warning will be printed)
 ///
 void MethodGenericPluginScan::loadPLHPoint(float point, int index){
@@ -210,7 +210,7 @@ void MethodGenericPluginScan::loadPLHPoint(float point, int index){
       }
     }
     if(ind==-2){
-      cout << "MethodGenericPluginScan::MethodGenericPluginScan() : ERROR : no scanpoint (" << point << ") found!" << endl; 
+      cout << "MethodGenericPluginScan::MethodGenericPluginScan() : ERROR : no scanpoint (" << point << ") found!" << endl;
     }
     else loadPLHPoint(ind);
   }
@@ -247,7 +247,7 @@ void MethodGenericPluginScan::print(){
   cout << "\t --- " << "Global minimum Chi2: \t\t" << chi2minGlobal << endl;
   cout << "\t --- " << "nrun: \t\t\t\t" << arg->nrun << endl;
   cout << "---------------------------------" << endl;
-  cout << "\t --- Scan Var " << scanVar1 << " from " << getScanVar1()->getMin("scan") 
+  cout << "\t --- Scan Var " << scanVar1 << " from " << getScanVar1()->getMin("scan")
        << " to " << getScanVar1()->getMax("scan") << endl;
   cout << "---------------------------------" << endl;
 }
@@ -261,7 +261,7 @@ void MethodGenericPluginScan::print(){
 ///
 /// \param runMin   defines lowest run number of toy jobs to read in
 ///
-/// \param runMax   defines highest run number of toy jobs to read in 
+/// \param runMax   defines highest run number of toy jobs to read in
 ///
 TChain* MethodGenericPluginScan::readFiles(int runMin, int runMax, int &nFilesRead, int &nFilesMissing, TString fileNameBaseIn){
   TChain *c = new TChain("plugin");
@@ -271,7 +271,7 @@ TChain* MethodGenericPluginScan::readFiles(int runMin, int runMax, int &nFilesRe
 
   TString dirname = "root/scan1dGenericPlugin_"+name+"_"+scanVar1;
   TString fileNameBase = (fileNameBaseIn.EqualTo("default")) ? dirname+"/scan1dGenericPlugin_"+name+"_"+scanVar1+"_run" : fileNameBaseIn;
-  
+
   if(!explicitInputFile){
     for (int i=runMin; i<=runMax; i++){
       TString file = Form(fileNameBase+"%i.root", i);
@@ -296,8 +296,8 @@ TChain* MethodGenericPluginScan::readFiles(int runMin, int runMax, int &nFilesRe
         _nFilesRead += 1;
       }
     }
-    cout << "MethodGenericPluginScan::readScan1dTrees() : read files: " << _nFilesRead 
-         << ", missing files: " << _nFilesMissing 
+    cout << "MethodGenericPluginScan::readScan1dTrees() : read files: " << _nFilesRead
+         << ", missing files: " << _nFilesMissing
          << "                                                               "
          << "                    " << endl; // many spaces to overwrite the above \r
     cout << "MethodGenericPluginScan::readScan1dTrees() : " << fileNameBase+"*.root" << endl;
@@ -316,8 +316,8 @@ TChain* MethodGenericPluginScan::readFiles(int runMin, int runMax, int &nFilesRe
       c->Add(file);
       _nFilesRead += 1;
     }
-    cout << "MethodGenericPluginScan::readScan1dTrees() : read files: " << _nFilesRead << endl  
-         << ", missing files: " << _nFilesMissing 
+    cout << "MethodGenericPluginScan::readScan1dTrees() : read files: " << _nFilesRead << endl
+         << ", missing files: " << _nFilesMissing
          << "                                                               "
          << "                    " << endl; // many spaces to overwrite the above \r
   }
@@ -331,7 +331,7 @@ void MethodGenericPluginScan::readScan1dTrees(int runMin, int runMax, TString fi
   TChain* c = this->readFiles(runMin, runMax, nFilesRead, nFilesMissing, fileNameBaseIn);
   ToyTree t(this->pdf, c);
   t.open();
-  
+
   float halfBinWidth = (t.getScanpointMax()-t.getScanpointMin())/((float)t.getScanpointN())/2;//-1.)/2;
   /// \todo replace this such that there's always one bin per scan point, but still the range is the scan range.
   /// \todo Also, if we use the min/max from the tree, we have the problem that they are not exactly
@@ -378,7 +378,7 @@ void MethodGenericPluginScan::readScan1dTrees(int runMin, int runMax, TString fi
   Long64_t n0betterPDF  = 0;
   Long64_t n0allPDF     = 0;
 
-  
+
   float printFreq = nentries>101 ? 100 : nentries;    ///< for the status bar
   t.activateCoreBranchesOnly();                       ///< speeds up the event loop
   t.activateBranch("BR_{Bd}_free");
@@ -386,11 +386,11 @@ void MethodGenericPluginScan::readScan1dTrees(int runMin, int runMax, TString fi
   {
     // status bar
     if (((int)i % (int)(nentries/printFreq)) == 0)
-      cout << "MethodGenericPluginScan::readScan1dTrees() : reading toys " 
+      cout << "MethodGenericPluginScan::readScan1dTrees() : reading toys "
            << Form("%.0f",(float)i/(float)nentries*100.) << "%   \r" << flush;
     // load entry
     t.GetEntry(i);
-    
+
     bool valid    = true;
     bool validPDF = true;
 
@@ -417,7 +417,7 @@ void MethodGenericPluginScan::readScan1dTrees(int runMin, int runMax, TString fi
       validPDF = false;
       if(t.scanpoint==0) n0failedPDF++;
     }
-    
+
     // Check if toys are in physical region.
     // Don't enforce t.chi2min-t.chi2minGlobal>0, else it can be hard because due
     // to little fluctuaions the best fit point can be missing from the plugin plot...
@@ -453,7 +453,7 @@ void MethodGenericPluginScan::readScan1dTrees(int runMin, int runMax, TString fi
     if ( inPhysicalRegion && t.chi2minGlobalToy > this->chi2minGlobal ){ //t.chi2minGlobal ){
       h_gof->Fill(t.scanpoint);
     }
-    
+
     // all toys
     if ( inPhysicalRegion ){
       // not efficient! TMath::Prob evaluated each toy, only needed once.
@@ -489,7 +489,7 @@ void MethodGenericPluginScan::readScan1dTrees(int runMin, int runMax, TString fi
     cout << "\nMethodGenericPluginScan::readScan1dTrees() : WARNING : Read toys that differ in global chi2min (wrong run) : "
           << (double)nwrongrun/(double)(nentries-nfailed)*100. << "%.\n" << endl;
   }
-  
+
   for (int i=1; i<=h_better->GetNbinsX(); i++){
     float nbetter = h_better->GetBinContent(i);
     float nall = h_all->GetBinContent(i);
@@ -510,7 +510,7 @@ void MethodGenericPluginScan::readScan1dTrees(int runMin, int runMax, TString fi
     // float p = (nbetter-nbackground)/(nall-nbackground);
     // hCL->SetBinContent(i, p);
     // hCL->SetBinError(i, sqrt(p * (1.-p)/(nall-nbackground)));
-    
+
     // don't subtract background
     cout << "====== number of toys for pValue calculation: " << nbetter << endl;
     float p = nbetter/nall;
@@ -523,17 +523,17 @@ void MethodGenericPluginScan::readScan1dTrees(int runMin, int runMax, TString fi
       cout << "Number of all toys: " << ntot << endl;
       cout << "Number of good toys: " << nall << " NLL val: " << nall_pdf <<  endl;
 
-      cout  << "Number of failed toys: " << n0failed << " fraction relative to all toys: " 
+      cout  << "Number of failed toys: " << n0failed << " fraction relative to all toys: "
             << (float)n0failed/(float)h_tot->GetBinContent(i) * 100 << " %." << endl;
-     cout  << "Number of failed toys (NLL val): " << n0failedPDF 
-           << " fraction relative to all toys (NLL val): " 
+     cout  << "Number of failed toys (NLL val): " << n0failedPDF
+           << " fraction relative to all toys (NLL val): "
            << (float)n0failedPDF/(float)h_tot->GetBinContent(i) * 100 << " %." << endl;
 
-      cout  << "Number of bkg toys: " << nbackground << " fraction relative to good toys: " 
+      cout  << "Number of bkg toys: " << nbackground << " fraction relative to good toys: "
             << (float)nbackground/(float)nall * 100 << " %." <<  endl;
-     cout  << "Number of bkg toys (NLL val): " << nbackgroundPDF 
+     cout  << "Number of bkg toys (NLL val): " << nbackgroundPDF
            << " fraction relative to good toys: " << (float)nbackgroundPDF/(float)nall_pdf * 100 << " %." <<  endl;
-      
+
       cout << std::scientific << std::resetiosflags(std::ios::fixed) << std::setprecision(3);
       cout << std::setw(72) << std::setfill('=') << "" <<  endl;
       cout << std::right << std::setw(45) << std::setfill(' ') << " pVal at BF_Bd=0:   " << p << " \\pm " << sqrt(p * (1.-p)/nall) << endl;
@@ -542,14 +542,14 @@ void MethodGenericPluginScan::readScan1dTrees(int runMin, int runMax, TString fi
       cout << std::resetiosflags(std::ios::right);
     }
   }
-  TCanvas* cans = new TCanvas("cans","cans",1024,786);
+  TCanvas* cans = newNoWarnTCanvas("cans","cans",1024,786);
   cans->cd();
   h_fracGoodToys->SetXTitle("BR(B_{d})");
   h_fracGoodToys->SetYTitle("fraction of good toys");
   h_fracGoodToys->Draw();
-    
+
   if(arg->debug || drawPlots){
-    TCanvas* can = new TCanvas("can","can",1024,786);
+    TCanvas* can = newNoWarnTCanvas("can","can",1024,786);
     can->cd();
     gStyle->SetOptTitle(0);
     //gStyle->SetOptStat(0);
@@ -562,7 +562,7 @@ void MethodGenericPluginScan::readScan1dTrees(int runMin, int runMax, TString fi
     h_fracGoodToys->SetXTitle("BR(B_{d})");
     h_fracGoodToys->SetYTitle("fraction of good toys");
     h_fracGoodToys->Draw();
-    TCanvas *canvas = new TCanvas("canvas","canvas",1200,1000);
+    TCanvas *canvas = newNoWarnTCanvas("canvas","canvas",1200,1000);
     canvas->Divide(2,2);
     canvas->cd(1);
     h_all->SetXTitle("h_all");
@@ -580,10 +580,10 @@ void MethodGenericPluginScan::readScan1dTrees(int runMin, int runMax, TString fi
     h_background->Draw();
   }
 
-  TCanvas* can1 = new TCanvas("can1","can1",1024,786);
+  TCanvas* can1 = newNoWarnTCanvas("can1","can1",1024,786);
   can1->cd();
   h_pVals->Draw();
-  TCanvas* can11 = new TCanvas("can11","can11",1024,786);
+  TCanvas* can11 = newNoWarnTCanvas("can11","can11",1024,786);
   can11->cd();
   h_background->Draw();
 
@@ -605,9 +605,9 @@ void MethodGenericPluginScan::readScan1dTrees(int runMin, int runMax, TString fi
 ///
 int MethodGenericPluginScan::scan1d(int nRun)
 {
-  // Necessary for parallelization 
+  // Necessary for parallelization
   RooRandom::randomGenerator()->SetSeed(0);
-  // Set limit to all parameters. 
+  // Set limit to all parameters.
   this->loadParameterLimits(); /// Default is "free", if not changed by cmd-line parameter
   if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - limits set" << endl;
 
@@ -618,7 +618,7 @@ int MethodGenericPluginScan::scan1d(int nRun)
 
   double freeDataFitValue = par->getVal();
 
-  // Define outputfile   
+  // Define outputfile
   TString dirname = "root/scan1dGenericPlugin_"+name+"_"+scanVar1;
   system("mkdir -p "+dirname);
   TString fName;
@@ -629,7 +629,7 @@ int MethodGenericPluginScan::scan1d(int nRun)
     fName = Form(dirname+"/scan1dGenericPlugin_"+name+"_"+scanVar1+"_run%i.root", nRun);
   }
   TFile *f2       = new TFile(fName, "RECREATE");
-  
+
   // Define a TH1D for prob values of the scan
   probPValues = new TH1F("probPValues","p Values of a prob Scan", nPoints1d, min, max);
 
@@ -641,7 +641,7 @@ int MethodGenericPluginScan::scan1d(int nRun)
   t.init();
   if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - ToyTree init finished" << endl;
   t.nrun = nRun;
-  
+
   if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - ToyTree initialized" << endl;
 
   // Save parameter values that were active at function
@@ -649,7 +649,7 @@ int MethodGenericPluginScan::scan1d(int nRun)
   // to the outside.
   RooDataSet* parsFunctionCall = new RooDataSet("parsFunctionCall", "parsFunctionCall", *w->set(parsName));
   parsFunctionCall->add(*w->set(parsName));
-      
+
   // for the progress bar: if more than 100 steps, show 50 status messages.
   int allSteps = nPoints1d*nToys;
   float printFreq = allSteps>51 ? 50 : allSteps;
@@ -663,22 +663,22 @@ int MethodGenericPluginScan::scan1d(int nRun)
   for ( int i=0; i<nPoints1d; i++ )
   {
     // scanpoint is calculated using min, max, which are the hCL x-Axis limits set in this->initScan()
-    // this uses the "scan" range, as expected 
+    // this uses the "scan" range, as expected
     // don't add half the bin size. try to solve this within plotting method
 
-    float scanpoint; 
+    float scanpoint;
     if(nPoints1d==1){
-      scanpoint = min; 
+      scanpoint = min;
     }
     else scanpoint = (max - min == 0 ) ? min : (min + (max-min)*(double)i/((double)nPoints1d-1));// + hCL->GetBinWidth(1)/2.);
-    
+
     t.scanpoint = scanpoint;
-    
+
     if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - scanpoint calculated in toy " << i+1 << " as: " << scanpoint << endl;
 
     // don't scan in unphysical region
     // by default this means checking against "free" range
-    if ( scanpoint < par->getMin() || scanpoint > par->getMax() ){ 
+    if ( scanpoint < par->getMin() || scanpoint > par->getMax() ){
       cout << "not obvious: " << scanpoint << " < " << par->getMin() << " and " << scanpoint << " > " << par->getMax() << endl;
       continue;
     }
@@ -687,7 +687,7 @@ int MethodGenericPluginScan::scan1d(int nRun)
 
     if(!externalProfileLH || doProbScanOnly){
       // Do initial fit
-      // here the scanvar has to be fixed -> this is done once per scanpoint 
+      // here the scanvar has to be fixed -> this is done once per scanpoint
       // and provides the scanner with the DeltaChi2 for the data as reference
       // additionally the nuisances are set to the resulting fit values
       if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - DO DATA SCAN FIT" << endl;
@@ -697,14 +697,14 @@ int MethodGenericPluginScan::scan1d(int nRun)
 
       RooFitResult *result = this->pdf->fit(kFALSE); // false -> fit on data
       assert(result);
-      if(arg->debug){ 
+      if(arg->debug){
         cout << "DEBUG in MethodGenericPluginScan::scan1d() - minNll data scan fix " << 2*result->minNll() << endl;
         cout << "DEBUG in MethodGenericPluginScan::scan1d() - Data Scan fit result" << endl;
         result->Print("v");
       }
       if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - RooSlimFitResult saved, fit converged in toy " << i+1 << endl;
       t.statusScanData = result->status();
-      
+
       // set chi2 of fixed fit: scan fit on data
       t.chi2min           = 2*result->minNll();
       t.covQualScanData   = result->covQual();
@@ -720,16 +720,16 @@ int MethodGenericPluginScan::scan1d(int nRun)
       t.covQualScanData = this->getParValAtScanpoint(scanpoint,"covQualScanData");
     }
 
-      // cout << "CHECK PAR EVOL LOADING: ####" << endl 
+      // cout << "CHECK PAR EVOL LOADING: ####" << endl
       // << "######## -\t scanpoint: " << t.scanpoint << " - scanpoint " << scanpoint << endl
-      // << "######## -\t statusScanData: " << t.statusScanData << endl 
-      // << "######## -\t chi2min: " << t.chi2min << endl 
+      // << "######## -\t statusScanData: " << t.statusScanData << endl
+      // << "######## -\t chi2min: " << t.chi2min << endl
       // << "######## -\t Nlam_br_th_start: " << this->pdf->getWorkspace()->var("Nlam_br_th")->getVal() << endl;
 
     // Set nuisances. This is the point in parameter space where
     // the toys need to be generated.
     // this->loadParevolPoscanpoint; // Do not use it here, as this use to provided by the data fit with fixed scanparameter
-    // save nuisances for start parameters 
+    // save nuisances for start parameters
     // after the initial data fit using the fixed scanvar
     RooArgSet allVars = w->allVars();
     TString plhName = Form("profileLHPoint_%i",i);
@@ -737,9 +737,9 @@ int MethodGenericPluginScan::scan1d(int nRun)
 
     RooDataSet* parsGlobalMinScanPoint = new RooDataSet("parsGlobalMinScanPoint", "parsGlobalMinScanPoint", *w->set(parsName));
     parsGlobalMinScanPoint->add(*w->set(parsName));
-    
+
     if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - stored parameter values in toy " << i+1 << endl;
-      
+
 
     // get the chi2 of the data
     if(this->chi2minGlobalFound){
@@ -750,7 +750,7 @@ int MethodGenericPluginScan::scan1d(int nRun)
       cout << "FATAL in MethodGenericPluginScan::scan1d() - Cannot continue with scan" << endl;
       exit(-1);
     }
-    
+
     t.storeParsPll();
 
     // Importance sampling ** interesting idea think about it
@@ -759,9 +759,9 @@ int MethodGenericPluginScan::scan1d(int nRun)
     float plhPvalue = TMath::Prob(t.chi2min-t.chi2minGlobal,1);
     probPValues->SetBinContent(probPValues->FindBin(scanpoint), plhPvalue);
     t.genericProbPValue = plhPvalue;
-    //if(arg->debug && (i<=10 || fmod(i,printFreq)==0) ) 
+    //if(arg->debug && (i<=10 || fmod(i,printFreq)==0) )
     cout << "DEBUG in MethodGenericPluginScan::scan1d() - pValue " << plhPvalue << " filled in bin " << scanpoint << " in toy " << i+1 << endl;
-    
+
     // Draw all toy datasets in advance. This is much faster. ** Check this statement for Generic usecase
 
     if(doProbScanOnly) nToys = 0;
@@ -778,14 +778,14 @@ int MethodGenericPluginScan::scan1d(int nRun)
       cout << "\n>>" << endl;
       cout << ">> new toy\n" << endl;
       cout << "\n>>" << endl;
-      
+
       this->pdf->setMinNllFree(0);
       this->pdf->setMinNllScan(0);
       //
       // 1. Generate toys
       //    (or select the right one)
       //
-      // set parameters to generate at to the values from the fit to data fixing the scanvar 
+      // set parameters to generate at to the values from the fit to data fixing the scanvar
       //Utils::setParameters(this->pdf->getWorkspace(), parsName, parsGlobalMinScanPoint->get(0));
       w->loadSnapshot(plhName);
       //par->setVal(scanpoint);
@@ -823,10 +823,10 @@ int MethodGenericPluginScan::scan1d(int nRun)
 
       if (std::isinf(pdf->getMinNllScan()) || std::isnan(pdf->getMinNllScan())) {
         cout << "----> nan/inf flag detected " << endl;
-        cout << "----> fit status: " << pdf->getFitStatus() << endl; 
+        cout << "----> fit status: " << pdf->getFitStatus() << endl;
         pdf->setFitStatus(-99);
-      }      
-  
+      }
+
       if (pdf->getFitStatus()!=0) {
           cout  << "----> problem in current fit: going to refit with strategy 1, summary: " << endl
           << "----> NLL value: " << std::setprecision(9) << pdf->minNll << endl
@@ -844,14 +844,14 @@ int MethodGenericPluginScan::scan1d(int nRun)
               cout << "----> emd: " << r->edm() << endl;
               break;
 
-            case -99: 
+            case -99:
               cout << "----> fit has NLL value with flag NaN or INF" << endl;
               cout << "----> NLL value: " << pdf->minNll << endl;
               cout << "----> emd: " << r->edm() << endl;
               break;
-            
+
             default:
-              cout << "unknown" << endl; 
+              cout << "unknown" << endl;
               break;
           }
           pdf->setFitStrategy(1);
@@ -861,7 +861,7 @@ int MethodGenericPluginScan::scan1d(int nRun)
           assert(r);
           if (std::isinf(pdf->getMinNllScan()) || std::isnan(pdf->getMinNllScan())) {
             cout << "----> nan/inf flag detected " << endl;
-            cout << "----> fit status: " << pdf->getFitStatus() << endl; 
+            cout << "----> fit status: " << pdf->getFitStatus() << endl;
             pdf->setFitStatus(-99);
           }
           if (pdf->getFitStatus()!=0) {
@@ -874,21 +874,21 @@ int MethodGenericPluginScan::scan1d(int nRun)
                 cout << "----> NLL value: " << pdf->minNll << endl;
                 cout << "----> emd: " << r->edm() << endl;
                 break;
-  
+
               case -1:
                 cout << "----> fit results in status -1" << endl;
                 cout << "----> NLL value: " << pdf->minNll << endl;
                 cout << "----> emd: " << r->edm() << endl;
                 break;
-  
-              case -99: 
+
+              case -99:
                 cout << "----> fit has NLL value with flag NaN or INF" << endl;
                 cout << "----> NLL value: " << pdf->minNll << endl;
                 cout << "----> emd: " << r->edm() << endl;
                 break;
-              
+
               default:
-                cout << "unknown" << endl; 
+                cout << "unknown" << endl;
                 break;
             }
             pdf->setFitStrategy(2);
@@ -896,19 +896,19 @@ int MethodGenericPluginScan::scan1d(int nRun)
             r = pdf->fit(kTRUE);
             assert(r);
           }
-      }   
-  
+      }
+
       if (std::isinf(pdf->minNll) || std::isnan(pdf->minNll)) {
         cout  << "++++ > second fit gives inf/nan: "  << endl
           << "++++ > minNll: " << pdf->minNll << endl
           << "++++ > status: " << pdf->getFitStatus() << endl;
         pdf->setFitStatus(-99);
-      }        
+      }
       pdf->setMinNllScan(pdf->minNll);
 
       /*
       if(pdf->getFitStatus() != 0 || r->minNll() < -1e27){
-        cout  << "Compare pdf fit status to fit result status: " 
+        cout  << "Compare pdf fit status to fit result status: "
               << pdf->getFitStatus() << " vs fit result: " << r->status() << endl;
         cout << "###### problem in scan fit: didn't converge properly!" << endl;
         this->printDebug(*r);
@@ -917,15 +917,15 @@ int MethodGenericPluginScan::scan1d(int nRun)
         r     = this->pdf->fit(kTRUE);
         cout << std::setw(30) << std::setfill('-') << ">> refit with strat 1:" << std::setfill(' ') << endl;
         this->printDebug(*r);
-        
+
         if(r->status()==-1){
-          delete r; 
+          delete r;
           cout << "------ last try with setFitStrategy(2)" << endl;
           this->pdf->setFitStrategy(2);
           r     = this->pdf->fit(kTRUE);
           this->printDebug(*r);
         }
-        
+
       }
       int scanStrategy = this->pdf->getFitStrategy();
       */
@@ -938,23 +938,23 @@ int MethodGenericPluginScan::scan1d(int nRun)
       t.storeParsScan();
 
       pdf->deleteNLL();
-      
+
       RooDataSet* parsAfterScanFit = new RooDataSet("parsAfterScanFit", "parsAfterScanFit", *w->set(parsName));
       parsAfterScanFit->add(*w->set(parsName));
-      
+
       cout  << std::setprecision(9);
       cout  << "===== > compare scan fit result with pdf parameters: " << endl;
-      cout  << "===== > minNLL for fitResult: " << t.chi2minToy << endl 
+      cout  << "===== > minNLL for fitResult: " << t.chi2minToy << endl
             << "===== > minNLL for pdfResult: " << t.chi2minToyPDF << endl
             << "===== > status for pdfResult: " << pdf->getFitStatus() << endl
             << "===== > status for fitResult: " << r->status() << endl
             << "===== > BR_{Bs} value from workspace: " << w->var("BR_{Bs}")->getVal() << endl
             << "===== > BR_{Bs} value from fitResult: " << static_cast<RooRealVar*>(r->floatParsFinal().find("BR_{Bs}"))->getVal() << endl;
-      
+
       //
       // 2. free fit
       //
-      //if(arg->debug) 
+      //if(arg->debug)
       cout << "DEBUG in MethodGenericPluginScan::scan1d() - perform free toy fit" << endl;
       // Use parameters from the scanfit to data
       if(!useConstrPDFforRandomization){
@@ -966,7 +966,7 @@ int MethodGenericPluginScan::scan1d(int nRun)
         if(this->pdf->globVals) globalVars = *this->pdf->globVals->get(0);
       }
 
-      
+
       par->setConstant(false);
       if(par->getVal() < 1e-13){
         par->setVal(2.0e-11);
@@ -980,17 +980,17 @@ int MethodGenericPluginScan::scan1d(int nRun)
 
       if (std::isinf(pdf->getMinNllFree()) || std::isnan(pdf->getMinNllFree())) {
         cout << "----> nan/inf flag detected " << endl;
-        cout << "----> fit status: " << pdf->getFitStatus() << endl; 
+        cout << "----> fit status: " << pdf->getFitStatus() << endl;
         pdf->setFitStatus(-99);
       }
 
       bool negTestStat = t.chi2minToy-t.chi2minGlobalToy<0;
-      
+
       if(pdf->getMinNllScan() != 0 && (pdf->getMinNllFree() > pdf->getMinNllScan())){
           // create unique failureflag
           switch(pdf->getFitStatus())
           {
-            case 0: 
+            case 0:
               pdf->setFitStatus(-13);
               break;
             case 1:
@@ -1013,7 +1013,7 @@ int MethodGenericPluginScan::scan1d(int nRun)
           cout  << "----> problem in current fit: going to refit with strategy "<< pdf->getFitStrategy() << " , summary: " << endl
                 << "----> NLL value: " << std::setprecision(9) << pdf->getMinNllFree() << endl
                 << "----> fit status: " << pdf->getFitStatus() << endl
-                << "----> dChi2: " << (t.chi2minToy-t.chi2minGlobalToy) << endl 
+                << "----> dChi2: " << (t.chi2minToy-t.chi2minGlobalToy) << endl
                 << "----> dChi2PDF: " << 2*(pdf->getMinNllScan()-pdf->getMinNllFree()) << endl;
 
           switch(pdf->getFitStatus()){
@@ -1029,7 +1029,7 @@ int MethodGenericPluginScan::scan1d(int nRun)
               cout << "----> emd: " << r1->edm() << endl;
               break;
 
-            case -99: 
+            case -99:
               cout << "----> fit has NLL value with flag NaN or INF" << endl;
               cout << "----> NLL value: " << pdf->getMinNllFree() << endl;
               cout << "----> emd: " << r1->edm() << endl;
@@ -1037,21 +1037,21 @@ int MethodGenericPluginScan::scan1d(int nRun)
             case -66:
               cout  << "----> fit has nan/inf NLL value and a negative test statistic" << endl
                     << "----> dChi2: " << 2*(pdf->getMinNllScan() - pdf->getMinNllFree()) << endl
-                    << "----> scan fit min nll:" << pdf->getMinNllScan() << endl 
+                    << "----> scan fit min nll:" << pdf->getMinNllScan() << endl
                     << "----> free fit min nll:" << pdf->getMinNllFree() << endl;
               cout << "----> emd: " << r1->edm() << endl;
               break;
             case -13:
               cout  << "----> free fit has status 0 but creates a negative test statistic" << endl
                     << "----> dChi2: " << 2*(pdf->getMinNllScan() - pdf->getMinNllFree()) << endl
-                    << "----> scan fit min nll:" << pdf->getMinNllScan() << endl 
+                    << "----> scan fit min nll:" << pdf->getMinNllScan() << endl
                     << "----> free fit min nll:" << pdf->getMinNllFree() << endl;
               cout  << "----> emd: " << r1->edm() << endl;
               break;
             case -12:
               cout  << "----> free fit has status 1 and creates a negative test statistic" << endl
                     << "----> dChi2: " << 2*(pdf->getMinNllScan() - pdf->getMinNllFree()) << endl
-                    << "----> scan fit min nll:" << pdf->getMinNllScan() << endl 
+                    << "----> scan fit min nll:" << pdf->getMinNllScan() << endl
                     << "----> free fit min nll:" << pdf->getMinNllFree() << endl;
 
               cout  << "----> emd: " << r1->edm() << endl;
@@ -1059,13 +1059,13 @@ int MethodGenericPluginScan::scan1d(int nRun)
             case -33:
               cout  << "----> free fit has status -1 and creates a negative test statistic" << endl
                     << "----> dChi2: " << 2*(pdf->getMinNllScan() - pdf->getMinNllFree()) << endl
-                    << "----> scan fit min nll:" << pdf->getMinNllScan() << endl 
+                    << "----> scan fit min nll:" << pdf->getMinNllScan() << endl
                     << "----> free fit min nll:" << pdf->getMinNllFree() << endl;
               cout  << "----> emd: " << r1->edm() << endl;
               cout  << std::setprecision(6);
               break;
             default:
-              cout << "-----> unknown / fitResult neg test stat, but status 0" << endl; 
+              cout << "-----> unknown / fitResult neg test stat, but status 0" << endl;
               cout << "----> dChi2: " << 2*(r->minNll() - r1->minNll()) << endl;
               cout << "----> dChi2PDF: " << 2*(pdf->getMinNllScan()-pdf->getMinNllFree()) << endl;
             break;
@@ -1087,16 +1087,16 @@ int MethodGenericPluginScan::scan1d(int nRun)
             t.chi2minGlobalToy = 2*r1->minNll();
             if (std::isinf(pdf->getMinNllFree()) || std::isnan(pdf->getMinNllFree())) {
               cout << "----> nan/inf flag detected " << endl;
-              cout << "----> fit status: " << pdf->getFitStatus() << endl; 
+              cout << "----> fit status: " << pdf->getFitStatus() << endl;
               pdf->setFitStatus(-99);
-            } 
+            }
             negTestStat = t.chi2minToy-t.chi2minGlobalToy<0;
 
             if(pdf->getMinNllScan() != 0 && (pdf->getMinNllFree() > pdf->getMinNllScan())){
               // create unique failureflag
               switch(pdf->getFitStatus())
               {
-                case 0: 
+                case 0:
                   pdf->setFitStatus(-13);
                   break;
                 case 1:
@@ -1119,7 +1119,7 @@ int MethodGenericPluginScan::scan1d(int nRun)
               cout  << "----> problem in current fit: going to refit with strategy "<< pdf->getFitStrategy() << " , summary: " << endl
                     << "----> NLL value: " << std::setprecision(9) << pdf->getMinNllFree() << endl
                     << "----> fit status: " << pdf->getFitStatus() << endl
-                    << "----> dChi2: " << (t.chi2minToy-t.chi2minGlobalToy) << endl 
+                    << "----> dChi2: " << (t.chi2minToy-t.chi2minGlobalToy) << endl
                     << "----> dChi2PDF: " << 2*(pdf->getMinNllScan()-pdf->getMinNllFree()) << endl;
               switch(pdf->getFitStatus()){
                 case 1:
@@ -1134,7 +1134,7 @@ int MethodGenericPluginScan::scan1d(int nRun)
                   cout << "----> emd: " << r1->edm() << endl;
                   break;
 
-                case -99: 
+                case -99:
                   cout << "----> fit has NLL value with flag NaN or INF" << endl;
                   cout << "----> NLL value: " << pdf->getMinNllFree() << endl;
                   cout << "----> emd: " << r1->edm() << endl;
@@ -1142,21 +1142,21 @@ int MethodGenericPluginScan::scan1d(int nRun)
                 case -66:
                   cout  << "----> fit has nan/inf NLL value and a negative test statistic" << endl
                         << "----> dChi2: " << 2*(pdf->getMinNllScan() - pdf->getMinNllFree()) << endl
-                        << "----> scan fit min nll:" << pdf->getMinNllScan() << endl 
+                        << "----> scan fit min nll:" << pdf->getMinNllScan() << endl
                         << "----> free fit min nll:" << pdf->getMinNllFree() << endl;
                   cout << "----> emd: " << r1->edm() << endl;
                   break;
                 case -13:
                   cout  << "----> free fit has status 0 but creates a negative test statistic" << endl
                         << "----> dChi2: " << 2*(pdf->getMinNllScan() - pdf->getMinNllFree()) << endl
-                        << "----> scan fit min nll:" << pdf->getMinNllScan() << endl 
+                        << "----> scan fit min nll:" << pdf->getMinNllScan() << endl
                         << "----> free fit min nll:" << pdf->getMinNllFree() << endl;
                   cout  << "----> emd: " << r1->edm() << endl;
                   break;
                 case -12:
                   cout  << "----> free fit has status 1 and creates a negative test statistic" << endl
                         << "----> dChi2: " << 2*(pdf->getMinNllScan() - pdf->getMinNllFree()) << endl
-                        << "----> scan fit min nll:" << pdf->getMinNllScan() << endl 
+                        << "----> scan fit min nll:" << pdf->getMinNllScan() << endl
                         << "----> free fit min nll:" << pdf->getMinNllFree() << endl;
 
                   cout  << "----> emd: " << r1->edm() << endl;
@@ -1164,13 +1164,13 @@ int MethodGenericPluginScan::scan1d(int nRun)
                 case -33:
                   cout  << "----> free fit has status -1 and creates a negative test statistic" << endl
                         << "----> dChi2: " << 2*(pdf->getMinNllScan() - pdf->getMinNllFree()) << endl
-                        << "----> scan fit min nll:" << pdf->getMinNllScan() << endl 
+                        << "----> scan fit min nll:" << pdf->getMinNllScan() << endl
                         << "----> free fit min nll:" << pdf->getMinNllFree() << endl;
                   cout  << "----> emd: " << r1->edm() << endl;
                   cout  << std::setprecision(6);
                   break;
                 default:
-                  cout << "unknown" << endl; 
+                  cout << "unknown" << endl;
                   break;
               }
               bool refit2nd = kFALSE;
@@ -1187,19 +1187,19 @@ int MethodGenericPluginScan::scan1d(int nRun)
                 delete r1;
                 r1  = this->pdf->fit(kTRUE);
                 assert(r1);
-                pdf->setMinNllFree(pdf->minNll); 
+                pdf->setMinNllFree(pdf->minNll);
                 t.chi2minGlobalToy = 2*r1->minNll();
                 if (std::isinf(pdf->getMinNllFree()) || std::isnan(pdf->getMinNllFree())) {
                   cout << "----> nan/inf flag detected " << endl;
-                  cout << "----> fit status: " << pdf->getFitStatus() << endl; 
+                  cout << "----> fit status: " << pdf->getFitStatus() << endl;
                   pdf->setFitStatus(-99);
-                } 
+                }
 
                 if(pdf->getMinNllScan() != 0 && (pdf->getMinNllFree() > pdf->getMinNllScan())){
                   // create unique failureflag
                   switch(pdf->getFitStatus())
                   {
-                    case 0: 
+                    case 0:
                       pdf->setFitStatus(-13);
                       break;
                     case 1:
@@ -1214,28 +1214,28 @@ int MethodGenericPluginScan::scan1d(int nRun)
                     default:
                       pdf->setFitStatus(-100);
                       break;
-          
+
                   }
                 }
               }
             }
           }
-        }   
+        }
 
       if( (t.chi2minToy-t.chi2minGlobalToy) < 0){
         cout << "+++++ > still negative test statistic after whole procedure!! " << endl;
         cout << "+++++ > try to fit with different starting values" << endl;
-        cout << "+++++ > dChi2: " << t.chi2minToy-t.chi2minGlobalToy << endl; 
+        cout << "+++++ > dChi2: " << t.chi2minToy-t.chi2minGlobalToy << endl;
         cout << "+++++ > dChi2PDF: " << 2*(pdf->getMinNllScan()-pdf->getMinNllFree()) << endl;
         Utils::setParameters(this->pdf->getWorkspace(), parsName, parsAfterScanFit->get(0));
         if(par->getVal() < 1e-13) par->setVal(0.67e-12);
-        par->setConstant(false); 
+        par->setConstant(false);
         pdf->deleteNLL();
         RooFitResult* r_tmp = pdf->fit(kTRUE);
         assert(r_tmp);
         if(r_tmp->status()==0 && r_tmp->minNll()<r1->minNll() && r_tmp->minNll()>-1e27){
-          pdf->setMinNllFree(pdf->minNll); 
-          cout << "+++++ > Improvement found in extra fit: Nll before: " << r1->minNll() 
+          pdf->setMinNllFree(pdf->minNll);
+          cout << "+++++ > Improvement found in extra fit: Nll before: " << r1->minNll()
           << " after: " << r_tmp->minNll() << endl;
           delete r1;
           r1 = r_tmp;
@@ -1249,9 +1249,9 @@ int MethodGenericPluginScan::scan1d(int nRun)
         }
         delete parsAfterScanFit;
       };
-      
+
       cout  << "===== > compare free fit result with pdf parameters: " << endl;
-      cout  << "===== > minNLL for fitResult: " << r1->minNll() << endl 
+      cout  << "===== > minNLL for fitResult: " << r1->minNll() << endl
             << "===== > minNLL for pdfResult: " << pdf->getMinNllFree() << endl
             << "===== > status for pdfResult: " << pdf->getFitStatus() << endl
             << "===== > status for fitResult: " << r1->status() << endl
@@ -1271,15 +1271,15 @@ int MethodGenericPluginScan::scan1d(int nRun)
       pdf->deleteNLL();
 
       cout << "#### > Fit summary: " << endl;
-      cout  << "#### > free fit status: " << t.statusFree << " vs pdf: " << t.statusFreePDF << endl 
-            << "#### > scan fit status: " << t.statusScan << " vs pdf: " << t.statusScanPDF<< endl 
-            << "#### > free min nll: " << t.chi2minGlobalToy << " vs pdf: " << t.chi2minGlobalToyPDF << endl 
-            << "#### > scan min nll: " << t.chi2minToy << " vs pdf: " << t.chi2minToyPDF << endl 
+      cout  << "#### > free fit status: " << t.statusFree << " vs pdf: " << t.statusFreePDF << endl
+            << "#### > scan fit status: " << t.statusScan << " vs pdf: " << t.statusScanPDF<< endl
+            << "#### > free min nll: " << t.chi2minGlobalToy << " vs pdf: " << t.chi2minGlobalToyPDF << endl
+            << "#### > scan min nll: " << t.chi2minToy << " vs pdf: " << t.chi2minToyPDF << endl
             << "#### > dChi2 fitresult: " << t.chi2minToy-t.chi2minGlobalToy << endl
             << "#### > dChi2 pdfresult: " << t.chi2minToyPDF-t.chi2minGlobalToyPDF << endl;
-      cout  << std::setprecision(6);      
-    
-      if(t.chi2minToy - t.chi2minGlobalToy > 20 && (t.statusFree==0 && t.statusScan==0) 
+      cout  << std::setprecision(6);
+
+      if(t.chi2minToy - t.chi2minGlobalToy > 20 && (t.statusFree==0 && t.statusScan==0)
           && t.chi2minToy>-1e27 && t.chi2minGlobalToy>-1e27){
         cout << std::setw(30) << std::setfill('-') << ">>> HIGH test stat value!! print fit results with fit strategy: "<< pdf->getFitStrategy() << std::setfill(' ') << endl;
         cout << "SCAN FIT Result" << endl;
@@ -1291,12 +1291,12 @@ int MethodGenericPluginScan::scan1d(int nRun)
 
       if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - ToyTree 2*minNll free fit: " << t.chi2minGlobalToy << endl;
 
-      if(arg->debug && (j<=2 || fmod(i,printFreq)==0)){ 
+      if(arg->debug && (j<=2 || fmod(i,printFreq)==0)){
         cout << "DEBUG in MethodGenericPluginScan::scan1d() - ToyTree 2*minNll scan fit: " << t.chi2minToy << endl;
         cout << "DEBUG in MethodGenericPluginScan::scan1d() - for Toy with scanpoint: " << t.scanpoint << endl;
         //r->Print("v");
       }
-      
+
       //
       // 4. store
       //
@@ -1338,11 +1338,11 @@ void MethodGenericPluginScan::drawDebugPlots(int runMin, int runMax, TString fil
 
   TString cut = "scanpoint == 0 && statusScan == 0 && statusFree == 0 && abs(chi2minToy)<300e3 && abs(chi2minGlobalToy)<300e3";
   TString isphysical = "(chi2minToy-chi2minGlobalToy)>=0";
-  TCanvas* can = new TCanvas("can","DChi2Nominal",1024,786);
-  TCanvas* can1 = new TCanvas("can1","BR_{Bd}",1024,786);
-  TCanvas* can3 = new TCanvas("can3","Chi2distr",1024,786);
+  TCanvas* can = newNoWarnTCanvas("can","DChi2Nominal",1024,786);
+  TCanvas* can1 = newNoWarnTCanvas("can1","BR_{Bd}",1024,786);
+  TCanvas* can3 = newNoWarnTCanvas("can3","Chi2distr",1024,786);
 
-  TCanvas* can2 = new TCanvas("can2","DChi2False",1024,786);
+  TCanvas* can2 = newNoWarnTCanvas("can2","DChi2False",1024,786);
   can->cd();
   chain->Draw("chi2minToy-chi2minGlobalToy", cut + "&&" + isphysical + " && abs(chi2minToy-chi2minGlobalToy)<1e2", "norm");
   can1->cd();
@@ -1363,7 +1363,7 @@ void MethodGenericPluginScan::performBootstrapTest(int nSamples, const TString& 
   TH1F* hist = new TH1F("h","h",800,1e-4,0.008);
   bootstrapPVals.clear();
   int nFilesRead(0), nFilesMissing(0);
-  this->readFiles(arg->jmin[0], arg->jmax[0], 
+  this->readFiles(arg->jmin[0], arg->jmax[0],
                   nFilesRead, nFilesMissing, arg->jobdir);
   ToyTree t(this->pdf, this->chain);
   t.open();
@@ -1371,8 +1371,8 @@ void MethodGenericPluginScan::performBootstrapTest(int nSamples, const TString& 
 
   TString cut = "";
   // Define cuts
-  cut += "scanpoint == 0"; 
-  cut += " && statusScan == 0"; 
+  cut += "scanpoint == 0";
+  cut += " && statusScan == 0";
   cut += " && statusFree == 0";
   cut += " && abs(chi2minToy)<1e27";
   cut += " && abs(chi2minGlobalToy)<1e27";
@@ -1391,19 +1391,19 @@ void MethodGenericPluginScan::performBootstrapTest(int nSamples, const TString& 
   double q_data = 0;
   for(int i = 0; i<t.GetEntries(); i++){
     t.GetEntry(i);
-    if(i==0){ 
+    if(i==0){
       q_data = t.chi2min-t.chi2minGlobal;
       cout << "Test stat for data: " << q_data << endl;
     }
-    if(!(t.statusScan == 0 && t.statusFree == 0 && fabs(t.chi2minToy)<1e27 
+    if(!(t.statusScan == 0 && t.statusFree == 0 && fabs(t.chi2minToy)<1e27
       && fabs(t.chi2minGlobalToy)<1e27 && t.scanpoint == 0))
-    { 
+    {
         totFailed++;
         /*
-        if( (t.statusFree == 0 && t.statusScan ==1) 
-            || (t.statusFree == 1 && t.statusScan ==0) 
+        if( (t.statusFree == 0 && t.statusScan ==1)
+            || (t.statusFree == 1 && t.statusScan ==0)
             || (t.statusFree == 1 && t.statusScan ==1)){
-          cout  << "Check test stat for status>0: dChi2 = " 
+          cout  << "Check test stat for status>0: dChi2 = "
                 << t.chi2minToy-t.chi2minGlobalToy << endl;
           q_Status_gt0.push_back(t.chi2minToy-t.chi2minGlobalToy);
         }
@@ -1416,7 +1416,7 @@ void MethodGenericPluginScan::performBootstrapTest(int nSamples, const TString& 
 
   }
   cout  << "INFO in MethodGenericPluginScan::performBootstrapTest - Tree loop finished" << endl;
-  cout  << "- start BootstrapTest with " << nSamples 
+  cout  << "- start BootstrapTest with " << nSamples
         << " Samples and " << numberOfToys << " Toys each" << endl;
   cout  << " Total number failed: " << totFailed << endl;
 
@@ -1428,7 +1428,7 @@ void MethodGenericPluginScan::performBootstrapTest(int nSamples, const TString& 
       int rndmInt = -1;
       do{
         rndmInt = rndm.Integer(numberOfToys);
-      }while(std::find(failed.begin(), failed.end(), rndmInt)!=failed.end()); 
+      }while(std::find(failed.begin(), failed.end(), rndmInt)!=failed.end());
 
       if ( (q[rndmInt]) > q_data ) nbetter += 1;
     }
@@ -1437,7 +1437,7 @@ void MethodGenericPluginScan::performBootstrapTest(int nSamples, const TString& 
     hist->Fill(p);
     if(i % 100 == 0) cout << i << " Samples from " << nSamples << " done. p Value: " << p << " with " << nbetter << " Toys of " << numberOfToys << " total" << endl;
   }
-  TCanvas* c = new TCanvas("c","c",1024,768);
+  TCanvas* c = newNoWarnTCanvas("c","c",1024,768);
   hist->SetLineColor(kRed+2);
   hist->SetLineWidth(2);
   hist->Fit("gaus");
@@ -1453,13 +1453,13 @@ void MethodGenericPluginScan::performBootstrapTest(int nSamples, const TString& 
 
 void MethodGenericPluginScan::printDebug(const RooFitResult& r){
     cout << std::fixed << std::scientific;
-    cout << std::setw(42) << std::right << std::setfill('-') << " Minimum: "  << std::setprecision(8) << r.minNll() 
+    cout << std::setw(42) << std::right << std::setfill('-') << " Minimum: "  << std::setprecision(8) << r.minNll()
     << " with edm: " << std::setprecision(6) << r.edm() << endl;
-    cout  << std::setw(42) << std::right << std::setfill('-') 
+    cout  << std::setw(42) << std::right << std::setfill('-')
           << " Minimize status: " << r.status() << endl;
-    cout  << std::setw(42) << std::right << std::setfill('-') 
+    cout  << std::setw(42) << std::right << std::setfill('-')
           << " Number of invalid NLL evaluations: " << r.numInvalidNLL() << endl;
-    cout  << std::resetiosflags(std::ios::right) 
-          << std::resetiosflags(std::ios::fixed) 
+    cout  << std::resetiosflags(std::ios::right)
+          << std::resetiosflags(std::ios::fixed)
           << std::resetiosflags(std::ios::scientific);
 };

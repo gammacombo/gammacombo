@@ -50,7 +50,8 @@ class OptParser
 		int		        digits;
 		bool            enforcePhysRange;
 		TString         filenameaddition;
-		vector<vector<FixPar> >	fixParameters;
+		vector<vector<FixPar> >     fixParameters;
+		vector<vector<RangePar> >   physRanges;
 		TString	group;
 		TString	groupPos;
 		int             id;
@@ -90,7 +91,7 @@ class OptParser
 		bool            plotpluginonly;
 		bool            plotpulls;
 		bool            plotprelim;
-		int             plotsolutions;
+		vector<int>     plotsolutions;
 		bool            plotunoff;
 		bool            intprob;
 		float           pluginPlotRangeMin;
@@ -119,7 +120,8 @@ class OptParser
 		int 		convertToIntWithCheck(TString parseMe, TString usage);
 		void		defineOptions();
 		void		parsePosition(TString parseMe, float &x, float &y, TString usage);
-		void		parseRange(TString parseMe, float &min, float &max);
+		bool		parseRange(TString parseMe, float &min, float &max);
+		bool		parseAssignment(TString parseMe, TString &name, TString &value);
 		bool		parseAssignment(TString parseMe, TString &name, float &value);
 		void		parseCombinerString(TString parseMe, int& resultCmbId, vector<int>& resultAddDelPdf);
 		vector<TString> availableOptions;

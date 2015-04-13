@@ -28,7 +28,8 @@ class OneMinusClPlotAbs
 {
 public:
     OneMinusClPlotAbs(OptParser *arg, TString name="c1", TString title="c1");
-    
+	~OneMinusClPlotAbs();
+
     virtual void    addScanner(MethodAbsScan* s);
     inline void     disableLegend(bool yesNo=false){plotLegend = yesNo;};
     inline void     disableSolution(bool yesNo=false){plotSolution = yesNo;};
@@ -41,6 +42,7 @@ public:
     inline  void    setFont(int fnum){font = fnum;};
     inline  void    setLabelSize(int lnum){labelsize = lnum;};
     inline  void    setPlotLabel(TString &lname){label = lname;};
+	inline void     Show(){m_mainCanvas->Show();};
     virtual void    Draw();
 
     int font;		///< font code. The last digit disables scaling with the canvas size.
@@ -50,7 +52,7 @@ public:
 
     vector<MethodAbsScan*> scanners;
     OptParser*  arg; ///< command line options
-    TCanvas*    c1;
+    TCanvas*    m_mainCanvas;
     TString     name;
     TString     title;
     TString     label;

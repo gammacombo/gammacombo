@@ -10,7 +10,7 @@
 PDF_Gaus2d::PDF_Gaus2d(TString cObs, TString cErr, TString cCor)
 : PDF_Abs(2)
 {
-  name = "gaus2d";
+  name = "Gaus2D";
   initParameters();
   initRelations();
   initObservables();
@@ -29,7 +29,7 @@ void PDF_Gaus2d::initParameters()
 {
   ParametersTutorial p;
   parameters = new RooArgList("parameters");
-  parameters->add(*(p.get("a_gaus"))); 
+  parameters->add(*(p.get("a_gaus")));
   parameters->add(*(p.get("b_gaus")));
 }
 
@@ -46,8 +46,8 @@ void PDF_Gaus2d::initRelations()
 void PDF_Gaus2d::initObservables()
 {
 	observables = new RooArgList("observables"); ///< the order of this list must match that of the COR matrix!
-	observables->add(*(new RooRealVar("a_gaus_obs", "a gaus2d obs",  0, -1e4, 1e4)));
-	observables->add(*(new RooRealVar("b_gaus_obs", "b gaus2d obs",  0, -1e4, 1e4)));
+	observables->add(*(new RooRealVar("a_gaus_obs", "a (Gaus 2D)",  0, -1e4, 1e4)));
+	observables->add(*(new RooRealVar("b_gaus_obs", "b (Gaus 2D)",  0, -1e4, 1e4)));
 }
 
 
@@ -99,7 +99,7 @@ void PDF_Gaus2d::setCorrelations(TString c)
 		cout << "PDF_Gaus2d::setCorrelations() : ERROR : config "+c+" not found." << endl;
 		exit(1);
 	}
-}  
+}
 
 
 void PDF_Gaus2d::buildPdf()

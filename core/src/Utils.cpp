@@ -75,8 +75,9 @@ double Utils::bringBackAngle(double angle)
 ///
 /// Compute the difference between 2 angles. This will never be
 /// larger than pi because they wrap around!
+///
 /// \param angle1 - first angle
-/// \param angle1 - first angle
+/// \param angle2 - second angle
 /// \return difference
 ///
 double Utils::angularDifference(double angle1, double angle2)
@@ -304,7 +305,7 @@ RooFitResult* Utils::fitToMinImprove(RooWorkspace *w, TString name)
 		//     w->var("r_dk")->setVal(y);
 		//     histo->SetBinContent(ix+1,iy+1,ll.getVal());
 		//   }
-		//   new TCanvas("c2");
+		//   newNoWarnTCanvas("c2");
 		//   histo->GetZaxis()->SetRangeUser(0,20);
 		//   histo->Draw("colz");
 		//   setParameters(w, parsName, r1);
@@ -354,7 +355,7 @@ RooFitResult* Utils::fitToMinImprove(RooWorkspace *w, TString name)
 		//     wImprove->var("r_dk")->setVal(y);
 		//     histo->SetBinContent(ix+1,iy+1,ll.getVal());
 		//   }
-		//   new TCanvas("c7");
+		//   newNoWarnTCanvas("c7");
 		//   histo->GetZaxis()->SetRangeUser(0,20);
 		//   histo->Draw("colz");
 		//   // setParameters(wImprove, parsName, r1);
@@ -495,6 +496,7 @@ void Utils::setParameters(RooWorkspace* w, TString parname, const RooAbsCollecti
 /// Set each floating parameter in the named set parname inside workspace w
 /// to the value found in set. Do nothing if a parameter is present
 /// in the parname set, but not found in set.
+///
 /// \param w workspace containing a parameter set of name parname
 /// \param parname Name of the parameter set containing the "destination" parameters.
 /// \param set parameter set holding the "from" parameters.
@@ -508,9 +510,13 @@ void Utils::setParametersFloating(RooWorkspace* w, TString parname, const RooAbs
 /// Set each parameter in the named set parname inside workspace w
 /// to the value found in the final set of floating (or floating and constant)
 /// fit parameters in r.
-/// \param constAndFloat If set to true, parameter values will be copied from both
-///                      constant and floating fit parameters in the RooFitResult.
-///                      Default is false.
+///
+/// \param w - workspace containing a parameter set of name parname
+/// \param parname - Name of the parameter set containing the "destination" parameters.
+/// \param r - a fit result holding the parameter values to be set
+/// \param constAndFloat - If set to true, parameter values will be copied from both
+///                        constant and floating fit parameters in the RooFitResult.
+///                        Default is false.
 ///
 void Utils::setParameters(RooWorkspace* w, TString parname, RooFitResult* r, bool constAndFloat)
 {
@@ -599,6 +605,7 @@ void Utils::floatParameters(const RooAbsCollection* set)
 
 ///
 /// Load a named parameter range for a certain parameter.
+///
 /// \param v - The parameter which will get the limit set.
 /// \param limitname - Name of the limit to set.
 ///
@@ -612,6 +619,7 @@ void Utils::setLimit(RooRealVar* v, TString limitname)
 ///
 /// Load a named parameter range for a certain parameter,
 /// which is found inside a workspace.
+///
 /// \param w - The workspace holding the parameter.
 /// \param parname - The name of the parameter.
 /// \param limitname - Name of the limit to set.
@@ -625,8 +633,8 @@ void Utils::setLimit(RooWorkspace* w, TString parname, TString limitname)
 
 ///
 /// Load a named parameter range for a list of parameters.
+///
 /// \param set - The list holding the parameters.
-/// \param parname - The name of the parameter.
 /// \param limitname - Name of the limit to set.
 ///
 void Utils::setLimit(const RooAbsCollection* set, TString limitname)
@@ -725,57 +733,6 @@ void Utils::mergeNamedSets(RooWorkspace *w, TString mergedSet, TString set1, TSt
 		if ( i<vars.size()-1 ) varsCommaList.Append(",");
 	}
 	w->defineSet(mergedSet, varsCommaList);
-}
-
-///
-/// Combine PDFs!
-///
-TString Utils::combine(RooWorkspace *w, TString pdf1, TString pdf2)
-{
-	// cout << "Utils::combine() : combining " << pdf1 << " and " << pdf2 << " ..." << endl;
-	TString name = Form("%s_%s", pdf1.Data(), pdf2.Data());
-	if ( w->pdf("pdf_"+name) )
-	{
-		// cout << "Utils::combine() : skip existing combination : " << name << endl;
-		return name;
-	}
-
-	// multiply both pdfs:
-	w->factory(Form("PROD::pdf_%s(pdf_%s, pdf_%s)", name.Data(), pdf1.Data(), pdf2.Data()));
-
-	// define sets of combined parameters
-	mergeNamedSets(w, "par_"+name, "par_"+pdf1, "par_"+pdf2);
-	mergeNamedSets(w, "obs_"+name, "obs_"+pdf1, "obs_"+pdf2);
-	mergeNamedSets(w, "th_"+name, "th_"+pdf1, "th_"+pdf2);
-	return name;
-}
-
-TString Utils::combine(RooWorkspace *w, TString pdf1, TString pdf2, TString pdf3)
-{
-	// cout << "Utils::combine() : combining " << pdf1 << ", " << pdf2 << ", " << pdf3 << " ..." << endl;
-	return combine(w, combine(w, pdf1, pdf2), pdf3);
-}
-
-TString Utils::combine(RooWorkspace *w, TString pdf1, TString pdf2, TString pdf3, TString pdf4)
-{
-	// cout << "Utils::combine() : combining " << pdf1 << ", " << pdf2 << ", " << pdf3 << ", " << pdf4 << " ..." << endl;
-	return combine(w, combine(w, combine(w, pdf1, pdf2), pdf3), pdf4);
-}
-
-TString Utils::combine(RooWorkspace *w, TString pdf1, TString pdf2, TString pdf3, TString pdf4, TString pdf5)
-{
-	// cout << "Utils::combine() : combining " << pdf1 << ", " << pdf2 << ", " << pdf3 << ", " << pdf4 << ", " << pdf5 << " ..." << endl;
-	return combine(w, combine(w, combine(w, combine(w, pdf1, pdf2), pdf3), pdf4), pdf5);
-}
-
-TString Utils::combine(RooWorkspace *w, TString pdf1, TString pdf2, TString pdf3, TString pdf4, TString pdf5, TString pdf6)
-{
-	return combine(w, combine(w, combine(w, combine(w, combine(w, pdf1, pdf2), pdf3), pdf4), pdf5), pdf6);
-}
-
-TString Utils::combine(RooWorkspace *w, TString pdf1, TString pdf2, TString pdf3, TString pdf4, TString pdf5, TString pdf6, TString pdf7)
-{
-	return combine(w, combine(w, combine(w, combine(w, combine(w, combine(w, pdf1, pdf2), pdf3), pdf4), pdf5), pdf6), pdf7);
 }
 
 /*
@@ -895,8 +852,11 @@ TTree* Utils::convertRooDatasetToTTree(RooDataSet *d)
 /// Creates a fresh, independent copy of the input histogram.
 /// We cannot use Root's Clone() or the like, because that
 /// crap always copies Draw options and whatnot.
-/// \param copyContent true: also copy content. false: initialize with zeroes
-/// \param uniqueName true: append a unique string to the histogram name
+///
+/// \param h - the input histogram
+/// \param copyContent - true: also copy content. false: initialize with zeroes
+/// \param uniqueName - true: append a unique string to the histogram name
+/// \return a new histogram. Caller assumes ownership.
 ///
 TH1F* Utils::histHardCopy(const TH1F* h, bool copyContent, bool uniqueName)
 {
@@ -1062,6 +1022,14 @@ void Utils::dump_vector(const std::vector<float>& l) {
 		cout << *it << endl;
 	}
 }
+void Utils::dump_matrix(const std::vector<std::vector<int> >& l) {
+	for ( int ix=0; ix<l.size(); ix++ ) {
+		for ( int iy=0; iy<l[0].size(); iy++ ) {
+			cout << printf("%5i",l[ix][iy]) << " ";
+		}
+		cout << endl;
+	}
+}
 
 ///
 /// Debug tools: print the content of a 2d map to stdout.
@@ -1073,4 +1041,52 @@ void Utils::dump_map(const std::map<int, std::vector<int> >& map) {
 		dump_vector(it->second);
 	}
 }
+
+std::vector<std::vector<int> > Utils::transpose(std::vector<std::vector<int> >& v)
+{
+	std::vector<std::vector<int> > newVector;
+	int oldNx = v.size();
+	if ( oldNx==0 ){
+		cout << "Utils::transpose() : ERROR : x dimension is 0" << endl;
+		return newVector;
+	}
+	int oldNy = v[0].size();
+	if ( oldNy==0 ){
+		cout << "Utils::transpose() : ERROR : y dimension is 0" << endl;
+		return newVector;
+	}
+	// check if rectangular
+	for ( int j=1; j<oldNx; j++ ){
+		if ( v[j].size()!=oldNy ){
+			cout << "Utils::transpose() : ERROR : vector not rectangular" << endl;
+			return newVector;
+		}
+	}
+	// transpose
+	for ( int iy=0; iy<oldNy; iy++ ){
+		std::vector<int> tmp;
+		for ( int ix=0; ix<oldNx; ix++ ){
+			tmp.push_back(v[ix][iy]);
+		}
+		newVector.push_back(tmp);
+	}
+	return newVector;
+}
+
+TCanvas* Utils::newNoWarnTCanvas(TString name, TString title, int width, int height)
+{
+	gErrorIgnoreLevel=kError;
+	TCanvas* c = new TCanvas(name, title, width, height);
+	gErrorIgnoreLevel=kInfo;
+	return c;
+}
+
+TCanvas* Utils::newNoWarnTCanvas(TString name, TString title, int x, int y, int width, int height)
+{
+	gErrorIgnoreLevel=kError;
+	TCanvas* c = new TCanvas(name, title, x, y, width, height);
+	gErrorIgnoreLevel=kInfo;
+	return c;
+}
+
 

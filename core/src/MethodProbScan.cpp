@@ -19,6 +19,7 @@
 ///
 MethodProbScan::MethodProbScan()
 {
+	exit(1);
 	methodName = "Prob";
 	scanDisableDragMode = false;
 	nScansDone					= 0;
@@ -29,6 +30,7 @@ MethodProbScan::MethodProbScan()
 ///
 MethodProbScan::MethodProbScan(PDF_Generic_Abs* PDF, OptParser* opt, TH1F* hcl, const TString &fname)
 {
+	exit(1);
 	name                = fname;
 	methodName          = "Prob";
 	scanDisableDragMode = false;
@@ -41,7 +43,7 @@ MethodProbScan::MethodProbScan(PDF_Generic_Abs* PDF, OptParser* opt, TH1F* hcl, 
 	scanVar1            = arg->var[0];
 	if ( arg->var.size()>1 ) scanVar2 = arg->var[1];
 	verbose             = arg->verbose;
-	drawSolution        = arg->plotsolutions;
+	drawSolution        = 0;
 	nPoints1d           = arg->npoints1d;
 	nPoints2dx          = arg->npoints2dx;
 	nPoints2dy          = arg->npoints2dy;
@@ -220,18 +222,21 @@ int MethodProbScan::scan1d(bool fast, bool reverse)
 			allResults.push_back(r);
 			bestMinFoundInScan = TMath::Min((double)chi2minScan, (double)bestMinFoundInScan);
 
+			TString warningChi2Neg;
 			if ( chi2minScan < 0 ){
 				float newChi2minScan = chi2minGlobal + 25.; // 5sigma more than best point
-				cout << "MethodProbScan::scan1d() : WARNING : " << title;
-				cout << " chi2 negative: " << chi2minScan;
-				cout << " setting to: " << newChi2minScan << endl;
+				warningChi2Neg = "MethodProbScan::scan1d() : WARNING : " + title;
+				warningChi2Neg += TString(Form(" chi2 negative for scan point %i: %f",i,chi2minScan));
+				warningChi2Neg += " setting to: " + TString(Form("%f",newChi2minScan));
+				//cout << warningChi2Neg << "\r" << flush;
+				cout << warningChi2Neg << endl;
 				chi2minScan = newChi2minScan;
 			}
 
 			// If we find a minimum smaller than the old "global" minimum, this means that all
 			// previous 1-CL values are too high.
 			if ( chi2minScan<chi2minGlobal ){
-				if ( arg->verbose ) cout << "MethodProbScan::scan1d() : WARNING : " << title << " new global minimum found! "
+				if ( arg->verbose ) cout << "MethodProbScan::scan1d() : WARNING : '" << title << "' new global minimum found! "
 																		<< " chi2minScan=" << chi2minScan << endl;
 				chi2minGlobal = chi2minScan;
 				// recompute previous 1-CL values
@@ -427,7 +432,7 @@ int MethodProbScan::scan2d()
 
 	// initialize some control plots
 	gStyle->SetOptTitle(1);
-	TCanvas *cDbg = new TCanvas(getUniqueRootName(), Form("DeltaChi2 for 2D scan %i",nScansDone));
+	TCanvas *cDbg = newNoWarnTCanvas(getUniqueRootName(), Form("DeltaChi2 for 2D scan %i",nScansDone));
 	cDbg->SetMargin(0.1,0.15,0.1,0.1);
 	float hChi2min2dMin = hChi2min2d->GetMinimum();
 	bool firstScanDone = hChi2min2dMin<1e5;
@@ -530,7 +535,7 @@ int MethodProbScan::scan2d()
 				if ( chi2minScan > -500 && chi2minScan<chi2minGlobal ){
 					// warn only if there was a significant improvement
 					if ( arg->debug || chi2minScan<chi2minGlobal-1e-2 ){
-						cout << "MethodProbScan::scan2d() : WARNING : " << title << " new global minimum found! chi2minGlobal="
+						if ( arg->verbose ) cout << "MethodProbScan::scan2d() : WARNING : '" << title << "' new global minimum found! chi2minGlobal="
 															<< chi2minGlobal << " chi2minScan=" << chi2minScan << endl;
 					}
 					chi2minGlobal = chi2minScan;
@@ -575,13 +580,14 @@ int MethodProbScan::scan2d()
 	}
 	cout << "MethodProbScan::scan2d() : scan done.            " << endl;
 	if ( arg->debug ){
-		cout << "MethodProbScan::scan2d() : scan time:     " << endl; tScan.Print();
-		cout << "MethodProbScan::scan2d() : - fit time:    " << endl; tFit.Print();
-		cout << "MethodProbScan::scan2d() : - fit results: " << endl; tSlimResult.Print();
-		cout << "MethodProbScan::scan2d() : - memory:      " << endl; tMemory.Print();
+		cout << "MethodProbScan::scan2d() : full scan time:             "; tScan.Print();
+		cout << "MethodProbScan::scan2d() : - fitting:                  "; tFit.Print();
+		cout << "MethodProbScan::scan2d() : - create RooSlimFitResults: "; tSlimResult.Print();
+		cout << "MethodProbScan::scan2d() : - memory management:        "; tMemory.Print();
 	}
 	setParameters(w, parsName, startPars->get(0));
 	saveSolutions2d();
+	if ( arg->debug ) printLocalMinima();
 	confirmSolutions();
 
 	// clean all fit results that didn't make it into the final result
@@ -685,10 +691,10 @@ void MethodProbScan::saveSolutions2d()
 			RooSlimFitResult *r = curveResults2d[i-1][j-1]; // -1 because it starts counting at 0, but histograms at 1
 			if (!r){
 				cout << "MethodProbScan::saveSolutions2d() : ERROR : No corresponding RooFitResult found! Skipping (i,j)="
-															 << Form("(%ii,%i)",i,j) << endl;
+															 << Form("(%i,%i)",i,j) << endl;
 				continue;
 			}
-			if ( arg->debug ) cout << "MethodProbScan::saveSolutions2d() : saving ..." << endl;
+			if ( arg->debug ) cout << "MethodProbScan::saveSolutions2d() : saving solution of bin " << Form("(%i,%i)",i,j) << " ..." << endl;
 			solutions.push_back((RooSlimFitResult*)curveResults2d[i-1][j-1]->Clone());
 		}
 

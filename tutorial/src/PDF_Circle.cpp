@@ -10,7 +10,7 @@
 	PDF_Circle::PDF_Circle(TString cObs, TString cErr, TString cCor)
 : PDF_Abs(1)
 {
-	name = "gaus";
+	name = "Circle";
 	initParameters();
 	initRelations();
 	initObservables();
@@ -44,7 +44,7 @@ void PDF_Circle::initRelations()
 void PDF_Circle::initObservables()
 {
 	observables = new RooArgList("observables"); ///< the order of this list must match that of the COR matrix!
-	observables->add(*(new RooRealVar("radius_obs", "radius_obs",  0, -1e4, 1e4)));
+	observables->add(*(new RooRealVar("radius_obs", "radius",  0, -1e4, 1e4)));
 }
 
 
@@ -90,7 +90,7 @@ void PDF_Circle::setCorrelations(TString c)
 	else{
 		cout << "PDF_Circle::setCorrelations() : ERROR : config "+c+" not found." << endl;
 		exit(1);
-	}    
+	}
 }
 
 

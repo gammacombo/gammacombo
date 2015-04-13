@@ -22,7 +22,7 @@ void ParameterCache::printFitResultToOutStream(ofstream &out, RooSlimFitResult *
 
 	out << "### FCN: " << slimFitRes->minNll() << ", EDM: " << slimFitRes->edm() << endl;
 	out << "### COV quality: " << slimFitRes->covQual() << ", status: " << slimFitRes->status()
-		<< ", confirmed: " << (slimFitRes->_isConfirmed?"yes":"no") << endl;
+		<< ", confirmed: " << (slimFitRes->isConfirmed()?"yes":"no") << endl;
 	RooArgList argList = slimFitRes->floatParsFinal();
 	argList.add(slimFitRes->constPars());
 	argList.sort();
@@ -100,7 +100,7 @@ void ParameterCache::cacheParameters(MethodAbsScan *scanner, TString fileName){
 
 		for (int i=0; i<pointsx.size(); i++){
 			int xBin = scanner->getHCL2d()->GetXaxis()->FindBin(pointsx[i]);
-			int yBin = scanner->getHCL2d()->GetXaxis()->FindBin(pointsy[i]);
+			int yBin = scanner->getHCL2d()->GetYaxis()->FindBin(pointsy[i]);
 			if ( xBin<1 || xBin>scanner->getNPoints2dx() || yBin<1 || yBin>scanner->getNPoints2dy() ){
 				cout << "ParameterCache::cacheParameters() : ERROR : specified point is out of scan range." << endl;
 				continue;

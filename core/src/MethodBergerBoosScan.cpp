@@ -1,7 +1,7 @@
 /*
  * Gamma Combination
  * Author: Maximilian Schlupp, maximilian.schlupp@cern.ch
- * Date: January 2013 
+ * Date: January 2013
  */
 
 #include "MethodBergerBoosScan.h"
@@ -24,7 +24,7 @@
 	nBBPoints           = 1;
 	//std::cout << "open the file" << std::endl;
 	TString fName;
-	if(this->dir == "XX"){  
+	if(this->dir == "XX"){
 		fName = "root/BBTree.root";
 	}
 	else{
@@ -129,15 +129,15 @@ void MethodBergerBoosScan::drawBBPoints(TString varX, TString varY, int runMin, 
 		// If there are two BB Points generated at the same Phasespace point
 		if( hBBPoints->GetBinContent(nBinX,nBinY)<=nBBPoints && hBBPoints->GetBinContent(nBinX,nBinY) != 0 && hBBPoints->GetBinContent(nBinX,nBinY) != (tree->GetLeaf("BergerBoos_id")->GetValue()+1))
 		{
-			// When it is not the first time filling (content == 0) and 
+			// When it is not the first time filling (content == 0) and
 			// the content is not equal the the value that would be filled: add the two values
 			hBBPoints->SetBinContent(nBinX,nBinY,(tree->GetLeaf("BergerBoos_id")->GetValue()+1+hBBPoints->GetBinContent(nBinX,nBinY)));
 		}
 		else{
-			hBBPoints->SetBinContent(nBinX,nBinY,(tree->GetLeaf("BergerBoos_id")->GetValue()+1));    
+			hBBPoints->SetBinContent(nBinX,nBinY,(tree->GetLeaf("BergerBoos_id")->GetValue()+1));
 		}
 	}
-	TCanvas* c1    = new TCanvas("c",varY+" vs "+varX,800,600);
+	TCanvas* c1    = newNoWarnTCanvas("c",varY+" vs "+varX,800,600);
 	hBBPoints->Draw("COLZTEXT");
 	if(save){
 		savePlot(c1,varY+"_vs_"+varX+"_BB_id");
@@ -172,10 +172,10 @@ void MethodBergerBoosScan::getBestPValue(TH1F* h, TH2F* pValues){
 
 ///
 /// Reads in Scan1DTree result from scan1D()
-/// This is a slightly modified version of 
+/// This is a slightly modified version of
 /// MethodPluginScan::readScan1dTrees()'s function
 /// to account for BergerBoos specifications
-///        
+///
 void MethodBergerBoosScan::readScan1dTrees(int runMin, int runMax){
 	TChain *c         = new TChain("plugin");
 	int nFilesMissing = 0;
@@ -247,7 +247,7 @@ void MethodBergerBoosScan::readScan1dTrees(int runMin, int runMax){
 		}
 		t.GetEntry(i);
 		// apply global cuts
-		// rejects events if the fits are "not good enough" 
+		// rejects events if the fits are "not good enough"
 		if ( ! (fabs(t.chi2minToy)<500 && fabs(t.chi2minGlobalToy)<500
 					&& t.statusFree==0. && t.statusScan==0.
 					// && fabs(t.chi2minGlobal-chi2minGlobal)<0.1 // reject files from other runs
@@ -300,7 +300,7 @@ void MethodBergerBoosScan::readScan1dTrees(int runMin, int runMax){
 	}
 
 	// 1-CL construction controlplot
-	// TCanvas* c1 = new TCanvas("asdf");
+	// TCanvas* c1 = newNoWarnTCanvas("asdf");
 	// c1->Divide(2,1);
 	// c1->cd(1); h_better->Draw("colz");
 	// c1->cd(2); h_all->Draw("colz");
@@ -316,7 +316,7 @@ void MethodBergerBoosScan::readScan1dTrees(int runMin, int runMax){
 	if(!arg->isAction("pluginbatch")) hCL2d->SaveAs(fName);
 
 	//hCL->SaveAs("root/hCL.root");
-	//h_better->SaveAs("root/h_better.root"); 
+	//h_better->SaveAs("root/h_better.root");
 };
 
 ///
@@ -380,7 +380,7 @@ int MethodBergerBoosScan::scan1d(int nRun)
 	int allSteps = nPoints1d*nToys*nBBPoints;
 	float printFreq = allSteps>51 ? 50 : allSteps;
 	int curStep  = 0;
-	int StepCounter = 0;    
+	int StepCounter = 0;
 	// start scan
 	cout << "MethodBergerBoosScan::scan1d() : starting ..." << endl;
 	for ( int i=0; i<nPoints1d; i++ )
@@ -408,8 +408,8 @@ int MethodBergerBoosScan::scan1d(int nRun)
 			setParameters(w, parsName, plhScan, true);
 
 			if(ii>0){
-				// From the second point in the nuisance parameter space onwards, new points are drawn randomly 
-				// from their Berger Boos ranges 
+				// From the second point in the nuisance parameter space onwards, new points are drawn randomly
+				// from their Berger Boos ranges
 				this->setNewBergerBoosPoint(StepCounter);
 				//continue;
 			}

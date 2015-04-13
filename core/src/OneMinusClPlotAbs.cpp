@@ -26,20 +26,17 @@ OneMinusClPlotAbs::OneMinusClPlotAbs(OptParser *arg, TString name, TString title
 	this->arg = arg;
 	this->name = name;
 	this->title = title;
-	c1 = new TCanvas(name+getUniqueRootName(), title, 800, 600);
+	m_mainCanvas = 0;
 
-	if ( arg->plotlog ){
-		c1->SetLogy();
-		this->name = this->name + "_log";
-	}
-	if ( arg->plotprelim ){
-		this->name = this->name + "_prelim";
-	}
 	plotLegend    = true;
 	plotSolution  = true;
 	plotLogYMin   = 1.e-3;
 	plotLogYMax   = 1;
+}
 
+OneMinusClPlotAbs::~OneMinusClPlotAbs()
+{
+	if ( m_mainCanvas!=0 ) delete m_mainCanvas;
 }
 
 ///
@@ -56,8 +53,11 @@ void OneMinusClPlotAbs::addScanner(MethodAbsScan* s)
 ///
 void OneMinusClPlotAbs::save()
 {
-	TString saveName = name;
-	savePlot(c1, saveName);
+	if ( m_mainCanvas==0 ){
+		cout << "OneMinusClPlotAbs::save() : ERROR : Empty canvas. Call Draw() or DrawFull() before saving!" << endl;
+		return;
+	}
+	savePlot(m_mainCanvas, name);
 }
 
 ///
@@ -72,6 +72,7 @@ void OneMinusClPlotAbs::save()
 void OneMinusClPlotAbs::drawGroup(float yPos)
 {
 	if ( arg->group==TString("off") ) return;
+	m_mainCanvas->cd();
 	float xPos = 0.5;
 	float xLow, yLow;
 	if ( arg->plotgroupx==-1 ) xLow = xPos; else xLow = arg->plotgroupx;

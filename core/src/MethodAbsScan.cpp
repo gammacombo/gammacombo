@@ -6,6 +6,7 @@
  */
 
 #include "MethodAbsScan.h"
+
 ///
 /// 'Default Constructor'
 /// Introduced so that inherited classes do not have to call an
@@ -14,6 +15,7 @@
 	MethodAbsScan::MethodAbsScan()
 : rndm()
 {
+	exit(1);
 	methodName = "Abs";
 	drawFilled = true;
 };
@@ -30,7 +32,7 @@
 	scanVar1 = arg->var[0];
 	if ( arg->var.size()>1 ) scanVar2 = arg->var[1];
 	verbose = arg->verbose;
-	drawSolution = arg->plotsolutions;
+	drawSolution = 0;
 	nPoints1d  = arg->npoints1d;
 	nPoints2dx = arg->npoints2dx;
 	nPoints2dy = arg->npoints2dy;
@@ -53,6 +55,9 @@
 	globalMin = 0;
 	nWarnings = 0;
 	drawFilled = true;
+	m_xrangeset = false;
+	m_yrangeset = false;
+	m_initialized = false;
 
 	// check workspace content
 	if ( !w->pdf(pdfName) ) { cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << pdfName  << endl; exit(1); }
@@ -173,14 +178,19 @@ void MethodAbsScan::setChi2minGlobal(double x)
 void MethodAbsScan::initScan()
 {
 	if ( arg->debug ) cout << "MethodAbsScan::initScan() : initializing ..." << endl;
+	if ( m_initialized ) {
+		cout << "MethodAbsScan::initScan() : already initialized." << endl;
+		exit(1);
+	}
 
 	// Init the 1-CL histograms. Range is taken from the scan range defined in
 	// the ParameterAbs class (and derived ones), unless the --scanrange command
 	// line argument is set.
 	RooRealVar *par1 = w->var(scanVar1);
 	if ( !par1 ){
-		cout << "MethodAbsScan::initScan() : ERROR : No such scan parameter: " << scanVar1 << endl;
-		cout << "MethodAbsScan::initScan() :         Choose an existing one using: --var par" << endl << endl;
+		if ( arg->debug ) cout << "MethodAbsScan::initScan() : ";
+		cout << "ERROR : No such scan parameter: " << scanVar1 << endl;
+		cout << "        Choose an existing one using: --var par" << endl << endl;
 		cout << "  Available parameters:" << endl;
 		cout << "  ---------------------" << endl << endl;
 		for ( int i=0; i<combiner->getParameterNames().size(); i++ ){
@@ -189,10 +199,8 @@ void MethodAbsScan::initScan()
 		cout << endl;
 		exit(1);
 	}
-	if ( arg->scanrangeMin != arg->scanrangeMax ){
-		RooMsgService::instance().setGlobalKillBelow(ERROR);
-		par1->setRange("scan", arg->scanrangeMin, arg->scanrangeMax);
-		RooMsgService::instance().setGlobalKillBelow(INFO);
+	if ( !m_xrangeset && arg->scanrangeMin != arg->scanrangeMax ){
+		setXscanRange(arg->scanrangeMin,arg->scanrangeMax);
 	}
 	setLimit(w, scanVar1, "scan");
 	float min1 = par1->getMin();
@@ -209,8 +217,9 @@ void MethodAbsScan::initScan()
 	{
 		RooRealVar *par2 = w->var(scanVar2);
 		if ( !par2 ){
-			cout << "MethodAbsScan::initScan() : ERROR : No such scan parameter: " << scanVar2 << endl;
-			cout << "MethodAbsScan::initScan() :         Choose an existing one using: --var par" << endl << endl;
+			if ( arg->debug ) cout << "MethodAbsScan::initScan() : ";
+			cout << "ERROR : No such scan parameter: " << scanVar2 << endl;
+			cout << "        Choose an existing one using: --var par" << endl << endl;
 			cout << "  Available parameters:" << endl;
 			cout << "  ---------------------" << endl << endl;
 			for ( int i=0; i<combiner->getParameterNames().size(); i++ ){
@@ -219,10 +228,8 @@ void MethodAbsScan::initScan()
 			cout << endl;
 			exit(1);
 		}
-		if ( arg->scanrangeyMin != arg->scanrangeyMax ){
-			RooMsgService::instance().setGlobalKillBelow(ERROR);
-			par2->setRange("scan", arg->scanrangeyMin, arg->scanrangeyMax);
-			RooMsgService::instance().setGlobalKillBelow(INFO);
+		if ( !m_yrangeset && arg->scanrangeyMin != arg->scanrangeyMax ){
+			setYscanRange(arg->scanrangeyMin,arg->scanrangeyMax);
 		}
 		setLimit(w, scanVar2, "scan");
 		float min2 = par2->getMin();
@@ -256,6 +263,7 @@ void MethodAbsScan::initScan()
 	// turn off some messages
 	RooMsgService::instance().setStreamStatus(0,kFALSE);
 	RooMsgService::instance().setStreamStatus(1,kFALSE);
+	m_initialized = true;
 }
 
 ///
@@ -329,16 +337,16 @@ bool MethodAbsScan::loadScanner(TString fName)
 		hChi2min = (TH1F*)obj;
 		hChi2min->SetName("hChi2min"+getUniqueRootName());
 	}
-	// load solutions: try the first ten
+	// load solutions: try the first one hundred
 	solutions.clear();
-	int nSol = 10;
+	int nSol = 100;
 	for ( int i=0; i<nSol; i++ ){
 		RooSlimFitResult *r = (RooSlimFitResult*)f->Get(Form("sol%i",i));
 		if ( !r ) break;
 		solutions.push_back(r);
 	}
 	if ( f->Get(Form("sol%i",nSol)) ){
-		cout << "MethodAbsScan::loadScanner() : WARNING : Not all solutions read from : " << fName << endl;
+		cout << "MethodAbsScan::loadScanner() : WARNING : Only the first 100 solutions read from: " << fName << endl;
 	}
 	return true;
 }
@@ -445,7 +453,7 @@ bool MethodAbsScan::interpolate(TH1F* h, int i, float y, float central, bool upp
 	// {
 	//   TString debugTitle = methodName + Form(" y=%.2f ",y);
 	//   debugTitle += upper?Form("%f upper",central):Form("%f lower",central);
-	//   TCanvas *c = new TCanvas(getUniqueRootName(), debugTitle);
+	//   TCanvas *c = newNoWarnTCanvas(getUniqueRootName(), debugTitle);
 	//   g->SetMarkerStyle(3);
 	//   g->SetHistogram(h);
 	//   h->Draw();
@@ -515,7 +523,7 @@ void MethodAbsScan::calcCLintervals()
 	if ( arg->isQuickhack(8) ){
 		// \todo Switch to the new CLIntervalMaker mechanism. It can be activated
 		// already using --qh 8, but it really is in beta stage still
-		cout << "\nMethodAbsScan::calcCLintervals() : NEW : " << name << endl << endl;
+		cout << "\nMethodAbsScan::calcCLintervals() : USING NEW CLIntervalMaker for " << name << endl << endl;
 		CLIntervalMaker clm(arg, *hCL);
 		clm.findMaxima(0.04); // ignore maxima under pvalue=0.04
 		for ( int iSol=0; iSol<solutions.size(); iSol++ ){
@@ -523,6 +531,14 @@ void MethodAbsScan::calcCLintervals()
 			clm.provideMorePreciseMaximum(sol, "max PLH");
 		}
 		clm.calcCLintervals();
+		// print
+		TString unit = w->var(scanVar1)->getUnit();
+		CLIntervalPrinter clp(arg, name, scanVar1, unit, methodName);
+		clp.setDegrees(isAngle(w->var(scanVar1)));
+		clp.addIntervals(clm.getClintervals1sigma());
+		clp.addIntervals(clm.getClintervals2sigma());
+		clp.print();
+		cout << endl;
 	}
 
 	cout << endl;
@@ -814,7 +830,7 @@ void MethodAbsScan::plot1d(TString var)
 	//   RooNLLVar nll("nll", "nll", *(w->pdf(pdfName)), *(w->data(dataName))) ;
 	//
 	//   TString plotName = "plot1d_"+name+"_"+var;
-	//   TCanvas *c1 = new TCanvas();
+	//   TCanvas *c1 = newNoWarnTCanvas();
 	//   RooPlot *frame = vx->frame();
 	//   // w->pdf(pdfName)->plotOn(frame);
 	//   nll.plotOn(frame);
@@ -853,7 +869,7 @@ void MethodAbsScan::plot2d(TString varx, TString vary)
 	gStyle->SetPalette(1);
 
 	TString plotName = "plot2d_"+name+"_"+varx+"_"+vary;
-	TCanvas *c1 = new TCanvas(plotName, plotName);
+	TCanvas *c1 = newNoWarnTCanvas(plotName, plotName);
 	TH1* h = w->pdf(pdfName)->createHistogram(plotName, *vx, YVar(*vy));
 	h->Draw("colz");
 
@@ -994,6 +1010,7 @@ void MethodAbsScan::sortSolutions()
 		solutions.push_back(solutionsUnSorted[iMin]);
 		solutionsUnSorted.erase(solutionsUnSorted.begin()+iMin);
 	}
+	if ( arg->debug ) cout << "MethodAbsScan::sortSolutions() : solutions sorted: " << solutions.size() << endl;
 }
 
 ///
@@ -1113,6 +1130,7 @@ void MethodAbsScan::confirmSolutions()
 	// do NOT delete the old solutions! They are still in allResults and curveResults.
 	solutions = confirmedSolutions;
 	sortSolutions();
+	if ( arg->debug ) printLocalMinima();
 	removeDuplicateSolutions();
 	// reset parameters
 	setParameters(w, parsName, frCache.getParsAtFunctionCall());
@@ -1124,8 +1142,12 @@ void MethodAbsScan::confirmSolutions()
 /// unconfirmed solutions converge to the same true local minimum
 /// when refitted by confirmSolutions().
 ///
+/// No solutions will be removed if --qh 9 is given.
+/// \todo upgrade the quickhack to a proper option
+///
 void MethodAbsScan::removeDuplicateSolutions()
 {
+	if ( arg->isQuickhack(9) ) return;
 	vector<RooSlimFitResult*> solutionsNoDup;
 	for ( int i=0; i<solutions.size(); i++ ){
 		bool found = false;
@@ -1134,6 +1156,17 @@ void MethodAbsScan::removeDuplicateSolutions()
 			if ( found==true ) continue;
 		}
 		if ( !found ) solutionsNoDup.push_back(solutions[i]);
+		else{
+			if ( arg->debug ) cout << "MethodAbsScan::removeDuplicateSolutions() : removing duplicate solution " << i << endl;
+		}
+	}
+	if ( solutions.size()!=solutionsNoDup.size() ){
+		cout << endl;
+		if ( arg->debug ) cout << "MethodAbsScan::removeDuplicateSolutions() : ";
+		cout << "INFO : some equivalent solutions were removed. In case of 2D scans" << endl;
+		cout << "       many equivalent solutions may lay on a contour of constant chi2, in" << endl;
+		cout << "       that case removing them is perhaps not desired. You can keep all solutions" << endl;
+		cout << "       using --qh 9\n" << endl;
 	}
 	solutions = solutionsNoDup;
 }
@@ -1213,3 +1246,26 @@ void MethodAbsScan::plotPulls(int nSolution)
 	p.loadParsFromSolution(nSolution);
 	p.plotPulls();
 }
+
+void MethodAbsScan::setXscanRange(float min, float max)
+{
+	if ( min==max ) return;
+	RooRealVar *par1 = w->var(scanVar1);
+	assert(par1);
+	RooMsgService::instance().setGlobalKillBelow(ERROR);
+	par1->setRange("scan", min, max);
+	RooMsgService::instance().setGlobalKillBelow(INFO);
+	m_xrangeset = true;
+}
+
+void MethodAbsScan::setYscanRange(float min, float max)
+{
+	if ( min==max ) return;
+	RooRealVar *par2 = w->var(scanVar2);
+	assert(par2);
+	RooMsgService::instance().setGlobalKillBelow(ERROR);
+	par2->setRange("scan", min, max);
+	RooMsgService::instance().setGlobalKillBelow(INFO);
+	m_yrangeset = true;
+}
+

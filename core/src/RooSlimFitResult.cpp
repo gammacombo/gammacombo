@@ -163,7 +163,7 @@ bool RooSlimFitResult::hasParameter(TString name) const
 void RooSlimFitResult::Print(bool verbose, bool printcor)
 {
 	cout << "  FCN: " << minNll() << ", EDM: " << edm() << endl;
-	cout << "  COV quality: " << covQual() << ", status: " << status() 
+	cout << "  COV quality: " << covQual() << ", status: " << status()
 		<< ", confirmed: " << (_isConfirmed?"yes":"no") << endl;
 	cout << endl;
 	cout << "    Parameter                      FinalValue +/- Error " << (_isConfirmed?"(HESSE)":"(MIGRAD)") << endl;
@@ -177,7 +177,7 @@ void RooSlimFitResult::Print(bool verbose, bool printcor)
 		}
 		// print constant parameters
 		if (_parsConst[i]){
-			if ( ! TString(_parsNames[i]).Contains("obs") ){ 
+			if ( ! TString(_parsNames[i]).Contains("obs") ){
 				printf("       %22s    %11.6g +/- %10.6g (const)", TString(_parsNames[i]).Data(), val, err);
 				if (_parsAngle[i]) cout << " (Deg)";
 				cout << endl;

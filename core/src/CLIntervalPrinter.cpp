@@ -25,50 +25,58 @@ void CLIntervalPrinter::addIntervals(vector<CLInterval> &intervals)
 	_intervals.push_back(intervals);
 }
 
+///
+/// Helper function to sort the intervals according to their
+/// lower boundary.
+///
+bool CLIntervalPrinter::compareByMin(const CLInterval &a, const CLInterval &b)
+{
+	    return a.min < b.min;
+}
+
 
 void CLIntervalPrinter::print()
 {
-	for ( int k=0; k<_intervals.size(); k++ )
-	for ( int j=0; j<_intervals[k].size(); j++ )
-	{
-		CLInterval i = _intervals[k][j];
+	for ( int k=0; k<_intervals.size(); k++ ){
+		// sort the intervals
+		vector<CLInterval> sortedIntervals(_intervals[k]);
+		sort(sortedIntervals.begin(), sortedIntervals.end(), compareByMin);
+		for ( int j=0; j<sortedIntervals.size(); j++ ){
+			CLInterval i = sortedIntervals[j];
 
-		// convert to degrees if necessary
-		if ( _degrees ){
-			i.central = RadToDeg(i.central);
-			i.min = RadToDeg(i.min);
-			i.max = RadToDeg(i.max);
-			_unit = "Deg";
-		}
+			// convert to degrees if necessary
+			if ( _degrees ){
+				i.central = RadToDeg(i.central);
+				i.min = RadToDeg(i.min);
+				i.max = RadToDeg(i.max);
+				_unit = "Deg";
+			}
 
-		Rounder myRounder(_arg, i.min, i.max, i.central);
-		int d = myRounder.getNsubdigits();        
-		printf("%s = [%7.*f, %7.*f] (%7.*f -%7.*f +%7.*f) @%3.2fCL",
-				_var.Data(),
-				d, myRounder.CLlo(), d, myRounder.CLhi(),
-				d, myRounder.central(), 
-				d, myRounder.errNeg(), d, myRounder.errPos(),
-				1.-i.pvalue);
-		if ( _unit!="" ) cout << ", ["<<_unit<<"]";
-		// \todo remove the following code from quickhack stage once we have switched
-		// to the CLIntervalMaker mechanism to get more useful information
-		// on the CL intervals
-		if ( _arg->isQuickhack(8) ){
-			if ( !i.closed ){
-				cout << " (not closed)";
+			Rounder myRounder(_arg, i.min, i.max, i.central);
+			int d = myRounder.getNsubdigits();
+			printf("%s = [%7.*f, %7.*f] (%7.*f -%7.*f +%7.*f) @%3.2fCL",
+					_var.Data(),
+					d, myRounder.CLlo(), d, myRounder.CLhi(),
+					d, myRounder.central(),
+					d, myRounder.errNeg(), d, myRounder.errPos(),
+					1.-i.pvalue);
+			if ( _unit!="" ) cout << ", ["<<_unit<<"]";
+			// \todo remove the following code from quickhack stage once we have switched
+			// to the CLIntervalMaker mechanism to get more useful information
+			// on the CL intervals
+			cout << ", " << _method;
+			if ( _arg->isQuickhack(8) ){
+				if ( _arg->verbose ){
+					cout << Form(", central: %-7s", i.centralmethod.Data());
+					cout << Form(", interval: [%-6s, %-6s]", i.minmethod.Data(), i.maxmethod.Data());
+					cout << ", p(central): " << i.pvalueAtCentral;
+				}
 			}
-		}
-		cout << ", " << _method;
-		if ( _arg->isQuickhack(8) ){
-			if ( _arg->verbose ){
-				cout << ", central: " << i.centralmethod;
-				cout << ", interval: [" << i.minmethod << ", " << i.maxmethod << "]";
-				cout << ", p(central): " << i.pvalueAtCentral;		
-			}
+			cout << endl;
 		}
 		cout << endl;
 	}
-} 
+}
 
 
 void CLIntervalPrinter::savePython()
@@ -98,7 +106,7 @@ void CLIntervalPrinter::savePython()
 		}
 
 		Rounder myRounder(_arg, i.min, i.max, i.central);
-		int d = myRounder.getNsubdigits();        
+		int d = myRounder.getNsubdigits();
 
 		float thisCL = 1.-i.pvalue;
 		if ( previousCL!=thisCL ){
@@ -107,10 +115,10 @@ void CLIntervalPrinter::savePython()
 		}
 
 		outf << Form("    {'var':'%s', 'min':'%.*f', 'max':'%.*f', 'central':'%.*f', "
-				"'neg':'%.*f', 'pos':'%.*f', 'cl':'%.2f', 'unit':'%s', 'method':'%s'},\n",	
+				"'neg':'%.*f', 'pos':'%.*f', 'cl':'%.2f', 'unit':'%s', 'method':'%s'},\n",
 				_var.Data(),
 				d, myRounder.CLlo(), d, myRounder.CLhi(),
-				d, myRounder.central(), 
+				d, myRounder.central(),
 				d, myRounder.errNeg(), d, myRounder.errPos(),
 				thisCL,
 				_unit.Data(),
@@ -120,4 +128,4 @@ void CLIntervalPrinter::savePython()
 	outf << "  ]" << endl;
 	outf << "}" << endl;
 	outf.close();
-} 
+}
