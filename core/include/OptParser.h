@@ -63,6 +63,7 @@ class OptParser
 		bool            largest;
 		vector<TString> loadParamsFile;
 		bool            lightfiles;
+    int             nbatchjobs;
 		int             nBBpoints;
 		int             ndiv;
 		int             ndivy;
@@ -100,6 +101,7 @@ class OptParser
 		bool		probimprove;
 		bool		printcor;
 		vector<int>   	qh;
+    TString         queue;
 		vector<TString> relation;
 		vector<float>   savenuisances1d;
 		vector<float>   savenuisances2dx;
@@ -114,6 +116,8 @@ class OptParser
 		bool            usage;
 		vector<TString> var;
 		bool		verbose;
+
+    CmdLine cmd;
 
 	private:
 		int 		convertToDigitWithCheck(TString parseMe, TString usage);

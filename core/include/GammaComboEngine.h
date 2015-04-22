@@ -25,6 +25,7 @@
 #include "TColor.h"
 #include "TDatime.h"
 #include "Utils.h"
+#include "BatchScriptWriter.h"
 
 using namespace std;
 using namespace Utils;
@@ -95,8 +96,9 @@ class GammaComboEngine
 		void			setAsimovObservables(Combiner* c);
 		void			loadAsimovPoint(Combiner* c, int cId);
 		void			setUpPlot();
-		void            tightenChi2Constraint(Combiner *c, TString scanVar);
+		void      tightenChi2Constraint(Combiner *c, TString scanVar);
 		void			usage();
+    void      writebatchscripts();
 
 		OptParser*			arg;
 		vector<Combiner*> 	cmb;
@@ -104,6 +106,7 @@ class GammaComboEngine
 		vector<int> 		colorsText;
 		TString 			execname;
 		FileNameBuilder*	m_fnamebuilder;
+    BatchScriptWriter* m_batchscriptwriter;
 		vector<PDF_Abs*>	pdf;
 		OneMinusClPlotAbs*	plot;
 		TStopwatch 			t;
