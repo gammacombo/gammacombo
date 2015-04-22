@@ -15,7 +15,8 @@
 /// - add its name to defineOptions()
 /// - add its definition and parsing to parseArguments()
 ///
-OptParser::OptParser()
+OptParser::OptParser():
+  cmd("", ' ', "")
 {
 	defineOptions();
 
@@ -42,6 +43,7 @@ OptParser::OptParser()
 	jobdir = ".";
 	largest = false;
 	lightfiles = false;
+  nbatchjobs = -99;
 	nBBpoints = -99;
 	ndiv = 407;
 	ndivy = 407;
@@ -74,6 +76,7 @@ OptParser::OptParser()
 	probforce = false;
 	probimprove = false;
 	printcor = false;
+  queue = "";
 	scanforce = false;
 	scanrangeMax = -101;
 	scanrangeMin = -101;
@@ -117,6 +120,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("loadParamsFile");
 	availableOptions.push_back("log");
 	availableOptions.push_back("magnetic");
+  availableOptions.push_back("nbatchjobs");
 	//availableOptions.push_back("nBBpoints");
 	availableOptions.push_back("nosyst");
 	availableOptions.push_back("npoints");
@@ -137,6 +141,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("ps");
 	availableOptions.push_back("pulls");
 	availableOptions.push_back("qh");
+  availableOptions.push_back("queue");
 	availableOptions.push_back("sn");
 	availableOptions.push_back("sn2d");
 	availableOptions.push_back("scanforce");
@@ -197,11 +202,12 @@ void OptParser::bookPlottingOptions()
 ///
 void OptParser::bookPluginOptions()
 {
-	bookedOptions.push_back("controlplots");
+  bookedOptions.push_back("controlplots");
 	bookedOptions.push_back("id");
 	bookedOptions.push_back("importance");
 	bookedOptions.push_back("jobs");
 	bookedOptions.push_back("lightfiles");
+  bookedOptions.push_back("nbatchjobs");
 	//bookedOptions.push_back("nBBpoints");
 	bookedOptions.push_back("npointstoy");
 	bookedOptions.push_back("nrun");
@@ -285,7 +291,8 @@ bool OptParser::isQuickhack(int id)
 ///
 void OptParser::parseArguments(int argc, char* argv[])
 {
-	CmdLine cmd("", ' ', "");
+  //CmdLine cmd("", ' ', "");
+  //cmd = CmdLine("", ' ', "");
 
 	// --------------- arguments that take a value
 	TCLAP::ValueArg<string> scanrangeArg("", "scanrange", "Restrict the scan range to a given range. "
@@ -329,6 +336,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::ValueArg<string> plotgroupposArg("", "grouppos", "Set the position of the group logo. "
 			"Format: --grouppos xmin:ymin in normalized coordinates [0,1]. To use default values "
 			"for one coordinate, use 'def': --grouppos def:y.", false, "default", "string");
+  TCLAP::ValueArg<string> queueArg("q","queue","Batch queue to submit to. If none is given then the scripts will be written but not submitted.", false, "", "string");
+  TCLAP::ValueArg<int> nbatchjobsArg("","nbatchjobs", "number of jobs to write scripts for and submit to batch system", false, 0, "int");
 	TCLAP::ValueArg<int> nBBpointsArg("", "nBBpoints", "number of BergerBoos points per scanpoint", false, 1, "int");
 	TCLAP::ValueArg<int> idArg("", "id", "When making controlplots (--controlplots), only consider the "
 			"scan point with this ID, that is a specific value of the scan parameter. "
@@ -517,6 +526,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "scanforce" ) ) cmd.add( scanforceArg );
 	if ( isIn<TString>(bookedOptions, "relation" ) ) cmd.add(relationArg);
 	if ( isIn<TString>(bookedOptions, "qh" ) ) cmd.add(qhArg);
+  if ( isIn<TString>(bookedOptions, "queue") ) cmd.add(queueArg);
 	if ( isIn<TString>(bookedOptions, "pulls" ) ) cmd.add( plotpullsArg );
 	if ( isIn<TString>(bookedOptions, "ps" ) ) cmd.add( plotsolutionsArg );
 	if ( isIn<TString>(bookedOptions, "probimprove" ) ) cmd.add( probimproveArg );
@@ -542,6 +552,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "ndivy" ) ) cmd.add(ndivyArg);
 	if ( isIn<TString>(bookedOptions, "ndiv" ) ) cmd.add(ndivArg);
 	if ( isIn<TString>(bookedOptions, "nBBpoints" ) ) cmd.add(nBBpointsArg);
+  if ( isIn<TString>(bookedOptions, "nbatchjobs" ) ) cmd.add(nbatchjobsArg);
 	if ( isIn<TString>(bookedOptions, "magnetic" ) ) cmd.add( plotmagneticArg );
 	if ( isIn<TString>(bookedOptions, "log" ) ) cmd.add( plotlogArg );
 	if ( isIn<TString>(bookedOptions, "loadParamsFile" ) ) cmd.add( loadParamsFileArg );
@@ -588,6 +599,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	jobdir            = TString(jobdirArg.getValue());
 	largest           = largestArg.getValue();
 	lightfiles        = lightfilesArg.getValue();
+  nbatchjobs        = nbatchjobsArg.getValue();
 	nBBpoints         = nBBpointsArg.getValue();
 	ndiv              = ndivArg.getValue();
 	ndivy             = ndivyArg.getValue();
@@ -613,6 +625,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	probforce         = probforceArg.getValue();
 	probimprove       = probimproveArg.getValue();
 	qh                = qhArg.getValue();
+  queue             = TString(queueArg.getValue());
 	savenuisances1d   = snArg.getValue();
 	scanforce         = scanforceArg.getValue();
 	smooth2d          = smooth2dArg.getValue();
