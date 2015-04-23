@@ -40,7 +40,7 @@ void BatchScriptWriter::writeScripts(OptParser *arg, vector<Combiner*> *cmb){
       scriptname += "_"+arg->var[1];
     }
     
-    for ( int job=0; job<arg->nbatchjobs; job++ ) {
+    for ( int job=1; job<=arg->nbatchjobs; job++ ) {
       TString fname = scriptname + Form("_run%d",job) + ".sh";
       writeScript(fname, job, arg);
     }
@@ -68,6 +68,8 @@ void BatchScriptWriter::writeScript(TString fname, int jobn, OptParser *arg) {
   outfile << Form("cp %s/%s bin/",cwd,subpkg.c_str()) << endl;
   outfile << "mkdir -p plots/dot" << endl;
   outfile << Form("cp -r %s/plots/dot/* plots/dot",cwd) << endl;
+  outfile << "mkdir -p plots/par" << endl;
+  outfile << Form("cp -r %s/plots/par/* plots/par",cwd) << endl;
   outfile << "mkdir -p root" << endl;
   outfile << Form("if ( %s --nrun %d ); then",exec.c_str(),jobn) << endl;
   outfile << Form("\ttouch %s/%s.done",cwd,fname.Data()) << endl;
