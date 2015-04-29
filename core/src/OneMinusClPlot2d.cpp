@@ -144,19 +144,19 @@
 	markerstyle.push_back(22);
 	markersize.push_back(1.1);
 
-	linecolor[0].push_back(kGray+3);
+	linecolor[0].push_back(kOrange+3);
 	linestyle[0].push_back(kSolid);
-	fillcolor[0].push_back(kGray-7);
+	fillcolor[0].push_back(kOrange-7);
 	fillstyle[0].push_back(3013);
 
-	linecolor[1].push_back(kGray-1);
+	linecolor[1].push_back(kOrange-1);
 	linestyle[1].push_back(kSolid);
-	fillcolor[1].push_back(kGray-6);
+	fillcolor[1].push_back(kOrange-6);
 	fillstyle[1].push_back(1001);
 
-	linecolor[2].push_back(kGray-2);
+	linecolor[2].push_back(kOrange-2);
 	linestyle[2].push_back(kSolid);
-	fillcolor[2].push_back(kGray-9);
+	fillcolor[2].push_back(kOrange-9);
 	fillstyle[2].push_back(1001);
 
 	linecolor[3].push_back(cb.lightcolor(linecolor[2][4]));
