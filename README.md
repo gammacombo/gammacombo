@@ -8,11 +8,18 @@ which is used to derive likelihood-based intervals and frequentist intervals
 based on pseudoexperiments following the Plugin method to handle nuisance
 parameters.
 
+WebLink
+======
+
+You can find information about the package at our website
+* [gammacombo.hepforge.org](http://gammacombo.hepforge.org/web/HTML/index.html)
+
+
 Manual
 ======
 
 A manual is provided in
-* [GammaComboManual.pdf](https://github.com/mkarbach/gammacombo/blob/master/manual/GammaComboManual.pdf)
+* [GammaComboManual.pdf](http://gammacombo.hepforge.org/web/HTML/GammaComboManual.pdf)
 
 Installation
 ============
