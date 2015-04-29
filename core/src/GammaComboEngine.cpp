@@ -18,6 +18,9 @@ GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[])
 	if (arg->filenameaddition!="") name += "_"+arg->filenameaddition;
 	m_fnamebuilder = new FileNameBuilder(arg, name);
 
+  // make batch scripts if appropriate and exit
+  m_batchscriptwriter = new BatchScriptWriter(argc, argv);
+
 	// run ROOT in interactive mode, if requested (-i)
 	if ( arg->interactive ) theApp = new TApplication("App", &argc, argv);
 	else gROOT->SetBatch(false);
@@ -29,6 +32,7 @@ GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[])
 GammaComboEngine::~GammaComboEngine()
 {
 	delete m_fnamebuilder;
+  delete m_batchscriptwriter;
 }
 
 
@@ -1113,6 +1117,15 @@ void GammaComboEngine::tightenChi2Constraint(Combiner *c, TString scanVar)
 }
 
 ///
+/// write batch scripts
+///
+void GammaComboEngine::writebatchscripts()
+{
+  m_batchscriptwriter->writeScripts(arg, &cmb);
+  exit(0);
+}
+
+///
 /// scan engine
 ///
 void GammaComboEngine::scan()
@@ -1354,6 +1367,7 @@ void GammaComboEngine::run()
 	//scaleDownErrors();
 	if ( arg->nosyst ) disableSystematics();
 	makeAddDelCombinations();
+  if ( arg->nbatchjobs>0 ) writebatchscripts();
 	defineColors();
 	customizeCombinerTitles();
 	setUpPlot();
