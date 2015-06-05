@@ -141,7 +141,7 @@ void ConfidenceContours::addFilledPlotArea(TH2F* hist)
 /// \param hist - the 2D histogram
 /// \param type - the type of the 2D histogram, either chi2 or p-value
 ///
-void ConfidenceContours::computeContours(TH2F* hist, histogramType type)
+void ConfidenceContours::computeContours(TH2F* hist, histogramType type, int id)
 {
 	if ( m_arg->debug ) {
 		cout << "ConfidenceContours::computeContours() : making contours of histogram ";
@@ -163,7 +163,7 @@ void ConfidenceContours::computeContours(TH2F* hist, histogramType type)
 	histb->SetContour(nMaxContours);
 	if ( type==kChi2 ) {
 		// chi2 units
-		if ( m_arg->plot2dcl ){
+		if ( m_arg->plot2dcl[id]>0 ){
 			histb->SetContourLevel(4, offset- 2.30);
 			histb->SetContourLevel(3, offset- 6.18);
 			histb->SetContourLevel(2, offset-11.83);
@@ -180,7 +180,7 @@ void ConfidenceContours::computeContours(TH2F* hist, histogramType type)
 	}
 	else {
 		// p-value units
-		if ( m_arg->plot2dcl ){
+		if ( m_arg->plot2dcl[id]>0 ){
 			histb->SetContourLevel(4, 0.3173);
 			histb->SetContourLevel(3, 4.55e-2);
 			histb->SetContourLevel(2, 2.7e-3);

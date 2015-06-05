@@ -24,7 +24,7 @@ class ConfidenceContours
 
 		ConfidenceContours(OptParser *arg);
 		~ConfidenceContours();
-		void                     computeContours(TH2F* hist, histogramType type);
+		void                     computeContours(TH2F* hist, histogramType type, int id=0);
 		void                     Draw();
 		void                     DrawDashedLine();
 		void                     setStyle(vector<int>& linecolor, vector<int>& linestyle, vector<int>& fillcolor, vector<int>& fillstyle);

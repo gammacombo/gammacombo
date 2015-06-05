@@ -47,6 +47,7 @@ namespace Utils
 		cleo2014,
 		cleoFullDP,
 		combos2008,
+    combpipi,
 		default_config,
 		excludeKdDdK3pi,
 		exclusive2014,
@@ -69,6 +70,8 @@ namespace Utils
 		lhcb_upgrade_extrap,
 		lhcbphis,
 		lhcbcomb,
+    lhcb_old,
+    lumi40pb,
 		lumi1fb,
 		lumi1fbConfcFit,
 		lumi1fbConfsFit,
@@ -94,8 +97,10 @@ namespace Utils
 		lambda1_3fb,
 		lambdafree_3fb,
 		manual,
+    milc_update,
 		none,
 		nophicorr,
+    onlyGsDGs,
 		sneha,
 		toy,
 		truth,
@@ -106,6 +111,7 @@ namespace Utils
 		useParametric,
 		usePolarCoords,
 		useTradObs,
+    world_average,
 		zero
 	};
 

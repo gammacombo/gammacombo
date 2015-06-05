@@ -930,10 +930,18 @@ void GammaComboEngine::scanStrategy1d(MethodProbScan *scanner, ParameterCache *p
 ///
 void GammaComboEngine::make1dPluginPlot(MethodPluginScan *sPlugin, MethodProbScan *sProb, int cId)
 {
-	make1dProbPlot(sProb, cId);
-	sPlugin->setLineColor(kBlack);
-	sPlugin->setDrawSolution(arg->plotsolutions[cId]);
-	sPlugin->plotOn(plot);
+	if ( arg->isQuickhack(17) ) {
+    make1dPluginOnlyPlot(sPlugin, cId);
+    sProb->setLineColor(kBlack);
+    sProb->setDrawSolution(arg->plotsolutions[cId]);
+    sProb->plotOn(plot);
+  }
+  else {
+    make1dProbPlot(sProb, cId);
+    sPlugin->setLineColor(kBlack);
+    sPlugin->setDrawSolution(arg->plotsolutions[cId]);
+    sPlugin->plotOn(plot);
+  }
 	plot->Draw();
 }
 
@@ -948,13 +956,25 @@ void GammaComboEngine::make1dPluginPlot(MethodPluginScan *sPlugin, MethodProbSca
 ///
 void GammaComboEngine::make2dPluginPlot(MethodPluginScan *sPlugin, MethodProbScan *sProb, int cId)
 {
-	sProb->setTitle(sProb->getTitle() + " (Prob)");
+	if ( arg->isQuickhack(18) ) {
+    sProb->setTitle(sProb->getTitle() + "PROB");
+    sPlugin->setTitle(sPlugin->getTitle() + "PLUGIN");
+  }
+  else {
+    sProb->setTitle(sProb->getTitle() + " (Prob)");
+    sPlugin->setTitle(sPlugin->getTitle() + " (Plugin)");
+  }
 	sProb->setDrawSolution(arg->plotsolutions[cId]);
-	sProb->plotOn(plot);
 	sProb->setLineColor(colorsLine[cId]);
-	sPlugin->setTitle(sPlugin->getTitle() + " (Plugin)");
 	sPlugin->setDrawSolution(arg->plotsolutions[cId]);
-	sPlugin->plotOn(plot);
+	if ( arg->isQuickhack(17) ) {
+    sPlugin->plotOn(plot);
+    sProb->plotOn(plot);
+  }
+  else {
+    sProb->plotOn(plot);
+    sPlugin->plotOn(plot);
+  }
 	plot->Draw();
 }
 
