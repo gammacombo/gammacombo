@@ -384,7 +384,6 @@ void OptParser::parseArguments(int argc, char* argv[])
 			" They cannot be used for control plots but save disk space.", false);
 	TCLAP::SwitchArg plotprelimArg("", "prelim", "Plot 'Preliminiary' into the plots. See also --unoff .", false);
 	TCLAP::SwitchArg plotunoffArg("", "unoff", "Plot 'Unofficial' into the plots. See also --prelim .", false);
-	TCLAP::SwitchArg plot2dclArg("", "2dcl", "Plot '2d' confidence level contours in 2d plots.", false);
 	TCLAP::SwitchArg prArg("", "pr", "Enforce the physical range on all parameters (needed to reproduce "
 			"the standard Feldman-Cousins with boundary example). If set, no nuisance will be allowed outside the "
 			"'phys' limit. However, toy generation of observables is not affected.", false);
@@ -441,6 +440,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"14: In 2D plots, reduce the y title offset and enlarge the pad accordingly.\n"
 			"15: In 2D plots, remove the X% CL content line.\n"
 			"16: In parameter evolution plots, add also the full evolution over the scan, in addition to just plotting the best evolution.\n"
+      "17: In 2D plots with the PLUGIN and PROB methods, plot the PLUGIN first then the PROB.\n"
+      "18: In 2D plots with PLUGIN and PROB methods, set legend titles as PLUGIN and PROB instead of (Plugin) and (Prob).\n"
 			, false, "int");
 	TCLAP::MultiArg<string> titleArg("", "title", "Override the title of a combination. "
 			"If 'default' is given, the default title for that combination is used. "
@@ -507,6 +508,14 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"combiners. If given less than the number of combinations (-c), the "
 			"remaining ones will not plot any solution.",
 			false, "int");
+  TCLAP::MultiArg<int> plot2dclArg("","2dcl","Plot '2d' confidence level contours in 2d plots.\n"
+      "2D plots only:\n"
+      " 0: don't plot 2dcl\n"
+      " 1: do plot 2dcl\n"
+      "When --2dcl is only given once, its value will be used for all plotted "
+      "combiners. If given less than the number of combinations (-c), the "
+      "remaining ones will plots without --2dcl.",
+      false, "int");
 
 	//
 	// let TCLAP parse the command line
@@ -612,7 +621,6 @@ void OptParser::parseArguments(int argc, char* argv[])
 	ntoys	          = ntoysArg.getValue();
 	parevol           = parevolArg.getValue();
 	pevid             = pevidArg.getValue();
-	plot2dcl          = plot2dclArg.getValue();
 	plotid            = plotidArg.getValue();
 	plotlog           = plotlogArg.getValue();
 	plotmagnetic      = plotmagneticArg.getValue();
@@ -858,8 +866,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	// }
 	// exit(0);
 
-	// --po
-	// If --po is only given once, apply the given setting to all
+	// --ps
+	// If --ps is only given once, apply the given setting to all
 	// combiners.
 	plotsolutions     = plotsolutionsArg.getValue();
 	if ( plotsolutions.size()==1 && combid.size()>1 ){
@@ -867,13 +875,30 @@ void OptParser::parseArguments(int argc, char* argv[])
 			plotsolutions.push_back(plotsolutions[0]);
 		}
 	}
-	// If --po is given more than once, but not for every combiner,
+	// If --ps is given more than once, but not for every combiner,
 	// fill the remaining ones up with 0=don't plot solution
 	else if ( plotsolutions.size() < combid.size() ){
 		for ( int i=plotsolutions.size(); i<combid.size(); i++ ){
 			plotsolutions.push_back(0);
 		}
 	}
+
+  // --2dcl
+  // If --2dcl is only given once, apply the given setting to all
+  // combiners
+	plot2dcl          = plot2dclArg.getValue();
+  if ( plot2dcl.size()==1 && combid.size()>1 ){
+    for (int i=1; i<combid.size(); i++ ){
+      plot2dcl.push_back(plot2dcl[0]);
+    }
+  }
+  // If --2dcl is given more than once, but not for every combiner,
+  // fill the remaining ones up with 0=don't plot 2dcl
+  else if ( plot2dcl.size() < combid.size() ) {
+    for ( int i=plot2dcl.size(); i<combid.size(); i++ ) {
+      plot2dcl.push_back(0);
+    }
+  }
 
 	// check --po argument
 	if ( plotpluginonly && !isAction("plugin") ){

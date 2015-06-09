@@ -169,7 +169,7 @@
 	fillcolor[4].push_back(cb.lightcolor(fillcolor[3][4]));
 	fillstyle[4].push_back(1001);
 
-	// scanners 6-12
+	// scanners 6-13
 	// colors based on http://colorbrewer2.org/, six classes, qualitative, second scheme
 	makeNewPlotStyle("#1b9e77"); // sea green
 	makeNewPlotStyle("#d95f02"); // dark orange
@@ -179,6 +179,7 @@
 	makeNewPlotStyle("#e6ab02"); // goldenrod
 	makeNewPlotStyle("#a6761d"); // chocolate
 	makeNewPlotStyle("#e31a1c"); // red
+  makeNewPlotStyle("#984ea3"); // darkish purple
 
 	// if requested, remove any fill pattern to make cleaner plots
 	if ( arg->isQuickhack(10) ){
@@ -309,7 +310,7 @@ void OneMinusClPlot2d::drawCLcontent()
 	t1->SetTextColor(kGray+1);
 	TString text;
 	text = "contours hold ";
-	if ( arg->plot2dcl || (histos.size()==1 && hasHistoType(kPvalue)) ){
+	if ( arg->plot2dcl[0]>0 || (histos.size()==1 && hasHistoType(kPvalue)) ){
 		if ( arg->plotnsigmacont>0 ) text += "68%";
 		if ( arg->plotnsigmacont>1 ) text += ", 95%";
 	}
@@ -479,7 +480,7 @@ void OneMinusClPlot2d::Draw()
 	for ( int i=0; i < histos.size(); i++ ){
 		if ( m_contours_computed[i] ) continue;
 		ConfidenceContours* cont = new ConfidenceContours(arg);
-		cont->computeContours(histos[i], histosType[i]);
+		cont->computeContours(histos[i], histosType[i], i);
 		int styleId = i;
 		if ( arg->color.size()>i ) styleId = arg->color[i];
 		cont->setStyle(transpose(linecolor)[styleId], transpose(linestyle)[styleId], transpose(fillcolor)[styleId], transpose(fillstyle)[styleId]);

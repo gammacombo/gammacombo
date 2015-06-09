@@ -77,7 +77,7 @@ class OptParser
 		TString 	parsavefile;
 		bool		parevol;
 		vector<int>	pevid;
-		bool            plot2dcl;
+		vector<int>     plot2dcl;
 		int             plotid;
 		bool            plotlog;
 		bool		        plotlegend;
