@@ -12,5 +12,12 @@
 
 SET( COMBINER_MODULES
 	tutorial
+  #biggammacombo
+  #gammacombo
+  #hfag
+  #belle2
+  #belle2_Vub
+  #Vub_Vcb
+  #bsmumu
 )
 
