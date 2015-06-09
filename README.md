@@ -28,7 +28,7 @@ To build GammaCombo cmake is needed in version 3.0 or higher.
 
 Get the source code from GitHub:
 
-    git clone https://github.com/mkarbach/gammacombo.git
+    git clone https://github.com/gammacombo/gammacombo.git
     cd gammacombo
 
 To create the library, create a build directory and change into it. E.g.
@@ -53,7 +53,7 @@ the doc/html subdirectory, do:
 
     make doc
 
-Follow the tutorial in the [manual](https://github.com/mkarbach/gammacombo/blob/master/manual/GammaComboManual.pdf):
+Follow the tutorial in the [manual](http://gammacombo.hepforge.org/web/HTML/GammaComboManual.pdf):
 
     cd ../tutorial
     bin/tutorial
