@@ -18,6 +18,9 @@ GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[])
 	if (arg->filenameaddition!="") name += "_"+arg->filenameaddition;
 	m_fnamebuilder = new FileNameBuilder(arg, name);
 
+  // make batch scripts if appropriate and exit
+  m_batchscriptwriter = new BatchScriptWriter(argc, argv);
+
 	// run ROOT in interactive mode, if requested (-i)
 	if ( arg->interactive ) theApp = new TApplication("App", &argc, argv);
 	else gROOT->SetBatch(false);
@@ -29,6 +32,7 @@ GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[])
 GammaComboEngine::~GammaComboEngine()
 {
 	delete m_fnamebuilder;
+  delete m_batchscriptwriter;
 }
 
 
@@ -897,10 +901,12 @@ void GammaComboEngine::scanStrategy1d(MethodProbScan *scanner, ParameterCache *p
 		cout << "first scan ..." << endl;
 		scanner->scan1d();
 		if ( !arg->probforce ){
-			for ( int i=0; i<scanner->getNSolutions(); i++ ){
-				cout << "rescan " << i+1 << " of " << scanner->getNSolutions() << " ..." << endl;
-				scanner->loadSolution(i);
-				scanner->scan1d(true);
+      vector<RooSlimFitResult*> firstScanSolutions = scanner->getSolutions();
+			for ( int i=0; i<firstScanSolutions.size(); i++ ){
+        cout << "Scan i: " << i << endl;
+        //scanner->loadSolution(i);
+        scanner->loadParameters(firstScanSolutions[i]);
+        scanner->scan1d(true);
 			}
 		}
 	}
@@ -926,10 +932,18 @@ void GammaComboEngine::scanStrategy1d(MethodProbScan *scanner, ParameterCache *p
 ///
 void GammaComboEngine::make1dPluginPlot(MethodPluginScan *sPlugin, MethodProbScan *sProb, int cId)
 {
-	make1dProbPlot(sProb, cId);
-	sPlugin->setLineColor(kBlack);
-	sPlugin->setDrawSolution(arg->plotsolutions[cId]);
-	sPlugin->plotOn(plot);
+	if ( arg->isQuickhack(17) ) {
+    make1dPluginOnlyPlot(sPlugin, cId);
+    sProb->setLineColor(kBlack);
+    sProb->setDrawSolution(arg->plotsolutions[cId]);
+    sProb->plotOn(plot);
+  }
+  else {
+    make1dProbPlot(sProb, cId);
+    sPlugin->setLineColor(kBlack);
+    sPlugin->setDrawSolution(arg->plotsolutions[cId]);
+    sPlugin->plotOn(plot);
+  }
 	plot->Draw();
 }
 
@@ -944,13 +958,25 @@ void GammaComboEngine::make1dPluginPlot(MethodPluginScan *sPlugin, MethodProbSca
 ///
 void GammaComboEngine::make2dPluginPlot(MethodPluginScan *sPlugin, MethodProbScan *sProb, int cId)
 {
-	sProb->setTitle(sProb->getTitle() + " (Prob)");
+	if ( arg->isQuickhack(18) ) {
+    sProb->setTitle(sProb->getTitle() + "PROB");
+    sPlugin->setTitle(sPlugin->getTitle() + "PLUGIN");
+  }
+  else {
+    sProb->setTitle(sProb->getTitle() + " (Prob)");
+    sPlugin->setTitle(sPlugin->getTitle() + " (Plugin)");
+  }
 	sProb->setDrawSolution(arg->plotsolutions[cId]);
-	sProb->plotOn(plot);
 	sProb->setLineColor(colorsLine[cId]);
-	sPlugin->setTitle(sPlugin->getTitle() + " (Plugin)");
 	sPlugin->setDrawSolution(arg->plotsolutions[cId]);
-	sPlugin->plotOn(plot);
+	if ( arg->isQuickhack(17) ) {
+    sPlugin->plotOn(plot);
+    sProb->plotOn(plot);
+  }
+  else {
+    sProb->plotOn(plot);
+    sPlugin->plotOn(plot);
+  }
 	plot->Draw();
 }
 
@@ -1110,6 +1136,15 @@ void GammaComboEngine::tightenChi2Constraint(Combiner *c, TString scanVar)
 	pdf->ScaleError(scanVar, scale);
 	pdf->buildCov();
 	pdf->buildPdf();
+}
+
+///
+/// write batch scripts
+///
+void GammaComboEngine::writebatchscripts()
+{
+  m_batchscriptwriter->writeScripts(arg, &cmb);
+  exit(0);
 }
 
 ///
@@ -1354,6 +1389,7 @@ void GammaComboEngine::run()
 	//scaleDownErrors();
 	if ( arg->nosyst ) disableSystematics();
 	makeAddDelCombinations();
+  if ( arg->nbatchjobs>0 ) writebatchscripts();
 	defineColors();
 	customizeCombinerTitles();
 	setUpPlot();

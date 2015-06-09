@@ -61,9 +61,9 @@ TString Utils::ConfigToTString(config s)
 	if ( s == lumi1fbsl )            return "lumi1fbsl";
 	if ( s == lumi2fb )              return "lumi2fb";
 	if ( s == lumi3fb )              return "lumi3fb";
-	if ( s == lumi3fbDKstz )              return "lumi3fbDKstz";
+	if ( s == lumi3fbDKstz )         return "lumi3fbDKstz";
 	if ( s == lumi3fbFix )           return "lumi3fbFix";
-	if ( s == lumi3fbPaper )              return "lumi3fbPaper";
+	if ( s == lumi3fbPaper )         return "lumi3fbPaper";
 	if ( s == lumi50fb )             return "lumi50fb";
 	if ( s == lumi9fb )              return "lumi9fb";
 	if ( s == manual )               return "manual";
@@ -79,7 +79,8 @@ TString Utils::ConfigToTString(config s)
 	if ( s == useParametric )        return "useParametric";
 	if ( s == usePolarCoords )       return "usePolarCoords";
 	if ( s == useTradObs )           return "useTradObs";
-	if ( s == year2014 )                return "year2014";
+  if ( s == world_average )        return "world_average";
+	if ( s == year2014 )             return "year2014";
 	if ( s == zero )                 return "zero";
 
 	cout << "PDF_Abs::ConfigToTString() : ERROR : Config not found: " << s << endl;
