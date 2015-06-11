@@ -39,6 +39,7 @@ OptParser::OptParser():
 	groupPos = "";
 	id = -99;
 	importance = false;
+  info = false;
 	interactive = false;
 	jobdir = ".";
 	largest = false;
@@ -108,6 +109,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("ext");
 	availableOptions.push_back("id");
 	availableOptions.push_back("importance");
+  availableOptions.push_back("info");
 	availableOptions.push_back("interactive");
 	//availableOptions.push_back("jobdir");
 	availableOptions.push_back("jobs");
@@ -387,6 +389,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::SwitchArg prArg("", "pr", "Enforce the physical range on all parameters (needed to reproduce "
 			"the standard Feldman-Cousins with boundary example). If set, no nuisance will be allowed outside the "
 			"'phys' limit. However, toy generation of observables is not affected.", false);
+  TCLAP::SwitchArg infoArg("", "info", "Print information about the passed combiners and exit", false);
 	TCLAP::SwitchArg importanceArg("", "importance", "Enable importance sampling for plugin toys.", false);
 	TCLAP::SwitchArg nosystArg("", "nosyst", "Sets all systematic errors to zero.", false);
 	TCLAP::SwitchArg printcorArg("", "printcor", "Print the correlation matrix of each solution found.", false);
@@ -572,6 +575,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "jobs" ) ) cmd.add(jobsArg);
 	if ( isIn<TString>(bookedOptions, "jobdir" ) ) cmd.add( jobdirArg );
 	if ( isIn<TString>(bookedOptions, "interactive" ) ) cmd.add( interactiveArg );
+  if ( isIn<TString>(bookedOptions, "info" ) ) cmd.add( infoArg );
 	if ( isIn<TString>(bookedOptions, "importance" ) ) cmd.add( importanceArg );
 	if ( isIn<TString>(bookedOptions, "id" ) ) cmd.add(idArg);
 	if ( isIn<TString>(bookedOptions, "group" ) ) cmd.add( plotgroupArg );
@@ -603,6 +607,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	group             = plotgroupArg.getValue();
 	id                = idArg.getValue();
 	importance        = importanceArg.getValue();
+  info              = infoArg.getValue();
 	interactive       = interactiveArg.getValue();
 	intprob           = intprobArg.getValue();
 	jobdir            = TString(jobdirArg.getValue());
