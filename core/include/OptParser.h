@@ -56,6 +56,7 @@ class OptParser
 		TString	groupPos;
 		int             id;
 		bool            importance;
+    bool            info;
 		bool		        interactive;
 		vector<int>   	jmax;
 		vector<int>   	jmin;
