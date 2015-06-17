@@ -1200,6 +1200,7 @@ void GammaComboEngine::scan()
 		// printout
 		c->print();
 		if ( arg->debug ) c->getWorkspace()->Print("v");
+    if ( arg->info ) continue;
 
 		/////////////////////////////////////////////////////
 		//
@@ -1394,6 +1395,7 @@ void GammaComboEngine::run()
 	customizeCombinerTitles();
 	setUpPlot();
 	scan();
+  if ( arg->info ) return; // if only info is requested then we can go home
 	if (!arg->isAction("pluginbatch")) savePlot();
 	cout << endl;
 	t.Stop();
