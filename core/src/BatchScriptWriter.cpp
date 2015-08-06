@@ -80,6 +80,7 @@ void BatchScriptWriter::writeScript(TString fname, int jobn, OptParser *arg) {
   outfile << Form("cp -r %s/plots/dot/* plots/dot",cwd) << endl;
   outfile << "mkdir -p plots/par" << endl;
   outfile << Form("cp -r %s/plots/par/* plots/par",cwd) << endl;
+  outfile << "mkdir -p plots/scanner" << endl;
   outfile << "mkdir -p root" << endl;
   outfile << Form("touch %s/%s.run",cwd,fname.Data()) << endl;
   outfile << Form("if ( %s --nrun %d ); then",exec.c_str(),jobn) << endl;
