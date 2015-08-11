@@ -56,6 +56,7 @@ namespace Utils
 		hfag,
 		hfagFP2014,
 		hfagLP2011,
+		hfagCHARM2015,
 		highrb,
 		highstattoy,
 		lhcb,
