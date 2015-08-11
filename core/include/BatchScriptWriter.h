@@ -23,7 +23,7 @@ class BatchScriptWriter
     ~BatchScriptWriter();
 
     void writeScripts(OptParser *arg, vector<Combiner*> *cmb);
-    void writeScript(TString fname, int jobn, OptParser *arg);
+    void writeScript(TString fname, TString outfloc, int jobn, OptParser *arg);
 
     string exec;
     string subpkg;

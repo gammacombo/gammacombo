@@ -1,10 +1,16 @@
+#include <ctime>
+
 #include "BatchScriptWriter.h"
 
 BatchScriptWriter::BatchScriptWriter(int argc, char* argv[]):
   exec("")
 {
   for (int i=0; i<argc; i++){
-    if ( string(argv[i])==string("--nbatchjobs") || (i>0 && string(argv[i-1])==string("--nbatchjobs")) ) {
+    // skip arguments we dont need
+    if ( string(argv[i])==string("--nbatchjobs") || (i>0 && string(argv[i-1])==string("--nbatchjobs")) ||
+         string(argv[i])==string("--batchstartn") || (i>0 && string(argv[i-1])==string("--batchstartn")) ||
+         string(argv[i])==string("--batcheos") 
+           ) {
       continue;
     }
     exec += string(argv[i]) + " ";
@@ -30,31 +36,48 @@ void BatchScriptWriter::writeScripts(OptParser *arg, vector<Combiner*> *cmb){
      
     cout << "Writing submission scripts for combination " << c->getName() << endl;
     
-    TString dirname = "sub/scan1dPlugin_"+c->getName()+"_"+arg->var[0];
+    TString dirname = "scan1dPlugin_"+c->getName()+"_"+arg->var[0];
     if ( arg->var.size()==2 ) {
-      dirname = "sub/scan2dPlugin_"+c->getName()+"_"+arg->var[0];
+      dirname = "scan2dPlugin_"+c->getName()+"_"+arg->var[0];
     }
     if ( arg->var.size()>1) {
       dirname += "_"+arg->var[1];
     }
-    system(Form("mkdir -p %s",dirname.Data()));
-    TString scriptname = dirname+"/scan1dPlugin_"+c->getName()+"_"+arg->var[0];
+    TString scripts_dir_path = "sub/" + dirname;
+    TString outf_dir = "root/" + dirname;
+    system(Form("mkdir -p %s",scripts_dir_path.Data()));
+    TString scriptname = "scan1dPlugin_"+c->getName()+"_"+arg->var[0];
+    // if write to eos then make the directory
+    if ( arg->batcheos ) {
+      time_t t = time(0);
+      struct tm * now = localtime(&t);
+      int day = now->tm_mday;
+      int month = now->tm_mon;
+      int year  = now->tm_year+1900;
+
+      TString eos_path = Form("/eos/lhcb/user/m/mkenzie/gammacombo/%02d%02d%04d",day,month,year);
+      system(Form("/afs/cern.ch/project/eos/installation/0.3.84-aquamarine/bin/eos.select mkdir %s",eos_path.Data()));
+      eos_path += Form("/%s",dirname.Data());
+      system(Form("/afs/cern.ch/project/eos/installation/0.3.84-aquamarine/bin/eos.select mkdir -p %s",eos_path.Data()));
+      outf_dir = eos_path;
+    }
     if ( arg->var.size()==2 ) {
-      scriptname = dirname+"/scan2dPlugin_"+c->getName()+"_"+arg->var[0];
+      scriptname = "scan2dPlugin_"+c->getName()+"_"+arg->var[0];
     }
     if ( arg->var.size()>1) {
       scriptname += "_"+arg->var[1];
     }
+    scriptname = scripts_dir_path + "/" + scriptname;
     
-    for ( int job=1; job<=arg->nbatchjobs; job++ ) {
+    for ( int job=arg->batchstartn; job<arg->batchstartn+arg->nbatchjobs; job++ ) {
       TString fname = scriptname + Form("_run%d",job) + ".sh";
-      writeScript(fname, job, arg);
+      writeScript(fname, outf_dir, job, arg);
     }
   }
 }
 
-void BatchScriptWriter::writeScript(TString fname, int jobn, OptParser *arg) {
-
+void BatchScriptWriter::writeScript(TString fname, TString outfloc, int jobn, OptParser *arg) {
+  
   TString rootfilename = fname;
   (rootfilename.ReplaceAll("sub","root")).ReplaceAll(".sh",".root");
   cout << "\t" << fname << endl;
@@ -90,8 +113,9 @@ void BatchScriptWriter::writeScript(TString fname, int jobn, OptParser *arg) {
   outfile << Form("\ttouch %s/%s.fail",cwd,fname.Data()) << endl;
   outfile << Form("\trm -f %s/%s.run",cwd,fname.Data()) << endl;
   outfile << "fi" << endl;
-  TString outfloc = fname;
-  outfile << Form("cp %s %s/%s",rootfilename.Data(),cwd,outfloc.ReplaceAll(".sh",".root").Data()) << endl;
+  TString copy_line = Form("cp %s %s/",rootfilename.Data(),outfloc.Data());
+  if ( arg->batcheos ) copy_line = "/afs/cern.ch/project/eos/installation/0.3.84-aquamarine/bin/eos.select "+copy_line;
+  outfile << copy_line << endl;
 
   outfile.close();
 

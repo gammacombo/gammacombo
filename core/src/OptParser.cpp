@@ -44,7 +44,9 @@ OptParser::OptParser():
 	jobdir = ".";
 	largest = false;
 	lightfiles = false;
+  batchstartn = 1;
   nbatchjobs = -99;
+  batcheos = false;
 	nBBpoints = -99;
 	ndiv = 407;
 	ndivy = 407;
@@ -97,6 +99,8 @@ void OptParser::defineOptions()
 	availableOptions.push_back("action");
 	availableOptions.push_back("asimov");
 	availableOptions.push_back("asimovfile");
+  availableOptions.push_back("batchstartn");
+  availableOptions.push_back("batcheos");
 	availableOptions.push_back("combid");
 	availableOptions.push_back("color");
 	availableOptions.push_back("controlplots");
@@ -204,6 +208,8 @@ void OptParser::bookPlottingOptions()
 ///
 void OptParser::bookPluginOptions()
 {
+  bookedOptions.push_back("batchstartn");
+  bookedOptions.push_back("batcheos");
   bookedOptions.push_back("controlplots");
 	bookedOptions.push_back("id");
 	bookedOptions.push_back("importance");
@@ -339,6 +345,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"Format: --grouppos xmin:ymin in normalized coordinates [0,1]. To use default values "
 			"for one coordinate, use 'def': --grouppos def:y.", false, "default", "string");
   TCLAP::ValueArg<string> queueArg("q","queue","Batch queue to submit to. If none is given then the scripts will be written but not submitted.", false, "", "string");
+  TCLAP::ValueArg<int> batchstartnArg("","batchstartn", "number of first batch job (e.g. if you have already submitted 100 you can submit another 100 starting from 101)", false, 1, "int");
   TCLAP::ValueArg<int> nbatchjobsArg("","nbatchjobs", "number of jobs to write scripts for and submit to batch system", false, 0, "int");
 	TCLAP::ValueArg<int> nBBpointsArg("", "nBBpoints", "number of BergerBoos points per scanpoint", false, 1, "int");
 	TCLAP::ValueArg<int> idArg("", "id", "When making controlplots (--controlplots), only consider the "
@@ -362,6 +369,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::ValueArg<string> jobdirArg("", "jobdir", "Give absolute job-directory if working on batch systems.", false, "default", "string");
 
 	// --------------- switch arguments
+  TCLAP::SwitchArg batcheosArg("","batcheos", "When submitting batch jobs (for plugin) write the output to eos", false);
 	TCLAP::SwitchArg plotpluginonlyArg("", "po", "Make a 1-CL plot just showing the plugin curves.", false);
 	TCLAP::SwitchArg interactiveArg("i", "interactive", "Enables interactive mode (requires X11 session). Exit with Ctrl+c.", false);
 	TCLAP::SwitchArg intprobArg("", "intprob", "Use the internal (=Prob) chi2min histogram"
@@ -590,6 +598,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "controlplots" ) ) cmd.add(controlplotArg);
 	if ( isIn<TString>(bookedOptions, "combid" ) ) cmd.add(combidArg);
 	if ( isIn<TString>(bookedOptions, "color" ) ) cmd.add(colorArg);
+  if ( isIn<TString>(bookedOptions, "batchstartn" ) ) cmd.add( batchstartnArg );
+  if ( isIn<TString>(bookedOptions, "batcheos" ) ) cmd.add(batcheosArg);
 	if ( isIn<TString>(bookedOptions, "asimovfile" ) ) cmd.add( asimovFileArg );
 	if ( isIn<TString>(bookedOptions, "asimov") ) cmd.add(asimovArg);
 	if ( isIn<TString>(bookedOptions, "action") ) cmd.add(actionArg);
@@ -613,6 +623,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	jobdir            = TString(jobdirArg.getValue());
 	largest           = largestArg.getValue();
 	lightfiles        = lightfilesArg.getValue();
+  batchstartn       = batchstartnArg.getValue();
+  batcheos          = batcheosArg.getValue();
   nbatchjobs        = nbatchjobsArg.getValue();
 	nBBpoints         = nBBpointsArg.getValue();
 	ndiv              = ndivArg.getValue();
