@@ -64,6 +64,8 @@ class OptParser
 		bool            largest;
 		vector<TString> loadParamsFile;
 		bool            lightfiles;
+    int             batchstartn;
+    bool            batcheos;
     int             nbatchjobs;
 		int             nBBpoints;
 		int             ndiv;
