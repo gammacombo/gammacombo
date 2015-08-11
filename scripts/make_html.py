@@ -8,6 +8,7 @@ parser.add_option("-p","--plotsPerLine",type="int",default=-1,help="Plots to dis
 parser.add_option("-c","--colorScheme",default="maroon",help="html color (as string) for borders etc.")
 parser.add_option("-u","--upload",default=None, help='Upload location on afs web server')
 parser.add_option("-r","--regex",default=None, help='Each plot name must match this regex')
+parser.add_option("-d","--dir",default="plots",help='Directory with plots in')
 (opts,args) = parser.parse_args()
 
 import os
@@ -145,8 +146,7 @@ def writeHtml( location, title, links, plots, isHome=False ):
 
 # __ main __
 
-#directories = gatherDirectories('plots')
-directories = ['plots']
+directories = [opts.dir]
 
 # home page
 #writeHtml( 'plots', 'Home', directories, {}, True )
@@ -167,7 +167,7 @@ if opts.upload:
 
   uname = raw_input('Enter username@lxplus.cern.ch\n')
 
-  exec_line = 'scp -r plots/* %s@lxplus.cern.ch:%s/'%(uname,opts.upload)
+  exec_line = 'scp -r %s/* %s@lxplus.cern.ch:%s/'%(opts.dir,uname,opts.upload)
   print exec_line
 
   os.system( exec_line )
