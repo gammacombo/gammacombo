@@ -900,38 +900,28 @@ void OptParser::parseArguments(int argc, char* argv[])
 		}
 	}
 
-  // --2dcl
-	plot2dcl          = plot2dclArg.getValue();
-	cout << "HERE" << endl;
-	for (int i=0; i<plot2dcl.size(); i++) {
-		cout << i << " " << plot2dcl[i] << endl;
-	}
-
+	plot2dcl = plot2dclArg.getValue();
   // If --2dcl is not given, apply 0 to all
 	if ( plot2dcl.size()==0){
-		for (int i=1; i<combid.size(); i++){
+		for (int i=0; i<10; i++){
 			plot2dcl.push_back(0);
 		}
 	}
   // combiners
 	// If --2dcl is only given once, apply the given setting to all
   // combiners
-  if ( plot2dcl.size()==1 && combid.size()>1 ){
+  if ( plot2dcl.size()==1 && combid.size()>0 ){
     for (int i=0; i<combid.size(); i++ ){
       plot2dcl.push_back(plot2dcl[0]);
     }
   }
   // If --2dcl is given more than once, but not for every combiner,
   // fill the remaining ones up with 0=don't plot 2dcl
-  else if ( plot2dcl.size() < combid.size() ) {
+  else if ( plot2dcl.size() > 1 && plot2dcl.size() <= combid.size() ) {
     for ( int i=plot2dcl.size(); i<combid.size(); i++ ) {
       plot2dcl.push_back(0);
     }
   }
-	cout << "HERE" << endl;
-	for (int i=0; i<plot2dcl.size(); i++) {
-		cout << i << " " << plot2dcl[i] << endl;
-	}
 
 	// check --po argument
 	if ( plotpluginonly && !isAction("plugin") ){
