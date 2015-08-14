@@ -180,6 +180,8 @@
 	makeNewPlotStyle("#a6761d"); // chocolate
 	makeNewPlotStyle("#e31a1c"); // red
   makeNewPlotStyle("#984ea3"); // darkish purple
+	makeNewPlotStyle("",kBlue-5); // same as 1D scan 1
+	makeNewPlotStyle("",kGreen-8); // same as 1D scan 2
 
 	// if requested, remove any fill pattern to make cleaner plots
 	if ( arg->isQuickhack(10) ){
@@ -199,13 +201,14 @@
 /// \param htmlColor - an HTML color, e.g. "#e6ab02". If ROOT is provided,
 /// the new scanner will be based on a predefined ROOT color.
 ///
-void OneMinusClPlot2d::makeNewPlotStyle(TString htmlColor)
+void OneMinusClPlot2d::makeNewPlotStyle(TString htmlColor, int ROOTColor)
 {
 	int currentNumberOfStyles = linecolor[0].size();
 	// get index of new color. Either use the provided HTML color, or
 	// take a predefined ROOT color.
 	int newColor;
 	if ( htmlColor.EqualTo("ROOT") ) newColor = currentNumberOfStyles;
+	else if ( ROOTColor > 0 ) newColor = ROOTColor;
 	else newColor = TColor::GetColor(htmlColor);
 	markerstyle.push_back(20);
 	markersize.push_back(1.1);
@@ -231,6 +234,7 @@ void OneMinusClPlot2d::makeNewPlotStyle(TString htmlColor)
 	linestyle[4].push_back(kSolid);
 	fillcolor[4].push_back(cb.darklightcolor(fillcolor[3][currentNumberOfStyles],thisMuchDarker));
 	fillstyle[4].push_back(1001);
+
 }
 
 ///

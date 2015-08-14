@@ -8,6 +8,7 @@ parser.add_option("-S","--synchdir",default=None,help="Synch to this directory (
 parser.add_option("-r","--regex",default=None,help="Filter folders by this regex")
 parser.add_option("-R","--resubmit",default=None,help="Resubmit jobs (pass Queued, Failed, All). Running and Completed jobs don't get resubmitted.")
 parser.add_option("-q","--queue",default=None,help='Queue to resubmit jobs to')
+parser.add_option("-n","--skipBackUp",default=False,action="store_true", help="Dont backup old files")
 (opts,args) = parser.parse_args()
 
 import sys
@@ -88,7 +89,7 @@ if opts.synch:
         back_up_req = True
         break
   # do back up if needed
-  if back_up_req:
+  if back_up_req and not opts.skipBackUp:
     os.system('mkdir -p root/back_up')
     timestamp = int(time.time())
     os.system('mkdir -p root/back_up/%d'%timestamp)
