@@ -45,6 +45,7 @@ namespace Utils
 		cleo2009,
 		cleo2012,
 		cleo2014,
+		cleo2015,
 		cleoFullDP,
 		combos2008,
     combpipi,
