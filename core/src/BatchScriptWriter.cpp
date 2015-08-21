@@ -113,7 +113,8 @@ void BatchScriptWriter::writeScript(TString fname, TString outfloc, int jobn, Op
   outfile << Form("\ttouch %s/%s.fail",cwd,fname.Data()) << endl;
   outfile << Form("\trm -f %s/%s.run",cwd,fname.Data()) << endl;
   outfile << "fi" << endl;
-  TString basename = rootfilename.Remove(0, rootfilename.Last('/')+1);
+  TString basename = rootfilename;
+  basename.Remove(0, rootfilename.Last('/')+1);
   TString copy_line = Form("cp %s %s/%s",rootfilename.Data(),outfloc.Data(),basename.Data());
   if ( arg->batcheos ) copy_line = "/afs/cern.ch/project/eos/installation/0.3.84-aquamarine/bin/eos.select "+copy_line;
   outfile << copy_line << endl;
