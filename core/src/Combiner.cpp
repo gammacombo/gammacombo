@@ -393,7 +393,12 @@ void Combiner::adjustPhysRange(TString varName, float min, float max)
 		cout << varName << ". Skipping." << endl;
 		return;
 	}
-	w->var(varName)->setRange("phys", min, max);
+  if ( min <= -999 && max <= -999 ) {
+    w->var(varName)->removeRange();
+  }
+  else {
+    w->var(varName)->setRange("phys", min, max);
+  }
 }
 
 ///

@@ -104,6 +104,7 @@ namespace Utils
 		none,
 		nophicorr,
     onlyGsDGs,
+    pdg,
 		sneha,
 		toy,
 		truth,

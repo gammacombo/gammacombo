@@ -52,6 +52,7 @@ class OptParser
 		TString         filenameaddition;
 		vector<vector<FixPar> >     fixParameters;
 		vector<vector<RangePar> >   physRanges;
+    vector<vector<TString> >    removeRanges;
 		TString	group;
 		TString	groupPos;
 		int             id;
@@ -62,6 +63,7 @@ class OptParser
 		vector<int>   	jmin;
 		TString         jobdir;
 		bool            largest;
+    bool            latex;
 		vector<TString> loadParamsFile;
 		bool            lightfiles;
     int             batchstartn;
