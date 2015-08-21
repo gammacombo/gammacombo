@@ -26,6 +26,7 @@
 #include "TDatime.h"
 #include "Utils.h"
 #include "BatchScriptWriter.h"
+#include "LatexMaker.h"
 
 using namespace std;
 using namespace Utils;
@@ -99,6 +100,7 @@ class GammaComboEngine
 		void      tightenChi2Constraint(Combiner *c, TString scanVar);
 		void			usage();
     void      writebatchscripts();
+    void      makeLatex( Combiner *c );
 
 		OptParser*			arg;
 		vector<Combiner*> 	cmb;

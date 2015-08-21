@@ -43,6 +43,7 @@ OptParser::OptParser():
 	interactive = false;
 	jobdir = ".";
 	largest = false;
+  latex = false;
 	lightfiles = false;
   batchstartn = 1;
   nbatchjobs = -99;
@@ -118,6 +119,7 @@ void OptParser::defineOptions()
 	//availableOptions.push_back("jobdir");
 	availableOptions.push_back("jobs");
 	availableOptions.push_back("largest");
+  availableOptions.push_back("latex");
 	availableOptions.push_back("leg");
 	availableOptions.push_back("legsize");
 	availableOptions.push_back("group");
@@ -148,6 +150,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("pulls");
 	availableOptions.push_back("qh");
   availableOptions.push_back("queue");
+  availableOptions.push_back("removeRange");
 	availableOptions.push_back("sn");
 	availableOptions.push_back("sn2d");
 	availableOptions.push_back("scanforce");
@@ -387,6 +390,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::SwitchArg largestArg("", "largest", "Report largest CL interval: lowest boundary of "
 			"all intervals to highest boundary of all intervals. Useful if two intervals are very "
 			"close together.", false);
+  TCLAP::SwitchArg latexArg("", "latex", "Make latex tables of observables and correlations", false);
 	TCLAP::SwitchArg plotlogArg("", "log", "make logarithmic 1-CL plots", false);
 	TCLAP::SwitchArg plotpullsArg("", "pulls", "Make a pull plot illustrating the consistency "
 			"of the best solution with the observables.", false);
@@ -475,7 +479,13 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"Example: --prange 'g=1.7:1.9,r_dk=0.09:0.2' \n"
 			"To modify only the parameters in the second combination, do\n"
 			"Example: --prange def --prange 'g=1.7:1.9,r_dk=0.09:0.2' \n"
+      "Set to -999:-999 to remove range \n"
 			, false, "string");
+  TCLAP::MultiArg<string> removeRangeArg("","removeRange","Remove the range entirely of one or more parameters in a combination. "
+      "The range are enforced through the --pr option."
+      "If 'all' is given, all parameter ranges are removed"
+      "Can also use regex matching"
+      , false, "string");
 	TCLAP::MultiArg<float> snArg("", "sn", "--sn x. Save nuisances to parameter cache file at certain points after a "
 			"1d scan was performed. This can be used to set these as starting points "
 			"for further scans. "
@@ -545,6 +555,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "scanrange" ) ) cmd.add( scanrangeArg );
 	if ( isIn<TString>(bookedOptions, "scanforce" ) ) cmd.add( scanforceArg );
 	if ( isIn<TString>(bookedOptions, "relation" ) ) cmd.add(relationArg);
+  if ( isIn<TString>(bookedOptions, "removeRange" ) ) cmd.add(removeRangeArg);
 	if ( isIn<TString>(bookedOptions, "qh" ) ) cmd.add(qhArg);
   if ( isIn<TString>(bookedOptions, "queue") ) cmd.add(queueArg);
 	if ( isIn<TString>(bookedOptions, "pulls" ) ) cmd.add( plotpullsArg );
@@ -580,6 +591,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "legsize" ) ) cmd.add( plotlegsizeArg );
 	if ( isIn<TString>(bookedOptions, "leg" ) ) cmd.add( plotlegArg );
 	if ( isIn<TString>(bookedOptions, "largest" ) ) cmd.add( largestArg );
+  if ( isIn<TString>(bookedOptions, "latex" ) ) cmd.add( latexArg );
 	if ( isIn<TString>(bookedOptions, "jobs" ) ) cmd.add(jobsArg);
 	if ( isIn<TString>(bookedOptions, "jobdir" ) ) cmd.add( jobdirArg );
 	if ( isIn<TString>(bookedOptions, "interactive" ) ) cmd.add( interactiveArg );
@@ -622,6 +634,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	intprob           = intprobArg.getValue();
 	jobdir            = TString(jobdirArg.getValue());
 	largest           = largestArg.getValue();
+  latex             = latexArg.getValue();
 	lightfiles        = lightfilesArg.getValue();
   batchstartn       = batchstartnArg.getValue();
   batcheos          = batcheosArg.getValue();
@@ -850,6 +863,18 @@ void OptParser::parseArguments(int argc, char* argv[])
 		//}
 	//}
 	//exit(0);
+
+  // --removeRange
+  tmp = removeRangeArg.getValue();
+  for ( int i = 0; i < tmp.size(); i++) { // loop over instances of --removeRange
+    TObjArray *parsArray = TString(tmp[i]).Tokenize(","); // split string at ","
+    vector<TString> pars;
+    for ( int j=0; j<parsArray->GetEntries(); j++){
+      TString par = ((TObjString*)parsArray->At(j))->GetString();
+      pars.push_back(par);
+    }
+    removeRanges.push_back(pars);
+  }
 
 	// --fix
 	tmp = fixArg.getValue();

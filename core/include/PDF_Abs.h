@@ -11,6 +11,7 @@
 #include <sstream>
 #include <iostream>
 #include <stdlib.h>
+#include <vector>
 
 #include "RooGlobalFunc.h"
 #include "RooWorkspace.h"
@@ -67,6 +68,7 @@ class PDF_Abs
 		inline TString      getUniqueID(){return uniqueID;};
 		inline unsigned long long getUniqueGlobalID(){return uniqueGlobalID;}
 		inline RooArgList*  getObservables(){return observables;};
+    inline vector<TString> getLatexObservables(){return latexObservables;};
 		inline TString		getObservableSourceString(){return obsValSource;};
 		float 				getObservableValue(TString obsname);
 		inline RooArgList*  getParameters(){return parameters;};
@@ -127,6 +129,7 @@ class PDF_Abs
 		int                     nObs;         // number of observables
 		map<string,TObject*>    trash;        // trash bin, gets emptied in destructor
 		bool					m_isCrossCorPdf;	// Cross correlation PDFs need some extra treatment in places, e.g. in uniquify()
+    vector<TString>         latexObservables; // holds latex labels for observables
 
 		// The following three members are to gain performance during
 		// toy generation - generating 1000 toys is much faster than 1000 times one toy.

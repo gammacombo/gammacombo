@@ -1080,9 +1080,23 @@ void GammaComboEngine::adjustRanges(Combiner *c, int cId)
 {
 	if ( cId<arg->physRanges.size() ){
 		for ( int j=0; j<arg->physRanges[cId].size(); j++ ){
-			c->adjustPhysRange(arg->physRanges[cId][j].name, arg->physRanges[cId][j].min, arg->physRanges[cId][j].max);
+      c->adjustPhysRange(arg->physRanges[cId][j].name, arg->physRanges[cId][j].min, arg->physRanges[cId][j].max);
 		}
 	}
+  if ( cId<arg->removeRanges.size() ){
+    for ( int j=0; j<arg->removeRanges[cId].size(); j++ ) {
+      if ( arg->removeRanges[cId][j] == "all" ) {
+        const RooArgSet *pars = (RooArgSet*)c->getParameters();
+        TIterator *it = pars->createIterator();
+        while ( RooRealVar* par = (RooRealVar*)it->Next() ) {
+          par->removeRange();
+        }
+      }
+      else {
+        c->adjustPhysRange( arg->removeRanges[cId][j], -999, -999 );
+      }
+    }
+  }
 }
 
 ///
@@ -1148,6 +1162,18 @@ void GammaComboEngine::writebatchscripts()
 }
 
 ///
+/// make latex
+///
+void GammaComboEngine::makeLatex(Combiner *c)
+{
+  for ( unsigned int p=0; p < c->getPdfs().size(); p++) {
+    PDF_Abs *pdf = c->getPdfs()[p];
+    LatexMaker m( c->getName(), pdf );
+    m.writeFile();
+  }
+}
+
+///
 /// scan engine
 ///
 void GammaComboEngine::scan()
@@ -1197,10 +1223,11 @@ void GammaComboEngine::scan()
 			c->getWorkspace()->extendSet(c->getParsName(), arg->var[1]);
 		}
 
-		// printout
+		// printout and latex
 		c->print();
 		if ( arg->debug ) c->getWorkspace()->Print("v");
-    if ( arg->info ) continue;
+    if ( arg->latex ) makeLatex( c );
+    if ( arg->info || arg->latex ) continue;
 
 		/////////////////////////////////////////////////////
 		//
@@ -1394,8 +1421,8 @@ void GammaComboEngine::run()
 	defineColors();
 	customizeCombinerTitles();
 	setUpPlot();
-	scan();
-  if ( arg->info ) return; // if only info is requested then we can go home
+	scan(); // most thing gets done here
+  if ( arg->info || arg->latex ) return; // if only info is requested then we can go home
 	if (!arg->isAction("pluginbatch")) savePlot();
 	cout << endl;
 	t.Stop();
