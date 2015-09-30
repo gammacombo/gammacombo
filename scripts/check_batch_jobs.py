@@ -77,7 +77,7 @@ for job_dir in job_dirs:
         else:
           print '\t', job
 
-  import time
+import time
 
 if opts.synch:
   # check if back_up is required
@@ -85,7 +85,7 @@ if opts.synch:
   for root,dirs, files in os.walk('root'):
     if root!='root': continue
     for dir in dirs:
-      if 'scan' in dir:
+      if dir in job_dirs:
         back_up_req = True
         break
   # do back up if needed
