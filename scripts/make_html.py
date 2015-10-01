@@ -10,6 +10,7 @@ parser.add_option("-u","--upload",default=None, help='Upload location on afs web
 parser.add_option("-l","--lxplus",default=False, action="store_true", help='If already running on lxplus')
 parser.add_option("-r","--regex",default=None, help='Each plot name must match this regex')
 parser.add_option("-d","--dir",default="plots",help='Directory with plots in')
+parser.add_option("-n","--newLoc",default=None, help='Copy plots and html file into a seperate location')
 (opts,args) = parser.parse_args()
 
 import os
@@ -108,6 +109,7 @@ def writeHtml( location, title, links, plots, isHome=False ):
   html.write('</div>\n')
   html.write('<br>\n')
 
+  print 'The following thumbnails will be used:'
   # plots
   for i, png in enumerate(plots['png']):
     png_path = os.path.relpath( png, location )
@@ -116,7 +118,7 @@ def writeHtml( location, title, links, plots, isHome=False ):
     # if not a .png file then skip it
     if ( os.path.splitext(png_path)[1] != '.png' ): continue
 
-    # see if there's a pdf equivalent which can be linked to
+    # if there's a pdf equivalent use this as the link path for the thumbnail png
     link_path = png_path
     if 'pdf' in plots.keys():
       pdf_path = png_path.replace('png/','pdf/')
@@ -124,11 +126,10 @@ def writeHtml( location, title, links, plots, isHome=False ):
       if os.path.join( location, pdf_path ) in plots['pdf']:
         link_path = pdf_path
 
-    html.write('<div style=\"display:inline-block;border-style:groove;border-width:5px;color:%s\">\n'%opts.colorScheme)
+    html.write('<div style=\"display:inline-block;border-style:groove;border-width:5px;color:%s;width:%s;word-break:break-all;word-wrap:break-all;\">\n'%(opts.colorScheme,opts.width))
     html.write('\t<center>\n')
     html.write('\t\t<a id=\"'+basename+'\" href='+link_path+'><img width=\"'+str(opts.width)+'\" src=\"'+png_path+'\"></a><br>\n')
     html.write('\t\t<b>'+basename+'</b><br>\n')
-    #html.write('\t\t<a href=\"'+png_path+'\">png</a>')
     for ext in plots.keys():
       ext_path = png_path.replace('png/',ext+'/')
       ext_path = ext_path.replace('.png','.'+ext)
@@ -140,37 +141,40 @@ def writeHtml( location, title, links, plots, isHome=False ):
 
     if opts.plotsPerLine>1 and i%opts.plotsPerLine==0: html.write('<br>\n')
 
-    print '\t \t', png_path
+    print '\t', png_path.split('png/')[1]
 
   html.close()
 
+  # if new location then copy everything to this new place
+  if opts.newLoc:
+    os.system('mkdir -p %s'%opts.newLoc)
+    os.system('cp %s %s/'%(html.name, opts.newLoc))
+
+    for ext, files in plots.iteritems():
+      if len(files)>0:
+        os.system('mkdir -p %s/%s'%(opts.newLoc,ext))
+        for f in files:
+          os.system('cp %s %s/%s/'%(f,opts.newLoc,ext))
+
+  # print message
+  outloc = opts.newLoc if opts.newLoc else opts.dir
+  print 'Page written to: \n\t%s/index.html'%outloc
 
 # __ main __
 
-directories = [opts.dir]
-
-# home page
-#writeHtml( 'plots', 'Home', directories, {}, True )
-
-# subdir pages
-for directory in directories:
-
-  name = os.path.basename( directory )
-  plots = gatherPlots( directory )
-
-  print name
-
-  writeHtml( directory, name, directories, plots )
+plots = gatherPlots( opts.dir )
+writeHtml( opts.dir, opts.title, [opts.dir], plots )
 
 if opts.upload:
 
-  print 'Will upload to the following afs location: %s '%opts.upload
+  print 'Will upload to the following afs location: \n\t%s '%opts.upload
 
+  current_loc = opts.newLoc if opts.newLoc else opts.dir
   if opts.lxplus:
-    exec_line = 'cp -r %s/* %s/'%(opts.dir,opts.upload)
+    exec_line = 'cp -r %s/* %s/'%(current_loc,opts.upload)
   else:
     uname = raw_input('Enter username@lxplus.cern.ch\n')
-    exec_line = 'scp -r %s/* %s@lxplus.cern.ch:%s/'%(opts.dir,uname,opts.upload)
+    exec_line = 'scp -r %s/* %s@lxplus.cern.ch:%s/'%(current_loc,uname,opts.upload)
   print exec_line
 
   os.system( exec_line )
