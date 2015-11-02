@@ -873,7 +873,7 @@ void MethodAbsScan::plot2d(TString varx, TString vary)
 	TH1* h = w->pdf(pdfName)->createHistogram(plotName, *vx, YVar(*vy));
 	h->Draw("colz");
 
-	savePlot(c1, plotName);
+	savePlot(c1, plotName + arg->plotext );
 }
 
 ///

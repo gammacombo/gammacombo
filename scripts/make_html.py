@@ -69,7 +69,7 @@ def writeHtml( location, title, links, plots, isHome=False ):
   insertJavaDropDownScript( html )
 
   # title
-  if opts.title != "":
+  if opts.title != "" and title != opts.title:
     title = opts.title + " - " + title
   html.write('<font size=\"5\"> <u> '+title+' </u> </font> <br>\n')
   html.write('<script language=\"Javascript\"> document.write(\"Last modified: \" + document.lastModified + \" (UTC)\"); </script> <br>\n')
