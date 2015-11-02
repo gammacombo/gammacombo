@@ -59,6 +59,7 @@ OptParser::OptParser():
 	nrun = -99;
 	ntoys = -99;
 	parevol = false;
+  plotext = "";
 	plotid = -99;
 	plotlegend = true;
 	plotlegx = -99;
@@ -80,6 +81,7 @@ OptParser::OptParser():
 	probforce = false;
 	probimprove = false;
 	printcor = false;
+  printSolX = -999.;
   queue = "";
 	scanforce = false;
 	scanrangeMax = -101;
@@ -140,10 +142,12 @@ void OptParser::defineOptions()
 	//availableOptions.push_back("pevid");
 	availableOptions.push_back("pr");
 	availableOptions.push_back("physrange");
+  availableOptions.push_back("plotext");
 	availableOptions.push_back("plotid");
 	availableOptions.push_back("intprob");
 	availableOptions.push_back("po");
 	availableOptions.push_back("prelim");
+  availableOptions.push_back("printsolx");
 	availableOptions.push_back("probforce");
 	//availableOptions.push_back("probimprove");
 	availableOptions.push_back("ps");
@@ -331,6 +335,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"Available IDs are 1-6. If not given, all control plots are made.", false, 0, "int");
 	TCLAP::ValueArg<int> digitsArg("s", "digits", "Set the number of printed"
 			" digits right of the decimal point. Default is automatic.", false, -1, "int");
+  TCLAP::ValueArg<string> plotextArg("", "plotext", "Add an extension to the output plot name.",false, "","string");
 	TCLAP::ValueArg<string> plotlegArg("", "leg", "Adjust the plot legend.\n"
 			"Disable the legend with --leg off .\n"
 			"2d plots: set the position of the legend. "
@@ -347,6 +352,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::ValueArg<string> plotgroupposArg("", "grouppos", "Set the position of the group logo. "
 			"Format: --grouppos xmin:ymin in normalized coordinates [0,1]. To use default values "
 			"for one coordinate, use 'def': --grouppos def:y.", false, "default", "string");
+  TCLAP::ValueArg<float> printSolXArg("","printsolx", "x coordinate to print solution at in 1D plots", false, -999., "float");
   TCLAP::ValueArg<string> queueArg("q","queue","Batch queue to submit to. If none is given then the scripts will be written but not submitted.", false, "", "string");
   TCLAP::ValueArg<int> batchstartnArg("","batchstartn", "number of first batch job (e.g. if you have already submitted 100 you can submit another 100 starting from 101)", false, 1, "int");
   TCLAP::ValueArg<int> nbatchjobsArg("","nbatchjobs", "number of jobs to write scripts for and submit to batch system", false, 0, "int");
@@ -562,6 +568,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "ps" ) ) cmd.add( plotsolutionsArg );
 	if ( isIn<TString>(bookedOptions, "probimprove" ) ) cmd.add( probimproveArg );
 	if ( isIn<TString>(bookedOptions, "probforce" ) ) cmd.add( probforceArg );
+  if ( isIn<TString>(bookedOptions, "printsolx" ) ) cmd.add( printSolXArg );
 	if ( isIn<TString>(bookedOptions, "printcor" ) ) cmd.add( printcorArg );
 	if ( isIn<TString>(bookedOptions, "prelim" ) ) cmd.add( plotprelimArg );
 	if ( isIn<TString>(bookedOptions, "po" ) ) cmd.add( plotpluginonlyArg );
@@ -569,6 +576,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "intprob" ) ) cmd.add( intprobArg );
 	if ( isIn<TString>(bookedOptions, "plotnsigmacont" ) ) cmd.add(plotnsigmacontArg);
 	if ( isIn<TString>(bookedOptions, "plotid" ) ) cmd.add(plotidArg);
+  if ( isIn<TString>(bookedOptions, "plotext" ) ) cmd.add(plotextArg);
 	if ( isIn<TString>(bookedOptions, "plot2dcl" ) ) cmd.add( plot2dclArg );
 	if ( isIn<TString>(bookedOptions, "pr" ) ) cmd.add( prArg );
 	if ( isIn<TString>(bookedOptions, "physrange" ) ) cmd.add(physrangeArg);
@@ -651,6 +659,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	ntoys	          = ntoysArg.getValue();
 	parevol           = parevolArg.getValue();
 	pevid             = pevidArg.getValue();
+  plotext           = plotextArg.getValue();
 	plotid            = plotidArg.getValue();
 	plotlog           = plotlogArg.getValue();
 	plotmagnetic      = plotmagneticArg.getValue();
@@ -660,6 +669,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	plotpulls         = plotpullsArg.getValue();
 	plotunoff         = plotunoffArg.getValue();
 	printcor          = printcorArg.getValue();
+  printSolX         = printSolXArg.getValue();
 	probforce         = probforceArg.getValue();
 	probimprove       = probimproveArg.getValue();
 	qh                = qhArg.getValue();

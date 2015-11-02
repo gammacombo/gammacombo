@@ -121,7 +121,8 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 
 	if ( filled ){
 		g->SetLineWidth(2);
-		g->SetFillColor(color);
+    double alpha = arg->isQuickhack(12) ? 0.4 : 1.;
+		g->SetFillColorAlpha(color,alpha);
 		g->SetLineStyle(1);
 	}
 	else{
@@ -386,6 +387,14 @@ void OneMinusClPlot::drawSolutions()
 			xNumberMin -= (xmax-xmin)*0.225;
 			xNumberMax -= (xmax-xmin)*0.225;
 		}
+
+    // if print solution argument given then over write
+    if ( arg->printSolX > 0. )
+    {
+      float diff = xNumberMax - xNumberMin;
+      xNumberMin = arg->printSolX;
+      xNumberMax = arg->printSolX + diff;
+    }
 
 		TPaveText *t1 = new TPaveText(xNumberMin, yNumberMin, xNumberMax, yNumberMax, "BR");
 		t1->SetBorderSize(0);

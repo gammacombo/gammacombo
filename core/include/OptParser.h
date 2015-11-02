@@ -83,6 +83,7 @@ class OptParser
 		bool		parevol;
 		vector<int>	pevid;
 		vector<int>     plot2dcl;
+    TString         plotext;
 		int             plotid;
 		bool            plotlog;
 		bool		        plotlegend;
@@ -105,6 +106,7 @@ class OptParser
 		bool		probforce;
 		bool		probimprove;
 		bool		printcor;
+    float           printSolX;
 		vector<int>   	qh;
     TString         queue;
 		vector<TString> relation;

@@ -57,7 +57,7 @@ void OneMinusClPlotAbs::save()
 		cout << "OneMinusClPlotAbs::save() : ERROR : Empty canvas. Call Draw() or DrawFull() before saving!" << endl;
 		return;
 	}
-	savePlot(m_mainCanvas, name);
+	savePlot(m_mainCanvas, name + arg->plotext);
 }
 
 ///

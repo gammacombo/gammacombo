@@ -695,22 +695,25 @@ void GammaComboEngine::defineColors()
 		colorsLine.push_back(arg->combid.size()==1 ? kBlue-8 : kBlue-5);
 		colorsLine.push_back(kGreen-8);
 		colorsLine.push_back(kOrange-8);
-		colorsLine.push_back(kViolet-7);
+		colorsLine.push_back(kMagenta-6);
 
 		// define text colors for drawn central values
 		colorsText.push_back(arg->combid.size()==1 ? kBlack : TColor::GetColor("#23236b"));
 		colorsText.push_back(TColor::GetColor("#234723"));
 		colorsText.push_back(kOrange+3);
-		colorsText.push_back(kViolet-7);
+		colorsText.push_back(kMagenta-8);
 	}
 	else
 	{
-		colorsLine.push_back(TColor::GetColor("#1b9e77"));
-		colorsLine.push_back(TColor::GetColor("#d95f02"));
-		colorsLine.push_back(TColor::GetColor("#7570b3"));
-		colorsLine.push_back(TColor::GetColor("#e7298a"));
-		colorsLine.push_back(TColor::GetColor("#66a61e"));
-		colorsLine.push_back(TColor::GetColor("#e6ab02"));
+		colorsLine.push_back(TColor::GetColor("#1b9e77")); // sea green
+		colorsLine.push_back(TColor::GetColor("#d95f02")); // dark orange
+		colorsLine.push_back(TColor::GetColor("#7570b3")); // medium purple
+		colorsLine.push_back(TColor::GetColor("#e7298a")); // medium violet red
+		colorsLine.push_back(TColor::GetColor("#66a61e")); // forest green
+		colorsLine.push_back(TColor::GetColor("#e6ab02")); // goldenrod
+    colorsLine.push_back(TColor::GetColor("#a6761d")); // chocolate
+    colorsLine.push_back(TColor::GetColor("#e31a1c")); // red
+    colorsLine.push_back(TColor::GetColor("#984ea3")); // darkish purple
 
 		// from http://colorbrewer2.org with:
 		//   number of data classes: 6
@@ -719,8 +722,9 @@ void GammaComboEngine::defineColors()
 
 		ColorBuilder cb;
 		for ( int i=0; i<colorsLine.size(); i++ ){
-			colorsText.push_back(cb.darklightcolor(colorsLine[i], 0.5));
-		}
+      //colorsText.push_back(cb.darklightcolor(colorsLine[i], 0.5));
+		  colorsText.push_back( colorsLine[i] );
+    }
 	}
 
 	// default for any additional scanner
@@ -879,7 +883,7 @@ void GammaComboEngine::make1dProbPlot(MethodProbScan *scanner, int cId)
 		int colorId = cId;
 		if ( arg->color.size()>cId ) colorId = arg->color[cId];
 		scanner->setLineColor(colorsLine[colorId]);
-		scanner->setTextColor(colorsText[cId]);
+		scanner->setTextColor(colorsText[colorId]);
 		plot->Draw();
 	}
 }
@@ -1411,6 +1415,7 @@ void GammaComboEngine::printBanner()
 void GammaComboEngine::run()
 {
 	if ( arg->usage ) usage(); // print usage and exit
+	defineColors();
 	checkCombinationArg();
 	checkColorArg();
 	checkAsimovArg();
@@ -1418,7 +1423,6 @@ void GammaComboEngine::run()
 	if ( arg->nosyst ) disableSystematics();
 	makeAddDelCombinations();
   if ( arg->nbatchjobs>0 ) writebatchscripts();
-	defineColors();
 	customizeCombinerTitles();
 	setUpPlot();
 	scan(); // most thing gets done here
