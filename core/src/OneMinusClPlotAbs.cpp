@@ -73,14 +73,14 @@ void OneMinusClPlotAbs::drawGroup(float yPos)
 {
 	if ( arg->group==TString("off") ) return;
 	m_mainCanvas->cd();
-	float xPos = 0.5;
+	float xPos = 0.7;
 	float xLow, yLow;
 	if ( arg->plotgroupx==-1 ) xLow = xPos; else xLow = arg->plotgroupx;
 	if ( arg->plotgroupy==-1 ) yLow = yPos; else yLow = arg->plotgroupy;
-	TPaveText *t1 = new TPaveText(xLow, yLow, 0.925, yLow+0.125, "BRNDC");
+	TPaveText *t1 = new TPaveText(xLow, yLow, xLow+0.225, yLow+0.125, "BRNDC");
 	t1->SetBorderSize(0);
 	t1->SetFillStyle(0);
-	t1->SetTextAlign(32);
+	t1->SetTextAlign(22);
 	t1->SetTextFont(font);
 	t1->SetTextSize(titlesize*1.0);
 	t1->AddText(arg->group);
