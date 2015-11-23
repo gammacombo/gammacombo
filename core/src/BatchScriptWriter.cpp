@@ -52,7 +52,7 @@ void BatchScriptWriter::writeScripts(OptParser *arg, vector<Combiner*> *cmb){
       time_t t = time(0);
       struct tm * now = localtime(&t);
       int day = now->tm_mday;
-      int month = now->tm_mon;
+      int month = now->tm_mon+1;
       int year  = now->tm_year+1900;
 
       TString eos_path = Form("/eos/lhcb/user/m/mkenzie/gammacombo/%02d%02d%04d",day,month,year);

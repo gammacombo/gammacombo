@@ -3,12 +3,13 @@
 from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("-d","--dir",default="sub",help="Directory to check in. Default=%default")
-parser.add_option("-s","--synch",default=False,action="store_true",help="Synch the output root files to the root directory")
-parser.add_option("-S","--synchdir",default=None,help="Synch to this directory (if different from directory with jobs scripts e.g. if files are stored on eos")
-parser.add_option("-r","--regex",default=None,help="Filter folders by this regex")
-parser.add_option("-R","--resubmit",default=None,help="Resubmit jobs (pass Queued, Failed, All). Running and Completed jobs don't get resubmitted.")
-parser.add_option("-q","--queue",default=None,help='Queue to resubmit jobs to')
-parser.add_option("-n","--skipBackUp",default=False,action="store_true", help="Dont backup old files")
+parser.add_option("-s","--synch",default=False,action="store_true",help="Synch the output root files to the root directory. Default=%default")
+parser.add_option("-S","--synchdir",default=None,help="Synch to this directory (if different from directory with jobs scripts e.g. if files are stored on eos. Default=%default")
+parser.add_option("-r","--regex",default=None,help="Filter folders by this regex. Default=%default")
+parser.add_option("-t","--date", default=None,help="Filter only folders modified after this date - format dd/mm/yyyy. Default=%default")
+parser.add_option("-R","--resubmit",default=None,help="Resubmit jobs (pass Queued, Failed, All). Running and Completed jobs don't get resubmitted. Default=%default")
+parser.add_option("-q","--queue",default=None,help='Queue to resubmit jobs to. Default=%default')
+parser.add_option("-n","--skipBackUp",default=False,action="store_true", help="Dont backup old files. Default=%default")
 (opts,args) = parser.parse_args()
 
 import sys
@@ -20,6 +21,8 @@ if opts.resubmit:
 import os
 import fnmatch
 import re
+import time
+import datetime
 regex=None
 if opts.regex:
   regex = re.compile(opts.regex)
@@ -28,11 +31,21 @@ job_dirs = []
 
 for root, dirs, files in os.walk(opts.dir):
   if root==opts.dir: continue
-  if root not in job_dirs: 
+  if root not in job_dirs:
+    include = True
+    # check regex
     if regex:
-      if regex.match(root):
-        job_dirs.append(root) 
-    else:
+      if not regex.match(root):
+        include = False
+    # check modified date
+    if opts.date:
+      d = datetime.datetime( int(opts.date.split('/')[2]), int(opts.date.split('/')[1]), int(opts.date.split('/')[0]) )
+      dsecs = (d-datetime.datetime(1970,1,1)).total_seconds()
+      if os.path.getmtime(root) < dsecs:
+        include = False
+    
+    # if it passes then include it
+    if include:
       job_dirs.append(root) 
 
 for job_dir in job_dirs:
