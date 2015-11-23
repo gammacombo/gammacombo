@@ -83,12 +83,12 @@ for job_dir in job_dirs:
     if opts.resubmit:
       print 'Will resubmit %d jobs:'%len(resubmits)
       for job in resubmits:
-        full_path = '%s/%s/%s'%(os.getcwd(),job_dir,job)
+        full_path = '%s/%s/%s'%(os.getcwd(),job_dir,job.split('.sh')[0]+'.sh')
         if opts.queue:
           line = 'bsub -q %s -o %s.log %s'%(opts.queue,full_path,full_path)
           os.system(line)
         else:
-          print '\t', job
+          print '\t', os.path.basename( full_path ) 
 
 import time
 
