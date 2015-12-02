@@ -80,7 +80,7 @@ void OneMinusClPlotAbs::drawGroup(float yPos)
 	TPaveText *t1 = new TPaveText(xLow, yLow, xLow+0.225, yLow+0.125, "BRNDC");
 	t1->SetBorderSize(0);
 	t1->SetFillStyle(0);
-	t1->SetTextAlign(22);
+	t1->SetTextAlign(32);
 	t1->SetTextFont(font);
 	t1->SetTextSize(titlesize*1.0);
 	t1->AddText(arg->group);
