@@ -17,6 +17,8 @@ PDF_Generic_Abs::PDF_Generic_Abs(RooWorkspace* w, int nObs, OptParser* opt)
   pdfName         = "notSet";
   globalVarsName  = "notSet";
   constraintName  = "notSet";
+  dataName        = "notSet";
+  pdfWspcName     = "notSet";
   areObsSet       = areParsSet = areRangesSet = isPdfSet = isDataSet = isToyDataSet = false;
   arg             = opt;
   fitStatus       = -10;
@@ -48,6 +50,23 @@ const RooArgSet* PDF_Generic_Abs::getObservables()
   return wspc->set(obsName);
 }
 */
+void PDF_Generic_Abs::initData(const TString& name){
+  if(isDataSet){
+    std::cout << "WARNING in PDF_Generic_Abs::initData -- Data already set" << std::endl; 
+    std::cout << "WARNING in PDF_Generic_Abs::initData -- Data will not be overwritten" << std::endl; 
+    std::cout << "WARNING in PDF_Generic_Abs::initData -- !!!" << std::endl; 
+    return;
+  }
+  dataName    = name;
+  data        = (RooDataSet*) wspc->data(dataName);
+  if(data) isDataSet   = true;
+  else{
+    std::cout << "FATAL in PDF_Generic_Abs::initData -- Data: " << dataName << " not found in workspace" << std::endl; 
+    exit(-1);
+  }
+  std::cout << "INFO in PDF_Generic_Abs::initData -- Data initialized" << std::endl;
+  return;
+};
 
 void  PDF_Generic_Abs::initObservables(const TString& setName){
     if( areObservablesSet() ){ 
@@ -115,11 +134,15 @@ void PDF_Generic_Abs::initPDF(const TString& name){
     std::cout << "WARNING in PDF_Generic_Abs::initPDF -- !!!" << std::endl; 
     return;
   }
-  pdfName   = name;
-  pdf       = wspc->pdf(pdfName);
-  isPdfSet  = true;
-  obsName    = "obs_"+pdfName;
-  parName    = "par_"+pdfName;
+  pdfWspcName   = name;
+  pdf           = wspc->pdf(pdfWspcName);
+  if(pdf) isPdfSet  = true;
+  else{
+    std::cout << "FATAL in PDF_Generic_Abs::initPDF -- PDF: " << pdfName << " not found in workspace" << std::endl; 
+    exit(-1);
+  }
+//  obsName    = "obs_"+pdfName;
+//  parName    = "par_"+pdfName;
 
   std::cout << "INFO in PDF_Generic_Abs::initPDF -- PDF initialized" << std::endl;
   return;
@@ -143,6 +166,11 @@ void PDF_Generic_Abs::setVarRange(const TString &varName, const TString &rangeNa
   }
   var->setRange(rangeName, rangeMin, rangeMax);
   RooMsgService::instance().setGlobalKillBelow(INFO);
+};
+void PDF_Generic_Abs::setPdfName(const TString& name){
+  this->pdfName = name;
+  this->obsName = "obs_"+pdfName;
+  this->parName = "par_"+pdfName;
 };
 
 void PDF_Generic_Abs::setToyData(RooDataSet* ds){
