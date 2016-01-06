@@ -743,7 +743,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
     probPValues->SetBinContent(probPValues->FindBin(scanpoint), plhPvalue);
     t.genericProbPValue = plhPvalue;
     //if(arg->debug && (i<=10 || fmod(i,printFreq)==0) ) 
-    cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - Chi2 pValue " << plhPvalue 
+    cout << "INFO in MethodDatasetsPluginScan::scan1d() - Chi2 pValue " << plhPvalue 
     << " filled in bin " << i+1 << " at: " << scanpoint << endl;
     
     // Draw all toy datasets in advance. This is much faster. ** Check this statement for Generic usecase
@@ -919,7 +919,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 
       pdf->deleteNLL();
       
-      RooDataSet* parafterScanFit = new RooDataSet("parsAfterScanFit", "parsAfterScanFit", *w->set(parsName));
+      RooDataSet* parsAfterScanFit = new RooDataSet("parsAfterScanFit", "parsAfterScanFit", *w->set(parsName));
       parsAfterScanFit->add(*w->set(parsName));
       
       /*cout  << std::setprecision(9);
