@@ -650,7 +650,7 @@ int MethodGenericPluginScan::scan1d(int nRun)
     
     t.scanpoint = scanpoint;
     
-    if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - scanpoint calculated in toy " << i+1 << " as: " << scanpoint << endl;
+    if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - scanpoint calculated in scanpoint " << i+1 << " as: " << scanpoint << endl;
 
     // don't scan in unphysical region
     // by default this means checking against "free" range
@@ -659,7 +659,8 @@ int MethodGenericPluginScan::scan1d(int nRun)
       continue;
     }
 
-    if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - scanVar set constant and to scanpoint value " << scanpoint <<" in toy " << i+1 << endl;
+    if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - scanVar set constant and to scanpoint value " 
+      << scanpoint <<" at scanpoint " << i+1 << endl;
 
     if(!externalProfileLH || doProbScanOnly){
       // Do initial fit
@@ -678,7 +679,7 @@ int MethodGenericPluginScan::scan1d(int nRun)
         cout << "DEBUG in MethodGenericPluginScan::scan1d() - Data Scan fit result" << endl;
         result->Print("v");
       }
-      if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - RooSlimFitResult saved, fit converged in toy " << i+1 << endl;
+      if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - RooSlimFitResult saved, fit converged for scanpoint " << i+1 << endl;
       t.statusScanData = result->status();
       
       // set chi2 of fixed fit: scan fit on data
@@ -687,12 +688,13 @@ int MethodGenericPluginScan::scan1d(int nRun)
       if(doProbScanOnly)  t.scanbest  = freeDataFitValue;
 
 
-      if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - parameters value stored in ToyTree in toy " << i+1 << endl;
+      if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - parameters value stored in ToyTree for scanpoint " << i+1 << endl;
       this->pdf->deleteNLL();
     }
     else{
       if(this->loadPLHPoint(scanpoint,i)){
-        if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - scan point loaded from external PLH scan file" << i+1 << endl; 
+        if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - scan point " << i+1 
+          << " loaded from external PLH scan file" << endl; 
       }
       // Get chi2 and status from tree
 
@@ -719,7 +721,7 @@ int MethodGenericPluginScan::scan1d(int nRun)
     RooDataSet* parsGlobalMinScanPoint = new RooDataSet("parsGlobalMinScanPoint", "parsGlobalMinScanPoint", *w->set(parsName));
     parsGlobalMinScanPoint->add(*w->set(parsName));
     
-    if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - stored parameter values in toy " << i+1 << endl;
+    if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - stored parameter values for scanpoint " << i+1 << endl;
       
 
     // get the chi2 of the data
@@ -741,7 +743,8 @@ int MethodGenericPluginScan::scan1d(int nRun)
     probPValues->SetBinContent(probPValues->FindBin(scanpoint), plhPvalue);
     t.genericProbPValue = plhPvalue;
     //if(arg->debug && (i<=10 || fmod(i,printFreq)==0) ) 
-    cout << "DEBUG in MethodGenericPluginScan::scan1d() - pValue " << plhPvalue << " filled in bin " << scanpoint << " in toy " << i+1 << endl;
+    cout << "DEBUG in MethodGenericPluginScan::scan1d() - Chi2 pValue " << plhPvalue 
+    << " filled in bin " << i+1 << " at: " << scanpoint << endl;
     
     // Draw all toy datasets in advance. This is much faster. ** Check this statement for Generic usecase
 
