@@ -66,6 +66,7 @@ class ToyTree
 		void                    writeToFile();
 		void                    setStoreObs(bool flag){this->storeObs = flag;};
 		void                    setStoreTh(bool flag){this->storeTh = flag;};
+		void                    setStoreGlob(bool flag){this->storeTh = flag;};
 		void                    storeParsGau();
 
 
@@ -106,13 +107,14 @@ class ToyTree
 		TString obsName;        ///< dataset name of observables, derived from name
 		TString parsName;       ///< set name of physics parameters, derived from name
 		TString thName;         ///< set name of theory parameters, derived from name
+		TString globName;		///< set name of explicit set of global observables
 
 		map<string,float>  parametersScan;   ///< fit result of the scan fit
 		map<string,float>  parametersFree;   ///< fit result of the free fit
 		map<string,float>  parametersPll;    ///< parameters of the profile likelihood curve of the data
 		map<string,float>  observables;      ///< values of the observables
 		map<string,float>  theory;           ///< theory parameters (=observables at profile likelihood points)
-		map<TString,float> constraintMeans;  ///< stores gaussian constraint means for the B2MuMu combination
+		map<TString,float> constraintMeans;  ///< values of global observables
 
 		float scanpointMin;     ///< minimum of the scanpoint, computed by computeMinMaxN().
 		float scanpointMax;     ///< maximum of the scanpoint, computed by computeMinMaxN().
@@ -121,8 +123,9 @@ class ToyTree
 		float scanpointyMax;    ///< maximum of the scanpointy, computed by computeMinMaxN().
 		int   scanpointyN;      ///< number of different values of the scanpointy, computed by computeMinMaxN().
 
-		bool storeObs;                      ///< Boolean flag to control storing ToyTree observables, can't store these for GenericScans
-		bool storeTh;                       ///< Boolean flag to control storing ToyTree theory parameters. Not needed in GenericScans 
+		bool storeObs;                      ///< Boolean flag to control storing ToyTree observables, can't store these for DatasetsScans
+		bool storeTh;                       ///< Boolean flag to control storing ToyTree theory parameters. Not needed in DatasetsScans 
+		bool storeGlob;               		///< Boolean flag to control storing ToyTree global observables. Extremely handy in DatasetsScans 
 };
 
 #endif

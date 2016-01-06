@@ -19,7 +19,6 @@
 ///
 MethodProbScan::MethodProbScan()
 {
-	exit(1);
 	methodName = "Prob";
 	scanDisableDragMode = false;
 	nScansDone					= 0;
@@ -30,7 +29,6 @@ MethodProbScan::MethodProbScan()
 ///
 MethodProbScan::MethodProbScan(PDF_Generic_Abs* PDF, OptParser* opt, TH1F* hcl, const TString &fname)
 {
-	exit(1);
 	name                = fname;
 	methodName          = "Prob";
 	scanDisableDragMode = false;

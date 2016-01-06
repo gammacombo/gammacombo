@@ -34,8 +34,8 @@ public:
     MethodProbScan*     getProfileLH(){return this->profileLH;};
     virtual void        initScan();
     void                loadParameterLimits();
-    void                loadPLHPoint(float point, int index=-1);
-    void                loadPLHPoint(int index);
+    bool                loadPLHPoint(float point, int index=-1);
+    bool                loadPLHPoint(int index);
     inline  void        performProbScanOnly(bool yesNo=true){doProbScanOnly = yesNo;};
     void                performBootstrapTest(int nSamples=1000, const TString& ext ="");
     virtual void        print();
@@ -43,6 +43,7 @@ public:
     TChain*             readFiles(int runMin, int runMax, int &nFilesRead, int &nFilesMissing, TString fileNameBaseIn = "default");
     void                readScan1dTrees(int runMin, int runMax, TString fileNameBaseIn = "default");
     virtual int         scan1d(int nRun=1);
+    void                setFileBase(const TString& fname){fileBase = fname;}; // possibility to change probScan file name
     inline  void        setInputFile(TString name){inputFiles.push_back(name); explicitInputFile=true;};
     inline  void        setExtProfileLH(TTree* tree){profileLHPoints = tree; externalProfileLH = true;};
     inline  void        addFile(TString name){inputFiles.push_back(name);};
@@ -58,6 +59,7 @@ public:
     std::vector<double>     bootstrapPVals;
     TChain*                 chain;
     RooFitResult*           dataFreeFitResult;
+    TString                 fileBase;
 };
 
 #endif
