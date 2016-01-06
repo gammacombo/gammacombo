@@ -6,6 +6,7 @@ ToyTree::ToyTree(Combiner *c, TChain* t)
 	this->initMembers(t);
 	this->storeObs  = true;
 	this->storeTh   = true;
+	this->storeGlob = false;
 }
 
 ToyTree::ToyTree(PDF_Generic_Abs *p, TChain* t){
@@ -17,10 +18,12 @@ ToyTree::ToyTree(PDF_Generic_Abs *p, TChain* t){
 	this->pdfName  = "pdf_"+p->getPdfName();
 	this->obsName  = "obs_"+p->getPdfName();
 	this->parsName = "par_"+p->getPdfName();
+  	globName = p->getGlobVarsName();
 	this->thName   = "";
 	this->initMembers(t);
 	this->storeObs  = false;
 	this->storeTh   = false;
+	this->storeGlob = true;
 };
 
 
@@ -174,18 +177,16 @@ void ToyTree::init()
 				t->Branch(TString(p->GetName()), &theory[p->GetName()], TString(p->GetName())+"/F");
 			}
 		}
-		// gau constraints for B2MuMu Combinations
-		if(!this->storeTh){
-			delete it; it = w->set("combconstraints")->createIterator();
-			while ( RooAbsPdf* gau = (RooAbsPdf*)it->Next() )
-			{
-				std::vector<TString> pars = Utils::getParsWithName("ean", *gau->getVariables());
-
-				constraintMeans.insert(pair<TString,float>(pars[0],w->var(pars[0])->getVal()));
-				t->Branch(TString(pars[0]), &constraintMeans[w->var(pars[0])->GetName()], TString(pars[0])+"/F");
-			}
-		}
-		delete it;
+		// global observables
+	    if(this->storeGlob){
+	      delete it; it = w->set(globName)->createIterator();
+	      while ( RooRealVar* p = (RooRealVar*)it->Next() )
+	      {
+	        constraintMeans.insert(pair<TString,float>(p->GetName(),p->getVal()));
+	        t->Branch(TString(p->GetName()), &constraintMeans[p->GetName()], TString(p->GetName())+"/F");
+	      }
+	    }
+	    delete it;
 	}
 }
 

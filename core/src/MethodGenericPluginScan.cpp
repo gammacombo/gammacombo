@@ -176,7 +176,7 @@ void MethodGenericPluginScan::initScan(){
 ///
 void MethodGenericPluginScan::loadParameterLimits(){
   TString rangeName = arg->enforcePhysRange ? "phys" : "free";
-  if ( arg->debug ) cout << "Combiner::loadParameterLimits() : loading parameter ranges: " << rangeName << endl;
+  if ( arg->debug ) cout << "DEBUG in Combiner::loadParameterLimits() : loading parameter ranges: " << rangeName << endl;
   TIterator* it = w->set("par_"+pdfName)->createIterator();
   while ( RooRealVar* p = (RooRealVar*)it->Next() ) setLimit(w, p->GetName(), rangeName);
   delete it;
@@ -239,15 +239,20 @@ bool MethodGenericPluginScan::loadPLHPoint(int index){
       p->setVal(scanParVal);
     }
     else{
-
-    }
-    }
-    else{
-      cout << "MethodGenericPluginScan::loadPLHPoint(int index) : ERROR : no var (" << parName 
-        << ") found in PLH scan file!" << endl; 
-      return success;
+        cout << "MethodGenericPluginScan::loadPLHPoint(int index) : ERROR : no var (" << parName 
+        << ") found in PLH scan file!" << endl;
+        fail_count++;
     }
   }
+  if(fail_count>0){
+    cout << "MethodGenericPluginScan::loadPLHPoint(int index) : ERROR : some values not loaded: \n" 
+    << fail_count << " out of " << pars->getSize() << " parameters not found!" 
+        << " unable to fully load PLH scan point!" << endl;
+    return false;
+  }
+  else{
+      return success;
+  } 
 };
 ///
 /// Print settings member of MethodGenericPluginScan
@@ -686,7 +691,9 @@ int MethodGenericPluginScan::scan1d(int nRun)
       this->pdf->deleteNLL();
     }
     else{
-      this->loadPLHPoint(scanpoint,i);
+      if(this->loadPLHPoint(scanpoint,i)){
+        if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - scan point loaded from external PLH scan file" << i+1 << endl; 
+      }
       // Get chi2 and status from tree
 
       t.statusScanData  = this->getParValAtScanpoint(scanpoint,"statusScanData");
