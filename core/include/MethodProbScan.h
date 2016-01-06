@@ -40,7 +40,7 @@
 #include "TLegend.h"
 
 #include "MethodAbsScan.h"
-#include "PDF_Generic_Abs.h"
+#include "PDF_Datasets_Abs.h"
 #include "Utils.h"
 
 using namespace RooFit;
@@ -51,7 +51,7 @@ class MethodProbScan : public MethodAbsScan
 {
 public:
   MethodProbScan(Combiner *comb);
-  MethodProbScan(PDF_Generic_Abs* PDF, OptParser* opt, TH1F* hcl, const TString &fname = "GenericScan");
+  MethodProbScan(PDF_Datasets_Abs* PDF, OptParser* opt, TH1F* hcl, const TString &fname = "GenericScan");
   MethodProbScan();
   ~MethodProbScan();
   

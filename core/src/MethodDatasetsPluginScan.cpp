@@ -9,7 +9,7 @@
  *      - come up with smarter way to fill probValue histo in readScan1dTrees()
  */
 
-#include "MethodGenericPluginScan.h"
+#include "MethodDatasetsPluginScan.h"
 #include "TRandom3.h"
 #include <algorithm>
 #include <ios>
@@ -17,10 +17,10 @@
 ///
 /// This should be the default for the GenericScan
 ///
-MethodGenericPluginScan::MethodGenericPluginScan(PDF_Generic_Abs* PDF, OptParser* opt, bool provideFitResult, RooFitResult* result)
+MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets_Abs* PDF, OptParser* opt, bool provideFitResult, RooFitResult* result)
 {
   obsDataset          = 0;
-  methodName          = "GenericPlugin";
+  methodName          = "DatasetsPlugin";
   combiner            = NULL;
   pdf                 = PDF;
   w                   = pdf->getWorkspace();
@@ -66,13 +66,13 @@ MethodGenericPluginScan::MethodGenericPluginScan(PDF_Generic_Abs* PDF, OptParser
     dataFreeFitResult = result;
   }
   // check workspace content IS PDF CHECK NECESSARY? Don't think so for generic scan!
-  //if ( !w->pdf(pdfName) ) { cout << "MethodGenericPluginScan::MethodGenericPluginScan() : ERROR : not found in workspace : " << pdfName  << endl; exit(1); }
-  if ( !w->set(obsName) ) { cout << "MethodGenericPluginScan::MethodGenericPluginScan() : ERROR : no 'obsName' set found in workspace : " << obsName << endl; exit(1); }
-  if ( !w->set(parsName) ){ cout << "MethodGenericPluginScan::MethodGenericPluginScan() : ERROR : no 'parsName' set found in workspace : " << parsName << endl; exit(1); }
+  //if ( !w->pdf(pdfName) ) { cout << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : not found in workspace : " << pdfName  << endl; exit(1); }
+  if ( !w->set(obsName) ) { cout << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no 'obsName' set found in workspace : " << obsName << endl; exit(1); }
+  if ( !w->set(parsName) ){ cout << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no 'parsName' set found in workspace : " << parsName << endl; exit(1); }
 
 }
 
-float MethodGenericPluginScan::getParValAtScanpoint(float point, TString parName){
+float MethodDatasetsPluginScan::getParValAtScanpoint(float point, TString parName){
   TBranch* b    = (TBranch*)this->profileLHPoints->GetBranch("scanpoint");
   int entries   = b->GetEntries();
   for(int i = 0; i<entries; i++){
@@ -84,22 +84,22 @@ float MethodGenericPluginScan::getParValAtScanpoint(float point, TString parName
     if(diff < 1e-5){
       TLeaf* var      = this->profileLHPoints->GetLeaf(parName);
       if(!var){
-        cout << "MethodGenericPluginScan::getParValAtScanpoint() : ERROR : variable (" << parName << ") found!" << endl;
+        cout << "MethodDatasetsPluginScan::getParValAtScanpoint() : ERROR : variable (" << parName << ") found!" << endl;
         return -1e12; 
       }
       return var->GetValue();
       }
   }
 };
-void MethodGenericPluginScan::initScan(){
-  if ( arg->debug ) cout << "MethodGenericPluginScan::initScan() : initializing ..." << endl;
+void MethodDatasetsPluginScan::initScan(){
+  if ( arg->debug ) cout << "MethodDatasetsPluginScan::initScan() : initializing ..." << endl;
 
   // Init the 1-CL histograms. Range is taken from the scan range, unless
   // the --scanrange command line argument is set.
   RooRealVar *par1 = w->var(scanVar1);
   if ( !par1 ){
-    cout << "MethodGenericPluginScan::initScan() : ERROR : No such scan parameter: " << scanVar1 << endl;
-    cout << "MethodGenericPluginScan::initScan() :         Choose an existing one using: --var par" << endl << endl;
+    cout << "MethodDatasetsPluginScan::initScan() : ERROR : No such scan parameter: " << scanVar1 << endl;
+    cout << "MethodDatasetsPluginScan::initScan() :         Choose an existing one using: --var par" << endl << endl;
     cout << "  Available parameters:" << endl;
     cout << "  ---------------------" << endl << endl << "  ";
     int parcounter = 0;
@@ -129,8 +129,8 @@ void MethodGenericPluginScan::initScan(){
   {
     RooRealVar *par2 = w->var(scanVar2);
     if(!par2){
-      cout << "MethodGenericPluginScan::initScan() : ERROR : No such scan parameter: " << scanVar2 << endl;
-      cout << "MethodGenericPluginScan::initScan() :         Choose an existing one using: --var par" << endl;
+      cout << "MethodDatasetsPluginScan::initScan() : ERROR : No such scan parameter: " << scanVar2 << endl;
+      cout << "MethodDatasetsPluginScan::initScan() :         Choose an existing one using: --var par" << endl;
       exit(1);
     }
     setLimit(w, scanVar2, "scan");
@@ -159,14 +159,14 @@ void MethodGenericPluginScan::initScan(){
     curveResults2d.push_back(tmp);
   }
   if(arg->debug){
-    std::cout << "DEBUG in MethodGenericPluginScan::initScan() - Global Minimum externally provided: " << std::endl;
-    std::cout << "DEBUG in MethodGenericPluginScan::initScan() - Minimum: " << getChi2minGlobal() << std::endl << std::endl;
+    std::cout << "DEBUG in MethodDatasetsPluginScan::initScan() - Global Minimum externally provided: " << std::endl;
+    std::cout << "DEBUG in MethodDatasetsPluginScan::initScan() - Minimum: " << getChi2minGlobal() << std::endl << std::endl;
   }  
   // turn off some messages
   RooMsgService::instance().setStreamStatus(0,kFALSE);
   RooMsgService::instance().setStreamStatus(1,kFALSE);
   if(arg->debug){
-    std::cout << "DEBUG in MethodGenericPluginScan::initScan() - Scan initialized successfully!\n" << std::endl;
+    std::cout << "DEBUG in MethodDatasetsPluginScan::initScan() - Scan initialized successfully!\n" << std::endl;
   }     
 }
 
@@ -174,7 +174,7 @@ void MethodGenericPluginScan::initScan(){
 /// load Parameter limits
 /// by default the "free" limit is loaded, can be changed to "phys" by command line argument
 ///
-void MethodGenericPluginScan::loadParameterLimits(){
+void MethodDatasetsPluginScan::loadParameterLimits(){
   TString rangeName = arg->enforcePhysRange ? "phys" : "free";
   if ( arg->debug ) cout << "DEBUG in Combiner::loadParameterLimits() : loading parameter ranges: " << rangeName << endl;
   TIterator* it = w->set("par_"+pdfName)->createIterator();
@@ -193,7 +193,7 @@ void MethodGenericPluginScan::loadParameterLimits(){
 /// \param index    load Entry of the external TTree (if the entry does not match 
 ///                 scanpoint, Warning will be printed)
 ///
-bool MethodGenericPluginScan::loadPLHPoint(float point, int index){
+bool MethodDatasetsPluginScan::loadPLHPoint(float point, int index){
   if(index!=-1){
     return loadPLHPoint(index);
   }
@@ -210,14 +210,14 @@ bool MethodGenericPluginScan::loadPLHPoint(float point, int index){
       }
     }
     if(ind==-2){
-      cout << "MethodGenericPluginScan::loadPLHPoint(float point, int index) : ERROR : no scanpoint (" << point << ") found!" << endl; 
+      cout << "MethodDatasetsPluginScan::loadPLHPoint(float point, int index) : ERROR : no scanpoint (" << point << ") found!" << endl; 
       return false;
     }
     else return loadPLHPoint(ind);
   }
 };
 
-bool MethodGenericPluginScan::loadPLHPoint(int index){
+bool MethodDatasetsPluginScan::loadPLHPoint(int index){
   int fail_count = 0;
   bool success = 0;
   this->profileLHPoints->GetEntry(index);
@@ -227,7 +227,7 @@ bool MethodGenericPluginScan::loadPLHPoint(int index){
     it = pars->createIterator();
   }
   else{
-    cout << "MethodGenericPluginScan::loadPLHPoint(int index) : ERROR : no parameter set (" 
+    cout << "MethodDatasetsPluginScan::loadPLHPoint(int index) : ERROR : no parameter set (" 
          << parsName << ") found in workspace!" << endl; 
     return success;
   }
@@ -239,13 +239,13 @@ bool MethodGenericPluginScan::loadPLHPoint(int index){
       p->setVal(scanParVal);
     }
     else{
-        cout << "MethodGenericPluginScan::loadPLHPoint(int index) : ERROR : no var (" << parName 
+        cout << "MethodDatasetsPluginScan::loadPLHPoint(int index) : ERROR : no var (" << parName 
         << ") found in PLH scan file!" << endl;
         fail_count++;
     }
   }
   if(fail_count>0){
-    cout << "MethodGenericPluginScan::loadPLHPoint(int index) : ERROR : some values not loaded: \n" 
+    cout << "MethodDatasetsPluginScan::loadPLHPoint(int index) : ERROR : some values not loaded: \n" 
     << fail_count << " out of " << pars->getSize() << " parameters not found!" 
         << " unable to fully load PLH scan point!" << endl;
     return false;
@@ -255,10 +255,10 @@ bool MethodGenericPluginScan::loadPLHPoint(int index){
   } 
 };
 ///
-/// Print settings member of MethodGenericPluginScan
+/// Print settings member of MethodDatasetsPluginScan
 ///
-void MethodGenericPluginScan::print(){
-  cout << "########################## Print MethodGenericPluginScan Class ##########################" << endl;
+void MethodDatasetsPluginScan::print(){
+  cout << "########################## Print MethodDatasetsPluginScan Class ##########################" << endl;
   cout << "\t --- " << "Method Name: \t\t\t" << methodName << endl;
   cout << "\t --- " << "Instance Name: \t\t\t" << name << endl;
   cout << "\t --- " << "Instance Title: \t\t\t" << title << endl;
@@ -289,61 +289,61 @@ void MethodGenericPluginScan::print(){
 /// \param runMin   defines lowest run number of toy jobs to read in
 ///
 /// \param runMax   defines highest run number of toy jobs to read in 
-TChain* MethodGenericPluginScan::readFiles(int runMin, int runMax, int &nFilesRead, int &nFilesMissing, TString fileNameBaseIn){
+TChain* MethodDatasetsPluginScan::readFiles(int runMin, int runMax, int &nFilesRead, int &nFilesMissing, TString fileNameBaseIn){
 ///
   TChain *c = new TChain("plugin");
   int _nFilesMissing = 0;
   int _nFilesRead = 0;
   // Align files names with scan1d/scan1d
 
-  TString dirname = "root/scan1dGenericPlugin_"+this->pdf->getPdfName()+"_"+scanVar1;
-  TString fileNameBase = (fileNameBaseIn.EqualTo("default")) ? dirname+"/scan1dGenericPlugin_"+this->pdf->getPdfName()+"_"+scanVar1+"_run" : fileNameBaseIn;
+  TString dirname = "root/scan1dDatasetsPlugin_"+this->pdf->getPdfName()+"_"+scanVar1;
+  TString fileNameBase = (fileNameBaseIn.EqualTo("default")) ? dirname+"/scan1dDatasetsPlugin_"+this->pdf->getPdfName()+"_"+scanVar1+"_run" : fileNameBaseIn;
   
   if(!explicitInputFile){
     for (int i=runMin; i<=runMax; i++){
       TString file = Form(fileNameBase+"%i.root", i);
-      cout << "MethodGenericPluginScan::readScan1dTrees() : opening " << file << "\r";
+      cout << "MethodDatasetsPluginScan::readScan1dTrees() : opening " << file << "\r";
       if ( !FileExists(file) ){
-        if ( arg->verbose ) cout << "MethodGenericPluginScan::readScan1dTrees() : ERROR : File not found: " + file + " ..." << endl;
+        if ( arg->verbose ) cout << "MethodDatasetsPluginScan::readScan1dTrees() : ERROR : File not found: " + file + " ..." << endl;
         _nFilesMissing += 1;
         continue;
       }
-      if ( arg->verbose ) cout << "MethodGenericPluginScan::readScan1dTrees() : reading " + file + " ..." << endl;
+      if ( arg->verbose ) cout << "MethodDatasetsPluginScan::readScan1dTrees() : reading " + file + " ..." << endl;
       c->Add(file);
       _nFilesRead += 1;
     }
     if(inputFiles.size()!=0){
       for(TString &file : inputFiles){
         if ( !FileExists(file) ){
-          if ( arg->verbose ) cout << "MethodGenericPluginScan::readScan1dTrees() : ERROR : File not found: " + file + " ..." << endl;
+          if ( arg->verbose ) cout << "MethodDatasetsPluginScan::readScan1dTrees() : ERROR : File not found: " + file + " ..." << endl;
           _nFilesMissing += 1;
         }
-        cout << "MethodGenericPluginScan::readScan1dTrees() : " << file << endl;
+        cout << "MethodDatasetsPluginScan::readScan1dTrees() : " << file << endl;
         c->Add(file);
         _nFilesRead += 1;
       }
     }
-    cout << "MethodGenericPluginScan::readScan1dTrees() : read files: " << _nFilesRead 
+    cout << "MethodDatasetsPluginScan::readScan1dTrees() : read files: " << _nFilesRead 
          << ", missing files: " << _nFilesMissing 
          << "                                                               "
          << "                    " << endl; // many spaces to overwrite the above \r
-    cout << "MethodGenericPluginScan::readScan1dTrees() : " << fileNameBase+"*.root" << endl;
+    cout << "MethodDatasetsPluginScan::readScan1dTrees() : " << fileNameBase+"*.root" << endl;
     if ( _nFilesRead==0 ){
-      cout << "MethodGenericPluginScan::readScan1dTrees() : no files read!" << endl;
+      cout << "MethodDatasetsPluginScan::readScan1dTrees() : no files read!" << endl;
       exit(1);
     }
   }
   else{
     for(TString &file : inputFiles){
       if ( !FileExists(file) ){
-        if ( arg->verbose ) cout << "MethodGenericPluginScan::readScan1dTrees() : ERROR : File not found: " + file + " ..." << endl;
+        if ( arg->verbose ) cout << "MethodDatasetsPluginScan::readScan1dTrees() : ERROR : File not found: " + file + " ..." << endl;
         _nFilesMissing += 1;
       }
-      cout << "MethodGenericPluginScan::readScan1dTrees() : " << file << endl;
+      cout << "MethodDatasetsPluginScan::readScan1dTrees() : " << file << endl;
       c->Add(file);
       _nFilesRead += 1;
     }
-    cout << "MethodGenericPluginScan::readScan1dTrees() : read files: " << _nFilesRead << endl  
+    cout << "MethodDatasetsPluginScan::readScan1dTrees() : read files: " << _nFilesRead << endl  
          << ", missing files: " << _nFilesMissing 
          << "                                                               "
          << "                    " << endl; // many spaces to overwrite the above \r
@@ -352,7 +352,7 @@ TChain* MethodGenericPluginScan::readFiles(int runMin, int runMax, int &nFilesRe
   nFilesMissing = _nFilesMissing;
   return c;
 };
-void MethodGenericPluginScan::readScan1dTrees(int runMin, int runMax, TString fileNameBaseIn)
+void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString fileNameBaseIn)
 {
   int nFilesRead, nFilesMissing;
   TChain* c = this->readFiles(runMin, runMax, nFilesRead, nFilesMissing, fileNameBaseIn);
@@ -388,7 +388,7 @@ void MethodGenericPluginScan::readScan1dTrees(int runMin, int runMax, TString fi
   TH1F *h_fracGoodToys  = (TH1F*)hCL->Clone("h_fracGoodToys");
   TH1F *h_pVals         = new TH1F("p","p", 200, 0.0, 1e-2);
   Long64_t nentries     = t.GetEntries();
-  cout << "MethodGenericPluginScan::readScan1dTrees() : total number of toys per scanpoint: " << (double) nentries / (double)21 << endl;
+  cout << "MethodDatasetsPluginScan::readScan1dTrees() : total number of toys per scanpoint: " << (double) nentries / (double)21 << endl;
   Long64_t nfailed      = 0;
   Long64_t nwrongrun    = 0;
   Long64_t n0better     = 0;
@@ -406,7 +406,7 @@ void MethodGenericPluginScan::readScan1dTrees(int runMin, int runMax, TString fi
   {
     // status bar
     if (((int)i % (int)(nentries/printFreq)) == 0)
-      cout << "MethodGenericPluginScan::readScan1dTrees() : reading toys " 
+      cout << "MethodDatasetsPluginScan::readScan1dTrees() : reading toys " 
            << Form("%.0f",(float)i/(float)nentries*100.) << "%   \r" << flush;
     // load entry
     t.GetEntry(i);
@@ -469,12 +469,12 @@ void MethodGenericPluginScan::readScan1dTrees(int runMin, int runMax, TString fi
     }
   }
   cout << std::fixed << std::setprecision(2);
-  cout << "MethodGenericPluginScan::readScan1dTrees() : reading done.           \n" << endl;
-  cout << "MethodGenericPluginScan::readScan1dTrees() : read an average of " << ((double)nentries-(double)nfailed)/(double)nPoints1d << " toys per scan point." << endl;
-  cout << "MethodGenericPluginScan::readScan1dTrees() : fraction of failed toys: " << (double)nfailed/(double)nentries*100. << "%." << endl;
-  cout << "MethodGenericPluginScan::readScan1dTrees() : fraction of background toys: " << h_background->GetEntries()/(double)nentries*100. << "%." << endl;
+  cout << "MethodDatasetsPluginScan::readScan1dTrees() : reading done.           \n" << endl;
+  cout << "MethodDatasetsPluginScan::readScan1dTrees() : read an average of " << ((double)nentries-(double)nfailed)/(double)nPoints1d << " toys per scan point." << endl;
+  cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of failed toys: " << (double)nfailed/(double)nentries*100. << "%." << endl;
+  cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of background toys: " << h_background->GetEntries()/(double)nentries*100. << "%." << endl;
   if ( nwrongrun>0 ){
-    cout << "\nMethodGenericPluginScan::readScan1dTrees() : WARNING : Read toys that differ in global chi2min (wrong run) : "
+    cout << "\nMethodDatasetsPluginScan::readScan1dTrees() : WARNING : Read toys that differ in global chi2min (wrong run) : "
           << (double)nwrongrun/(double)(nentries-nfailed)*100. << "%.\n" << endl;
   }
   
@@ -572,7 +572,7 @@ void MethodGenericPluginScan::readScan1dTrees(int runMin, int runMax, TString fi
   float nall = h_all->GetBinContent(iBinBestFit);
   float fitprobabilityVal = nGofBetter/nall;
   float fitprobabilityErr = sqrt(fitprobabilityVal * (1.-fitprobabilityVal)/nall);
-  cout << "MethodGenericPluginScan::readScan1dTrees() : fit prob of best-fit point: "
+  cout << "MethodDatasetsPluginScan::readScan1dTrees() : fit prob of best-fit point: "
     << Form("(%.1f+/-%.1f)%%", fitprobabilityVal*100., fitprobabilityErr*100.) << endl;
 }
 
@@ -581,13 +581,13 @@ void MethodGenericPluginScan::readScan1dTrees(int runMin, int runMax, TString fi
 /// Saves chi2 values and the prob-Scan p-values in a root tree
 /// \param nRun Part of the root tree file name to facilitate parallel production.
 ///
-int MethodGenericPluginScan::scan1d(int nRun)
+int MethodDatasetsPluginScan::scan1d(int nRun)
 {
   // Necessary for parallelization 
   RooRandom::randomGenerator()->SetSeed(0);
   // Set limit to all parameters. 
   this->loadParameterLimits(); /// Default is "free", if not changed by cmd-line parameter
-  if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - limits set" << endl;
+  if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - limits set" << endl;
 
   // Define scan parameter and scan range.
   RooRealVar *par = w->var(scanVar1);
@@ -596,30 +596,30 @@ int MethodGenericPluginScan::scan1d(int nRun)
   double freeDataFitValue = par->getVal();
 
   // Define outputfile   
-  TString dirname = "root/scan1dGenericPlugin_"+this->pdf->getPdfName()+"_"+scanVar1;
+  TString dirname = "root/scan1dDatasetsPlugin_"+this->pdf->getPdfName()+"_"+scanVar1;
   system("mkdir -p "+dirname);
   TString fName;
   if(doProbScanOnly){
-    fName = (fileBase=="none") ? Form("root/scan1dGenericProb_"+this->pdf->getPdfName()+"_%ip"+"_"+scanVar1+"_run%i.root",arg->npoints1d,nRun) : fileBase ;
+    fName = (fileBase=="none") ? Form("root/scan1dDatasetsProb_"+this->pdf->getPdfName()+"_%ip"+"_"+scanVar1+"_run%i.root",arg->npoints1d,nRun) : fileBase ;
   }
   else{
-    fName = Form(dirname+"/scan1dGenericPlugin_"+this->pdf->getPdfName()+"_"+scanVar1+"_run%i.root", nRun);
+    fName = Form(dirname+"/scan1dDatasetsPlugin_"+this->pdf->getPdfName()+"_"+scanVar1+"_run%i.root", nRun);
   }
   TFile *f2       = new TFile(fName, "RECREATE");
   
   // Define a TH1D for prob values of the scan
   probPValues = new TH1F("probPValues","p Values of a prob Scan", nPoints1d, min, max);
 
-  if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - probPValues defined, min/max found" << endl;
+  if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - probPValues defined, min/max found" << endl;
 
   // Set up toy root tree
   ToyTree t(this->pdf);
-  if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - ToyTree constructed" << endl;
+  if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - ToyTree constructed" << endl;
   t.init();
-  if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - ToyTree init finished" << endl;
+  if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - ToyTree init finished" << endl;
   t.nrun = nRun;
   
-  if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - ToyTree initialized" << endl;
+  if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - ToyTree initialized" << endl;
 
   // Save parameter values that were active at function
   // call. We'll reset them at the end to be transparent
@@ -635,7 +635,7 @@ int MethodGenericPluginScan::scan1d(int nRun)
   // define constraint rooargset
   RooArgSet globalVars = *w->set(pdf->getGlobVarsName());
   // start scan
-  cout << "MethodGenericPluginScan::scan1d() : starting ... with " << nPoints1d << " scanpoints..." << endl;
+  cout << "MethodDatasetsPluginScan::scan1d() : starting ... with " << nPoints1d << " scanpoints..." << endl;
   for ( int i=0; i<nPoints1d; i++ )
   {
     // scanpoint is calculated using min, max, which are the hCL x-Axis limits set in this->initScan()
@@ -650,7 +650,7 @@ int MethodGenericPluginScan::scan1d(int nRun)
     
     t.scanpoint = scanpoint;
     
-    if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - scanpoint calculated in toy " << i+1 << " as: " << scanpoint << endl;
+    if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - scanpoint calculated in scanpoint " << i+1 << " as: " << scanpoint << endl;
 
     // don't scan in unphysical region
     // by default this means checking against "free" range
@@ -659,14 +659,15 @@ int MethodGenericPluginScan::scan1d(int nRun)
       continue;
     }
 
-    if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - scanVar set constant and to scanpoint value " << scanpoint <<" in toy " << i+1 << endl;
+    if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - scanVar set constant and to scanpoint value " 
+      << scanpoint <<" at scanpoint " << i+1 << endl;
 
     if(!externalProfileLH || doProbScanOnly){
       // Do initial fit
       // here the scanvar has to be fixed -> this is done once per scanpoint 
       // and provides the scanner with the DeltaChi2 for the data as reference
       // additionally the nuisances are set to the resulting fit values
-      if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - DO DATA SCAN FIT" << endl;
+      if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - DO DATA SCAN FIT" << endl;
       // set and fix scan point
       par->setVal(scanpoint);
       par->setConstant(true);
@@ -674,11 +675,11 @@ int MethodGenericPluginScan::scan1d(int nRun)
       RooFitResult *result = this->pdf->fit(kFALSE); // false -> fit on data
       assert(result);
       if(arg->debug){ 
-        cout << "DEBUG in MethodGenericPluginScan::scan1d() - minNll data scan fix " << 2*result->minNll() << endl;
-        cout << "DEBUG in MethodGenericPluginScan::scan1d() - Data Scan fit result" << endl;
+        cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - minNll data scan fix " << 2*result->minNll() << endl;
+        cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - Data Scan fit result" << endl;
         result->Print("v");
       }
-      if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - RooSlimFitResult saved, fit converged in toy " << i+1 << endl;
+      if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - RooSlimFitResult saved, fit converged for scanpoint " << i+1 << endl;
       t.statusScanData = result->status();
       
       // set chi2 of fixed fit: scan fit on data
@@ -687,12 +688,13 @@ int MethodGenericPluginScan::scan1d(int nRun)
       if(doProbScanOnly)  t.scanbest  = freeDataFitValue;
 
 
-      if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - parameters value stored in ToyTree in toy " << i+1 << endl;
+      if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - parameters value stored in ToyTree for scanpoint " << i+1 << endl;
       this->pdf->deleteNLL();
     }
     else{
       if(this->loadPLHPoint(scanpoint,i)){
-        if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - scan point loaded from external PLH scan file" << i+1 << endl; 
+        if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - scan point " << i+1 
+          << " loaded from external PLH scan file" << endl; 
       }
       // Get chi2 and status from tree
 
@@ -719,7 +721,7 @@ int MethodGenericPluginScan::scan1d(int nRun)
     RooDataSet* parsGlobalMinScanPoint = new RooDataSet("parsGlobalMinScanPoint", "parsGlobalMinScanPoint", *w->set(parsName));
     parsGlobalMinScanPoint->add(*w->set(parsName));
     
-    if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - stored parameter values in toy " << i+1 << endl;
+    if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - stored parameter values for scanpoint " << i+1 << endl;
       
 
     // get the chi2 of the data
@@ -727,8 +729,8 @@ int MethodGenericPluginScan::scan1d(int nRun)
       t.chi2minGlobal     = this->getChi2minGlobal();
     }
     else{
-      cout << "FATAL in MethodGenericPluginScan::scan1d() - Global Minimum not set!" << endl;
-      cout << "FATAL in MethodGenericPluginScan::scan1d() - Cannot continue with scan" << endl;
+      cout << "FATAL in MethodDatasetsPluginScan::scan1d() - Global Minimum not set!" << endl;
+      cout << "FATAL in MethodDatasetsPluginScan::scan1d() - Cannot continue with scan" << endl;
       exit(-1);
     }
     
@@ -741,7 +743,8 @@ int MethodGenericPluginScan::scan1d(int nRun)
     probPValues->SetBinContent(probPValues->FindBin(scanpoint), plhPvalue);
     t.genericProbPValue = plhPvalue;
     //if(arg->debug && (i<=10 || fmod(i,printFreq)==0) ) 
-    cout << "DEBUG in MethodGenericPluginScan::scan1d() - pValue " << plhPvalue << " filled in bin " << scanpoint << " in toy " << i+1 << endl;
+    cout << "INFO in MethodDatasetsPluginScan::scan1d() - Chi2 pValue " << plhPvalue 
+    << " filled in bin " << i+1 << " at: " << scanpoint << endl;
     
     // Draw all toy datasets in advance. This is much faster. ** Check this statement for Generic usecase
 
@@ -780,7 +783,7 @@ int MethodGenericPluginScan::scan1d(int nRun)
       //
       // 2. scan fit
       //
-      if(arg->debug)cout << "DEBUG in MethodGenericPluginScan::scan1d() - perform scan toy fit" << endl;
+      if(arg->debug)cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - perform scan toy fit" << endl;
       // set parameters to data scan fit
       if(!useConstrPDFforRandomization){
         Utils::setParameters(this->pdf->getWorkspace(), parsName, parsGlobalMinScanPoint->get(0));
@@ -932,7 +935,7 @@ int MethodGenericPluginScan::scan1d(int nRun)
       // 2. free fit
       //
       //if(arg->debug) 
-      if(arg->debug)cout << "DEBUG in MethodGenericPluginScan::scan1d() - perform free toy fit" << endl;
+      if(arg->debug)cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - perform free toy fit" << endl;
       // Use parameters from the scanfit to data
       if(!useConstrPDFforRandomization){
         Utils::setParameters(this->pdf->getWorkspace(), parsName, parsGlobalMinScanPoint->get(0));
@@ -1264,11 +1267,11 @@ int MethodGenericPluginScan::scan1d(int nRun)
         r1->Print("");
       }
 
-      if(arg->debug) cout << "DEBUG in MethodGenericPluginScan::scan1d() - ToyTree 2*minNll free fit: " << t.chi2minGlobalToy << endl;
+      if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - ToyTree 2*minNll free fit: " << t.chi2minGlobalToy << endl;
 
       if(arg->debug && (j<=2 || fmod(i,printFreq)==0)){ 
-        cout << "DEBUG in MethodGenericPluginScan::scan1d() - ToyTree 2*minNll scan fit: " << t.chi2minToy << endl;
-        cout << "DEBUG in MethodGenericPluginScan::scan1d() - for Toy with scanpoint: " << t.scanpoint << endl;
+        cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - ToyTree 2*minNll scan fit: " << t.chi2minToy << endl;
+        cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - for Toy with scanpoint: " << t.scanpoint << endl;
         //r->Print("v");
       }
       
@@ -1304,7 +1307,7 @@ int MethodGenericPluginScan::scan1d(int nRun)
   return 0;
 }
 
-void MethodGenericPluginScan::drawDebugPlots(int runMin, int runMax, TString fileNameBaseIn){
+void MethodDatasetsPluginScan::drawDebugPlots(int runMin, int runMax, TString fileNameBaseIn){
   int nFilesRead, nFilesMissing;
   TChain* c = this->readFiles(runMin, runMax, nFilesRead, nFilesMissing, fileNameBaseIn);
   //ToyTree t(this->pdf, c);
@@ -1333,7 +1336,7 @@ void MethodGenericPluginScan::drawDebugPlots(int runMin, int runMax, TString fil
 ///
 /// Assumption: root file is given to the scanner which only has toy at a specific scanpoint, not necessary!
 ///
-void MethodGenericPluginScan::performBootstrapTest(int nSamples, const TString& ext){
+void MethodDatasetsPluginScan::performBootstrapTest(int nSamples, const TString& ext){
   TRandom3 rndm;
   TH1F* hist = new TH1F("h","h",800,1e-4,0.008);
   bootstrapPVals.clear();
@@ -1390,7 +1393,7 @@ void MethodGenericPluginScan::performBootstrapTest(int nSamples, const TString& 
     q.push_back(t.chi2minToy-t.chi2minGlobalToy);
 
   }
-  cout  << "INFO in MethodGenericPluginScan::performBootstrapTest - Tree loop finished" << endl;
+  cout  << "INFO in MethodDatasetsPluginScan::performBootstrapTest - Tree loop finished" << endl;
   cout  << "- start BootstrapTest with " << nSamples 
         << " Samples and " << numberOfToys << " Toys each" << endl;
   cout  << " Total number failed: " << totFailed << endl;
@@ -1426,7 +1429,7 @@ void MethodGenericPluginScan::performBootstrapTest(int nSamples, const TString& 
 
 };
 
-void MethodGenericPluginScan::printDebug(const RooFitResult& r){
+void MethodDatasetsPluginScan::printDebug(const RooFitResult& r){
     cout << std::fixed << std::scientific;
     cout << std::setw(42) << std::right << std::setfill('-') << " Minimum: "  << std::setprecision(8) << r.minNll() 
     << " with edm: " << std::setprecision(6) << r.edm() << endl;

@@ -13,16 +13,16 @@
  *  
  **/
 
-#ifndef PDF_Generic_Abs_h
-#define PDF_Generic_Abs_h
+#ifndef PDF_Datasets_Abs_h
+#define PDF_Datasets_Abs_h
 
 #include "PDF_Abs.h"
 
-class PDF_Generic_Abs : public PDF_Abs
+class PDF_Datasets_Abs : public PDF_Abs
 {
 public:
-  PDF_Generic_Abs(RooWorkspace* w, int nObs, OptParser* opt);
-  ~PDF_Generic_Abs();
+  PDF_Datasets_Abs(RooWorkspace* w, int nObs, OptParser* opt);
+  ~PDF_Datasets_Abs();
   void                  deleteConstraints(){if(globVals) delete globVals;};
   void                  deleteNLL(){if(_NLL){delete _NLL; _NLL=NULL;}};
 

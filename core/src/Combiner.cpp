@@ -505,7 +505,7 @@ void Combiner::setObservablesToToyValues()
 ///  - the scan fits in the Prob method (MethodProbScan::scan1d(), MethodProbScan::scan2d())
 ///  - the scan and free fits in the Plugin method (MethodPluginScan::scan1d(), MethodPluginScan::scan2d())
 ///  - the Berger-Boos scans (MethodBergerBoosScan::scan1d())
-///  - generic plugin scans (MethodGenericPluginScan::scan1d())
+///  - generic plugin scans (MethodDatasetsPluginScan::scan1d())
 ///
 /// If a Feldman-Cousins like behaviour is needed, we need
 /// to load the 'phys' limits, which will prevent any parameter

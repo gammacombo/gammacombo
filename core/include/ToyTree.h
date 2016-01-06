@@ -18,7 +18,7 @@
 #include "OptParser.h"
 #include "Utils.h"
 #include "TPaveStats.h"
-#include "PDF_Generic_Abs.h"
+#include "PDF_Datasets_Abs.h"
 #include "ProgressBar.h"
 
 #include "MethodProbScan.h"
@@ -35,7 +35,7 @@ class ToyTree
 	public:
 
 		ToyTree(Combiner *c, TChain* t=0);
-		ToyTree(PDF_Generic_Abs *p, TChain* t=0);
+		ToyTree(PDF_Datasets_Abs *p, TChain* t=0);
 		~ToyTree();
 
 		void                    activateCoreBranchesOnly();

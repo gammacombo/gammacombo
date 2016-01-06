@@ -3,9 +3,9 @@
  * Author: Maximilian Schlupp, max.schlupp@cern.ch
  * Date: November 2013
  * 
- * Class MethodGenericPluginScan - implements a FC plugin scan using dataset fits
+ * Class MethodDatasetsPluginScan - implements a FC plugin scan using dataset fits
  * Instead of extracting physics parameters from experimental observables the 
- * MethodGenericPluginScan can be used to directly calculate FC based errors 
+ * MethodDatasetsPluginScan can be used to directly calculate FC based errors 
  * from the provided PDF. The PDF needs to be able to generate and fit toys. 
  * If you want to implement your own use-case, see the GaussianPlusExp example.
  *
@@ -15,19 +15,19 @@
  *          - id tracks if FC boundaries get violated twice 
  */
 
-#ifndef MethodGenericPluginScan_h
-#define MethodGenericPluginScan_h
+#ifndef MethodDatasetsPluginScan_h
+#define MethodDatasetsPluginScan_h
 
 #include "MethodPluginScan.h"
-#include "PDF_Generic_Abs.h"
+#include "PDF_Datasets_Abs.h"
 #include "RooSlimFitResult.h"
 #include "TLeaf.h"
 #include "TBranch.h"
 
-class MethodGenericPluginScan : public MethodPluginScan
+class MethodDatasetsPluginScan : public MethodPluginScan
 {
 public:
-    MethodGenericPluginScan(PDF_Generic_Abs* PDF, OptParser* opt, 
+    MethodDatasetsPluginScan(PDF_Datasets_Abs* PDF, OptParser* opt, 
                             bool provideFitResult = false, RooFitResult* result = 0);
     void                drawDebugPlots(int runMin, int runMax, TString fileNameBaseIn = "default");
     float               getParValAtScanpoint(float point, TString parName);
@@ -48,7 +48,7 @@ public:
     inline  void        setExtProfileLH(TTree* tree){profileLHPoints = tree; externalProfileLH = true;};
     inline  void        addFile(TString name){inputFiles.push_back(name);};
 
-    PDF_Generic_Abs*        pdf;
+    PDF_Datasets_Abs*        pdf;
     TH1F*                   probPValues;
     TTree*                  profileLHPoints;
     bool                    drawPlots;

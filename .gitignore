@@ -3,3 +3,4 @@ bsmumu
 build/
 tutorial/bin/
 commit_msg
+*.root
