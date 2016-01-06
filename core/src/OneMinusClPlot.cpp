@@ -41,6 +41,9 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 		cout << "OneMinusClPlot::scan1dPlot() : plotting ";
 		cout << s->getName() << " (" << s->getMethodName() << ")" << endl;
 	}
+	if ( m_mainCanvas==0 ){
+		m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, 600);
+	}
 	m_mainCanvas->cd();
 	bool plotPoints = ( s->getMethodName()=="Plugin" || s->getMethodName()=="BergerBoos" || s->getMethodName()=="GenericPlugin" ) && plotPluginMarkers;
 	TH1F *hCL = (TH1F*)s->getHCL()->Clone(getUniqueRootName());

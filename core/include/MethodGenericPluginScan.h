@@ -34,8 +34,8 @@ public:
     MethodProbScan*     getProfileLH(){return this->profileLH;};
     virtual void        initScan();
     void                loadParameterLimits();
-    void                loadPLHPoint(float point, int index=-1);
-    void                loadPLHPoint(int index);
+    bool                loadPLHPoint(float point, int index=-1);
+    bool                loadPLHPoint(int index);
     inline  void        performProbScanOnly(bool yesNo=true){doProbScanOnly = yesNo;};
     void                performBootstrapTest(int nSamples=1000, const TString& ext ="");
     virtual void        print();

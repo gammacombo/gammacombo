@@ -15,7 +15,6 @@
 	MethodAbsScan::MethodAbsScan()
 : rndm()
 {
-	exit(1);
 	methodName = "Abs";
 	drawFilled = true;
 };

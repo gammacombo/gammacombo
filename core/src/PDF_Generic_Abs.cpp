@@ -138,7 +138,7 @@ void PDF_Generic_Abs::initPDF(const TString& name){
   pdf           = wspc->pdf(pdfWspcName);
   if(pdf) isPdfSet  = true;
   else{
-    std::cout << "FATAL in PDF_Generic_Abs::initPDF -- PDF: " << pdfName << " not found in workspace" << std::endl; 
+    std::cout << "FATAL in PDF_Generic_Abs::initPDF -- PDF: " << pdfWspcName << " not found in workspace" << std::endl; 
     exit(-1);
   }
 //  obsName    = "obs_"+pdfName;

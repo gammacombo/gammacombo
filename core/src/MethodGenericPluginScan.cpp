@@ -30,7 +30,7 @@ MethodGenericPluginScan::MethodGenericPluginScan(PDF_Generic_Abs* PDF, OptParser
   scanVar1            = arg->var[0];
   if ( arg->var.size()>1 ) scanVar2 = arg->var[1];
   verbose             = arg->verbose;
-  drawSolution        = arg->plotsolutions;
+  drawSolution        = 0;
   nToys               = arg->ntoys;
   nPoints1d           = arg->npoints1d;
   nPoints2dx          = arg->npoints2dx;
@@ -58,7 +58,7 @@ MethodGenericPluginScan::MethodGenericPluginScan(PDF_Generic_Abs* PDF, OptParser
   externalProfileLH   = false;
   dataFreeFitResult   = NULL;
   fileBase            = "none";
-  inputFiles.clear();         
+  inputFiles.clear();        
   if(provideFitResult){
     chi2minGlobal      = 2*result->minNll();
     std::cout << "=============== Global Minimum (2*-Log(Likelihood)) set to: 2*" << result->minNll() << " = " << chi2minGlobal << endl;
@@ -193,9 +193,9 @@ void MethodGenericPluginScan::loadParameterLimits(){
 /// \param index    load Entry of the external TTree (if the entry does not match 
 ///                 scanpoint, Warning will be printed)
 ///
-void MethodGenericPluginScan::loadPLHPoint(float point, int index){
+bool MethodGenericPluginScan::loadPLHPoint(float point, int index){
   if(index!=-1){
-    loadPLHPoint(index);
+    return loadPLHPoint(index);
   }
   else{
     int ind=-2;
@@ -210,21 +210,43 @@ void MethodGenericPluginScan::loadPLHPoint(float point, int index){
       }
     }
     if(ind==-2){
-      cout << "MethodGenericPluginScan::MethodGenericPluginScan() : ERROR : no scanpoint (" << point << ") found!" << endl; 
+      cout << "MethodGenericPluginScan::loadPLHPoint(float point, int index) : ERROR : no scanpoint (" << point << ") found!" << endl; 
+      return false;
     }
-    else loadPLHPoint(ind);
+    else return loadPLHPoint(ind);
   }
 };
 
-void MethodGenericPluginScan::loadPLHPoint(int index){
+bool MethodGenericPluginScan::loadPLHPoint(int index){
+  int fail_count = 0;
+  bool success = 0;
   this->profileLHPoints->GetEntry(index);
   RooArgSet* pars          = (RooArgSet*)this->pdf->getWorkspace()->set(parsName);
-  TIterator* it            = pars->createIterator();
+  TIterator* it;
+  if(pars){
+    it = pars->createIterator();
+  }
+  else{
+    cout << "MethodGenericPluginScan::loadPLHPoint(int index) : ERROR : no parameter set (" 
+         << parsName << ") found in workspace!" << endl; 
+    return success;
+  }
   while ( RooRealVar* p = (RooRealVar*)it->Next() ){
     TString parName     = p->GetName();
     TLeaf* parLeaf      = (TLeaf*)this->profileLHPoints->GetLeaf(parName+"_start");
-    float scanParVal    = parLeaf->GetValue();
-    p->setVal(scanParVal);
+    if(parLeaf){
+      float scanParVal    = parLeaf->GetValue();
+      p->setVal(scanParVal);
+    }
+    else{
+
+    }
+    }
+    else{
+      cout << "MethodGenericPluginScan::loadPLHPoint(int index) : ERROR : no var (" << parName 
+        << ") found in PLH scan file!" << endl; 
+      return success;
+    }
   }
 };
 ///
@@ -530,7 +552,6 @@ void MethodGenericPluginScan::readScan1dTrees(int runMin, int runMax, TString fi
     h_background->SetYTitle("fraction of neg. test stat toys");
     h_background->Draw();
   }
-
   TCanvas* can1 = new TCanvas("can1","can1",1024,786);
   can1->cd();
   h_pVals->Draw();
@@ -540,6 +561,7 @@ void MethodGenericPluginScan::readScan1dTrees(int runMin, int runMax, TString fi
 
   this->profileLH = new MethodProbScan(pdf, this->getArg(), h_probPValues);
   // goodness-of-fit
+ 
   int iBinBestFit = hCL->GetMaximumBin();
   float nGofBetter = h_gof->GetBinContent(iBinBestFit);
   float nall = h_all->GetBinContent(iBinBestFit);
