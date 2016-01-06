@@ -27,7 +27,7 @@ MethodProbScan::MethodProbScan()
 /// 'Dummy' constructor
 /// no scan needed here, hCL histogram is provided externally
 ///
-MethodProbScan::MethodProbScan(PDF_Generic_Abs* PDF, OptParser* opt, TH1F* hcl, const TString &fname)
+MethodProbScan::MethodProbScan(PDF_Datasets_Abs* PDF, OptParser* opt, TH1F* hcl, const TString &fname)
 {
 	name                = fname;
 	methodName          = "Prob";

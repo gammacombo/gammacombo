@@ -31,7 +31,7 @@
 }
 
 ///
-/// 'Default constructor', mainly to ensure compatibility with MethodGenericPluginScan
+/// 'Default constructor', mainly to ensure compatibility with MethodDatasetsPluginScan
 /// this way one is not forced to use an explicit constructor
 ///
 MethodPluginScan::MethodPluginScan(){

@@ -9,7 +9,7 @@ ToyTree::ToyTree(Combiner *c, TChain* t)
 	this->storeGlob = false;
 }
 
-ToyTree::ToyTree(PDF_Generic_Abs *p, TChain* t){
+ToyTree::ToyTree(PDF_Datasets_Abs *p, TChain* t){
 	assert(p);
 	this->comb = NULL;
 	this->w = p->getWorkspace();
