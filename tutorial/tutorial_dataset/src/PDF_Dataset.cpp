@@ -2,7 +2,7 @@
 #include "RooExponential.h"
 
 PDF_Dataset::PDF_Dataset(RooWorkspace* w, OptParser* opt)
-: PDF_Generic_Abs(w,1,opt)
+: PDF_Datasets_Abs(w,1,opt)
 {
   name    = "PDF_Dataset";
   title   = "PDF_Dataset";

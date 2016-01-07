@@ -1,13 +1,13 @@
 #ifndef PDF_Dataset_h
 #define PDF_Dataset_h
 
-#include "PDF_Generic_Abs.h"
+#include "PDF_Datasets_Abs.h"
  
 using namespace RooFit;
 using namespace std;
 using namespace Utils;
 
-class PDF_Dataset : public PDF_Generic_Abs
+class PDF_Dataset : public PDF_Datasets_Abs
 {
 public:
   PDF_Dataset(RooWorkspace* w, OptParser* opt);
