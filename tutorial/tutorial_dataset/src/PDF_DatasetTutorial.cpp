@@ -1,28 +1,28 @@
-#include "PDF_Dataset.h"
+#include "PDF_DatasetTutorial.h"
 #include "RooExponential.h"
 
-PDF_Dataset::PDF_Dataset(RooWorkspace* w, OptParser* opt)
-: PDF_Datasets_Abs(w,1,opt)
+PDF_DatasetTutorial::PDF_DatasetTutorial(RooWorkspace* w, OptParser* opt)
+: PDF_DatasetTutorials_Abs(w,1,opt)
 {
-  name    = "PDF_Dataset";
-  title   = "PDF_Dataset";
+  name    = "PDF_DatasetTutorial";
+  title   = "PDF_DatasetTutorial";
   data = (RooDataSet*)wspc->data("data"); //> set real Dataset 
   if(data){
     isDataSet = kTRUE;
-    std::cout << "INFO in PDF_Dataset::PDF_Dataset -- Dataset initialized" << std::endl;
+    std::cout << "INFO in PDF_DatasetTutorial::PDF_DatasetTutorial -- Dataset initialized" << std::endl;
   }
   else{
-    std::cout << "FATAL in PDF_Dataset::PDF_Dataset -- no Dataset found in worspace!" << std::endl;
+    std::cout << "FATAL in PDF_DatasetTutorial::PDF_DatasetTutorial -- no Dataset found in worspace!" << std::endl;
     isDataSet = kFALSE;
   }
   this->setNToys(0);
   drawFitsDebug = kFALSE;
 }
-PDF_Dataset::~PDF_Dataset(){};
+PDF_DatasetTutorial::~PDF_DatasetTutorial(){};
 
-RooFitResult* PDF_Dataset::fit(bool fitToys){
+RooFitResult* PDF_DatasetTutorial::fit(bool fitToys){
   if(this->notSetupToFit(fitToys)){
-    std::cout << "FATAL in PDF_Dataset::fit -- There is no PDF or (toy)data set to fit!" << std::endl;  
+    std::cout << "FATAL in PDF_DatasetTutorial::fit -- There is no PDF or (toy)data set to fit!" << std::endl;  
     return NULL;
   }
   // Turn off RooMsg
@@ -47,10 +47,10 @@ RooFitResult* PDF_Dataset::fit(bool fitToys){
   return result;
 };
 
-void   PDF_Dataset::generateToys(int SeedShift){
+void   PDF_DatasetTutorial::generateToys(int SeedShift){
   TRandom3 rndm(0);
   if(this->getNToys()==0){
-    std::cout << "FATAL in PDF_Dataset::generateToys -- I am supposed to generate 0 Toys? Can't do that!" << std::endl;  
+    std::cout << "FATAL in PDF_DatasetTutorial::generateToys -- I am supposed to generate 0 Toys? Can't do that!" << std::endl;  
   }
   
   double mean_signal_events_to_be_generated = getWorkspace()->var("branchingRatio")->getVal() / getWorkspace()->var("norm_constant")->getVal();

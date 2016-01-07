@@ -3,7 +3,7 @@
 #include <RooAddPdf>
 #include <RooFormula>
 #include <RooExponential>
-#include "PDF_Dataset.h"
+#include "PDF_DatasetTutorial.h"
 
 
 
@@ -23,7 +23,7 @@ int main(int argc, char* argv[]){
   RooWorkspace* workspace = (RooWorkspace*)f.Get("dataset_workspace");
 
   // Construct the PDF and pass the workspace to it
-  PDF_Datasets_Abs* pdf = new PDF_Dataset(workspace);
+  PDF_DatasetTutorials_Abs* pdf = new PDF_DatasetTutorial(workspace);
 
   // Start the Gammacombo Engine
   GammaComboEngine gc("tutorial_dataset", argc, argv);
