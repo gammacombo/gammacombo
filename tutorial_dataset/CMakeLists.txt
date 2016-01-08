@@ -2,7 +2,7 @@
 # Set the combiner name
 #  The name must be the name of the subdirectory of the combiner.
 SET(COMBINER_NAME
-	cartesian
+	tutorial_dataset
 )
 
 # Define all executables of this combiner.

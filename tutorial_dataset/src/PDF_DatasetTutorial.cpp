@@ -1,8 +1,8 @@
 #include "PDF_DatasetTutorial.h"
 #include "RooExponential.h"
 
-PDF_DatasetTutorial::PDF_DatasetTutorial(RooWorkspace* w, OptParser* opt)
-: PDF_DatasetTutorials_Abs(w,1,opt)
+PDF_DatasetTutorial::PDF_DatasetTutorial(RooWorkspace* w)
+: PDF_Datasets_Abs(w,1, NULL)
 {
   name    = "PDF_DatasetTutorial";
   title   = "PDF_DatasetTutorial";
@@ -30,8 +30,12 @@ RooFitResult* PDF_DatasetTutorial::fit(bool fitToys){
   RooMsgService::instance().setSilentMode(kTRUE);
   // Choose Dataset to fit to
   RooDataSet* dataToFit = (fitToys) ? this->toyObservables : this->data ;
-  if(fitToys) this->setGlobalObservablesToToys(); // renamed "resetConstraintMeansToData"
-  else this->setGlobalObservablesToData();
+
+  
+  if(fitToys) this->randomizeConstraintMeans(); // \todo: rename as "setGlobalObservablesToToys" 
+                                                // We should not randomize anything here, we should 
+  // \todo: put this back in later!!!
+  // else this->setGlobalObservablesToData();
 
   RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() 
                                       ,RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName))
@@ -68,6 +72,25 @@ void   PDF_DatasetTutorial::generateToys(int SeedShift){
   toys->append(*(this->getWorkspace()->pdf("e")->generate(*observables,bkg_number)));
 
   this->toyObservables  = toys; 
-  this->sampleConstraintObservables();
+
+
+  // !!!!!!!!!!!!!!!!!!!!!!!!
+  //
+  //
+  // \todo: put this back in later !!!!!!
+  // this->sampleConstraintObservables();
+  //
+  //
+  // !!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
+
+
   this->isToyDataSet    = kTRUE;
+}
+
+void randomizeConstraintMeans(){
+  // we should not randomize here, we should generate the global observables with the toys in generateToys and then just set them later.
+  exit(1);
 }

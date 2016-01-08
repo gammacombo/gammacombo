@@ -1,16 +1,13 @@
 #ifndef PDF_DatasetTutorial_h
 #define PDF_DatasetTutorial_h
 
-#include "PDF_DatasetTutorials_Abs.h"
+#include "PDF_Datasets_Abs.h"
  
-using namespace RooFit;
-using namespace std;
-using namespace Utils;
 
-class PDF_DatasetTutorial : public PDF_DatasetTutorials_Abs
+class PDF_DatasetTutorial : public PDF_Datasets_Abs
 {
 public:
-  PDF_DatasetTutorial(RooWorkspace* w, OptParser* opt);
+  PDF_DatasetTutorial(RooWorkspace* w);
   RooFitResult* fit(bool fitToys = kTRUE);
   void          generateToys(int SeedShift = 0);
   inline void   setNToys(int nToys){toysToGenerate = nToys;};
