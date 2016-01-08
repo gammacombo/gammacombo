@@ -7,16 +7,16 @@ parser.add_option("-s","--synch",default=False,action="store_true",help="Synch t
 parser.add_option("-S","--synchdir",default=None,help="Synch to this directory (if different from directory with jobs scripts e.g. if files are stored on eos. Default=%default")
 parser.add_option("-r","--regex",default=None,help="Filter folders by this regex. Default=%default")
 parser.add_option("-t","--date", default=None,help="Filter only folders modified after this date - format dd/mm/yyyy. Default=%default")
-parser.add_option("-R","--resubmit",default=None,help="Resubmit jobs (pass Queued, Failed, All). Running and Completed jobs don't get resubmitted. Default=%default")
+parser.add_option("-R","--resubmit",default=None,help="Resubmit jobs (pass Queued, Failed, Running, All). Completed jobs don't get resubmitted. Default=%default")
 parser.add_option("-q","--queue",default=None,help='Queue to resubmit jobs to. Default=%default')
 parser.add_option("-n","--skipBackUp",default=False,action="store_true", help="Dont backup old files. Default=%default")
 (opts,args) = parser.parse_args()
 
 import sys
-allowed_resubmits = ['Queued','Failed','All']
+allowed_resubmits = ['Queued','Failed','All','Running']
 if opts.resubmit:
   if opts.resubmit not in allowed_resubmits:
-    sys.exit('--resubmit must be one of Queued, Failed, All')
+    sys.exit('--resubmit must be one of Queued, Failed, Running, All')
 
 import os
 import fnmatch
@@ -79,6 +79,8 @@ for job_dir in job_dirs:
         resubmits += waiting
       if opts.resubmit=='Failed' or opts.resubmit=='All':
         resubmits += fail
+      if opts.resubmit=='Running' or opts.resubmit=='All':
+        resubmits += run
     
     if opts.resubmit:
       print 'Will resubmit %d jobs:'%len(resubmits)

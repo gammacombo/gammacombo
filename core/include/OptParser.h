@@ -77,6 +77,7 @@ class OptParser
 		int		npoints2dx;
 		int		npoints2dy;
 		int             npointstoy;
+    int             ncoveragetoys;
 		int		nrun;
 		int		ntoys;
 		TString 	parsavefile;
