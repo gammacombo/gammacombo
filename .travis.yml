@@ -9,4 +9,7 @@ before_install:
 - docker pull schubertkonstantin/cern_root:v5-34-23
 
 script:
-- docker run schubertkonstantin/cern_root:v5-34-23  /bin/bash -c "git clone https://github.com/gammacombo/gammacombo.git; cd gammacombo; mkdir build; cd build; cmake ..; make; make install"
+- docker run --name raw_container schubertkonstantin/cern_root:v5-34-23 /bin/bash -c "mkdir /code"
+- docker cp  . raw_container:/code 
+- docker commit raw_container image_with_files
+- docker run image_with_files /bin/bash -c "mkdir /code/build; cd /code/build; cmake ..; make; make install"
