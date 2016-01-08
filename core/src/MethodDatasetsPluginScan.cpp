@@ -17,7 +17,7 @@
 ///
 /// This should be the default for the GenericScan
 ///
-MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets_Abs* PDF, OptParser* opt, bool provideFitResult, RooFitResult* result)
+MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets_Abs* PDF, OptParser* opt, bool provideFitResult)
 {
   obsDataset          = 0;
   methodName          = "DatasetsPlugin";
@@ -60,10 +60,14 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets_Abs* PDF, OptPar
   fileBase            = "none";
   inputFiles.clear();        
   if(provideFitResult){
+    RooFitResult* result = (RooFitResult*) w->obj("data_fit_result");
     chi2minGlobal      = 2*result->minNll();
     std::cout << "=============== Global Minimum (2*-Log(Likelihood)) set to: 2*" << result->minNll() << " = " << chi2minGlobal << endl;
     chi2minGlobalFound = true;
     dataFreeFitResult = result;
+  }else{
+    // \todo: suppor the case where no result is passed.
+    exit(EXIT_FAILURE);
   }
   // check workspace content IS PDF CHECK NECESSARY? Don't think so for generic scan!
   //if ( !w->pdf(pdfName) ) { cout << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : not found in workspace : " << pdfName  << endl; exit(1); }
