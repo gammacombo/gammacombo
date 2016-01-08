@@ -1,4 +1,6 @@
 #include "GammaComboEngine.h"
+#include "MethodDatasetsPluginScan.h"
+#include "PDF_Datasets_Abs.h"
 
 GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[])
 {
@@ -711,9 +713,9 @@ void GammaComboEngine::defineColors()
 		colorsLine.push_back(TColor::GetColor("#e7298a")); // medium violet red
 		colorsLine.push_back(TColor::GetColor("#66a61e")); // forest green
 		colorsLine.push_back(TColor::GetColor("#e6ab02")); // goldenrod
-    colorsLine.push_back(TColor::GetColor("#a6761d")); // chocolate
-    colorsLine.push_back(TColor::GetColor("#e31a1c")); // red
-    colorsLine.push_back(TColor::GetColor("#984ea3")); // darkish purple
+		colorsLine.push_back(TColor::GetColor("#a6761d")); // chocolate
+		colorsLine.push_back(TColor::GetColor("#e31a1c")); // red
+		colorsLine.push_back(TColor::GetColor("#984ea3")); // darkish purple
 
 		// from http://colorbrewer2.org with:
 		//   number of data classes: 6
@@ -722,9 +724,9 @@ void GammaComboEngine::defineColors()
 
 		ColorBuilder cb;
 		for ( int i=0; i<colorsLine.size(); i++ ){
-      //colorsText.push_back(cb.darklightcolor(colorsLine[i], 0.5));
-		  colorsText.push_back( colorsLine[i] );
-    }
+		//colorsText.push_back(cb.darklightcolor(colorsLine[i], 0.5));
+		colorsText.push_back( colorsLine[i] );
+	}
 	}
 
 	// default for any additional scanner
@@ -905,12 +907,12 @@ void GammaComboEngine::scanStrategy1d(MethodProbScan *scanner, ParameterCache *p
 		cout << "first scan ..." << endl;
 		scanner->scan1d();
 		if ( !arg->probforce ){
-      vector<RooSlimFitResult*> firstScanSolutions = scanner->getSolutions();
+		vector<RooSlimFitResult*> firstScanSolutions = scanner->getSolutions();
 			for ( int i=0; i<firstScanSolutions.size(); i++ ){
-        cout << "Scan i: " << i << endl;
-        //scanner->loadSolution(i);
-        scanner->loadParameters(firstScanSolutions[i]);
-        scanner->scan1d(true);
+		cout << "Scan i: " << i << endl;
+		//scanner->loadSolution(i);
+		scanner->loadParameters(firstScanSolutions[i]);
+		scanner->scan1d(true);
 			}
 		}
 	}
@@ -937,17 +939,17 @@ void GammaComboEngine::scanStrategy1d(MethodProbScan *scanner, ParameterCache *p
 void GammaComboEngine::make1dPluginPlot(MethodPluginScan *sPlugin, MethodProbScan *sProb, int cId)
 {
 	if ( arg->isQuickhack(17) ) {
-    make1dPluginOnlyPlot(sPlugin, cId);
-    sProb->setLineColor(kBlack);
-    sProb->setDrawSolution(arg->plotsolutions[cId]);
-    sProb->plotOn(plot);
-  }
-  else {
-    make1dProbPlot(sProb, cId);
-    sPlugin->setLineColor(kBlack);
-    sPlugin->setDrawSolution(arg->plotsolutions[cId]);
-    sPlugin->plotOn(plot);
-  }
+		make1dPluginOnlyPlot(sPlugin, cId);
+		sProb->setLineColor(kBlack);
+		sProb->setDrawSolution(arg->plotsolutions[cId]);
+		sProb->plotOn(plot);
+	}
+	else {
+		make1dProbPlot(sProb, cId);
+		sPlugin->setLineColor(kBlack);
+		sPlugin->setDrawSolution(arg->plotsolutions[cId]);
+		sPlugin->plotOn(plot);
+	}
 	plot->Draw();
 }
 
@@ -963,25 +965,25 @@ void GammaComboEngine::make1dPluginPlot(MethodPluginScan *sPlugin, MethodProbSca
 void GammaComboEngine::make2dPluginPlot(MethodPluginScan *sPlugin, MethodProbScan *sProb, int cId)
 {
 	if ( arg->isQuickhack(18) ) {
-    sProb->setTitle(sProb->getTitle() + "PROB");
-    sPlugin->setTitle(sPlugin->getTitle() + "PLUGIN");
-  }
-  else {
-    sProb->setTitle(sProb->getTitle() + " (Prob)");
-    sPlugin->setTitle(sPlugin->getTitle() + " (Plugin)");
-  }
+		sProb->setTitle(sProb->getTitle() + "PROB");
+		sPlugin->setTitle(sPlugin->getTitle() + "PLUGIN");
+	}
+	else {
+		sProb->setTitle(sProb->getTitle() + " (Prob)");
+		sPlugin->setTitle(sPlugin->getTitle() + " (Plugin)");
+	}
 	sProb->setDrawSolution(arg->plotsolutions[cId]);
 	sProb->setLineColor(colorsLine[cId]);
 	sPlugin->setDrawSolution(arg->plotsolutions[cId]);
 	if ( arg->isQuickhack(17) ) {
-    sPlugin->plotOn(plot);
-    sProb->plotOn(plot);
-  }
-  else {
-    sProb->plotOn(plot);
-    sPlugin->plotOn(plot);
-  }
-	plot->Draw();
+		sPlugin->plotOn(plot);
+		sProb->plotOn(plot);
+	}
+	else {
+		sProb->plotOn(plot);
+		sPlugin->plotOn(plot);
+	}
+		plot->Draw();
 }
 
 ///
@@ -1084,22 +1086,22 @@ void GammaComboEngine::adjustRanges(Combiner *c, int cId)
 {
 	if ( cId<arg->physRanges.size() ){
 		for ( int j=0; j<arg->physRanges[cId].size(); j++ ){
-      c->adjustPhysRange(arg->physRanges[cId][j].name, arg->physRanges[cId][j].min, arg->physRanges[cId][j].max);
+	  c->adjustPhysRange(arg->physRanges[cId][j].name, arg->physRanges[cId][j].min, arg->physRanges[cId][j].max);
 		}
 	}
   if ( cId<arg->removeRanges.size() ){
-    for ( int j=0; j<arg->removeRanges[cId].size(); j++ ) {
-      if ( arg->removeRanges[cId][j] == "all" ) {
-        const RooArgSet *pars = (RooArgSet*)c->getParameters();
-        TIterator *it = pars->createIterator();
-        while ( RooRealVar* par = (RooRealVar*)it->Next() ) {
-          par->removeRange();
-        }
-      }
-      else {
-        c->adjustPhysRange( arg->removeRanges[cId][j], -999, -999 );
-      }
-    }
+	for ( int j=0; j<arg->removeRanges[cId].size(); j++ ) {
+	  if ( arg->removeRanges[cId][j] == "all" ) {
+		const RooArgSet *pars = (RooArgSet*)c->getParameters();
+		TIterator *it = pars->createIterator();
+		while ( RooRealVar* par = (RooRealVar*)it->Next() ) {
+		  par->removeRange();
+		}
+	  }
+	  else {
+		c->adjustPhysRange( arg->removeRanges[cId][j], -999, -999 );
+	  }
+	}
   }
 }
 
@@ -1171,9 +1173,9 @@ void GammaComboEngine::writebatchscripts()
 void GammaComboEngine::makeLatex(Combiner *c)
 {
   for ( unsigned int p=0; p < c->getPdfs().size(); p++) {
-    PDF_Abs *pdf = c->getPdfs()[p];
-    LatexMaker m( c->getName(), pdf );
-    m.writeFile();
+	PDF_Abs *pdf = c->getPdfs()[p];
+	LatexMaker m( c->getName(), pdf );
+	m.writeFile();
   }
 }
 
@@ -1230,8 +1232,8 @@ void GammaComboEngine::scan()
 		// printout and latex
 		c->print();
 		if ( arg->debug ) c->getWorkspace()->Print("v");
-    if ( arg->latex ) makeLatex( c );
-    if ( arg->info || arg->latex ) continue;
+	if ( arg->latex ) makeLatex( c );
+	if ( arg->info || arg->latex ) continue;
 
 		/////////////////////////////////////////////////////
 		//
@@ -1384,6 +1386,62 @@ void GammaComboEngine::scan()
 		}
 	}
 }
+//
+// special scan engine for datasetss
+//
+void GammaComboEngine::scanDataSet()
+{
+   if ( arg->info || arg->latex ) return;
+
+	/////////////////////////////////////////////////////
+	//
+	// PROB
+	//
+	/////////////////////////////////////////////////////
+
+	if ( !arg->isAction("plugin") && !arg->isAction("pluginbatch") )
+	{
+		cout << "ERROR : For now, only plugin scans are supported when running on a dataset" << endl;
+		exit(EXIT_FAILURE);
+	}
+
+	/////////////////////////////////////////////////////
+	//
+	// PLUGIN
+	//
+	/////////////////////////////////////////////////////
+
+	else if ( arg->isAction("plugin") || arg->isAction("pluginbatch") )
+	{
+		// 1D SCAN
+		if ( arg->var.size()==1 )
+		{
+			MethodDatasetsPluginScan *scanner = new MethodDatasetsPluginScan( (PDF_Datasets_Abs*) pdf[0], arg);
+			scanner->initScan(); //\todo <- can we get rid of this?
+			if ( arg->isAction("pluginbatch") ){
+				scanner->scan1d();
+			} else if ( arg->isAction("plugin") ){
+				scanner->readScan1dTrees(arg->jmin[0], arg->jmax[0]);
+			}
+		}
+		// 2D SCANS
+		else if ( arg->var.size()==2 ) {
+			MethodDatasetsPluginScan *scanner = new MethodDatasetsPluginScan((PDF_Datasets_Abs*) pdf[0], arg);
+			scanner->initScan(); //\todo <- can we get rid of this?
+			if ( arg->isAction("pluginbatch") ){
+				scanner->scan1d();
+			} else if ( arg->isAction("plugin") ){
+				scanner->readScan1dTrees(arg->jmin[0], arg->jmax[0]);
+			}
+		}
+	} else 
+	{
+		cout << "ERROR : Invalid combination of options for running on a dataset" << endl;
+		exit(EXIT_FAILURE);
+	}
+}
+
+
 
 ///
 /// run the ROOT application, if the -i flag for interactive
@@ -1412,21 +1470,30 @@ void GammaComboEngine::printBanner()
 ///
 /// run GammaComboEngine, main steering function
 ///
-void GammaComboEngine::run()
+void GammaComboEngine::run(bool runOnDatSet)
 {
 	if ( arg->usage ) usage(); // print usage and exit
-	defineColors();
-	checkCombinationArg();
-	checkColorArg();
-	checkAsimovArg();
-	//scaleDownErrors();
-	if ( arg->nosyst ) disableSystematics();
-	makeAddDelCombinations();
-  if ( arg->nbatchjobs>0 ) writebatchscripts();
-	customizeCombinerTitles();
+
+	if(runOnDatSet){
+		if ( !cmb.empty() ){
+			cout << "ERROR : Please do not define any combiners when running on a dataset" << endl;
+			exit(EXIT_FAILURE);
+		}
+		scanDataSet();  // most thing gets done here
+	} else {
+		defineColors();
+		checkCombinationArg();
+		checkColorArg();
+		checkAsimovArg();
+		//scaleDownErrors();
+		if ( arg->nosyst ) disableSystematics();
+		makeAddDelCombinations();
+		if ( arg->nbatchjobs>0 ) writebatchscripts();
+		customizeCombinerTitles();
+		scan(); // most thing gets done here
+	}
 	setUpPlot();
-	scan(); // most thing gets done here
-  if ( arg->info || arg->latex ) return; // if only info is requested then we can go home
+	if ( arg->info || arg->latex ) return; // if only info is requested then we can go home
 	if (!arg->isAction("pluginbatch")) savePlot();
 	cout << endl;
 	t.Stop();
