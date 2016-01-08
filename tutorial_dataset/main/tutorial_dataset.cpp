@@ -29,8 +29,8 @@ int main(int argc, char* argv[]){
   GammaComboEngine gc("tutorial_dataset", argc, argv);
 
   // add the PDF
-  gc.addPdf(1, pdf); 
-  // there is just a single pdf, and its id is 1
+  gc.addPdf(0, pdf); 
+  // there is just a single pdf, and its id is 0
 
   // Combiners are not supported when working with datsets. 
   // The statistical model is fully defined with the PDF
