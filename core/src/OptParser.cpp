@@ -56,6 +56,7 @@ OptParser::OptParser():
 	npoints2dx = -99;
 	npoints2dy = -99;
 	npointstoy = -99;
+  ncoveragetoys = -99;
 	nrun = -99;
 	ntoys = -99;
 	parevol = false;
@@ -137,6 +138,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("npoints2dx");
 	availableOptions.push_back("npoints2dy");
 	availableOptions.push_back("npointstoy");
+	availableOptions.push_back("ncoveragetoys");
 	availableOptions.push_back("nrun");
 	availableOptions.push_back("ntoys");
 	//availableOptions.push_back("pevid");
@@ -369,6 +371,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::ValueArg<int> npoints2dxArg("", "npoints2dx", "Number of 2D scan points, x axis. Default: 50", false, -1, "int");
 	TCLAP::ValueArg<int> npoints2dyArg("", "npoints2dy", "Number of 2D scan points, y axis. Default: 50", false, -1, "int");
 	TCLAP::ValueArg<int> npointstoyArg("", "npointstoy", "Number of scan points used by the plugin method. Default: 100", false, 100, "int");
+	TCLAP::ValueArg<int> ncoveragetoysArg("", "ncoveragetoys", "Number of toys to throw in the coverage method. Default: 100", false, 100, "int");
 	TCLAP::MultiArg<string> jobsArg("j", "jobs", "Range of toy job ids to be considered. "
 			"To be used with --action plugin. "
 			"Can be given multiple times when plotting more than one combinations. In that case, they need to be given in same "
@@ -417,6 +420,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	vector<string> vAction;
 	//vAction.push_back("bb");
 	//vAction.push_back("bbbatch");
+  vAction.push_back("coverage");
+  vAction.push_back("coveragebatch");
 	vAction.push_back("plot");
 	//vAction.push_back("plot2d");
 	vAction.push_back("plugin");
@@ -584,6 +589,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "ntoys" ) ) cmd.add(ntoysArg);
 	if ( isIn<TString>(bookedOptions, "nrun" ) ) cmd.add(nrunArg);
 	if ( isIn<TString>(bookedOptions, "npointstoy" ) ) cmd.add(npointstoyArg);
+	if ( isIn<TString>(bookedOptions, "ncoveragetoys" ) ) cmd.add(ncoveragetoysArg);
 	if ( isIn<TString>(bookedOptions, "npoints2dy" ) ) cmd.add(npoints2dyArg);
 	if ( isIn<TString>(bookedOptions, "npoints2dx" ) ) cmd.add(npoints2dxArg);
 	if ( isIn<TString>(bookedOptions, "npoints" ) ) cmd.add(npointsArg);
@@ -655,6 +661,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	npoints2dx        = npoints2dxArg.getValue()==-1 ? (npointsArg.getValue()==-1 ? 50 : npointsArg.getValue()) : npoints2dxArg.getValue();
 	npoints2dy        = npoints2dyArg.getValue()==-1 ? (npointsArg.getValue()==-1 ? 50 : npointsArg.getValue()) : npoints2dyArg.getValue();
 	npointstoy        = npointstoyArg.getValue();
+  ncoveragetoys     = ncoveragetoysArg.getValue();
 	nrun	          = nrunArg.getValue();
 	ntoys	          = ntoysArg.getValue();
 	parevol           = parevolArg.getValue();
