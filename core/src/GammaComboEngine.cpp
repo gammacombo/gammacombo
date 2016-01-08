@@ -871,6 +871,34 @@ void GammaComboEngine::make2dPluginScan(MethodPluginScan *scannerPlugin, int cId
 	}
 }
 
+/// Perform the coverage scanner
+///
+/// \param scanner - the scanner to run the scan with
+/// \param cId - the id of this combination on the command line
+void GammaComboEngine::make1dCoverageScan(MethodCoverageScan *scanner, int cId)
+{
+  // load coverage point parameters (this can be done automatically)
+  ParameterCache *pCache = new ParameterCache(arg);
+  if ( arg->loadParamsFile.size() != arg->combid.size() ) {
+    cout << "\nERROR : For a Coverage scan you must pass a parameter file (--parfile) to through the toys from. You need one parfile per combiner" << endl;
+    cout << arg->loadParamsFile.size() << " " << arg->combid.size() << endl;
+    exit(1);
+  }
+  pCache->loadPoints( arg->loadParamsFile[cId] );
+
+  // do scan
+  scanner->initScan();
+  scanner->setParameterCache( pCache ); // this can be passed directly to scan
+  if ( arg->isAction("coveragebatch") ) {
+    scanner->scan1d(arg->nrun);
+  }
+  else {
+    scanner->readScan1dTrees( arg->jmin[cId], arg->jmax[cId] );
+    scanner->saveScanner( m_fnamebuilder->getFileNameScanner( scanner ) );
+  }
+
+}
+
 ///
 /// Make a 1D plot of a Prob scanner. The scanner can either be a "fresh"
 /// one, as made in make1dProbScan(), or a loaded one.
@@ -1016,6 +1044,17 @@ void GammaComboEngine::make2dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId)
 	sPlugin->setDrawSolution(arg->plotsolutions[cId]);
 	sPlugin->plotOn(plot);
 	plot->Draw();
+}
+
+///
+/// Make the 1D coverage plot
+///
+/// \param scanner - the coverage scanner
+/// \param cId - the id of this combination on the command line
+///
+void GammaComboEngine::make1dCoveragePlot(MethodCoverageScan *scanner, int cId)
+{
+  scanner->plot();
 }
 
 ///
@@ -1241,7 +1280,7 @@ void GammaComboEngine::scan()
 		//
 		/////////////////////////////////////////////////////
 
-		if ( !arg->isAction("plugin") && !arg->isAction("pluginbatch") )
+		if ( !arg->isAction("plugin") && !arg->isAction("pluginbatch") && !arg->isAction("coverage") && !arg->isAction("coveragebatch") )
 		{
 			MethodProbScan *scannerProb = new MethodProbScan(c);
 			// pvalue corrector
@@ -1380,6 +1419,39 @@ void GammaComboEngine::scan()
 		}
 
 		/////////////////////////////////////////////////////
+		//
+		// COVERAGE
+		//
+		/////////////////////////////////////////////////////
+
+    if ( arg->isAction("coverage") || arg->isAction("coveragebatch") )
+    {
+			if ( arg->var.size()!=1 ) {
+        cerr << "ERROR -- you can only scan in 1D for a coverage check" << endl;
+        exit(1);
+      }
+      MethodCoverageScan *coverageScan = new MethodCoverageScan(c);
+      if ( arg->isAction("coveragebatch") ) {
+        make1dCoverageScan( coverageScan, i );
+      }
+      else if ( arg->isAction("coverage") ) {
+        if ( arg->isAction("plot") ) {
+          if ( FileExists(m_fnamebuilder->getFileNameScanner(coverageScan)) ) {
+            coverageScan->loadScanner(m_fnamebuilder->getFileNameScanner(coverageScan));
+          }
+          else {
+            cout << "\nERROR : Couldn't load the coverage scanner: " << m_fnamebuilder->getFileNameScanner(coverageScan) << endl;
+            exit(1);
+          }
+        }
+        else {
+          make1dCoverageScan( coverageScan, i );
+        }
+        make1dCoveragePlot( coverageScan, i );
+      }
+    }
+
+		/////////////////////////////////////////////////////
 
 		if ( i<arg->combid.size()-1 ) {
 			cout << "\n-- now starting -c " << arg->combid[i+1] << " ------------------------------------------------------------------\n" << endl;
@@ -1494,7 +1566,7 @@ void GammaComboEngine::run(bool runOnDatSet)
 	}
 	setUpPlot();
 	if ( arg->info || arg->latex ) return; // if only info is requested then we can go home
-	if (!arg->isAction("pluginbatch")) savePlot();
+	if (!arg->isAction("pluginbatch") && !arg->isAction("coveragebatch") && !arg->isAction("coverage") ) savePlot();
 	cout << endl;
 	t.Stop();
 	t.Print();

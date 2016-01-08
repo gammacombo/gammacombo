@@ -14,6 +14,7 @@
 #include "Graphviz.h"
 #include "MethodPluginScan.h"
 #include "MethodProbScan.h"
+#include "MethodCoverageScan.h"
 #include "OneMinusClPlot.h"
 #include "OneMinusClPlot2d.h"
 #include "OneMinusClPlotAbs.h"
@@ -83,6 +84,8 @@ class GammaComboEngine
 		void			make1dPluginScan(MethodPluginScan *scannerPlugin, int cId);
 		void			make1dProbPlot(MethodProbScan *scanner, int cId);
 		void			make1dProbScan(MethodProbScan *scanner, int cId);
+    void      make1dCoverageScan(MethodCoverageScan *scanner, int cId);
+    void      make1dCoveragePlot(MethodCoverageScan *scanner, int cId);
 		void			make2dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId);
 		void			make2dPluginPlot(MethodPluginScan *sPlugin, MethodProbScan *sProb, int cId);
 		void			make2dPluginScan(MethodPluginScan *scannerPlugin, int cId);
