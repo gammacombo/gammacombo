@@ -1562,9 +1562,9 @@ void GammaComboEngine::run(bool runOnDatSet)
 		makeAddDelCombinations();
 		if ( arg->nbatchjobs>0 ) writebatchscripts();
 		customizeCombinerTitles();
+		setUpPlot();
 		scan(); // most thing gets done here
 	}
-	setUpPlot();
 	if ( arg->info || arg->latex ) return; // if only info is requested then we can go home
 	if (!arg->isAction("pluginbatch") && !arg->isAction("coveragebatch") && !arg->isAction("coverage") ) savePlot();
 	cout << endl;
