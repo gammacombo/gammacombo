@@ -57,7 +57,7 @@ class GammaComboEngine
 		void			print();
 		void			printPdfs();
 		void			printCombinations();
-		void			run();
+		void			run(bool runOnData=true);
 		void			runApplication();
 		void            scanStrategy1d(MethodProbScan *scanner, ParameterCache *pCache);
 		void			scanStrategy2d(MethodProbScan *scanner, ParameterCache *pCache);
@@ -94,6 +94,7 @@ class GammaComboEngine
 		void			savePlot();
 		void			scaleDownErrors();
 		void			scan();
+		void			scanDataSet();
 		void			setAsimovObservables(Combiner* c);
 		void			loadAsimovPoint(Combiner* c, int cId);
 		void			setUpPlot();

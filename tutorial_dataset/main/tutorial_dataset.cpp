@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
 
   // Combiners are not supported when working with datsets. 
   // The statistical model is fully defined with the PDF
-  gc.run(); //\todo: change to gc.run(true) once this is supported in gammacombo engine!!!!!
+  gc.run(true);
 }
 
 void constructWorkspace()
