@@ -12,7 +12,6 @@
 
 SET( COMBINER_MODULES
 	tutorial
-	tutorial_dataset
   #biggammacombo
   #gammacombo
   #hfag

@@ -10,6 +10,8 @@ SET(COMBINER_NAME
 #  end with .cpp.
 SET(COMBINER_EXECUTABLES
 	${COMBINER_NAME}
+        cartesian
+	tutorial_dataset
 	# tutorial2 # <-- add other execubables here
 )
 
