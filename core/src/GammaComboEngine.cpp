@@ -1,4 +1,6 @@
 #include "GammaComboEngine.h"
+#include "MethodDatasetsPluginScan.h"
+#include "PDF_Datasets_Abs.h"
 
 GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[])
 {
@@ -1389,7 +1391,7 @@ void GammaComboEngine::scan()
 //
 void GammaComboEngine::scanDataSet()
 {
-   if ( arg->info || arg->latex ) continue;
+   if ( arg->info || arg->latex ) return;
 
 	/////////////////////////////////////////////////////
 	//
@@ -1414,23 +1416,21 @@ void GammaComboEngine::scanDataSet()
 		// 1D SCAN
 		if ( arg->var.size()==1 )
 		{
-			MethodGenericPluginScan *scanner = new MethodGenericPluginScan(pdf, arg);
+			MethodDatasetsPluginScan *scanner = new MethodDatasetsPluginScan( (PDF_Datasets_Abs*) pdf[0], arg);
 			scanner->initScan(); //\todo <- can we get rid of this?
 			if ( arg->isAction("pluginbatch") ){
-				scanner.scan1d();
+				scanner->scan1d();
 			} else if ( arg->isAction("plugin") ){
-				MethodProbScan *scannerProb = new MethodProbScan(c);
 				scanner->readScan1dTrees(arg->jmin[0], arg->jmax[0]);
 			}
 		}
 		// 2D SCANS
 		else if ( arg->var.size()==2 ) {
-			MethodGenericPluginScan *scanner = new MethodGenericPluginScan(pdf, arg);
+			MethodDatasetsPluginScan *scanner = new MethodDatasetsPluginScan((PDF_Datasets_Abs*) pdf[0], arg);
 			scanner->initScan(); //\todo <- can we get rid of this?
 			if ( arg->isAction("pluginbatch") ){
-				scanner.scan1d();
+				scanner->scan1d();
 			} else if ( arg->isAction("plugin") ){
-				MethodProbScan *scannerProb = new MethodProbScan(c);
 				scanner->readScan1dTrees(arg->jmin[0], arg->jmax[0]);
 			}
 		}

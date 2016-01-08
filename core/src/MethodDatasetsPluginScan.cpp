@@ -60,7 +60,7 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets_Abs* PDF, OptPar
   fileBase            = "none";
   inputFiles.clear();        
   if(provideFitResult){
-    RooFitResult =  <- the result is in the workspace which is in the pdf. Get it from there
+    RooFitResult* result = (RooFitResult*) w->obj("data_fit_result");
     chi2minGlobal      = 2*result->minNll();
     std::cout << "=============== Global Minimum (2*-Log(Likelihood)) set to: 2*" << result->minNll() << " = " << chi2minGlobal << endl;
     chi2minGlobalFound = true;

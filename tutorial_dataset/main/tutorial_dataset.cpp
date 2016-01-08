@@ -134,9 +134,9 @@ void constructWorkspace()
   RooWorkspace workspace("dataset_workspace");
   workspace.import(mass_model);
   workspace.import(data);
-  workspace.import(rooFitResult);
-  workspace.defineSet("constraintPDFs", constraint_set, true);
-  workspace.defineSet("globalObservables", global_observables_set, true);
+  workspace.import(rooFitResult, "data_fit_result");
+  workspace.defineSet("constraint_set", constraint_set, true);
+  workspace.defineSet("global_observables_set", global_observables_set, true);
 
   // Save the workspace to a file
   workspace.SaveAs("bs24mu_wsp.root");
