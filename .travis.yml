@@ -12,4 +12,4 @@ script:
 - docker run --name raw_container schubertkonstantin/cern_root:v5-34-23 /bin/bash -c "mkdir /build"
 - docker cp  . raw_container:/build 
 - docker commit raw_container image_with_files
-- docker run image_with_files /bin/bash -c "cd build; cmake ..; make; make install"
+- docker run image_with_files /bin/bash -c "cd /build; cmake ..; make; make install"
