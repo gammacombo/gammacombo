@@ -250,7 +250,7 @@ void Combiner::setParametersConstant()
 ///
 RooAbsPdf* Combiner::getPdf()
 {
-	if ( _isCombined ){
+	if ( !_isCombined ){
 		cout << "Combiner::getPdf() : ERROR : Combiner needs to be combined first!" << endl;
 		assert(0);
 	}
