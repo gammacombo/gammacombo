@@ -12,7 +12,7 @@ PDF_DatasetTutorial::PDF_DatasetTutorial(RooWorkspace* w)
     std::cout << "INFO in PDF_DatasetTutorial::PDF_DatasetTutorial -- Dataset initialized" << std::endl;
   }
   else{
-    std::cout << "FATAL in PDF_DatasetTutorial::PDF_DatasetTutorial -- no Dataset found in worspace!" << std::endl;
+    std::cout << "FATAL in PDF_DatasetTutorial::PDF_DatasetTutorial -- no Dataset found in workspace!" << std::endl;
     isDataSet = kFALSE;
   }
   this->setNToys(0);

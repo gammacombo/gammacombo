@@ -11,6 +11,7 @@
 #include "TFile.h"
 
 
+void constructWorkspace(); // forward declaration of helper function below
 
 int main(int argc, char* argv[])
 {
@@ -23,6 +24,7 @@ int main(int argc, char* argv[])
   // In a more complex analysis, you can also do this elsewhere, for example using pyroot.
   //
   /////////////////////////////////////////////////////////////// 
+  constructWorkspace();
 
   // Load the workspace from its file
   TFile f("workspace.root");
@@ -139,6 +141,6 @@ void constructWorkspace()
   workspace.defineSet("global_observables_set", global_observables_set, true);
 
   // Save the workspace to a file
-  workspace.SaveAs("bs24mu_wsp.root");
+  workspace.SaveAs("workspace.root");
 
 }

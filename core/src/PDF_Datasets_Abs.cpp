@@ -184,7 +184,7 @@ void PDF_Datasets_Abs::print(){
     std::cout << "PDF:\t" << this->getPdfName() << std::endl;
   }
   if(wspc){
-    std::cout << "Worspace:\t" << std::endl;
+    std::cout << "Workspace:\t" << std::endl;
     wspc->Print();
   }
   return;
