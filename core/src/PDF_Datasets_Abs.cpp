@@ -158,3 +158,12 @@ void PDF_Datasets_Abs::print(){
   }
   return;
 };
+
+
+OptParser*   PDF_Datasets_Abs::getArg(){
+  std::cout<<"ERROR: getting the options parser from the pdf has been deprecated"<<std::endl;
+  std::cout<<"(This is up for discussion of course)"<<std::endl;
+  exit(EXIT_FAILURE);
+}
+
+

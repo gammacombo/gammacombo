@@ -9,15 +9,15 @@ ToyTree::ToyTree(Combiner *c, TChain* t)
 	this->storeGlob = false;
 }
 
-ToyTree::ToyTree(PDF_Datasets_Abs *p, TChain* t){
+ToyTree::ToyTree(PDF_Datasets_Abs *p, OptParser* opt, TChain* t){
 	assert(p);
 	this->comb = NULL;
 	this->w = p->getWorkspace();
 	this->name = p->getName();
-	this->arg = p->getArg();
+	this->arg = opt;
 	this->pdfName  = "pdf_"+p->getPdfName();
-	this->obsName  = "obs_"+p->getPdfName();
-	this->parsName = "par_"+p->getPdfName();
+	this->obsName  = p->getObsName();
+	this->parsName = p->getParName();
   	globName = p->getGlobVarsName();
 	this->thName   = "";
 	this->initMembers(t);

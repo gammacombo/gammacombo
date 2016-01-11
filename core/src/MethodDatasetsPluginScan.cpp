@@ -72,7 +72,6 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets_Abs* PDF, OptPar
   //if ( !w->pdf(pdf->getPdfName()) ) { cout << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : not found in workspace : " << pdf->getPdfName()  << endl; exit(1); }
   if ( !w->set(obsName) ) { cout << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no 'obsName' set found in workspace : " << pdf->getObsName() << endl; exit(1); }
   if ( !w->set(pdf->getParName()) ){ cout << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no 'pdf->getParName()' set found in workspace : " << pdf->getParName() << endl; exit(1); }
-
 }
 
 float MethodDatasetsPluginScan::getParValAtScanpoint(float point, TString parName){
@@ -180,7 +179,7 @@ void MethodDatasetsPluginScan::initScan(){
 void MethodDatasetsPluginScan::loadParameterLimits(){
   TString rangeName = arg->enforcePhysRange ? "phys" : "free";
   if ( arg->debug ) cout << "DEBUG in Combiner::loadParameterLimits() : loading parameter ranges: " << rangeName << endl;
-  TIterator* it = w->set("par_"+pdf->getPdfName())->createIterator();
+  TIterator* it = w->set(pdf->getParName())->createIterator();
   while ( RooRealVar* p = (RooRealVar*)it->Next() ) setLimit(w, p->GetName(), rangeName);
   delete it;
 }
@@ -359,7 +358,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
 {
   int nFilesRead, nFilesMissing;
   TChain* c = this->readFiles(runMin, runMax, nFilesRead, nFilesMissing, fileNameBaseIn);
-  ToyTree t(this->pdf, c);
+  ToyTree t(this->pdf, this->arg, c);
   t.open();
   
   float halfBinWidth = (t.getScanpointMax()-t.getScanpointMin())/((float)t.getScanpointN())/2;//-1.)/2;
@@ -592,6 +591,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
   this->loadParameterLimits(); /// Default is "free", if not changed by cmd-line parameter
   if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - limits set" << endl;
 
+
   // Define scan parameter and scan range.
   RooRealVar *par = w->var(scanVar1);
   float min = hCL->GetXaxis()->GetXmin();
@@ -616,7 +616,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
   if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - probPValues defined, min/max found" << endl;
 
   // Set up toy root tree
-  ToyTree t(this->pdf);
+  
+  ToyTree t(this->pdf, arg);
   if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - ToyTree constructed" << endl;
   t.init();
   if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - ToyTree init finished" << endl;
@@ -1346,7 +1347,7 @@ void MethodDatasetsPluginScan::performBootstrapTest(int nSamples, const TString&
   int nFilesRead(0), nFilesMissing(0);
   this->readFiles(arg->jmin[0], arg->jmax[0], 
                   nFilesRead, nFilesMissing, arg->jobdir);
-  ToyTree t(this->pdf, this->chain);
+  ToyTree t(this->pdf, this->arg, this->chain);
   t.open();
   t.activateCoreBranchesOnly(); ///< speeds up the event loop
 

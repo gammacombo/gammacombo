@@ -36,7 +36,7 @@ public:
   virtual void                  initParameters(); //overriding the inherited virtual method
   void                  initPDF(const TString& name);
 
-  OptParser*            getArg(){ return arg; };
+  OptParser*            getArg();
   TString               getConstraintName(){return constraintName;};
   TString               getExternalPdfName(){return pdfWspcName;};
   TString               getDataName(){return dataName;};

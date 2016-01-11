@@ -35,7 +35,7 @@ class ToyTree
 	public:
 
 		ToyTree(Combiner *c, TChain* t=0);
-		ToyTree(PDF_Datasets_Abs *p, TChain* t=0);
+		ToyTree(PDF_Datasets_Abs *p, OptParser* opt, TChain* t=0);
 		~ToyTree();
 
 		void                    activateCoreBranchesOnly();
