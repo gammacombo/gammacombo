@@ -32,10 +32,8 @@ RooFitResult* PDF_DatasetTutorial::fit(bool fitToys){
   RooDataSet* dataToFit = (fitToys) ? this->toyObservables : this->data ;
 
   
-  if(fitToys) this->randomizeConstraintMeans(); // \todo: rename as "setGlobalObservablesToToys" 
-                                                // We should not randomize anything here, we should 
-  // \todo: put this back in later!!!
-  // else this->setGlobalObservablesToData();
+  if(fitToys)   wspc->loadSnapshot(globalObsToySnapshotName);
+  else          wspc->loadSnapshot(globalObsDataSnapshotName);
 
   RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() 
                                       ,RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName))
@@ -51,7 +49,7 @@ RooFitResult* PDF_DatasetTutorial::fit(bool fitToys){
   return result;
 };
 
-void   PDF_DatasetTutorial::generateToys(int SeedShift){
+void   PDF_DatasetTutorial::generateToys(int SeedShift) {
   TRandom3 rndm(0);
   if(this->getNToys()==0){
     std::cout << "FATAL in PDF_DatasetTutorial::generateToys -- I am supposed to generate 0 Toys? Can't do that!" << std::endl;  
@@ -72,25 +70,11 @@ void   PDF_DatasetTutorial::generateToys(int SeedShift){
   toys->append(*(this->getWorkspace()->pdf("e")->generate(*observables,bkg_number)));
 
   this->toyObservables  = toys; 
-
-
-  // !!!!!!!!!!!!!!!!!!!!!!!!
-  //
-  //
-  // \todo: put this back in later !!!!!!
-  // this->sampleConstraintObservables();
-  //
-  //
-  // !!!!!!!!!!!!!!!!!!!!!!!!
-
-
-
-
-
   this->isToyDataSet    = kTRUE;
 }
 
-void randomizeConstraintMeans(){
-  // we should not randomize here, we should generate the global observables with the toys in generateToys and then just set them later.
-  exit(1);
+  void  PDF_DatasetTutorial::generateToysGlobalObservables(bool useConstrPdf , int SeedShift) {
+    // \todo: generate the global observables!!!!
+      
+    wspc->saveSnapshot(globalObsToySnapshotName, *wspc->set(globalObsName));
 }

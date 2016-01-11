@@ -9,7 +9,8 @@ class PDF_DatasetTutorial : public PDF_Datasets_Abs
 public:
   PDF_DatasetTutorial(RooWorkspace* w);
   RooFitResult* fit(bool fitToys = kTRUE);
-  void          generateToys(int SeedShift = 0);
+  void          generateToys(int SeedShift = 0) override;
+  void          generateToysGlobalObservables(bool useConstrPdf = true, int SeedShift = 0) override;
   inline void   setNToys(int nToys){toysToGenerate = nToys;};
   inline int    getNToys(){return toysToGenerate;};
   ~PDF_DatasetTutorial();

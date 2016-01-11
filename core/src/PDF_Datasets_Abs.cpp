@@ -66,6 +66,16 @@ void  PDF_Datasets_Abs::initObservables(const TString& setName){
   observables = (RooArgList*) wspc->set(obsName);
   areObsSet = true;
 };
+
+void  PDF_Datasets_Abs::initGlobalObservables(const TString& setName){
+  wspc->renameSet(setName, globalObsName);
+  wspc->saveSnapshot(globalObsDataSnapshotName,*wspc->set(globalObsName));
+};
+
+
+
+
+
 void  PDF_Datasets_Abs::initObservables(){
     std::cout << "ERROR in PDF_Datasets_Abs::initObservables():"<<endl;
     std::cout << "This function is not supported for dataset scans." << std::endl; 
@@ -165,5 +175,3 @@ OptParser*   PDF_Datasets_Abs::getArg(){
   std::cout<<"(This is up for discussion of course)"<<std::endl;
   exit(EXIT_FAILURE);
 }
-
-

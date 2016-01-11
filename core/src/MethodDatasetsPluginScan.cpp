@@ -675,7 +675,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       // set and fix scan point
       par->setVal(scanpoint);
       par->setConstant(true);
-
+      
       RooFitResult *result = this->pdf->fit(kFALSE); // false -> fit on data
       assert(result);
       if(arg->debug){ 
@@ -777,10 +777,10 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       w->loadSnapshot(plhName);
       
       this->pdf->generateToys();
+      this->pdf->generateToysGlobalObservables(useConstrPDFforRandomization);
 
-      //prepare fit by randomising constraints
-      this->pdf->randomizeConstraintMeans(useConstrPDFforRandomization);
-      if(this->pdf->globVals) globalVars = *this->pdf->globVals->get(0);
+      
+      if(this->pdf->globVals) globalVars = *this->pdf->globVals->get(0); // \todo: what does this line do? do we need it???  
 
       t.storeParsGau();
 
