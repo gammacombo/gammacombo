@@ -19,6 +19,8 @@
 ///
 MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets_Abs* PDF, OptParser* opt, bool provideFitResult)
 {
+
+  // \todo: Call the superclass constructor and avoid duplicate code
   obsDataset          = 0;
   methodName          = "DatasetsPlugin";
   combiner            = NULL;
@@ -35,9 +37,6 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets_Abs* PDF, OptPar
   nPoints1d           = arg->npoints1d;
   nPoints2dx          = arg->npoints2dx;
   nPoints2dy          = arg->npoints2dy;
-  pdfName             = pdf->getPdfName();
-  obsName             = pdf->getObsName();
-  parsName            = pdf->getParName();
   chi2minGlobal       = 0.0;
   chi2minGlobalFound  = false;
   lineStyle           = 0;
@@ -70,9 +69,9 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets_Abs* PDF, OptPar
     exit(EXIT_FAILURE);
   }
   // check workspace content IS PDF CHECK NECESSARY? Don't think so for generic scan!
-  //if ( !w->pdf(pdfName) ) { cout << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : not found in workspace : " << pdfName  << endl; exit(1); }
-  if ( !w->set(obsName) ) { cout << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no 'obsName' set found in workspace : " << obsName << endl; exit(1); }
-  if ( !w->set(parsName) ){ cout << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no 'parsName' set found in workspace : " << parsName << endl; exit(1); }
+  //if ( !w->pdf(pdf->getPdfName()) ) { cout << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : not found in workspace : " << pdf->getPdfName()  << endl; exit(1); }
+  if ( !w->set(obsName) ) { cout << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no 'obsName' set found in workspace : " << pdf->getObsName() << endl; exit(1); }
+  if ( !w->set(pdf->getParName()) ){ cout << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no 'pdf->getParName()' set found in workspace : " << pdf->getParName() << endl; exit(1); }
 
 }
 
@@ -121,9 +120,9 @@ void MethodDatasetsPluginScan::initScan(){
   Utils::setLimit(w, scanVar1, "scan");
   float min1 = par1->getMin();
   float max1 = par1->getMax();
-  hCL = new TH1F("hCL"+getUniqueRootName(), "hCL"+pdfName, nPoints1d, min1, max1);
+  hCL = new TH1F("hCL"+getUniqueRootName(), "hCL"+pdf->getPdfName(), nPoints1d, min1, max1);
   if ( hChi2min ) delete hChi2min; 
-  hChi2min = new TH1F("hChi2min"+getUniqueRootName(), "hChi2min"+pdfName, nPoints1d, min1, max1);
+  hChi2min = new TH1F("hChi2min"+getUniqueRootName(), "hChi2min"+pdf->getPdfName(), nPoints1d, min1, max1);
   
   // fill the chi2 histogram with very unlikely values such
   // that inside scan1d() the if clauses work correctly
@@ -140,7 +139,7 @@ void MethodDatasetsPluginScan::initScan(){
     setLimit(w, scanVar2, "scan");
     float min2 = par2->getMin();
     float max2 = par2->getMax();
-    hCL2d      = new TH2F("hCL"+getUniqueRootName(),      "hCL2d"+pdfName, nPoints2dx, min1, max1, nPoints2dy, min2, max2);
+    hCL2d      = new TH2F("hCL"+getUniqueRootName(),      "hCL2d"+pdf->getPdfName(), nPoints2dx, min1, max1, nPoints2dy, min2, max2);
     hChi2min2d = new TH2F("hChi2min"+getUniqueRootName(), "hChi2min",      nPoints2dx, min1, max1, nPoints2dy, min2, max2);
     for ( int i=1; i<=nPoints2dx; i++ )
       for ( int j=1; j<=nPoints2dy; j++ ) hChi2min2d->SetBinContent(i,j,1e6);
@@ -181,7 +180,7 @@ void MethodDatasetsPluginScan::initScan(){
 void MethodDatasetsPluginScan::loadParameterLimits(){
   TString rangeName = arg->enforcePhysRange ? "phys" : "free";
   if ( arg->debug ) cout << "DEBUG in Combiner::loadParameterLimits() : loading parameter ranges: " << rangeName << endl;
-  TIterator* it = w->set("par_"+pdfName)->createIterator();
+  TIterator* it = w->set("par_"+pdf->getPdfName())->createIterator();
   while ( RooRealVar* p = (RooRealVar*)it->Next() ) setLimit(w, p->GetName(), rangeName);
   delete it;
 }
@@ -225,14 +224,14 @@ bool MethodDatasetsPluginScan::loadPLHPoint(int index){
   int fail_count = 0;
   bool success = 0;
   this->profileLHPoints->GetEntry(index);
-  RooArgSet* pars          = (RooArgSet*)this->pdf->getWorkspace()->set(parsName);
+  RooArgSet* pars          = (RooArgSet*)this->pdf->getWorkspace()->set(pdf->getParName());
   TIterator* it;
   if(pars){
     it = pars->createIterator();
   }
   else{
     cout << "MethodDatasetsPluginScan::loadPLHPoint(int index) : ERROR : no parameter set (" 
-         << parsName << ") found in workspace!" << endl; 
+         << pdf->getParName() << ") found in workspace!" << endl; 
     return success;
   }
   while ( RooRealVar* p = (RooRealVar*)it->Next() ){
@@ -272,9 +271,9 @@ void MethodDatasetsPluginScan::print(){
   cout << "\t --- " << "Number of Scanpoints x 2D: \t" << nPoints2dx <<endl;
   cout << "\t --- " << "Number of Scanpoints y 2D: \t" << nPoints2dy <<endl;
   cout << "\t --- " << "Number of Toys per scanpoint: \t" << nToys << endl;
-  cout << "\t --- " << "PDF Name: \t\t\t\t" << pdfName << endl;
-  cout << "\t --- " << "Observables Name: \t\t\t" <<  obsName << endl;
-  cout << "\t --- " << "Parameters Name: \t\t\t" <<  parsName << endl;
+  cout << "\t --- " << "PDF Name: \t\t\t\t" << pdf->getPdfName() << endl;
+  cout << "\t --- " << "Observables Name: \t\t\t" <<  pdf->getObsName() << endl;
+  cout << "\t --- " << "Parameters Name: \t\t\t" <<  pdf->getParName() << endl;
   cout << "\t --- " << "Global minimum Chi2: \t\t" << chi2minGlobal << endl;
   cout << "\t --- " << "nrun: \t\t\t\t" << arg->nrun << endl;
   cout << "---------------------------------" << endl;
@@ -628,8 +627,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
   // Save parameter values that were active at function
   // call. We'll reset them at the end to be transparent
   // to the outside.
-  RooDataSet* parsFunctionCall = new RooDataSet("parsFunctionCall", "parsFunctionCall", *w->set(parsName));
-  parsFunctionCall->add(*w->set(parsName));
+  RooDataSet* parsFunctionCall = new RooDataSet("parsFunctionCall", "parsFunctionCall", *w->set(pdf->getParName()));
+  parsFunctionCall->add(*w->set(pdf->getParName()));
       
   // for the progress bar: if more than 100 steps, show 50 status messages.
   int allSteps = nPoints1d*nToys;
@@ -722,8 +721,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
     TString plhName = Form("profileLHPoint_%i",i);
     w->saveSnapshot(plhName,allVars);
 
-    RooDataSet* parsGlobalMinScanPoint = new RooDataSet("parsGlobalMinScanPoint", "parsGlobalMinScanPoint", *w->set(parsName));
-    parsGlobalMinScanPoint->add(*w->set(parsName));
+    RooDataSet* parsGlobalMinScanPoint = new RooDataSet("parsGlobalMinScanPoint", "parsGlobalMinScanPoint", *w->set(pdf->getParName()));
+    parsGlobalMinScanPoint->add(*w->set(pdf->getParName()));
     
     if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - stored parameter values for scanpoint " << i+1 << endl;
       
@@ -790,7 +789,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       if(arg->debug)cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - perform scan toy fit" << endl;
       // set parameters to data scan fit
       if(!useConstrPDFforRandomization){
-        Utils::setParameters(this->pdf->getWorkspace(), parsName, parsGlobalMinScanPoint->get(0));
+        Utils::setParameters(this->pdf->getWorkspace(), pdf->getParName(), parsGlobalMinScanPoint->get(0));
       }
       else{
         w->loadSnapshot(plhName);
@@ -923,8 +922,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 
       pdf->deleteNLL();
       
-      RooDataSet* parsAfterScanFit = new RooDataSet("parsAfterScanFit", "parsAfterScanFit", *w->set(parsName));
-      parsAfterScanFit->add(*w->set(parsName));
+      RooDataSet* parsAfterScanFit = new RooDataSet("parsAfterScanFit", "parsAfterScanFit", *w->set(pdf->getParName()));
+      parsAfterScanFit->add(*w->set(pdf->getParName()));
       
       /*cout  << std::setprecision(9);
       cout  << "===== > compare scan fit result with pdf parameters: " << endl;
@@ -942,7 +941,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       if(arg->debug)cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - perform free toy fit" << endl;
       // Use parameters from the scanfit to data
       if(!useConstrPDFforRandomization){
-        Utils::setParameters(this->pdf->getWorkspace(), parsName, parsGlobalMinScanPoint->get(0));
+        Utils::setParameters(this->pdf->getWorkspace(), pdf->getParName(), parsGlobalMinScanPoint->get(0));
       }
       else{
         // scanpoint has to be set free again
@@ -1209,7 +1208,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         cout << "+++++ > try to fit with different starting values" << endl;
         cout << "+++++ > dChi2: " << t.chi2minToy-t.chi2minGlobalToy << endl; 
         cout << "+++++ > dChi2PDF: " << 2*(pdf->getMinNllScan()-pdf->getMinNllFree()) << endl;
-        Utils::setParameters(this->pdf->getWorkspace(), parsName, parsAfterScanFit->get(0));
+        Utils::setParameters(this->pdf->getWorkspace(), pdf->getParName(), parsAfterScanFit->get(0));
         if(par->getVal() < 1e-13) par->setVal(0.67e-12);
         par->setConstant(false); 
         pdf->deleteNLL();
@@ -1248,7 +1247,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       t.statusFreePDF       = pdf->getFitStatus(); //r1->status();
       t.statusFree          = r1->status();
       t.covQualFree         = r1->covQual();
-      t.scanbest            = ((RooRealVar*)w->set(parsName)->find(scanVar1))->getVal();
+      t.scanbest            = ((RooRealVar*)w->set(pdf->getParName())->find(scanVar1))->getVal();
       t.storeParsFree();
       pdf->deleteNLL();
 
@@ -1297,10 +1296,10 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
     } // End of toys loop
     if(doProbScanOnly) t.fill();
     // reset
-    setParameters(w, parsName, parsFunctionCall->get(0));
+    setParameters(w, pdf->getParName(), parsFunctionCall->get(0));
     //delete result;
     delete parsGlobalMinScanPoint;
-    //setParameters(w, obsName, obsDataset->get(0));
+    //setParameters(w, pdf->getObsName(), obsDataset->get(0));
     t.writeToFile();
   } // End of npoints loop
   this->profileLH = new MethodProbScan(this->pdf, this->getArg(), probPValues, this->pdf->getPdfName());

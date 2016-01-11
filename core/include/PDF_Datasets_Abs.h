@@ -31,9 +31,9 @@ public:
   
   void                  initData(const TString& name);
   void                  initObservables(const TString& setName);
+  virtual void                  initObservables();  //overriding the inherited virtual method
   void                  initParameters(const TString& setName);
-  void                  initObservables(const vector<TString>& obsNames);
-  void                  initParameters(const vector<TString>& parNames);
+  virtual void                  initParameters(); //overriding the inherited virtual method
   void                  initPDF(const TString& name);
 
   OptParser*            getArg(){ return arg; };
