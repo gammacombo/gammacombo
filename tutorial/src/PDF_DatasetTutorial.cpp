@@ -15,8 +15,8 @@ PDF_DatasetTutorial::PDF_DatasetTutorial(RooWorkspace* w)
     std::cout << "FATAL in PDF_DatasetTutorial::PDF_DatasetTutorial -- no Dataset with name 'data' found in workspace!" << std::endl;
     isDataSet = kFALSE;
   }
-  this->setNToys(0);
-  drawFitsDebug = kFALSE;
+  
+  drawFitsDebug  = kFALSE;
 }
 PDF_DatasetTutorial::~PDF_DatasetTutorial(){};
 
@@ -30,7 +30,6 @@ RooFitResult* PDF_DatasetTutorial::fit(bool fitToys){
   RooMsgService::instance().setSilentMode(kTRUE);
   // Choose Dataset to fit to
   RooDataSet* dataToFit = (fitToys) ? this->toyObservables : this->data ;
-
   
   if(fitToys)   wspc->loadSnapshot(globalObsToySnapshotName);
   else          wspc->loadSnapshot(globalObsDataSnapshotName);
@@ -51,10 +50,7 @@ RooFitResult* PDF_DatasetTutorial::fit(bool fitToys){
 
 void   PDF_DatasetTutorial::generateToys(int SeedShift) {
   TRandom3 rndm(0);
-  if(this->getNToys()==0){
-    std::cout << "FATAL in PDF_DatasetTutorial::generateToys -- I am supposed to generate 0 Toys? Can't do that!" << std::endl;  
-  }
-  
+
   double mean_signal_events_to_be_generated = getWorkspace()->var("branchingRatio")->getVal() / getWorkspace()->var("norm_constant")->getVal();
   double mean_background_events_to_be_generated = this->getWorkspace()->var("Nbkg")->getVal();
 
@@ -66,8 +62,7 @@ void   PDF_DatasetTutorial::generateToys(int SeedShift) {
   int bkg_number = background_poisson(generator);
 
   RooDataSet* toys = this->getWorkspace()->pdf("g")->generate(*observables, sig_number);
-
-  toys->append(*(this->getWorkspace()->pdf("e")->generate(*observables,bkg_number)));
+  toys->append(*(this->getWorkspace()->pdf("background_model")->generate(*observables,bkg_number)));
 
   this->toyObservables  = toys; 
   this->isToyDataSet    = kTRUE;

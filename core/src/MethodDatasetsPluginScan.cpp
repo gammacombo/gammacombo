@@ -636,8 +636,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
   float printFreq = allSteps>51 ? 50 : allSteps;
   int curStep  = 0;
   
-  // define constraint rooargset
-  RooArgSet globalVars = *w->set(pdf->getGlobVarsName());
+  
   // start scan
   cout << "MethodDatasetsPluginScan::scan1d() : starting ... with " << nPoints1d << " scanpoints..." << endl;
   for ( int i=0; i<nPoints1d; i++ )
@@ -762,27 +761,24 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       //  cout << (float)curStep/(float)allSteps*100. << "%" << endl;
      
       //}
-      if(arg->debug){
-        cout << "\n>>" << endl;
-        cout << ">> new toy\n" << endl;
-        cout << "\n>>" << endl;
-      }
+      if(arg->debug) cout << ">> new toy\n" << endl;
       this->pdf->setMinNllFree(0);
       this->pdf->setMinNllScan(0);
       //
       // 1. Generate toys
-      //    (or select the right one)
-      //
+
       // set parameters to generate at to the values from the fit to data fixing the scanvar 
       w->loadSnapshot(plhName);
+      // \does this make sure we are generating toy global observables according to the plugin method?
       
       this->pdf->generateToys();
       this->pdf->generateToysGlobalObservables(useConstrPDFforRandomization);
 
       
-      if(this->pdf->globVals) globalVars = *this->pdf->globVals->get(0); // \todo: what does this line do? do we need it???  
+     //if(this->pdf->globVals) globalVars = *this->pdf->globVals->get(0); // \todo: make sure it is okay that I removed this.
 
-      t.storeParsGau();
+      // \todo: comment the following back in once I know how we do thiat
+    //      t.storeParsGau( we need to pass a rooargset of the means of the global observables here);  
 
       //
       // 2. scan fit
@@ -794,7 +790,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       }
       else{
         w->loadSnapshot(plhName);
-        if(this->pdf->globVals) globalVars = *this->pdf->globVals->get(0);
+       // if(this->pdf->globVals) globalVars = *this->pdf->globVals->get(0);  \todo: make sure that it is okay that I removed this.
       }
 
 
@@ -947,7 +943,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       else{
         // scanpoint has to be set free again
         w->loadSnapshot(plhName);
-        if(this->pdf->globVals) globalVars = *this->pdf->globVals->get(0);
+        //if(this->pdf->globVals) globalVars = *this->pdf->globVals->get(0); \todo: make sure it is okay I removed this.
       }
       par->setConstant(false);
       if(par->getVal() < 1e-13){

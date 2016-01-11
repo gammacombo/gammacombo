@@ -67,7 +67,7 @@ class ToyTree
 		void                    setStoreObs(bool flag){this->storeObs = flag;};
 		void                    setStoreTh(bool flag){this->storeTh = flag;};
 		void                    setStoreGlob(bool flag){this->storeTh = flag;};
-		void                    storeParsGau();
+		void                    storeParsGau(const RooArgSet globalConstraintMeans);
 
 
 		float scanpoint;        ///< the scanpoint for 1D scans, or the x scanpoint for 2D scans
