@@ -58,7 +58,7 @@ class GammaComboEngine
 		void			print();
 		void			printPdfs();
 		void			printCombinations();
-		void			run(bool runOnData=true);
+		void			run(bool runOnData=false);
 		void			runApplication();
 		void            scanStrategy1d(MethodProbScan *scanner, ParameterCache *pCache);
 		void			scanStrategy2d(MethodProbScan *scanner, ParameterCache *pCache);

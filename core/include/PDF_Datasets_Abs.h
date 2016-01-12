@@ -28,15 +28,17 @@ public:
 
   virtual RooFitResult* fit(bool fitToys = kTRUE) = 0;
   virtual void          generateToys(int SeedShift = 0) = 0;
+  virtual void          generateToysGlobalObservables(bool useConstrPdf = true, int SeedShift = 0) = 0;
   
   void                  initData(const TString& name);
   void                  initObservables(const TString& setName);
+  virtual void                  initObservables();  //overriding the inherited virtual method
+  void                  initGlobalObservables(const TString& setName);
   void                  initParameters(const TString& setName);
-  void                  initObservables(const vector<TString>& obsNames);
-  void                  initParameters(const vector<TString>& parNames);
+  virtual void                  initParameters(); //overriding the inherited virtual method
   void                  initPDF(const TString& name);
 
-  OptParser*            getArg(){ return arg; };
+  OptParser*            getArg();
   TString               getConstraintName(){return constraintName;};
   TString               getExternalPdfName(){return pdfWspcName;};
   TString               getDataName(){return dataName;};
@@ -65,6 +67,7 @@ public:
   void                  setVarRange(const TString &varName, const TString &rangeName, 
                                     const double &rangeMin, const double &rangeMax);
   void                  setToyData(RooDataSet* ds);
+  void                  setGlobalObservables(bool toToys);
 
   void                  print();
 
@@ -76,8 +79,6 @@ public:
   int                   NCPU;         //> number of CPU used
   RooDataSet*           globVals; //> values for a set of global vars
   float                 minNll;
-
-  virtual void          randomizeConstraintMeans(bool useConstrPdf = true){cout << "Child specific" << endl; };         //> helper function to draw new means for constraints every toy
 
 
 protected:
@@ -91,7 +92,12 @@ protected:
   TString         dataName;       //> name of the data set in the workspace
   TString         pdfWspcName;    //> name of the pdf in an external workspace
   TString         constraintName; //> name of the set with all constraint pdfs 
-  TString         globalVarsName; //> name of the set of global vars, e.g. mean of gaussian constraints...
+  TString         globalVarsName; //> name of the set of global vars in the workspace, e.g. mean of gaussian constraints...
+  TString         globalObsName;   //> name of the set of global observables in the workspace.
+  const TString         globalObsDataSnapshotName = "globalObsDataSnapshotName";
+  //> name of a snapshot that stores the values of the global observables in data
+  const TString         globalObsToySnapshotName = "globalObsToySnapshotName";
+  //> name of a snapshot that stores the latest simulated values for the global observables
   OptParser*      arg;
   int             fitStrategy;
   int             fitStatus;

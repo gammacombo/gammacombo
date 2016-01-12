@@ -9,15 +9,15 @@ ToyTree::ToyTree(Combiner *c, TChain* t)
 	this->storeGlob = false;
 }
 
-ToyTree::ToyTree(PDF_Datasets_Abs *p, TChain* t){
+ToyTree::ToyTree(PDF_Datasets_Abs *p, OptParser* opt, TChain* t){
 	assert(p);
 	this->comb = NULL;
 	this->w = p->getWorkspace();
 	this->name = p->getName();
-	this->arg = p->getArg();
+	this->arg = opt;
 	this->pdfName  = "pdf_"+p->getPdfName();
-	this->obsName  = "obs_"+p->getPdfName();
-	this->parsName = "par_"+p->getPdfName();
+	this->obsName  = p->getObsName();
+	this->parsName = p->getParName();
   	globName = p->getGlobVarsName();
 	this->thName   = "";
 	this->initMembers(t);
@@ -304,23 +304,13 @@ void ToyTree::storeParsFree()
 /// Store the current workspace fit parameters as the
 /// free fit result.
 ///
-void ToyTree::storeParsGau()
+void ToyTree::storeParsGau( RooArgSet globalConstraintMeans)
 {
-	TIterator* i = w->set("combconstraints")->createIterator();
-	while( RooAbsPdf* gau = (RooAbsPdf*)i->Next() ){
-		std::vector<TString> pars = Utils::getParsWithName("ean", *gau->getVariables());
-		if(pars.size() == 0){
-			std::cout << "ERROR in PDF_B_MuMu_CombCMSLHCb_WS140401::initConstraintMeans - No var with sub-string 'ean' found in set" << std::endl;
-			return;
-		}
-		if(pars.size() > 1){
-			std::cout << "ERROR in PDF_B_MuMu_CombCMSLHCb_WS140401::initConstraintMeans - More than one var with sub-string 'ean' found in set" << std::endl;
-			return;
-		}
-		constraintMeans[w->var(pars[0])->GetName()] = w->var(pars[0])->getVal();
+	TIterator* it = globalConstraintMeans.createIterator();
+	while( RooRealVar* mean = (RooRealVar*) it->Next() ){
+		constraintMeans[mean->GetName()] = mean->getVal();
 	}
-
-	delete i;
+	delete it;
 }
 
 ///

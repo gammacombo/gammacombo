@@ -35,7 +35,7 @@ class ToyTree
 	public:
 
 		ToyTree(Combiner *c, TChain* t=0);
-		ToyTree(PDF_Datasets_Abs *p, TChain* t=0);
+		ToyTree(PDF_Datasets_Abs *p, OptParser* opt, TChain* t=0);
 		~ToyTree();
 
 		void                    activateCoreBranchesOnly();
@@ -67,7 +67,7 @@ class ToyTree
 		void                    setStoreObs(bool flag){this->storeObs = flag;};
 		void                    setStoreTh(bool flag){this->storeTh = flag;};
 		void                    setStoreGlob(bool flag){this->storeTh = flag;};
-		void                    storeParsGau();
+		void                    storeParsGau(const RooArgSet globalConstraintMeans);
 
 
 		float scanpoint;        ///< the scanpoint for 1D scans, or the x scanpoint for 2D scans

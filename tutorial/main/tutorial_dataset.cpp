@@ -11,6 +11,7 @@
 #include "TFile.h"
 
 
+void constructWorkspace(); // forward declaration of helper function below
 
 int main(int argc, char* argv[])
 {
@@ -23,6 +24,7 @@ int main(int argc, char* argv[])
   // In a more complex analysis, you can also do this elsewhere, for example using pyroot.
   //
   /////////////////////////////////////////////////////////////// 
+  constructWorkspace();
 
   // Load the workspace from its file
   TFile f("workspace.root");
@@ -30,6 +32,9 @@ int main(int argc, char* argv[])
 
   // Construct the PDF and pass the workspace to it
   PDF_Datasets_Abs* pdf = new PDF_DatasetTutorial(workspace);
+  pdf->initPDF("mass_model"); // this the name of the pdf in the workspace (without the constraints)
+  pdf->initObservables("datasetObservables"); // \todo is this the right set here?
+  pdf->initParameters("parameters");
 
   // Start the Gammacombo Engine
   GammaComboEngine gc("tutorial_dataset", argc, argv);
@@ -97,6 +102,7 @@ void constructWorkspace()
                                                                 ->getRealValue("norm_constant_glob_obs");
   //
   RooDataSet& data = *mass_model.generate(RooArgSet(mass),100); // we use a reference here to avoid copying the object
+  data.SetName("data"); // the name of the dataset MUST be "data" in order for the framework to identify it.
   //
   /////////////////////////////////////////////////////////
 
@@ -119,8 +125,8 @@ void constructWorkspace()
   //one containting the global Observables,
   RooArgSet global_observables_set(norm_constant_obs, "globalObservables");
 
-  //one containting the normal Observables and
-  RooArgSet normal_observables_set(mass, "datsetObservables");
+  //one containting the normal Observables (the bin variables in the datasets usually) and
+  RooArgSet dataset_observables_set(mass, "datasetObservables");
 
   //one containting the parameters
   RooArgSet parameters_set(branchingRatio, norm_constant, "parameters");
@@ -137,8 +143,10 @@ void constructWorkspace()
   workspace.import(rooFitResult, "data_fit_result");
   workspace.defineSet("constraint_set", constraint_set, true);
   workspace.defineSet("global_observables_set", global_observables_set, true);
+  workspace.defineSet("datasetObservables", dataset_observables_set, true);
+  workspace.defineSet("parameters", parameters_set, true);
 
   // Save the workspace to a file
-  workspace.SaveAs("bs24mu_wsp.root");
+  workspace.SaveAs("workspace.root");
 
 }

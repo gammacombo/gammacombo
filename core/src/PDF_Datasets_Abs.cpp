@@ -14,11 +14,12 @@ PDF_Datasets_Abs::PDF_Datasets_Abs(RooWorkspace* w, int nObs, OptParser* opt)
   observables     = NULL;
   parameters      = NULL;
   wspc            = w;//new RooWorkspace(*w);
-  pdfName         = "notSet";
-  globalVarsName  = "notSet";
-  constraintName  = "notSet";
-  dataName        = "notSet";
-  pdfWspcName     = "notSet";
+  pdfName         = "default_internal_pdf_name";
+  globalVarsName  = "default_internal_global_vars_set_name";
+  constraintName  = "default_internal_constraint_set_name";
+  dataName        = "default_internal_dataset_name";
+  pdfWspcName     = "default_internal_workspace_name";
+  parName         = "default_internal_parameter_set";
   areObsSet       = areParsSet = areRangesSet = isPdfSet = isDataSet = isToyDataSet = false;
   arg             = opt;
   fitStatus       = -10;
@@ -33,23 +34,7 @@ PDF_Datasets_Abs::PDF_Datasets_Abs(RooWorkspace* w, int nObs, OptParser* opt)
 PDF_Datasets_Abs::~PDF_Datasets_Abs(){
   delete wspc;
 };
-/*
-///
-/// Return RooArgSet that contains all parameters.
-/// 
-const RooArgSet* PDF_Datasets_Abs::getParameters()
-{
-  return wspc->set(parName);
-}
 
-///
-/// Return RooArgSet that contains all observables.
-/// 
-const RooArgSet* PDF_Datasets_Abs::getObservables()
-{
-  return wspc->set(obsName);
-}
-*/
 void PDF_Datasets_Abs::initData(const TString& name){
   if(isDataSet){
     std::cout << "WARNING in PDF_Datasets_Abs::initData -- Data already set" << std::endl; 
@@ -77,9 +62,27 @@ void  PDF_Datasets_Abs::initObservables(const TString& setName){
     std::cout << "FATAL in PDF_Datasets_Abs::initObservables -- first call PDF_Datasets_Abs::initPdf to init the PDF!" << std::endl;
     exit(-1);
   }
-  wspc->renameSet(setName,obsName);
+  wspc->renameSet(setName, obsName);
   observables = (RooArgList*) wspc->set(obsName);
   areObsSet = true;
+};
+
+void  PDF_Datasets_Abs::initGlobalObservables(const TString& setName){
+  wspc->renameSet(setName, globalObsName);
+  wspc->saveSnapshot(globalObsDataSnapshotName,*wspc->set(globalObsName));
+};
+
+
+
+
+
+void  PDF_Datasets_Abs::initObservables(){
+    std::cout << "ERROR in PDF_Datasets_Abs::initObservables():"<<endl;
+    std::cout << "This function is not supported for dataset scans." << std::endl; 
+    std::cout << "You must define the RooArgSet of observables in the Workspace." << std::endl; 
+    std::cout << "The name of the set in the workspace must be passed to the PDF object via " <<std::endl;
+    std::cout << "PDF_Datasets_Abs::initObservables(const TString& setName)" << std::endl; 
+    exit(-1);
 };
 
 void  PDF_Datasets_Abs::initParameters(const TString& setName){
@@ -96,53 +99,28 @@ void  PDF_Datasets_Abs::initParameters(const TString& setName){
   areParsSet = true;
 };
 
-void  PDF_Datasets_Abs::initObservables(const vector<TString>& obsNames){
-  if( areObservablesSet() ){ 
-    std::cout << "WARNING in PDF_Datasets_Abs::initObservables -- Observables already set" << std::endl; 
-    return;
-  }
-  if(! isPdfInitialized() ){
-    std::cout << "FATAL in PDF_Datasets_Abs::initObservables -- first call PDF_Datasets_Abs::initPdf to init the PDF!" << std::endl;
-    exit(-1);
-  }
-  observables = new RooArgList("observables");
-  Utils::fillArgList(observables, wspc, obsNames);
-  wspc->defineSet(obsName,*observables);//, RooFit::Silence());
-  areObsSet = true;
-};
 
-void  PDF_Datasets_Abs::initParameters(const vector<TString>& parNames){
-  if( areParametersSet() ){ 
-    std::cout << "WARNING in PDF_Datasets_Abs::initParameters -- Parameters already set" << std::endl; 
-    return;
-  }
-  if(! isPdfInitialized() ){
-    std::cout << "FATAL in PDF_Datasets_Abs::initParameters -- first call PDF_Datasets_Abs::initPdf to init the PDF!" << std::endl;
+void  PDF_Datasets_Abs::initParameters(){
+    std::cout << "ERROR in PDF_Datasets_Abs::initParameters():"<<endl;
+    std::cout << "This function is not supported for dataset scans." << std::endl; 
+    std::cout << "You must define the RooArgSet of parameters in the Workspace." << std::endl; 
+    std::cout << "The name of the set in the workspace must be passed to the PDF object via " <<std::endl;
+    std::cout << "PDF_Datasets_Abs::initObservables(const TString& setName)" << std::endl; 
     exit(-1);
-  }
-  parameters = new RooArgList("parameters");
-  Utils::fillArgList(parameters, wspc, parNames);
-  wspc->defineSet(parName, *parameters);//, RooFit::Silence());
-  areParsSet = true;
-  if(arg->debug) std::cout << "DEBUG in PDF_Datasets_Abs::initParameters --pars filled" << std::endl;
 };
 
 void PDF_Datasets_Abs::initPDF(const TString& name){
   if(isPdfSet){
-    std::cout << "WARNING in PDF_Datasets_Abs::initPDF -- PDF already set" << std::endl; 
-    std::cout << "WARNING in PDF_Datasets_Abs::initPDF -- PDF will not be overwritten" << std::endl; 
-    std::cout << "WARNING in PDF_Datasets_Abs::initPDF -- !!!" << std::endl; 
-    return;
+    std::cout << "ERROR in PDF_Datasets_Abs::initPDF -- PDF already set" << std::endl; 
+    exit(EXIT_FAILURE);
   }
   pdfWspcName   = name;
   pdf           = wspc->pdf(pdfWspcName);
   if(pdf) isPdfSet  = true;
   else{
     std::cout << "FATAL in PDF_Datasets_Abs::initPDF -- PDF: " << pdfWspcName << " not found in workspace" << std::endl; 
-    exit(-1);
+    exit(EXIT_FAILURE);
   }
-//  obsName    = "obs_"+pdfName;
-//  parName    = "par_"+pdfName;
 
   std::cout << "INFO in PDF_Datasets_Abs::initPDF -- PDF initialized" << std::endl;
   return;
@@ -169,8 +147,9 @@ void PDF_Datasets_Abs::setVarRange(const TString &varName, const TString &rangeN
 };
 void PDF_Datasets_Abs::setPdfName(const TString& name){
   this->pdfName = name;
-  this->obsName = "obs_"+pdfName;
-  this->parName = "par_"+pdfName;
+  this->obsName = "obs_"+pdfName; // these are the internal names of the observable
+  this->parName = "par_"+pdfName; // and the parameter sets. 
+  // \todo: Instead of re-naming the datasets, use the names that the user specified in initObservables and initParameters directly.
 };
 
 void PDF_Datasets_Abs::setToyData(RooDataSet* ds){
@@ -184,8 +163,15 @@ void PDF_Datasets_Abs::print(){
     std::cout << "PDF:\t" << this->getPdfName() << std::endl;
   }
   if(wspc){
-    std::cout << "Worspace:\t" << std::endl;
+    std::cout << "Workspace:\t" << std::endl;
     wspc->Print();
   }
   return;
 };
+
+
+OptParser*   PDF_Datasets_Abs::getArg(){
+  std::cout<<"ERROR: getting the options parser from the pdf has been deprecated"<<std::endl;
+  std::cout<<"(This is up for discussion of course)"<<std::endl;
+  exit(EXIT_FAILURE);
+}
