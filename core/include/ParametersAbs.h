@@ -23,12 +23,12 @@ public:
   inline virtual      ~ParametersAbs(){};
   Parameter*          var(TString name);
   RooRealVar*         get(TString name);
+  Parameter*          newParameter(TString name);
+  Parameter::Range    range(float min, float max);
 
 protected:
   vector<Parameter*>  m_parameters;
   inline virtual void defineParameters(){};
-  Parameter*          newParameter(TString name);
-  Parameter::Range    range(float min, float max);
 };
 
 #endif
