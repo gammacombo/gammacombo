@@ -23,7 +23,10 @@ int main(int argc, char* argv[])
   // In this tutorial, this is done in the constructWorkspace() function. 
   // In a more complex analysis, you can also do this elsewhere, for example using pyroot.
   //
-  /////////////////////////////////////////////////////////////// 
+  ///////////////////////////////////////////////////////////////
+	
+	todo: let user construct the workspace on demand. We cannot construct a new workspace
+	every time, especially when we run the -a plugin method after calling with -a pluginbatch
   constructWorkspace();
 
   // Load the workspace from its file
@@ -67,22 +70,22 @@ void constructWorkspace()
   RooGaussian signal_model("g","g", mass, mean, sigma);
 
   // ... and of an exponential function to describe the background.
-  RooRealVar exponent("exponent","exponent", 0, -1., 1.);
+  RooRealVar exponent("exponent","exponent", -1e-3, -1., 1.);
   RooExponential background_model("background_model", "background_model", mass, exponent);
 
   // The number of signal events is related to the branching ratio via the formula <branching ratio> = <n_sig> * <normalization factor>
   // The normalization factor is not exactly known. Instead, it has to be estimated. The estimator for the normalization factor is a global observable
   // that constraints its value via a Gaussian Constraint. 
   RooRealVar  norm_constant_obs( "norm_constant_glob_obs", "global observable of normalization constant", 
-                              7.4e-10, 0., 1e-8);     // this is the observed value, the global observable
-  RooRealVar  norm_constant("norm_constant","norm_constant", 7e-10, 0,  1e-8);                   // the normalization constant is a nuisance parameter.
-  RooRealVar  norm_constant_sigma("norm_constant_sigma","norm_constant_sigma", 0.5e-10);
+                              7e-9, 0., 1e-7);     // this is the observed value, the global observable
+  RooRealVar  norm_constant("norm_constant","norm_constant", 7e-9, 0,  1e-8);                   // the normalization constant is a nuisance parameter.
+  RooRealVar  norm_constant_sigma("norm_constant_sigma","norm_constant_sigma", 5e-10);
   RooGaussian norm_constant_constraint("norm_constant_constraint","norm_constant_constraint", norm_constant_obs, norm_constant, norm_constant_sigma);
 
   // Now we can build the mass model by adding the signal and background probability density functions
-  RooRealVar branchingRatio("branchingRatio", "branchingRatio", 1e-9, 0,  1e-6);  // this is the branching ratio, the parameter of interest
+  RooRealVar branchingRatio("branchingRatio", "branchingRatio", 1e-7, 0,  1e-4);  // this is the branching ratio, the parameter of interest
   RooFormulaVar n_sig("Nsig", "branchingRatio/norm_constant", RooArgList(branchingRatio, norm_constant));
-  RooRealVar n_bkg("Nbkg","Nbkg", 30, 0, 1000);
+  RooRealVar n_bkg("Nbkg","Nbkg", 100, 0, 10000);
   RooAddPdf mass_model("mass_model","mass_model", RooArgList(signal_model, background_model), RooArgList(n_sig, n_bkg));
 
   /////////////////////////////////////////////////////////
@@ -101,7 +104,7 @@ void constructWorkspace()
                                                                 ->get(0)
                                                                 ->getRealValue("norm_constant_glob_obs");
   //
-  RooDataSet& data = *mass_model.generate(RooArgSet(mass),100); // we use a reference here to avoid copying the object
+  RooDataSet& data = *mass_model.generate(RooArgSet(mass),5000); // we use a reference here to avoid copying the object
   data.SetName("data"); // the name of the dataset MUST be "data" in order for the framework to identify it.
   //
   /////////////////////////////////////////////////////////
@@ -112,6 +115,19 @@ void constructWorkspace()
 
   // The workspace must also include the fit result of an initial fit of the model to data.
   RooFitResult& rooFitResult = *mass_model.fitTo(data,RooFit::Save(), RooFit::ExternalConstraints(RooArgSet(norm_constant_constraint)));
+
+  /////////////////////////////////////////////////////////
+  //
+  // Plot it all so we can see what we did
+  //
+  /////////////////////////////////////////////////////////
+  
+  RooPlot* plot = mass.frame();
+  data.plotOn(plot);	
+  mass_model.plotOn(plot);
+  TCanvas c("c","c",1024, 768);
+  plot->Draw();
+  c.SaveAs("plots/pdf/data_and_fit_in_workspace.pdf");
 
   /////////////////////////////////////////////////////////
   //

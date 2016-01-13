@@ -503,24 +503,6 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     float p = nbetter/nall;
     hCL->SetBinContent(i, p);
     hCL->SetBinError(i, sqrt(p * (1.-p)/nall));
-    /*if(i==1){
-      cout << "\n\n ========= Summary for BR_Bd = 0  >>>>\n" << endl;
-      cout << "Number of all toys: " << ntot << endl;
-      cout << "Number of good toys: " << nall << endl;
-
-      cout  << "Number of failed toys: " << n0failed << " fraction relative to all toys: " 
-            << (float)n0failed/(float)h_tot->GetBinContent(i) * 100 << " %." << endl;
-      
-      cout  << "Number of bkg toys: " << nbackground << " fraction relative to good toys: " 
-            << (float)nbackground/(float)nall * 100 << " %." <<  endl;
-      
-      cout << std::scientific << std::resetiosflags(std::ios::fixed) << std::setprecision(3);
-      cout << std::setw(72) << std::setfill('=') << "" <<  endl;
-      cout << std::right << std::setw(45) << std::setfill(' ') << " pVal at BF_Bd=0:   " << p << " \\pm " << sqrt(p * (1.-p)/nall) << endl;
-      cout << std::right << std::setw(45) << " pVal at BF_Bd=0 with NLL vars:   " << p_pdf << " \\pm " << sqrt(p_pdf * (1.-p_pdf)/nall_pdf) << endl << endl;
-      cout << std::right << std::setw(45) << " pVal at BF_Bd=0 with bf_bd as test stat:   " << p_poi << " \\pm " << sqrt(p_poi * (1.-p_poi)/nall) << endl << endl;
-      cout << std::resetiosflags(std::ios::right);
-    }*/
   }
   TCanvas* cans = new TCanvas("cans","cans",1024,786);
   cans->cd();
