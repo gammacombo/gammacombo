@@ -12,7 +12,7 @@ SET(COMBINER_EXECUTABLES
 	${COMBINER_NAME}
         cartesian
 	tutorial_dataset
-	# tutorial2 # <-- add other execubables here
+	tutorial_dataset_build_workspace
 )
 
 # Configure if this combiner has custom ROOT objects
