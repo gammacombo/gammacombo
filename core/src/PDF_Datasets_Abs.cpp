@@ -99,6 +99,9 @@ void  PDF_Datasets_Abs::initParameters(const TString& setName){
   areParsSet = true;
 };
 
+void  PDF_Datasets_Abs::initConstraints(const TString& setName){
+  wspc->renameSet(setName,constraintName);
+};
 
 void  PDF_Datasets_Abs::initParameters(){
     std::cout << "ERROR in PDF_Datasets_Abs::initParameters():"<<endl;
@@ -106,7 +109,7 @@ void  PDF_Datasets_Abs::initParameters(){
     std::cout << "You must define the RooArgSet of parameters in the Workspace." << std::endl; 
     std::cout << "The name of the set in the workspace must be passed to the PDF object via " <<std::endl;
     std::cout << "PDF_Datasets_Abs::initObservables(const TString& setName)" << std::endl; 
-    exit(-1);
+    exit(EXIT_FAILURE);
 };
 
 void PDF_Datasets_Abs::initPDF(const TString& name){

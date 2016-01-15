@@ -32,10 +32,11 @@ public:
   
   void                  initData(const TString& name);
   void                  initObservables(const TString& setName);
-  virtual void                  initObservables();  //overriding the inherited virtual method
+  virtual void          initObservables();  //overriding the inherited virtual method
+  void                  initConstraints(const TString& setName);
   void                  initGlobalObservables(const TString& setName);
   void                  initParameters(const TString& setName);
-  virtual void                  initParameters(); //overriding the inherited virtual method
+  virtual void          initParameters(); //overriding the inherited virtual method
   void                  initPDF(const TString& name);
 
   OptParser*            getArg();

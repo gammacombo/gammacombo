@@ -33,7 +33,8 @@ int main(int argc, char* argv[])
   pdf->initPDF("mass_model"); // this the name of the pdf in the workspace (without the constraints)
   pdf->initObservables("datasetObservables"); // \todo is this the right set here?
   pdf->initParameters("parameters");
-
+  pdf->initConstraints("constraint_set");
+  
   // Start the Gammacombo Engine
   GammaComboEngine gc("tutorial_dataset", argc, argv);
   
