@@ -25,6 +25,24 @@ RooFitResult* PDF_DatasetTutorial::fit(bool fitToys){
     std::cout << "FATAL in PDF_DatasetTutorial::fit -- There is no PDF or (toy)data set to fit!" << std::endl;  
     return NULL;
   }
+  	//\todo: move the following into separate method in the ABS class
+	//\todo: also check if all the other argsets and co can be found
+	//\todo: in exchange, get rid of the memeber variables that check initalization, except for the pdf itself.
+	//\todo: Or maybe it is smarter to make the checks elsewhere?
+    //\todo: Maybe in fact we could have the fit functions in the ABS class and call other functions
+    // from within these fit functions that only implement the fit, but none of the checks?
+	if (this->getWorkspace()->set(constraintName)==NULL){
+		std::cout<<std::endl;
+		std::cout<<std::endl;
+		std::cout<< "ERROR: No RooArgSet with constraints found."<<std::endl;
+		std::cout<< "The Workspace must contain a RooArgSet with constraint PDFs."<<std::endl;
+		std::cout<< "These are usually Gaussians that constrain parameters via global observables."<<std::endl;
+		std::cout<< "This set can be empty."<<std::endl;
+		std::cout<< "By default its name should be 'default_internal_constraint_set_name'."<<std::endl;
+		std::cout<< "Other names can be passed via PDF_Datasets_Abs::initConstraints"<<std::endl;
+		  exit(EXIT_FAILURE);
+	  }
+  
   // Turn off RooMsg
   RooMsgService::instance().setGlobalKillBelow(ERROR);
   RooMsgService::instance().setSilentMode(kTRUE);
@@ -33,14 +51,26 @@ RooFitResult* PDF_DatasetTutorial::fit(bool fitToys){
   
   if(fitToys)   wspc->loadSnapshot(globalObsToySnapshotName);
   else          wspc->loadSnapshot(globalObsDataSnapshotName);
-
+  
   RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() 
                                       ,RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName))
                                       ,RooFit::Minos(kFALSE)
                                       ,RooFit::Hesse(kFALSE)
                                       ,RooFit::Strategy(3)
                                       ,RooFit::Minimizer("Minuit2","minimize")
-                                      ); 
+                                      );
+  
+//
+//  RooPlot* plot = getWorkspace()->var("mass")->frame();
+//  dataToFit->plotOn(plot);	
+//  pdf->plotOn(plot);
+//  TCanvas c("c","c",1024, 768);
+//  plot->Draw();
+//  if (fitToys){
+//	  c.SaveAs("plots/pdf/testfitplot"+TString(std::to_string(rand()%10))+".pdf");
+//  } else {
+//	  c.SaveAs(TString("plots/pdf/fitdata/testfitplot"+std::to_string(getWorkspace()->var("branchingRatio")->getVal()*10000)+".pdf"));
+//  }
 
   RooMsgService::instance().setSilentMode(kFALSE);
   RooMsgService::instance().setGlobalKillBelow(INFO);
@@ -68,8 +98,11 @@ void   PDF_DatasetTutorial::generateToys(int SeedShift) {
   this->isToyDataSet    = kTRUE;
 }
 
-  void  PDF_DatasetTutorial::generateToysGlobalObservables(bool useConstrPdf , int SeedShift) {
+void  PDF_DatasetTutorial::generateToysGlobalObservables(bool useConstrPdf , int SeedShift) {
     // \todo: generate the global observables!!!!
-      
+    
+//	RooArgSet* obsSet = *wspc->set(globalObsName);
+//	for (int i=0; i<obsSet.getSize())
+//		globalObs->SetConstat
     wspc->saveSnapshot(globalObsToySnapshotName, *wspc->set(globalObsName));
 }

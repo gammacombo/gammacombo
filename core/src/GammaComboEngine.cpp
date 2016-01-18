@@ -20,8 +20,8 @@ GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[])
 	if (arg->filenameaddition!="") name += "_"+arg->filenameaddition;
 	m_fnamebuilder = new FileNameBuilder(arg, name);
 
-  // make batch scripts if appropriate and exit
-  m_batchscriptwriter = new BatchScriptWriter(argc, argv);
+	// make batch scripts if appropriate and exit
+	m_batchscriptwriter = new BatchScriptWriter(argc, argv);
 
 	// run ROOT in interactive mode, if requested (-i)
 	if ( arg->interactive ) theApp = new TApplication("App", &argc, argv);
@@ -1485,26 +1485,27 @@ void GammaComboEngine::scanDataSet()
 
 	else if ( arg->isAction("plugin") || arg->isAction("pluginbatch") )
 	{
-		// 1D SCAN
-		if ( arg->var.size()==1 )
-		{
-			MethodDatasetsPluginScan *scanner = new MethodDatasetsPluginScan( (PDF_Datasets_Abs*) pdf[0], arg);
-			scanner->initScan(); //\todo <- can we get rid of this?
-			if ( arg->isAction("pluginbatch") ){
-				scanner->scan1d();
-			} else if ( arg->isAction("plugin") ){
-				scanner->readScan1dTrees(arg->jmin[0], arg->jmax[0]);
-			}
-		}
-		// 2D SCANS
-		else if ( arg->var.size()==2 ) {
-			MethodDatasetsPluginScan *scanner = new MethodDatasetsPluginScan((PDF_Datasets_Abs*) pdf[0], arg);
-			scanner->initScan(); //\todo <- can we get rid of this?
-			if ( arg->isAction("pluginbatch") ){
-				scanner->scan1d();
-			} else if ( arg->isAction("plugin") ){
-				scanner->readScan1dTrees(arg->jmin[0], arg->jmax[0]);
-			}
+
+		MethodDatasetsPluginScan *scanner = new MethodDatasetsPluginScan( (PDF_Datasets_Abs*) pdf[0], arg);
+		scanner->initScan(); //\todo <- can we get rid of this?
+		if ( arg->isAction("pluginbatch") ){
+			scanner->scan1d();
+		} else if ( arg->isAction("plugin") ){
+			scanner->readScan1dTrees(arg->jmin[0], arg->jmax[0]);
+			/////////////////////////////////////////////////////
+			//
+			// Plotting
+			//
+			/////////////////////////////////////////////////////
+			plot->addScanner(scanner);
+			MethodProbScan* sc = dynamic_cast<MethodProbScan*>(scanner->getProfileLH());
+			plot->addScanner(sc);
+			scanner->calcCLintervals();
+			sc->calcCLintervals();
+			plot->Draw();
+		} else {
+			cout << "ERROR : Unsupported action" << endl;
+			exit(EXIT_FAILURE);
 		}
 	} else 
 	{
@@ -1545,18 +1546,18 @@ void GammaComboEngine::printBanner()
 void GammaComboEngine::run(bool runOnDatSet)
 {
 	if ( arg->usage ) usage(); // print usage and exit
-
+	defineColors();
+	if (!runOnDatSet) checkCombinationArg();
+	checkColorArg();
+	checkAsimovArg();
 	if(runOnDatSet){
 		if ( !cmb.empty() ){
 			cout << "ERROR : Please do not define any combiners when running on a dataset" << endl;
 			exit(EXIT_FAILURE);
 		}
+		setUpPlot();
 		scanDataSet();  // most thing gets done here
 	} else {
-		defineColors();
-		checkCombinationArg();
-		checkColorArg();
-		checkAsimovArg();
 		//scaleDownErrors();
 		if ( arg->nosyst ) disableSystematics();
 		makeAddDelCombinations();
