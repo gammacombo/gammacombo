@@ -14,6 +14,6 @@ script:
 - docker commit raw_container image_with_files
 - docker run --name built_container image_with_files /bin/bash -c "mkdir /code/build; cd /code/build; cmake ..; make; make install"
 - docker commit built_container built_image
-- docker run built_image /bin/bash -c "/code/tutorial/bin/tutorial_dataset -a pluginbatch --lightfiles --var branchingRatio --ntoys 20 --scanrange 5e-7:15e-7 --npoints 10; tutorial/bin/tutorial_dataset -a plugin --var branchingRatio" 
+- docker run built_image /bin/bash -c "/code/tutorial/bin/tutorial_dataset -a pluginbatch --lightfiles --var branchingRatio --ntoys 20 --scanrange 5e-7:15e-7 --npoints 10; /code/tutorial/bin/tutorial_dataset -a plugin --var branchingRatio" 
 # -docker run built_image /bin/bash -c  "/code/tutorial/bin/tutorial -c 1 -c 2 -c 3 -i --var a_gaus --ps 1"
 # the last line still causes a segfault in the master (!) at the moment, we will include it as soon as this is resolved.
