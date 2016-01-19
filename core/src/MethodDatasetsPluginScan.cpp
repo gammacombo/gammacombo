@@ -17,48 +17,25 @@
 ///
 /// This should be the default for the GenericScan
 ///
-MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets_Abs* PDF, OptParser* opt, bool provideFitResult)
-{
-
-  // \todo: Call the superclass constructor and avoid duplicate code
-  obsDataset          = 0;
-  methodName          = "DatasetsPlugin";
-  combiner            = NULL;
-  pdf                 = PDF;
-  w                   = pdf->getWorkspace();
-  name                = pdf->getName();
-  title               = pdf->getTitle();
-  arg                 = opt;
-  scanVar1            = arg->var[0];
-  if ( arg->var.size()>1 ) scanVar2 = arg->var[1];
-  verbose             = arg->verbose;
-  drawSolution        = 0;
-  nToys               = arg->ntoys;
-  nPoints1d           = arg->npoints1d;
-  nPoints2dx          = arg->npoints2dx;
-  nPoints2dy          = arg->npoints2dy;
-  chi2minGlobal       = 0.0;
-  chi2minGlobalFound  = false;
-  lineStyle           = 0;
-  lineColor           = kBlue-8;
-  textColor           = kBlack;
-  hCL                 = 0;
-  hCL2d               = 0;
-  hChi2min            = 0;
-  hChi2min2d          = 0;
-  obsDataset          = 0;
-  startPars           = 0;
-  globalMin           = 0;
-  nWarnings           = 0;
-  probPValues         = 0;
-  drawPlots           = false;
-  explicitInputFile   = false;
-  doProbScanOnly      = false;
-  externalProfileLH   = false;
-  dataFreeFitResult   = NULL;
-  fileBase            = "none";
-  inputFiles.clear();        
-  if(provideFitResult){
+MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets_Abs* PDF, OptParser* opt, bool provideFitResult):
+  MethodPluginScan(opt),
+  obsDataset          (NULL),
+  methodName          ("DatasetsPlugin"),
+  pdf                 (PDF),
+  w                   (PDF->getWorkspace()),
+  name                (PDF->getName()),
+  title               (PDF->getTitle()),
+  probPValues         (NULL),
+  drawPlots           (false),
+  explicitInputFile   (false),
+  doProbScanOnly      (false),
+  externalProfileLH   (false),
+  dataFreeFitResult   (NULL),
+  fileBase            ("none")
+  {
+	if ( arg->var.size()>1 ) scanVar2 = arg->var[1];
+	inputFiles.clear();        
+	if(provideFitResult){
     RooFitResult* result = (RooFitResult*) w->obj("data_fit_result");
     chi2minGlobal      = 2*result->minNll();
     std::cout << "=============== Global Minimum (2*-Log(Likelihood)) set to: 2*" << result->minNll() << " = " << chi2minGlobal << endl;

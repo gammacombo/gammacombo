@@ -31,12 +31,12 @@
 }
 
 ///
-/// 'Default constructor', mainly to ensure compatibility with MethodDatasetsPluginScan
-/// this way one is not forced to use an explicit constructor
+/// Constructor, mainly to ensure compatibility with MethodDatasetsPluginScan
 ///
-MethodPluginScan::MethodPluginScan(){
-	methodName = "Plugin";
-};
+MethodPluginScan::MethodPluginScan(OptParser* opt):
+		MethodAbsScan(opt),
+		nToys(opt->ntoys)
+	{};
 
 ///
 /// Initialize from a Combiner object. This is more difficult,

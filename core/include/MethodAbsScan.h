@@ -44,7 +44,7 @@ class MethodAbsScan
 {
 	public:
 		MethodAbsScan(Combiner* c);
-		MethodAbsScan();
+                MethodAbsScan::MethodAbsScan(OptParser* opt);
 		~MethodAbsScan();
 
 		void                            calcCLintervals();
