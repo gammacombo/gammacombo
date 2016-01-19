@@ -19,12 +19,7 @@
 ///
 MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets_Abs* PDF, OptParser* opt, bool provideFitResult):
   MethodPluginScan(opt),
-  obsDataset          (NULL),
-  methodName          ("DatasetsPlugin"),
   pdf                 (PDF),
-  w                   (PDF->getWorkspace()),
-  name                (PDF->getName()),
-  title               (PDF->getTitle()),
   probPValues         (NULL),
   drawPlots           (false),
   explicitInputFile   (false),
@@ -33,6 +28,11 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets_Abs* PDF, OptPar
   dataFreeFitResult   (NULL),
   fileBase            ("none")
   {
+	methodName = "DatasetsPlugin";
+	w = PDF->getWorkspace();
+	title = PDF->getTitle();
+	name =  PDF->getName();
+	
 	if ( arg->var.size()>1 ) scanVar2 = arg->var[1];
 	inputFiles.clear();        
 	if(provideFitResult){

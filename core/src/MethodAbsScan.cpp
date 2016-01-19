@@ -7,67 +7,66 @@
 
 #include "MethodAbsScan.h"
 
-///
-/// 'Default Constructor'
-/// Introduced so that inherited classes do not have to call an
-/// explicit constructor
-///
-	MethodAbsScan::MethodAbsScan()
-: rndm()
-{
-	methodName = "Abs";
-	drawFilled = true;
-};
+    MethodAbsScan::MethodAbsScan()
+	: rndm()
+	{
+       methodName = "Abs";
+       drawFilled = true;
+	};
+
 
 	MethodAbsScan::MethodAbsScan(Combiner *c): 
-			MethodAbsScan(c->getArg()),  // C++11 onwards, one can delegate constructors
-			combiner(c),
-			methodName("Abs"),
-			w(c->getWorkspace()),
-			name(c->getName()),
-			title(c->getTitle()),
-			pdfName("pdf_"+combiner->getPdfName()),
-			obsName("obs_"+combiner->getPdfName()),
-			parsName("par_"+combiner->getPdfName()),
-			thName("th_"+combiner->getPdfName())
+		MethodAbsScan(c->getArg())  
+		// C++11 onwards, one can delegate constructors, 
+		// but then, there can be no other initializers
 	{
-	// check workspace content
-	if ( !w->pdf(pdfName) ) { cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << pdfName  << endl; exit(1); }
-	if ( !w->set(obsName) ) { cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << obsName << endl; exit(1); }
-	if ( !w->set(parsName) ){ cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << parsName << endl; exit(1); }
-	if ( !w->set(thName) )  { cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << thName << endl; exit(1); }
+		combiner = c;
+		w = c->getWorkspace();
+		name = c->getName();
+		title = c->getTitle();
+		pdfName = "pdf_"+combiner->getPdfName();
+		obsName = "obs_"+combiner->getPdfName();
+		parsName = "par_"+combiner->getPdfName();
+		thName = "th_"+combiner->getPdfName();
+	
+		// check workspace content
+		if ( !w->pdf(pdfName) ) { cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << pdfName  << endl; exit(1); }
+		if ( !w->set(obsName) ) { cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << obsName << endl; exit(1); }
+		if ( !w->set(parsName) ){ cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << parsName << endl; exit(1); }
+		if ( !w->set(thName) )  { cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << thName << endl; exit(1); }
 	}
 	
 	
 	// constructor without combiner, this is atm still needed for the MethodDataSetPluginScan
-	MethodAbsScan::MethodAbsScan(OptParser* opt)
-	: rndm(),
-	combiner(NULL),
-	w(NULL),
-	arg(opt),
-	scanVar1(opt->var[0]),
-	verbose(opt->verbose),
-	drawSolution(0),
-	nPoints1d(opt->npoints1d),
-	nPoints2dx(opt->npoints2dx),
-	nPoints2dy(opt->npoints2dy),
-	chi2minGlobal(0.0),
-	chi2minGlobalFound(false),
-	lineStyle(0),
-	lineColor(kBlue-8),
-	textColor(kBlack),
-	hCL(0),
-	hCL2d(0),
-	hChi2min(0),
-	hChi2min2d(0),
-	obsDataset(0),
-	startPars(0),
-	globalMin(0),
-	nWarnings(0),
-	drawFilled(true),
-	m_xrangeset(false),
-	m_yrangeset(false),
-	m_initialized(false)
+	MethodAbsScan::MethodAbsScan(OptParser* opt):
+		rndm(),
+		methodName("Abs"),
+		combiner(NULL),
+		w(NULL),
+		arg(opt),
+		scanVar1(opt->var[0]),
+		verbose(opt->verbose),
+		drawSolution(0),
+		nPoints1d(opt->npoints1d),
+		nPoints2dx(opt->npoints2dx),
+		nPoints2dy(opt->npoints2dy),
+		chi2minGlobal(0.0),
+		chi2minGlobalFound(false),
+		lineStyle(0),
+		lineColor(kBlue-8),
+		textColor(kBlack),
+		hCL(0),
+		hCL2d(0),
+		hChi2min(0),
+		hChi2min2d(0),
+		obsDataset(NULL),
+		startPars(0),
+		globalMin(0),
+		nWarnings(0),
+		drawFilled(true),
+		m_xrangeset(false),
+		m_yrangeset(false),
+		m_initialized(false)
 	{
 		if ( opt->var.size()>1 ) scanVar2 = opt->var[1];
 	}

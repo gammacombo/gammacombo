@@ -43,8 +43,9 @@ class OneMinusClPlotAbs;
 class MethodAbsScan
 {
 	public:
+                MethodAbsScan();
 		MethodAbsScan(Combiner* c);
-                MethodAbsScan::MethodAbsScan(OptParser* opt);
+                MethodAbsScan(OptParser* opt);
 		~MethodAbsScan();
 
 		void                            calcCLintervals();
@@ -77,7 +78,7 @@ class MethodAbsScan
 		inline TString			getParsName(){return parsName;};
 		float                           getScanVarSolution(int iVar, int iSol);
 		RooRealVar*                     getScanVar1();
-		TString													getScanVar1Name();
+		TString                         getScanVar1Name();
 		float                           getScanVar1Solution(int i=0);
 		RooRealVar*                     getScanVar2();
 		TString							getScanVar2Name();
