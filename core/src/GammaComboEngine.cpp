@@ -878,8 +878,7 @@ void GammaComboEngine::make1dCoverageScan(MethodCoverageScan *scanner, int cId)
   // load coverage point parameters (this can be done automatically)
   ParameterCache *pCache = new ParameterCache(arg);
   if ( arg->loadParamsFile.size() != arg->combid.size() ) {
-    cout << "\nERROR : For a Coverage scan you must pass a parameter file (--parfile) to through the toys from. You need one parfile per combiner" << endl;
-    cout << arg->loadParamsFile.size() << " " << arg->combid.size() << endl;
+    cout << "\nERROR : For a Coverage scan you must pass a parameter file (--parfile) to throw the toys from. You need one parfile per combiner" << endl;
     exit(1);
   }
   pCache->loadPoints( arg->loadParamsFile[cId] );
