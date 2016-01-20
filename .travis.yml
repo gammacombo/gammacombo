@@ -6,7 +6,7 @@ services:
   - docker
 
 before_install:
-- docker pull schubertkonstantin/cern_root:v5-34-23
+- docker pull schubertkonstantin/root:v5-34-32
 - docker pull schubertkonstantin/root:v6-04-00-patches
 
 script:
@@ -20,7 +20,7 @@ script:
 - docker run built_image_6 /bin/bash -c  "/code/tutorial/bin/tutorial -c 1 -c 2 -c 3 -i --var a_gaus --ps 1"
 
 # root5
-- docker run --name raw_container schubertkonstantin/cern_root:v5-34-23 /bin/bash -c "mkdir /code"
+- docker run --name raw_container schubertkonstantin/root:v5-34-32 /bin/bash -c "mkdir /code"
 - docker cp  . raw_container:/code 
 - docker commit raw_container image_with_files
 - docker run --name built_container image_with_files /bin/bash -c "mkdir /code/build; cd /code/build; cmake ..; make; make install"
