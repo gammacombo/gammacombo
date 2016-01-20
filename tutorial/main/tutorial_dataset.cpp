@@ -1,9 +1,11 @@
 #include "GammaComboEngine.h"
 #include "PDF_DatasetTutorial.h"
 #include "TFile.h"
+#include "RooGaussian.h"
+#include "RooExponential.h"
+#include "RooWorkspace.h"
 
 
-void constructWorkspace(); // forward declaration of helper function below
 
 int main(int argc, char* argv[])
 {
