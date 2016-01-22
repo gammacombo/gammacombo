@@ -28,27 +28,32 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets_Abs* PDF, OptPar
   dataFreeFitResult   (NULL),
   fileBase            ("none")
   {
-	methodName = "DatasetsPlugin";
-	w = PDF->getWorkspace();
-	title = PDF->getTitle();
-	name =  PDF->getName();
-	
-	if ( arg->var.size()>1 ) scanVar2 = arg->var[1];
-	inputFiles.clear();        
-	if(provideFitResult){
+  methodName = "DatasetsPlugin";
+  w = PDF->getWorkspace();
+  title = PDF->getTitle();
+  name =  PDF->getName();
+  
+  if ( arg->var.size()>1 ) scanVar2 = arg->var[1];
+  inputFiles.clear();        
+
+  if(provideFitResult){
+    if (w->obj("data_fit_result") == NULL){ //\todo: support passing the name of the fit result in the workspace.
+      cerr << "ERROR: The workspace must contain the fit result of the fit to data. The name of the fit result must be 'data_fit_result'. " <<endl;
+      exit(EXIT_FAILURE);
+    }
     RooFitResult* result = (RooFitResult*) w->obj("data_fit_result");
     chi2minGlobal      = 2*result->minNll();
     std::cout << "=============== Global Minimum (2*-Log(Likelihood)) set to: 2*" << result->minNll() << " = " << chi2minGlobal << endl;
     chi2minGlobalFound = true;
     dataFreeFitResult = result;
   }else{
-    // \todo: suppor the case where no result is passed.
+    // \todo: support the case where no result is passed.
     exit(EXIT_FAILURE);
   }
   // check workspace content IS PDF CHECK NECESSARY? Don't think so for generic scan!
   //if ( !w->pdf(pdf->getPdfName()) ) { cout << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : not found in workspace : " << pdf->getPdfName()  << endl; exit(1); }
-  if ( !w->set(obsName) ) { cout << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no 'obsName' set found in workspace : " << pdf->getObsName() << endl; exit(1); }
-  if ( !w->set(pdf->getParName()) ){ cout << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no 'pdf->getParName()' set found in workspace : " << pdf->getParName() << endl; exit(1); }
+  if ( !w->set(obsName) ) { cerr << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no 'obsName' set found in workspace : " << pdf->getObsName() << endl; exit(1); }
+  if ( !w->set(pdf->getParName()) ){ cerr << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no 'pdf->getParName()' set found in workspace : " << pdf->getParName() << endl; exit(1); }
 }
 
 float MethodDatasetsPluginScan::getParValAtScanpoint(float point, TString parName){
