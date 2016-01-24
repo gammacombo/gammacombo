@@ -14,11 +14,13 @@ PDF_Datasets_Abs::PDF_Datasets_Abs(RooWorkspace* w, int nObs, OptParser* opt)
   observables     = NULL;
   parameters      = NULL;
   wspc            = w;//new RooWorkspace(*w);
-  pdfName         = "default_internal_pdf_name";
+  obsName         = "default_internal_observables_set_name";
+  parName         = "default_internal_parameter_set_name";
   globalVarsName  = "default_internal_global_vars_set_name";
+  globalObsName   = "default_internal_global_obs_set_name";
   constraintName  = "default_internal_constraint_set_name";
   dataName        = "default_internal_dataset_name";
-  pdfWspcName     = "default_internal_workspace_name";
+  pdfName         = "default_pdf_workspace_name";
   parName         = "default_internal_parameter_set";
   areObsSet       = areParsSet = areRangesSet = isPdfSet = isDataSet = isToyDataSet = false;
   arg             = opt;
@@ -53,11 +55,11 @@ void PDF_Datasets_Abs::initData(const TString& name){
   return;
 };
 
+//
+// Sets the name of the set containing the observables, minus the global observables.
+//
 void  PDF_Datasets_Abs::initObservables(const TString& setName){
-    if( areObservablesSet() ){ 
-    std::cout << "WARNING in PDF_Datasets_Abs::initObservables -- Observables already set" << std::endl; 
-    return;
-  }
+    
   if(! isPdfInitialized() ){
     std::cout << "FATAL in PDF_Datasets_Abs::initObservables -- first call PDF_Datasets_Abs::initPdf to init the PDF!" << std::endl;
     exit(-1);
@@ -117,11 +119,11 @@ void PDF_Datasets_Abs::initPDF(const TString& name){
     std::cout << "ERROR in PDF_Datasets_Abs::initPDF -- PDF already set" << std::endl; 
     exit(EXIT_FAILURE);
   }
-  pdfWspcName   = name;
-  pdf           = wspc->pdf(pdfWspcName);
+  pdfName  = name;
+  pdf      = wspc->pdf(pdfName);
   if(pdf) isPdfSet  = true;
   else{
-    std::cout << "FATAL in PDF_Datasets_Abs::initPDF -- PDF: " << pdfWspcName << " not found in workspace" << std::endl; 
+    std::cout << "FATAL in PDF_Datasets_Abs::initPDF -- PDF: " << pdfName << " not found in workspace" << std::endl; 
     exit(EXIT_FAILURE);
   }
 
@@ -148,12 +150,7 @@ void PDF_Datasets_Abs::setVarRange(const TString &varName, const TString &rangeN
   var->setRange(rangeName, rangeMin, rangeMax);
   RooMsgService::instance().setGlobalKillBelow(INFO);
 };
-void PDF_Datasets_Abs::setPdfName(const TString& name){
-  this->pdfName = name;
-  this->obsName = "obs_"+pdfName; // these are the internal names of the observable
-  this->parName = "par_"+pdfName; // and the parameter sets. 
-  // \todo: Instead of re-naming the datasets, use the names that the user specified in initObservables and initParameters directly.
-};
+
 
 void PDF_Datasets_Abs::setToyData(RooDataSet* ds){
   toyObservables  = ds; 

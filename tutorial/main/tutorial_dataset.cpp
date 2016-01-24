@@ -34,6 +34,7 @@ int main(int argc, char* argv[])
   PDF_DatasetTutorial* pdf = new PDF_DatasetTutorial(workspace);
   pdf->initPDF("mass_model"); // this the name of the pdf in the workspace (without the constraints)
   pdf->initObservables("datasetObservables"); // \todo is this the right set here?
+//\todo:  pdf->initGlobalObservables(???); 
   pdf->initParameters("parameters");
   pdf->initConstraints("constraint_set");
   

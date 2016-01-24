@@ -146,7 +146,6 @@ void ToyTree::init()
 	t->Branch("statusFree",       &statusFree,        "statusFree/F");
 	t->Branch("statusScan",       &statusScan,        "statusScan/F");
 	t->Branch("statusScanData",   &statusScanData,    "statusScanData/F");
-
 	if ( !arg->lightfiles )
 	{
 		TIterator* it = w->set(parsName)->createIterator();
@@ -179,7 +178,14 @@ void ToyTree::init()
 		}
 		// global observables
 	    if(this->storeGlob){
-	      delete it; it = w->set(globName)->createIterator();
+	      delete it; 
+	      if(w->set(globName)==NULL){
+	      	cerr<<"Unable to store parameters of global contraints because no set called "+globName
+	      		<<" is defined in the workspace. "<<endl;
+	      		//\todo Implement init function in PDF_Datasets_Abs to enabe the user to set the name of this set in the workspace. 
+	      		exit(EXIT_FAILURE);
+	      }
+	      it = w->set(globName)->createIterator();
 	      while ( RooRealVar* p = (RooRealVar*)it->Next() )
 	      {
 	        constraintMeans.insert(pair<TString,float>(p->GetName(),p->getVal()));

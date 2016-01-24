@@ -1473,7 +1473,7 @@ void GammaComboEngine::scanDataSet()
 
 	if ( !arg->isAction("plugin") && !arg->isAction("pluginbatch") )
 	{
-		cout << "ERROR : For now, only plugin scans are supported when running on a dataset" << endl;
+		cerr << "ERROR : For now, only plugin scans are supported when running on a dataset" << endl;
 		exit(EXIT_FAILURE);
 	}
 
@@ -1485,7 +1485,6 @@ void GammaComboEngine::scanDataSet()
 
 	else if ( arg->isAction("plugin") || arg->isAction("pluginbatch") )
 	{
-
 		MethodDatasetsPluginScan *scanner = new MethodDatasetsPluginScan( (PDF_Datasets_Abs*) pdf[0], arg);
 		scanner->initScan(); //\todo <- can we get rid of this?
 		if ( arg->isAction("pluginbatch") ){

@@ -50,10 +50,9 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets_Abs* PDF, OptPar
     // \todo: support the case where no result is passed.
     exit(EXIT_FAILURE);
   }
-  // check workspace content IS PDF CHECK NECESSARY? Don't think so for generic scan!
-  //if ( !w->pdf(pdf->getPdfName()) ) { cout << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : not found in workspace : " << pdf->getPdfName()  << endl; exit(1); }
-  if ( !w->set(obsName) ) { cerr << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no 'obsName' set found in workspace : " << pdf->getObsName() << endl; exit(1); }
-  if ( !w->set(pdf->getParName()) ){ cerr << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no 'pdf->getParName()' set found in workspace : " << pdf->getParName() << endl; exit(1); }
+  // check workspace content 
+  if ( !w->set(pdf->getObsName()) ) { cerr << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no '" + pdf->getObsName() + "' set found in workspace" << endl; exit(1); }
+  if ( !w->set(pdf->getParName()) ) { cerr << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no '" + pdf->getParName() + "' set found in workspace" << endl; exit(1); }
 }
 
 float MethodDatasetsPluginScan::getParValAtScanpoint(float point, TString parName){
@@ -717,10 +716,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       // set parameters to generate at to the values from the fit to data fixing the scanvar 
       w->loadSnapshot(plhName);
       // \does this make sure we are generating toy global observables according to the plugin method?
-      
       this->pdf->generateToys();
       this->pdf->generateToysGlobalObservables(useConstrPDFforRandomization);
-
       
      //if(this->pdf->globVals) globalVars = *this->pdf->globVals->get(0); // \todo: make sure it is okay that I removed this.
 
