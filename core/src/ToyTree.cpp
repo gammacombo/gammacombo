@@ -114,8 +114,10 @@ void ToyTree::writeToFile(TString fName)
 void ToyTree::writeToFile()
 {
 	assert(t);
-	if ( arg->debug ) cout << "ToyTree::writeToFile() : ";
-	cout << "saving toys to ... " << endl;
+	if ( arg->debug ){ 
+		cout << "ToyTree::writeToFile() : ";
+		cout << "saving toys to ... " << endl;
+	}
 	t->GetCurrentFile()->cd();
 	t->Write();
 }

@@ -691,9 +691,10 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
     float plhPvalue = TMath::Prob(toyTree.chi2min-toyTree.chi2minGlobal,1);
     probPValues->SetBinContent(probPValues->FindBin(scanpoint), plhPvalue);
     toyTree.genericProbPValue = plhPvalue;
-    //if(arg->debug && (i<=10 || fmod(i,printFreq)==0) ) 
-    cout << "INFO in MethodDatasetsPluginScan::scan1d() - Chi2 pValue " << plhPvalue 
-    << " filled in bin " << i+1 << " at: " << scanpoint << endl;
+    if(arg->debug){
+      cout << "INFO in MethodDatasetsPluginScan::scan1d() - Chi2 pValue " << plhPvalue 
+      << " filled in bin " << i+1 << " at: " << scanpoint << endl;
+    }
     
     // Draw all toy datasets in advance. This is much faster. ** Check this statement for Generic usecase
 
@@ -1171,17 +1172,13 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         }
         delete parsAfterScanFit;
       };
-      
-      cout  << "===== > compare free fit result with pdf parameters: " << endl;
-      cout  << "===== > minNLL for fitResult: " << r1->minNll() << endl 
-            << "===== > minNLL for pdfResult: " << pdf->getMinNllFree() << endl
-            << "===== > status for pdfResult: " << pdf->getFitStatus() << endl
-            << "===== > status for fitResult: " << r1->status() << endl;
-            //<< "===== > BR_{Bd} value from workspace: " << w->var("BR_{Bd}")->getVal() << endl
-            //<< "===== > BR_{Bd} value from fitResult: " << static_cast<RooRealVar*>(r1->floatParsFinal().find("BR_{Bd}"))->getVal() << endl
-            //<< "===== > BR_{Bs} value from workspace: " << w->var("BR_{Bs}")->getVal() << endl
-            //<< "===== > BR_{Bs} value from fitResult: " << static_cast<RooRealVar*>(r1->floatParsFinal().find("BR_{Bs}"))->getVal() << endl;
-
+      if(arg->debug){
+        cout  << "===== > compare free fit result with pdf parameters: " << endl;
+        cout  << "===== > minNLL for fitResult: " << r1->minNll() << endl 
+              << "===== > minNLL for pdfResult: " << pdf->getMinNllFree() << endl
+              << "===== > status for pdfResult: " << pdf->getFitStatus() << endl
+              << "===== > status for fitResult: " << r1->status() << endl;
+      }
 
       toyTree.chi2minGlobalToy    = 2*r1->minNll(); //2*r1->minNll();
       toyTree.chi2minGlobalToyPDF = 2*pdf->getMinNllFree(); //2*r1->minNll();
@@ -1192,26 +1189,28 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       toyTree.storeParsFree();
       pdf->deleteNLL();
 
-      cout << "#### > Fit summary: " << endl;
-      cout  << "#### > free fit status: " << toyTree.statusFree << " vs pdf: " << toyTree.statusFreePDF << endl 
-            << "#### > scan fit status: " << toyTree.statusScan << " vs pdf: " << toyTree.statusScanPDF<< endl 
-            << "#### > free min nll: " << toyTree.chi2minGlobalToy << " vs pdf: " << toyTree.chi2minGlobalToyPDF << endl 
-            << "#### > scan min nll: " << toyTree.chi2minToy << " vs pdf: " << toyTree.chi2minToyPDF << endl 
-            << "#### > dChi2 fitresult: " << toyTree.chi2minToy-toyTree.chi2minGlobalToy << endl
-            << "#### > dChi2 pdfresult: " << toyTree.chi2minToyPDF-toyTree.chi2minGlobalToyPDF << endl;
-      cout  << std::setprecision(6);      
-    
-      if(toyTree.chi2minToy - toyTree.chi2minGlobalToy > 20 && (toyTree.statusFree==0 && toyTree.statusScan==0) 
-          && toyTree.chi2minToy>-1e27 && toyTree.chi2minGlobalToy>-1e27){
-        cout << std::setw(30) << std::setfill('-') << ">>> HIGH test stat value!! print fit results with fit strategy: "<< pdf->getFitStrategy() << std::setfill(' ') << endl;
-        cout << "SCAN FIT Result" << endl;
-        r->Print("");
-        cout << "================" << endl;
-        cout << "FREE FIT result" << endl;
-        r1->Print("");
-      }
+      if(arg->debug){
+        cout << "#### > Fit summary: " << endl;
+        cout  << "#### > free fit status: " << toyTree.statusFree << " vs pdf: " << toyTree.statusFreePDF << endl 
+              << "#### > scan fit status: " << toyTree.statusScan << " vs pdf: " << toyTree.statusScanPDF<< endl 
+              << "#### > free min nll: " << toyTree.chi2minGlobalToy << " vs pdf: " << toyTree.chi2minGlobalToyPDF << endl 
+              << "#### > scan min nll: " << toyTree.chi2minToy << " vs pdf: " << toyTree.chi2minToyPDF << endl 
+              << "#### > dChi2 fitresult: " << toyTree.chi2minToy-toyTree.chi2minGlobalToy << endl
+              << "#### > dChi2 pdfresult: " << toyTree.chi2minToyPDF-toyTree.chi2minGlobalToyPDF << endl;
+        cout  << std::setprecision(6);
+      
+        if(toyTree.chi2minToy - toyTree.chi2minGlobalToy > 20 && (toyTree.statusFree==0 && toyTree.statusScan==0) 
+            && toyTree.chi2minToy>-1e27 && toyTree.chi2minGlobalToy>-1e27){
+          cout << std::setw(30) << std::setfill('-') << ">>> HIGH test stat value!! print fit results with fit strategy: "<< pdf->getFitStrategy() << std::setfill(' ') << endl;
+          cout << "SCAN FIT Result" << endl;
+          r->Print("");
+          cout << "================" << endl;
+          cout << "FREE FIT result" << endl;
+          r1->Print("");
+        }
 
-      if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - ToyTree 2*minNll free fit: " << toyTree.chi2minGlobalToy << endl;
+        cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - ToyTree 2*minNll free fit: " << toyTree.chi2minGlobalToy << endl;
+      }
 
       
       //

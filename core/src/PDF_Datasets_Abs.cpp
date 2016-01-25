@@ -61,16 +61,16 @@ void PDF_Datasets_Abs::initData(const TString& name){
 void  PDF_Datasets_Abs::initObservables(const TString& setName){
     
   if(! isPdfInitialized() ){
-    std::cout << "FATAL in PDF_Datasets_Abs::initObservables -- first call PDF_Datasets_Abs::initPdf to init the PDF!" << std::endl;
-    exit(-1);
+    std::cerr << "FATAL in PDF_Datasets_Abs::initObservables -- first call PDF_Datasets_Abs::initPdf to init the PDF!" << std::endl;
+    exit(EXIT_FAILURE);
   }
-  wspc->renameSet(setName, obsName);
+  obsName = setName;
   observables = (RooArgList*) wspc->set(obsName);
   areObsSet = true;
 };
 
 void  PDF_Datasets_Abs::initGlobalObservables(const TString& setName){
-  wspc->renameSet(setName, globalObsName);
+  globalObsName = setName;
   wspc->saveSnapshot(globalObsDataSnapshotName,*wspc->set(globalObsName));
 };
 
@@ -84,7 +84,7 @@ void  PDF_Datasets_Abs::initObservables(){
     std::cout << "You must define the RooArgSet of observables in the Workspace." << std::endl; 
     std::cout << "The name of the set in the workspace must be passed to the PDF object via " <<std::endl;
     std::cout << "PDF_Datasets_Abs::initObservables(const TString& setName)" << std::endl; 
-    exit(-1);
+    exit(EXIT_FAILURE);
 };
 
 void  PDF_Datasets_Abs::initParameters(const TString& setName){
@@ -96,13 +96,13 @@ void  PDF_Datasets_Abs::initParameters(const TString& setName){
     std::cout << "FATAL in PDF_Datasets_Abs::initParameters -- first call PDF_Datasets_Abs::initPdf to init the PDF!" << std::endl;
     exit(-1);
   }
-  wspc->renameSet(setName,parName);
+  parName = setName;
   parameters = (RooArgList*) wspc->set(parName);
   areParsSet = true;
 };
 
 void  PDF_Datasets_Abs::initConstraints(const TString& setName){
-  wspc->renameSet(setName,constraintName);
+  constraintName = setName;
 };
 
 void  PDF_Datasets_Abs::initParameters(){
