@@ -19,6 +19,7 @@
 #define MethodDatasetsPluginScan_h
 
 #include "MethodPluginScan.h"
+#include "ProgressBar.h"
 #include "PDF_Datasets_Abs.h"
 #include "RooSlimFitResult.h"
 #include "TLeaf.h"

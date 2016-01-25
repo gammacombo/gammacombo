@@ -591,8 +591,10 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       
   // start scan
   cout << "MethodDatasetsPluginScan::scan1d() : starting ... with " << nPoints1d << " scanpoints..." << endl;
+  ProgressBar progressBar(arg, nPoints1d);
   for ( int i=0; i<nPoints1d; i++ )
   {
+    progressBar.progress();
     // scanpoint is calculated using min, max, which are the hCL x-Axis limits set in this->initScan()
     // this uses the "scan" range, as expected 
     // don't add half the bin size. try to solve this within plotting method
