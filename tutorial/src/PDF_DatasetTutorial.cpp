@@ -97,12 +97,3 @@ void   PDF_DatasetTutorial::generateToys(int SeedShift) {
   this->toyObservables  = toys; 
   this->isToyDataSet    = kTRUE;
 }
-
-void  PDF_DatasetTutorial::generateToysGlobalObservables(bool useConstrPdf , int SeedShift) {
-    // \todo: generate the global observables!!!!
-    
-//	RooArgSet* obsSet = *wspc->set(globalObsName);
-//	for (int i=0; i<obsSet.getSize())
-//		globalObs->SetConstat
-    wspc->saveSnapshot(globalObsToySnapshotName, *wspc->set(globalObsName));
-}

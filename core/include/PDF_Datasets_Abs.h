@@ -28,7 +28,7 @@ public:
 
   virtual RooFitResult* fit(bool fitToys = kTRUE) = 0;
   virtual void          generateToys(int SeedShift = 0) = 0;
-  virtual void          generateToysGlobalObservables(bool useConstrPdf = true, int SeedShift = 0) = 0;
+  virtual void          generateToysGlobalObservables(int SeedShift = 0);
   
   void                  initData(const TString& name);
   void                  initObservables(const TString& setName);
@@ -44,7 +44,7 @@ public:
   TString               getDataName(){return dataName;};
   inline int            getFitStatus(){return fitStatus;};
   inline int            getFitStrategy(){return fitStrategy;};
-  TString               getGlobVarsName(){return globalVarsName;};
+  TString               getGlobalParsName(){return globalParsName;};
   float                 getMinNllFree(){return minNllFree;};
   float                 getMinNllScan(){return minNllScan;};
   TString               getObsName(){return obsName;};
@@ -58,7 +58,6 @@ public:
   inline void           setDataName(const TString& objName){dataName = objName;};
   inline void           setFitStatus(int stat = 0){fitStatus = stat;};
   inline void           setFitStrategy(int strat = 0){fitStrategy = strat;};
-  inline void           setGlobalVars(const TString& globName){globalVarsName = globName;}; 
   inline void           setMinNllFree(float mnll){minNllFree = mnll;}; 
   inline void           setMinNllScan(float mnll){minNllScan = mnll;}; 
   void                  setNCPU(int n){NCPU = n;}; 
@@ -89,7 +88,7 @@ protected:
   TString         parName;
   TString         dataName;       //> name of the data set in the workspace
   TString         constraintName; //> name of the set with all constraint pdfs 
-  TString         globalVarsName; //> name of the set of global vars in the workspace, that is, the parameters that occur (not only) in the  constraints...
+  TString         globalParsName; //> name of the set of global parameters in the workspace, that is, the parameters that occur (not only) in the  constraints...
   TString         globalObsName;   //> name of the set of global observables in the workspace.
   const TString         globalObsDataSnapshotName = "globalObsDataSnapshotName";
   //> name of a snapshot that stores the values of the global observables in data

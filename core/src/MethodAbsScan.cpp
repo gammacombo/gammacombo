@@ -548,6 +548,8 @@ void MethodAbsScan::calcCLintervals()
 
 	cout << endl;
 	if ( arg->debug ) cout << "MethodAbsScan::calcCLintervals() : ";
+	cout << "beep"<< endl;
+	cout << solutions.size()<< endl;
 	cout << "CONFIDENCE INTERVALS for combination " << name << endl << endl;
 	clintervals1sigma.clear(); // clear, else calling this function twice doesn't work
 	clintervals2sigma.clear();
@@ -717,7 +719,7 @@ void MethodAbsScan::printCLintervals()
 	cout << endl;
 
 	// print solutions not contained in the 1sigma and 2sigma intervals
-	for ( int i=0; i<getNSolutions(); i++ )
+	for ( int i=0; i<solutions.size(); i++ )
 	{
 		float sol = getScanVar1Solution(i);
 		bool cont=false;

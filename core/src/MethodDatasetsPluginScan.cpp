@@ -486,12 +486,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
 	cout << "At scanpoint "<< std::scientific << hCL->GetBinCenter(i)<<": ===== number of toys for pValue calculation: " << nbetter << endl;
 	cout << "At scanpoint "<<hCL->GetBinCenter(i)<<": ===== pValue: " << p << endl;
   }
-  TCanvas* cans = new TCanvas("cans","cans",1024,786);
-  cans->cd();
-  h_fracGoodToys->SetXTitle(scanVar1);
-  h_fracGoodToys->SetYTitle("fraction of good toys");
-  h_fracGoodToys->Draw();
-    
+
   if(arg->debug || drawPlots){
     TCanvas* can = new TCanvas("can","can",1024,786);
     can->cd();
@@ -523,12 +518,6 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     h_background->SetYTitle("fraction of neg. test stat toys");
     h_background->Draw();
   }
-  TCanvas* can1 = new TCanvas("can1","can1",1024,786);
-  can1->cd();
-  h_pVals->Draw();
-  TCanvas* can11 = new TCanvas("can11","can11",1024,786);
-  can11->cd();
-  h_background->Draw();
 
   this->profileLH = new MethodProbScan(pdf, this->getArg(), h_probPValues);
   // goodness-of-fit
@@ -1376,3 +1365,45 @@ void MethodDatasetsPluginScan::printDebug(const RooFitResult& r){
           << std::resetiosflags(std::ios::fixed) 
           << std::resetiosflags(std::ios::scientific);
 };
+
+void MethodDatasetsPluginScan::calcCLintervals()
+{
+ 
+  clintervals1sigma.clear(); 
+  clintervals2sigma.clear();
+  
+  double levels[2] = {0.6827, 0.9545};
+  for (int c=0;c<2;c++){
+    const std::pair<double, double> borders = getBorders(*this->hCL, levels[c]);
+    CLInterval cli;
+    cli.pvalue = 1. - levels[c];
+    cli.min = borders.first;
+    cli.max = borders.second;
+    cli.central = -1;
+    if ( c==0 ) clintervals1sigma.push_back(cli);
+    if ( c==1 ) clintervals2sigma.push_back(cli);
+    std::cout<<"borders at "<<levels[c]<<"  [ "<<borders.first<<" : "<<borders.second<<"]"<<std::endl;
+  }
+
+}
+
+const std::pair<double, double> MethodDatasetsPluginScan::getBorders(const TH1& hist, const double confidence_level){
+
+  const double p_val = 1 - confidence_level;
+
+  int bin=1;
+  double lower_edge =-999;
+  while(hist.GetBinContent(bin)<p_val && bin<=hist.GetNbinsX()){
+    lower_edge = hist.GetBinLowEdge(bin) + hist.GetBinWidth(bin);
+    bin++;
+  }
+
+  bin = hist.GetNbinsX();
+  double upper_edge =999;
+  while(hist.GetBinContent(bin)<p_val && bin>=1){
+    upper_edge = hist.GetBinLowEdge(bin);
+    bin--;
+  }
+
+  return std::pair<double, double>(lower_edge,upper_edge);
+}

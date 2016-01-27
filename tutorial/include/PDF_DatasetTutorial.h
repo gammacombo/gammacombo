@@ -10,7 +10,6 @@ public:
   PDF_DatasetTutorial(RooWorkspace* w);
   RooFitResult* fit(bool fitToys = kTRUE);
   void          generateToys(int SeedShift = 0) override;
-  void          generateToysGlobalObservables(bool useConstrPdf = true, int SeedShift = 0) override;
   ~PDF_DatasetTutorial();
 
   private:

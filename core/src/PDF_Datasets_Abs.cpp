@@ -16,7 +16,7 @@ PDF_Datasets_Abs::PDF_Datasets_Abs(RooWorkspace* w, int nObs, OptParser* opt)
   wspc            = w;//new RooWorkspace(*w);
   obsName         = "default_internal_observables_set_name";
   parName         = "default_internal_parameter_set_name";
-  globalVarsName  = "default_internal_global_vars_set_name";
+  globalParsName  = "default_internal_global_pars_set_name";
   globalObsName   = "default_internal_global_obs_set_name";
   constraintName  = "default_internal_constraint_set_name";
   dataName        = "default_internal_dataset_name";
@@ -174,4 +174,20 @@ OptParser*   PDF_Datasets_Abs::getArg(){
   std::cout<<"ERROR: getting the options parser from the pdf has been deprecated"<<std::endl;
   std::cout<<"(This is up for discussion of course)"<<std::endl;
   exit(EXIT_FAILURE);
+}
+
+
+void  PDF_Datasets_Abs::generateToysGlobalObservables(int SeedShift){
+  
+  //obtain the part of the PDF that can generate the global observables
+  auto constraintPdf  = new RooProdPdf("constraintPdf","",*wspc->set(constraintName));
+  // generate the global observables into a RooArgSet
+  const RooArgSet* set = constraintPdf->generate(*(wspc->set(globalObsName)),1)->get(0);
+  // iterate over the generated values and use them to update the actual global observables in the workspace
+  TIterator* it =  set->createIterator();
+  while (RooRealVar* genVal = dynamic_cast<RooRealVar*>(it->Next())) {
+    wspc->var(genVal->GetName())->setVal(genVal->getVal());
+  }
+  // take a snapshot of the global variables in the workspace so they can be loaded later
+  wspc->saveSnapshot(globalObsToySnapshotName, *wspc->set(globalObsName));
 }

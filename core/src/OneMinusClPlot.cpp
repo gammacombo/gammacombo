@@ -71,7 +71,7 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	}
 
 	// add solution
-	if ( s->getNSolutions()>0 ){
+	if ( ! s->getSolutions().empty() ){
 		TGraphTools t;
 		TGraph *gNew = t.addPointToGraphAtFirstMatchingX(g, s->getScanVar1Solution(0), 1.0);
 		delete g;
