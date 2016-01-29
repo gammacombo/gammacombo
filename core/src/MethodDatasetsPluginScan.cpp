@@ -1152,8 +1152,9 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       delete r;
       delete r1;
       pdf->deleteToys();
-      pdf->deleteConstraints();
-      //delete parsAfterScanFit;
+      // we cannot/ don't have to delete the toy global variables 
+      //because they are saved as a a snapshot and we cannot delete snapshots.
+      
     } // End of toys loop
 
     // reset

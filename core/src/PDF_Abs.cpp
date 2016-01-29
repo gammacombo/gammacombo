@@ -13,12 +13,12 @@
 	corStatMatrix(nObs),
 	corSystMatrix(nObs)
 {
-	this->nObs = nObs;
-	parameters = 0;
-	theory = 0;
-	observables = 0;
-	pdf = 0;
-	toyObservables = 0;
+	this->nObs  = nObs;
+	parameters  = NULL;
+	theory      = NULL;
+	observables = NULL;
+	pdf         = NULL;
+	toyObservables = NULL;
 	nToyObs = 1000;
 	iToyObs = 0;
 	for ( int i=0; i<nObs; i++ ){

@@ -11,8 +11,6 @@
 
 PDF_Datasets_Abs::PDF_Datasets_Abs(RooWorkspace* w, int nObs, OptParser* opt) 
 : PDF_Abs(nObs){
-  observables     = NULL;
-  parameters      = NULL;
   wspc            = w;//new RooWorkspace(*w);
   obsName         = "default_internal_observables_set_name";
   parName         = "default_internal_parameter_set_name";
@@ -25,8 +23,6 @@ PDF_Datasets_Abs::PDF_Datasets_Abs(RooWorkspace* w, int nObs, OptParser* opt)
   areObsSet       = areParsSet = areRangesSet = isPdfSet = isDataSet = isToyDataSet = false;
   arg             = opt;
   fitStatus       = -10;
-  globVals        = NULL;
-  _constraintPdf  = NULL;
   _NLL            = NULL;
   minNllFree      = 0;
   minNllScan      = 0;
@@ -71,6 +67,8 @@ void  PDF_Datasets_Abs::initObservables(const TString& setName){
 
 void  PDF_Datasets_Abs::initGlobalObservables(const TString& setName){
   globalObsName = setName;
+  // The global observables in the workspace are set to their observed value.
+  // This value is saved.
   wspc->saveSnapshot(globalObsDataSnapshotName,*wspc->set(globalObsName));
 };
 

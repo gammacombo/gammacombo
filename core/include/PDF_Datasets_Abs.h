@@ -23,7 +23,6 @@ class PDF_Datasets_Abs : public PDF_Abs
 public:
   PDF_Datasets_Abs(RooWorkspace* w, int nObs, OptParser* opt);
   ~PDF_Datasets_Abs();
-  void                  deleteConstraints(){if(globVals) delete globVals;};
   void                  deleteNLL(){if(_NLL){delete _NLL; _NLL=NULL;}};
 
   virtual RooFitResult* fit(bool fitToys = kTRUE) = 0;
@@ -74,14 +73,12 @@ public:
   inline  bool          isDataInitialized(){ return isDataSet; };
   inline  bool          notSetupToFit(bool fitToys){return (!(isPdfSet && isDataSet) || (fitToys && !(isPdfSet && isToyDataSet))); }; // this comes from a previous if-statement
   int                   NCPU;         //> number of CPU used
-  RooDataSet*           globVals; //> values for a set of global vars
   float                 minNll;
 
 
 protected:
   RooWorkspace*   wspc;
   RooDataSet*     data;
-  RooAbsPdf*      _constraintPdf;
   RooAbsReal*     _NLL; // possible pointer to minimization function 
   TString         pdfName; //> name of the pdf in the workspace
   TString         obsName;
