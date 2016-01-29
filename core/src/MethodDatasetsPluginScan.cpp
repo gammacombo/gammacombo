@@ -11,6 +11,7 @@
 
 #include "MethodDatasetsPluginScan.h"
 #include "TRandom3.h"
+#include "TMVA/TSpline1.h"
 #include <algorithm>
 #include <ios>
 #include <iomanip>
@@ -1374,7 +1375,7 @@ void MethodDatasetsPluginScan::calcCLintervals()
   
   double levels[2] = {0.6827, 0.9545};
   for (int c=0;c<2;c++){
-    const std::pair<double, double> borders = getBorders(*this->hCL, levels[c]);
+    const std::pair<double, double> borders = getBorders(TGraph(this->hCL), levels[c]);
     CLInterval cli;
     cli.pvalue = 1. - levels[c];
     cli.min = borders.first;
@@ -1387,23 +1388,31 @@ void MethodDatasetsPluginScan::calcCLintervals()
 
 }
 
-const std::pair<double, double> MethodDatasetsPluginScan::getBorders(const TH1& hist, const double confidence_level){
+const std::pair<double, double> MethodDatasetsPluginScan::getBorders(const TGraph& graph, const double confidence_level){
 
   const double p_val = 1 - confidence_level;
+  // performing a conservative linear interpolation
+  TMVA::TSpline1 splines("splines", new TGraph(graph));
 
-  int bin=1;
-  double lower_edge =-999;
-  while(hist.GetBinContent(bin)<p_val && bin<=hist.GetNbinsX()){
-    lower_edge = hist.GetBinLowEdge(bin) + hist.GetBinWidth(bin);
-    bin++;
+  double min_edge = graph.GetX()[0];
+  // will never return smaller edge than min_edge
+  double max_edge = graph.GetX()[graph.GetN()-1];
+  // will never return higher edge than max_edge
+  int scan_steps = 1000;
+  double lower_edge = min_edge;
+  double upper_edge = max_edge;
+
+  for(double point = min_edge; point < max_edge; point+= (max_edge-min_edge)/scan_steps){
+    if(splines.Eval(point)>p_val){
+      lower_edge = point;
+      break;
+    }
   }
-
-  bin = hist.GetNbinsX();
-  double upper_edge =999;
-  while(hist.GetBinContent(bin)<p_val && bin>=1){
-    upper_edge = hist.GetBinLowEdge(bin);
-    bin--;
+  for(double point = max_edge; point > min_edge; point-= (max_edge-min_edge)/scan_steps){
+    if(splines.Eval(point)>p_val){
+      upper_edge = point;
+      break;
+    }
   }
-
   return std::pair<double, double>(lower_edge,upper_edge);
 }
