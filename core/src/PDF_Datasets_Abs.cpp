@@ -178,6 +178,8 @@ OptParser*   PDF_Datasets_Abs::getArg(){
 
 
 void  PDF_Datasets_Abs::generateToysGlobalObservables(int SeedShift){
+
+  // \todo: use seed shift
   
   //obtain the part of the PDF that can generate the global observables
   auto constraintPdf  = new RooProdPdf("constraintPdf","",*wspc->set(constraintName));
