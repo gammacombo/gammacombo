@@ -766,8 +766,8 @@ void GammaComboEngine::scanStrategy2d(MethodProbScan *scanner, ParameterCache *p
 
 		cout << "\n2D scan for " + scanner->getScanVar1Name() + " and " + scanner->getScanVar2Name() + ":\n" << endl;
 		vector<RooSlimFitResult*> solutions;
-		for ( int i=0; i<s1->getNSolutions(); i++ ) solutions.push_back(s1->getSolution(i));
-		for ( int i=0; i<s2->getNSolutions(); i++ ) solutions.push_back(s2->getSolution(i));
+		for ( int i=0; i<s1->getSolutions().size(); i++ ) solutions.push_back(s1->getSolution(i));
+		for ( int i=0; i<s2->getSolutions().size(); i++ ) solutions.push_back(s2->getSolution(i));
 		// \todo remove similar solutions from list
 		for ( int j=0; j<solutions.size(); j++ ){
 			cout << "2D scan " << j+1 << " of " << solutions.size() << " ..." << endl;
@@ -1473,7 +1473,7 @@ void GammaComboEngine::scanDataSet()
 
 	if ( !arg->isAction("plugin") && !arg->isAction("pluginbatch") )
 	{
-		cout << "ERROR : For now, only plugin scans are supported when running on a dataset" << endl;
+		cerr << "ERROR : For now, only plugin scans are supported when running on a dataset" << endl;
 		exit(EXIT_FAILURE);
 	}
 
@@ -1485,7 +1485,6 @@ void GammaComboEngine::scanDataSet()
 
 	else if ( arg->isAction("plugin") || arg->isAction("pluginbatch") )
 	{
-
 		MethodDatasetsPluginScan *scanner = new MethodDatasetsPluginScan( (PDF_Datasets_Abs*) pdf[0], arg);
 		scanner->initScan(); //\todo <- can we get rid of this?
 		if ( arg->isAction("pluginbatch") ){

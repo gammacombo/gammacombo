@@ -28,6 +28,7 @@ MethodProbScan::MethodProbScan()
 /// no scan needed here, hCL histogram is provided externally
 ///
 MethodProbScan::MethodProbScan(PDF_Datasets_Abs* PDF, OptParser* opt, TH1F* hcl, const TString &fname)
+	: MethodAbsScan(opt)
 {
 	name                = fname;
 	methodName          = "Prob";

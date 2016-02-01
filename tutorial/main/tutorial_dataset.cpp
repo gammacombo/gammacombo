@@ -1,9 +1,11 @@
 #include "GammaComboEngine.h"
 #include "PDF_DatasetTutorial.h"
 #include "TFile.h"
+#include "RooGaussian.h"
+#include "RooExponential.h"
+#include "RooWorkspace.h"
 
 
-void constructWorkspace(); // forward declaration of helper function below
 
 int main(int argc, char* argv[])
 {
@@ -16,6 +18,11 @@ int main(int argc, char* argv[])
   // In a more complex analysis, you can also do this elsewhere, for example using pyroot.
   //
   ///////////////////////////////////////////////////////////////
+
+  // How to run the tutorial:
+  // bin/tutorial_dataset_build_workspace
+  // bin/tutorial_dataset -a pluginbatch --var branchingRatio --lightfiles --ntoys 50  --npoints 10 --scanrange 1e-7:3e-6
+  // bin/tutorial_dataset -a plugin --var branchingRatio --lightfiles -i
 	
 
   // Load the workspace from its file
@@ -32,6 +39,7 @@ int main(int argc, char* argv[])
   PDF_DatasetTutorial* pdf = new PDF_DatasetTutorial(workspace);
   pdf->initPDF("mass_model"); // this the name of the pdf in the workspace (without the constraints)
   pdf->initObservables("datasetObservables"); // \todo is this the right set here?
+  pdf->initGlobalObservables("global_observables_set"); 
   pdf->initParameters("parameters");
   pdf->initConstraints("constraint_set");
   

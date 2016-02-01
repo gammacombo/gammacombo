@@ -18,6 +18,7 @@
 #include "TPaveText.h"
 #include "TF1.h"
 #include "TDatime.h"
+#include "TMVA/TSpline1.h"
 
 #include "Utils.h"
 #include "OneMinusClPlotAbs.h"
@@ -43,11 +44,12 @@ class OneMinusClPlotAbs;
 class MethodAbsScan
 {
 	public:
+                MethodAbsScan();
 		MethodAbsScan(Combiner* c);
-		MethodAbsScan();
+                MethodAbsScan(OptParser* opt);
 		~MethodAbsScan();
 
-		void                            calcCLintervals();
+		virtual void                    calcCLintervals();
 		void                            confirmSolutions();
 		void                            doInitialFit(bool force=false);
 		inline OptParser*               getArg(){return arg;};
@@ -71,13 +73,12 @@ class MethodAbsScan
 		inline int                      getNPoints1d(){return nPoints1d;}
 		inline int                      getNPoints2dx(){return nPoints2dx;}
 		inline int                      getNPoints2dy(){return nPoints2dy;}
-		inline int                      getNSolutions(){return solutions.size();};
 		inline const RooArgSet*         getObservables(){return w->set(obsName);}
-		inline TString			getObsName(){return obsName;};
-		inline TString			getParsName(){return parsName;};
+		inline TString			        getObsName(){return obsName;};
+		inline TString			        getParsName(){return parsName;};
 		float                           getScanVarSolution(int iVar, int iSol);
 		RooRealVar*                     getScanVar1();
-		TString													getScanVar1Name();
+		TString                         getScanVar1Name();
 		float                           getScanVar1Solution(int i=0);
 		RooRealVar*                     getScanVar2();
 		TString							getScanVar2Name();
@@ -119,6 +120,8 @@ class MethodAbsScan
 		inline void                     setVerbose(bool yesNo=true){verbose = yesNo;};
 		void 							setXscanRange(float min, float max);
 		void 							setYscanRange(float min, float max);
+		void							calcCLintervalsSimple();
+		const std::pair<double, double> getBorders(const TGraph& graph, const double confidence_level);
 
 		vector<RooSlimFitResult*> allResults;           ///< All fit results we encounter along the scan.
 		vector<RooSlimFitResult*> curveResults;         ///< All fit results of the the points that make it into the 1-CL curve.
