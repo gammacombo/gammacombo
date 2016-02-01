@@ -158,14 +158,23 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	bool optimizeNdiv = arg->ndiv<0 ? true : false;
 	haxes->GetXaxis()->SetNdivisions(xndiv, optimizeNdiv);
 	haxes->GetYaxis()->SetNdivisions(407, true);
-	if ( plotLegend ){
-		if ( arg->plotlog ) haxes->GetYaxis()->SetRangeUser(1e-3,10);
-		else                haxes->GetYaxis()->SetRangeUser(0.0,1.3);
-	}
-	else{
-		if ( arg->plotlog ) haxes->GetYaxis()->SetRangeUser(plotLogYMin,plotLogYMax);
-		else                haxes->GetYaxis()->SetRangeUser(0.0,1.0);
-	}
+
+  // plot y range
+  float plotYMax;
+  float plotYMin;
+  if ( plotLegend ) {
+    if ( arg->plotlog ) { plotYMin = 1.e-3; plotYMax = 10.; }
+    else                { plotYMin = 0.0  ; plotYMax = 1.3; }
+  }
+  else {
+    if ( arg->plotlog ) { plotYMin = 1.e-3; plotYMax = 1.0; }
+    else                { plotYMin = 0.0  ; plotYMax = 1.0; }
+  }
+  // change if passed as option
+	plotYMin = arg->plotymin > 0. ? arg->plotymin : plotYMin;
+  plotYMax = arg->plotymax > 0. ? arg->plotymax : plotYMax;
+
+  haxes->GetYaxis()->SetRangeUser( plotYMin, plotYMax );
 	haxes->Draw("axissame");
 	g->SetHistogram(haxes);
 
@@ -472,7 +481,9 @@ void OneMinusClPlot::drawCLguideLines()
 	drawCLguideLine(4.55e-2);
 	if ( arg->plotlog ){
 		drawCLguideLine(2.7e-3);
-		// drawCLguideLine(6.3e-5);
+		if ( arg->plotymin < 6.3e-5 ) {
+      drawCLguideLine(6.3e-5);
+    }
 	}
 }
 
