@@ -1,23 +1,7 @@
 #include "PDF_DatasetTutorial.h"
 #include "RooExponential.h"
 
-PDF_DatasetTutorial::PDF_DatasetTutorial(RooWorkspace* w)
-: PDF_Datasets_Abs(w,1, NULL)
-{
-  name    = "PDF_DatasetTutorial";
-  title   = "PDF_DatasetTutorial";
-  data = (RooDataSet*)wspc->data("data"); //> set real Dataset 
-  if(data){
-    isDataSet = kTRUE;
-    std::cout << "INFO in PDF_DatasetTutorial::PDF_DatasetTutorial -- Dataset initialized" << std::endl;
-  }
-  else{
-    std::cout << "FATAL in PDF_DatasetTutorial::PDF_DatasetTutorial -- no Dataset with name 'data' found in workspace!" << std::endl;
-    isDataSet = kFALSE;
-  }
-  
-  drawFitsDebug  = kFALSE;
-}
+PDF_DatasetTutorial::PDF_DatasetTutorial(RooWorkspace* w): PDF_Datasets_Abs(w){}
 PDF_DatasetTutorial::~PDF_DatasetTutorial(){};
 
 RooFitResult* PDF_DatasetTutorial::fit(bool fitToys){

@@ -36,7 +36,8 @@ int main(int argc, char* argv[])
   }
 
   // Construct the PDF and pass the workspace to it
-  PDF_Datasets_Abs* pdf = new PDF_Datasets_Abs(workspace);
+  // PDF_Datasets_Abs* pdf = new PDF_Datasets_Abs(workspace);
+  PDF_Datasets_Abs* pdf = new PDF_DatasetTutorial(workspace);
   pdf->initPDF("mass_model"); // this the name of the pdf in the workspace (without the constraints)
   pdf->initObservables("datasetObservables"); // \todo is this the right set here?
   pdf->initGlobalObservables("global_observables_set"); 
