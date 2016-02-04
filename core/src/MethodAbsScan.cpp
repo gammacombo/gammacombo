@@ -546,11 +546,14 @@ void MethodAbsScan::calcCLintervals()
 		cout << endl;
 	}
 
-	cout << endl;
-	if ( arg->debug ) cout << "MethodAbsScan::calcCLintervals() : ";
-	cout << "beep"<< endl;
-	cout << solutions.size()<< endl;
-	cout << "CONFIDENCE INTERVALS for combination " << name << endl << endl;
+	if(solutions.empty()){
+		cout 	<< "MethodAbsScan::calcCLintervals() : Solutions vector empty. "
+								<<"Using simple method with  linear splines."<<endl;;
+		this->calcCLintervalsSimple();
+		return;
+	}
+
+
 	clintervals1sigma.clear(); // clear, else calling this function twice doesn't work
 	clintervals2sigma.clear();
 	int n = hCL->GetNbinsX();
@@ -1276,3 +1279,53 @@ void MethodAbsScan::setYscanRange(float min, float max)
 	m_yrangeset = true;
 }
 
+void MethodAbsScan::calcCLintervalsSimple()
+{
+ 
+  clintervals1sigma.clear(); 
+  clintervals2sigma.clear();
+  
+  double levels[2] = {0.6827, 0.9545};
+  for (int c=0;c<2;c++){
+    const std::pair<double, double> borders = getBorders(TGraph(this->hCL), levels[c]);
+    CLInterval cli;
+    cli.pvalue = 1. - levels[c];
+    cli.min = borders.first;
+    cli.max = borders.second;
+    cli.central = -1;
+    if ( c==0 ) clintervals1sigma.push_back(cli);
+    if ( c==1 ) clintervals2sigma.push_back(cli);
+    std::cout<<"borders at "<<levels[c]<<"  [ "<<borders.first<<" : "<<borders.second<<"]";
+	cout << ", " << methodName << " (simple boundary scan)" << endl;
+  }
+
+}
+
+const std::pair<double, double> MethodAbsScan::getBorders(const TGraph& graph, const double confidence_level){
+
+  const double p_val = 1 - confidence_level;
+  // performing a conservative linear interpolation
+  TMVA::TSpline1 splines("splines", new TGraph(graph));
+
+  double min_edge = graph.GetX()[0];
+  // will never return smaller edge than min_edge
+  double max_edge = graph.GetX()[graph.GetN()-1];
+  // will never return higher edge than max_edge
+  int scan_steps = 1000;
+  double lower_edge = min_edge;
+  double upper_edge = max_edge;
+
+  for(double point = min_edge; point < max_edge; point+= (max_edge-min_edge)/scan_steps){
+    if(splines.Eval(point)>p_val){
+      lower_edge = point;
+      break;
+    }
+  }
+  for(double point = max_edge; point > min_edge; point-= (max_edge-min_edge)/scan_steps){
+    if(splines.Eval(point)>p_val){
+      upper_edge = point;
+      break;
+    }
+  }
+  return std::pair<double, double>(lower_edge,upper_edge);
+}

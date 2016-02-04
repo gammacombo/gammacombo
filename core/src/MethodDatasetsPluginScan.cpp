@@ -15,7 +15,7 @@
 #include <ios>
 #include <iomanip>
 ///
-/// This should be the default for the GenericScan
+/// The default constructor for the dataset plugin scan
 ///
 MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets_Abs* PDF, OptParser* opt, bool provideFitResult):
   MethodPluginScan(opt),
@@ -48,6 +48,7 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets_Abs* PDF, OptPar
     dataFreeFitResult = result;
   }else{
     // \todo: support the case where no result is passed.
+    cerr << "ERROR: The workspace must contain the fit result of the fit to data. The name of the fit result must be 'data_fit_result'. " <<endl;
     exit(EXIT_FAILURE);
   }
   // check workspace content 
@@ -643,17 +644,9 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       toyTree.covQualScanData = this->getParValAtScanpoint(scanpoint,"covQualScanData");
     }
 
-      // cout << "CHECK PAR EVOL LOADING: ####" << endl 
-      // << "######## -\t scanpoint: " << t.scanpoint << " - scanpoint " << scanpoint << endl
-      // << "######## -\t statusScanData: " << t.statusScanData << endl 
-      // << "######## -\t chi2min: " << t.chi2min << endl 
-      // << "######## -\t Nlam_br_th_start: " << this->pdf->getWorkspace()->var("Nlam_br_th")->getVal() << endl;
-
-    // Set nuisances. This is the point in parameter space where
-    // the toys need to be generated.
-    // this->loadParevolPoscanpoint; // Do not use it here, as this use to provided by the data fit with fixed scanparameter
-    // save nuisances for start parameters 
-    // after the initial data fit using the fixed scanvar
+    // After doing the fit with the parameter of interest constrained to the scanpoint,
+    // we are now saving the fit values of the nuisance parameters. These values will be
+    // used to generate toys according to the PLUGIN method.
     RooArgSet allVars = w->allVars();
     TString plhName = Form("profileLHPoint_%i",i);
     w->saveSnapshot(plhName,allVars);
@@ -687,57 +680,43 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       << " filled in bin " << i+1 << " at: " << scanpoint << endl;
     }
     
-    // Draw all toy datasets in advance. This is much faster. ** Check this statement for Generic usecase
 
-    if(doProbScanOnly) nToys = 0;
-    // Begin toy loop
     for ( int j = 0; j<nToys; j++ )
     {
-      bool useConstrPDFforRandomization = true;
-      //curStep++;
-      //if ( curStep % (int)(allSteps/printFreq) == 0 ){
-      //  cout << (float)curStep/(float)allSteps*100. << "%" << endl;
-     
-      //}
+      
+
       if(arg->debug) cout << ">> new toy\n" << endl;
       this->pdf->setMinNllFree(0);
       this->pdf->setMinNllScan(0);
-      //
+      
       // 1. Generate toys
 
-      // set parameters to generate at to the values from the fit to data fixing the scanvar 
+      // Set nuisance parameters to the values from the fit to data with fixed parameter of interest.
+      // This is called the PLUGIN method.
       w->loadSnapshot(plhName);
-      // \does this make sure we are generating toy global observables according to the plugin method?
-      this->pdf->generateToys();
-      this->pdf->generateToysGlobalObservables(useConstrPDFforRandomization);
-      
-     //if(this->pdf->globVals) globalVars = *this->pdf->globVals->get(0); // \todo: make sure it is okay that I removed this.
 
+      this->pdf->generateToys(); // this is generating the toy dataset
+      this->pdf->generateToysGlobalObservables(); // this is generating the toy global observables
+      
       // \todo: comment the following back in once I know how we do thiat
-    //      t.storeParsGau( we need to pass a rooargset of the means of the global observables here);  
+      //      t.storeParsGau( we need to pass a rooargset of the means of the global observables here);  
 
       //
-      // 2. scan fit
+      // 2. Fit to toys with parameter of interest fixed to scanpoint
       //
       if(arg->debug)cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - perform scan toy fit" << endl;
       // set parameters to data scan fit
-      if(!useConstrPDFforRandomization){
-        Utils::setParameters(this->pdf->getWorkspace(), pdf->getParName(), parsGlobalMinScanPoint->get(0));
-      }
-      else{
-        w->loadSnapshot(plhName);
-       // if(this->pdf->globVals) globalVars = *this->pdf->globVals->get(0);  \todo: make sure that it is okay that I removed this.
-      }
 
-
-      parameterToScan->setVal(scanpoint);
+      w->loadSnapshot(plhName); //\todo: remove this?
+  
+      parameterToScan->setVal(scanpoint); // I think it should already be on this value from loading the snapshot.
       parameterToScan->setConstant(true);
       this->pdf->setFitStrategy(0);
-      RooFitResult* r   = this->pdf->fit(kTRUE); // fit toys
+      RooFitResult* r   = this->pdf->fit(kTRUE); // kTrue makes sure the fit is to toy data and to toy global observables
       assert(r);
       pdf->setMinNllScan(pdf->minNll);
 
-      if (std::isinf(pdf->getMinNllScan()) || std::isnan(pdf->getMinNllScan())) {
+      if (! std::isfinite(pdf->getMinNllScan())) {
         cout << "----> nan/inf flag detected " << endl;
         cout << "----> fit status: " << pdf->getFitStatus() << endl; 
         pdf->setFitStatus(-99);
@@ -822,30 +801,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       }        
       pdf->setMinNllScan(pdf->minNll);
 
-      /*
-      if(pdf->getFitStatus() != 0 || r->minNll() < -1e27){
-        cout  << "Compare pdf fit status to fit result status: " 
-              << pdf->getFitStatus() << " vs fit result: " << r->status() << endl;
-        cout << "###### problem in scan fit: didn't converge properly!" << endl;
-        this->printDebug(*r);
-        delete r;
-        this->pdf->setFitStrategy(1);
-        r     = this->pdf->fit(kTRUE);
-        cout << std::setw(30) << std::setfill('-') << ">> refit with strat 1:" << std::setfill(' ') << endl;
-        this->printDebug(*r);
-        
-        if(r->status()==-1){
-          delete r; 
-          cout << "------ last try with setFitStrategy(2)" << endl;
-          this->pdf->setFitStrategy(2);
-          r     = this->pdf->fit(kTRUE);
-          this->printDebug(*r);
-        }
-        
-      }
-      int scanStrategy = this->pdf->getFitStrategy();
-      */
-
+      
       toyTree.chi2minToy          = 2*r->minNll(); // 2*r->minNll(); //2*r->minNll();
       toyTree.chi2minToyPDF       = 2*pdf->getMinNllScan();
       toyTree.covQualScan         = r->covQual();
@@ -858,41 +814,25 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       RooDataSet* parsAfterScanFit = new RooDataSet("parsAfterScanFit", "parsAfterScanFit", *w->set(pdf->getParName()));
       parsAfterScanFit->add(*w->set(pdf->getParName()));
       
-      /*cout  << std::setprecision(9);
-      cout  << "===== > compare scan fit result with pdf parameters: " << endl;
-      cout  << "===== > minNLL for fitResult: " << t.chi2minToy << endl 
-            << "===== > minNLL for pdfResult: " << t.chi2minToyPDF << endl
-            << "===== > status for pdfResult: " << pdf->getFitStatus() << endl
-            << "===== > status for fitResult: " << r->status() << endl
-            << "===== > BR_{Bs} value from workspace: " << w->var("BR_{Bs}")->getVal() << endl
-            << "===== > BR_{Bs} value from fitResult: " << static_cast<RooRealVar*>(r->floatParsFinal().find("BR_{Bs}"))->getVal() << endl;
-      */
+      
       //
-      // 2. free fit
+      // 2. Fit to toys with free parameter of interest
       //
-      //if(arg->debug) 
       if(arg->debug)cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - perform free toy fit" << endl;
       // Use parameters from the scanfit to data
-      if(!useConstrPDFforRandomization){
-        Utils::setParameters(this->pdf->getWorkspace(), pdf->getParName(), parsGlobalMinScanPoint->get(0));
-      }
-      else{
-        // scanpoint has to be set free again
-        w->loadSnapshot(plhName);
-        //if(this->pdf->globVals) globalVars = *this->pdf->globVals->get(0); \todo: make sure it is okay I removed this.
-      }
+      
+      w->loadSnapshot(plhName); // not sure why we are loading this here. Maybe it helps to get a nice starting point.
+
       parameterToScan->setConstant(false);
-      if(parameterToScan->getVal() < 1e-13){
-        parameterToScan->setVal(2.0e-11);
-      }
+      
       // Fit
       // pdf->setFitStrategy(0);
-      RooFitResult* r1  = this->pdf->fit(kTRUE);
+      RooFitResult* r1  = this->pdf->fit(kTRUE); // kTrue makes sure the fit is to toy data and to toy global observables
       assert(r1);
       pdf->setMinNllFree(pdf->minNll);
       toyTree.chi2minGlobalToy = 2*r1->minNll();
 
-      if (std::isinf(pdf->getMinNllFree()) || std::isnan(pdf->getMinNllFree())) {
+      if (! std::isfinite(pdf->getMinNllFree())) {
         cout << "----> nan/inf flag detected " << endl;
         cout << "----> fit status: " << pdf->getFitStatus() << endl; 
         pdf->setFitStatus(-99);
@@ -999,7 +939,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             assert(r1);
             pdf->setMinNllFree(pdf->minNll);
             toyTree.chi2minGlobalToy = 2*r1->minNll();
-            if (std::isinf(pdf->getMinNllFree()) || std::isnan(pdf->getMinNllFree())) {
+            if (! std::isfinite(pdf->getMinNllFree())) {
               cout << "----> nan/inf flag detected " << endl;
               cout << "----> fit status: " << pdf->getFitStatus() << endl; 
               pdf->setFitStatus(-99);
@@ -1103,7 +1043,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                 assert(r1);
                 pdf->setMinNllFree(pdf->minNll); 
                 toyTree.chi2minGlobalToy = 2*r1->minNll();
-                if (std::isinf(pdf->getMinNllFree()) || std::isnan(pdf->getMinNllFree())) {
+                if (! std::isfinite(pdf->getMinNllFree())) {
                   cout << "----> nan/inf flag detected " << endl;
                   cout << "----> fit status: " << pdf->getFitStatus() << endl; 
                   pdf->setFitStatus(-99);
@@ -1212,10 +1152,11 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       delete r;
       delete r1;
       pdf->deleteToys();
-      pdf->deleteConstraints();
-      //delete parsAfterScanFit;
+      // we cannot/ don't have to delete the toy global variables 
+      //because they are saved as a a snapshot and we cannot delete snapshots.
+      
     } // End of toys loop
-    if(doProbScanOnly) toyTree.fill();
+
     // reset
     setParameters(w, pdf->getParName(), parsFunctionCall->get(0));
     //delete result;
@@ -1227,7 +1168,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
   outputFile->Write();
   outputFile->Close();
   delete parsFunctionCall;
-  //if (!(arg->isAction("pluginbatch"))) readScan1dTrees(nRun, nRun);
+  // if (!(arg->isAction("pluginbatch"))) readScan1dTrees(nRun, nRun); \todo: In fact, I have to figure out how to structure the meaning of plugin/pluginbatch properly
   return 0;
 }
 
@@ -1365,45 +1306,3 @@ void MethodDatasetsPluginScan::printDebug(const RooFitResult& r){
           << std::resetiosflags(std::ios::fixed) 
           << std::resetiosflags(std::ios::scientific);
 };
-
-void MethodDatasetsPluginScan::calcCLintervals()
-{
- 
-  clintervals1sigma.clear(); 
-  clintervals2sigma.clear();
-  
-  double levels[2] = {0.6827, 0.9545};
-  for (int c=0;c<2;c++){
-    const std::pair<double, double> borders = getBorders(*this->hCL, levels[c]);
-    CLInterval cli;
-    cli.pvalue = 1. - levels[c];
-    cli.min = borders.first;
-    cli.max = borders.second;
-    cli.central = -1;
-    if ( c==0 ) clintervals1sigma.push_back(cli);
-    if ( c==1 ) clintervals2sigma.push_back(cli);
-    std::cout<<"borders at "<<levels[c]<<"  [ "<<borders.first<<" : "<<borders.second<<"]"<<std::endl;
-  }
-
-}
-
-const std::pair<double, double> MethodDatasetsPluginScan::getBorders(const TH1& hist, const double confidence_level){
-
-  const double p_val = 1 - confidence_level;
-
-  int bin=1;
-  double lower_edge =-999;
-  while(hist.GetBinContent(bin)<p_val && bin<=hist.GetNbinsX()){
-    lower_edge = hist.GetBinLowEdge(bin) + hist.GetBinWidth(bin);
-    bin++;
-  }
-
-  bin = hist.GetNbinsX();
-  double upper_edge =999;
-  while(hist.GetBinContent(bin)<p_val && bin>=1){
-    upper_edge = hist.GetBinLowEdge(bin);
-    bin--;
-  }
-
-  return std::pair<double, double>(lower_edge,upper_edge);
-}

@@ -24,7 +24,6 @@ public:
   PDF_Datasets_Abs(RooWorkspace* w, int nObs, OptParser* opt);
   PDF_Datasets_Abs(RooWorkspace* w);
   ~PDF_Datasets_Abs();
-  void                  deleteConstraints(){if(globVals) delete globVals;};
   void                  deleteNLL(){if(_NLL){delete _NLL; _NLL=NULL;}};
 
   virtual RooFitResult* fit(bool fitToys = kTRUE);
@@ -77,14 +76,12 @@ public:
 
 
   int                   NCPU;         //> number of CPU used
-  RooDataSet*           globVals; //> values for a set of global vars
   float                 minNll;
 
 
 protected:
   RooWorkspace*   wspc;
   RooDataSet*     data;
-  RooAbsPdf*      _constraintPdf;
   RooAbsReal*     _NLL; // possible pointer to minimization function 
   TString         pdfName; //> name of the pdf in the workspace
   TString         obsName;

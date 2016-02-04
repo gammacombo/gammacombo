@@ -48,8 +48,6 @@ public:
     inline  void        setInputFile(TString name){inputFiles.push_back(name); explicitInputFile=true;};
     inline  void        setExtProfileLH(TTree* tree){profileLHPoints = tree; externalProfileLH = true;};
     inline  void        addFile(TString name){inputFiles.push_back(name);};
-    virtual void        calcCLintervals() override;
-    const std::pair<double, double> getBorders(const TH1& hist, const double confidence_level);
 
     PDF_Datasets_Abs*        pdf;
     TH1F*                   probPValues;
