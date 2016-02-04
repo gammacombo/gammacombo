@@ -33,6 +33,23 @@ PDF_Datasets_Abs::PDF_Datasets_Abs(RooWorkspace* w, int nObs, OptParser* opt)
   minNll          = 0;
 };
 
+PDF_Datasets_Abs::PDF_Datasets_Abs(RooWorkspace* w)
+: PDF_Datasets_Abs(w,1, NULL)
+{
+  name    = "PDF_DatasetTutorial";
+  title   = "PDF_DatasetTutorial";
+  data = (RooDataSet*)wspc->data("data"); //> set real Dataset 
+  if(data){
+    isDataSet = kTRUE;
+    std::cout << "INFO in PDF_DatasetTutorial::PDF_DatasetTutorial -- Dataset initialized" << std::endl;
+  }
+  else{
+    std::cout << "FATAL in PDF_DatasetTutorial::PDF_DatasetTutorial -- no Dataset with name 'data' found in workspace!" << std::endl;
+    isDataSet = kFALSE;
+  }
+  
+};
+
 PDF_Datasets_Abs::~PDF_Datasets_Abs(){
   delete wspc;
 };
@@ -190,4 +207,53 @@ void  PDF_Datasets_Abs::generateToysGlobalObservables(int SeedShift){
   }
   // take a snapshot of the global variables in the workspace so they can be loaded later
   wspc->saveSnapshot(globalObsToySnapshotName, *wspc->set(globalObsName));
+}
+
+
+RooFitResult* PDF_Datasets_Abs::fit(bool fitToys){
+
+  if(this->notSetupToFit(fitToys)){
+    std::cout << "FATAL in PDF_DatasetTutorial::fit -- There is no PDF or (toy)data set to fit!" << std::endl;  
+    return NULL;
+  }
+
+  if (this->getWorkspace()->set(constraintName)==NULL){
+    std::cout<<std::endl;
+    std::cout<<std::endl;
+    std::cout<< "ERROR: No RooArgSet with constraints found."<<std::endl;
+    std::cout<< "The Workspace must contain a RooArgSet with constraint PDFs."<<std::endl;
+    std::cout<< "These are usually Gaussians that constrain parameters via global observables."<<std::endl;
+    std::cout<< "This set can be empty."<<std::endl;
+    std::cout<< "By default its name should be 'default_internal_constraint_set_name'."<<std::endl;
+    std::cout<< "Other names can be passed via PDF_Datasets_Abs::initConstraints"<<std::endl;
+      exit(EXIT_FAILURE);
+    }
+  
+  // Turn off RooMsg
+  RooMsgService::instance().setGlobalKillBelow(ERROR);
+  RooMsgService::instance().setSilentMode(kTRUE);
+  // Choose Dataset to fit to
+  RooDataSet* dataToFit = (fitToys) ? this->toyObservables : this->data ;
+  
+  if(fitToys)   wspc->loadSnapshot(globalObsToySnapshotName);
+  else          wspc->loadSnapshot(globalObsDataSnapshotName);
+  
+  RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() ,RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
+
+
+  RooMsgService::instance().setSilentMode(kFALSE);
+  RooMsgService::instance().setGlobalKillBelow(INFO);
+  this->fitStatus = result->status();
+  return result;
+};
+
+void   PDF_Datasets_Abs::generateToys(int SeedShift) {
+  TRandom3 rndm(0);
+
+  //\todo set seed according to seed SeedShift
+
+  RooDataSet* toys = this->pdf->generate(*observables, RooFit::Extended(kTRUE));
+
+  this->toyObservables  = toys; 
+  this->isToyDataSet    = kTRUE;
 }

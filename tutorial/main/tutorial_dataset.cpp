@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
   }
 
   // Construct the PDF and pass the workspace to it
-  PDF_DatasetTutorial* pdf = new PDF_DatasetTutorial(workspace);
+  PDF_Datasets_Abs* pdf = new PDF_Datasets_Abs(workspace);
   pdf->initPDF("mass_model"); // this the name of the pdf in the workspace (without the constraints)
   pdf->initObservables("datasetObservables"); // \todo is this the right set here?
   pdf->initGlobalObservables("global_observables_set"); 
@@ -52,5 +52,5 @@ int main(int argc, char* argv[])
 
   // Combiners are not supported when working with datsets. 
   // The statistical model is fully defined with the PDF
-  gc.run(true);
+  gc.run(true); // The boolean parameter is a flag that tells Gammacombo that we are analysing a dataset
 }

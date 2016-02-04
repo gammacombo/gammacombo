@@ -59,18 +59,7 @@ RooFitResult* PDF_DatasetTutorial::fit(bool fitToys){
                                       ,RooFit::Strategy(3)
                                       ,RooFit::Minimizer("Minuit2","minimize")
                                       );
-  
-//
-//  RooPlot* plot = getWorkspace()->var("mass")->frame();
-//  dataToFit->plotOn(plot);	
-//  pdf->plotOn(plot);
-//  TCanvas c("c","c",1024, 768);
-//  plot->Draw();
-//  if (fitToys){
-//	  c.SaveAs("plots/pdf/testfitplot"+TString(std::to_string(rand()%10))+".pdf");
-//  } else {
-//	  c.SaveAs(TString("plots/pdf/fitdata/testfitplot"+std::to_string(getWorkspace()->var("branchingRatio")->getVal()*10000)+".pdf"));
-//  }
+
 
   RooMsgService::instance().setSilentMode(kFALSE);
   RooMsgService::instance().setGlobalKillBelow(INFO);
