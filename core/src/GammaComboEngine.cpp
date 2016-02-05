@@ -1,6 +1,6 @@
 #include "GammaComboEngine.h"
 #include "MethodDatasetsPluginScan.h"
-#include "PDF_Datasets_Abs.h"
+#include "PDF_Datasets.h"
 
 GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[])
 {
@@ -1485,7 +1485,7 @@ void GammaComboEngine::scanDataSet()
 
 	else if ( arg->isAction("plugin") || arg->isAction("pluginbatch") )
 	{
-		MethodDatasetsPluginScan *scanner = new MethodDatasetsPluginScan( (PDF_Datasets_Abs*) pdf[0], arg);
+		MethodDatasetsPluginScan *scanner = new MethodDatasetsPluginScan( (PDF_Datasets*) pdf[0], arg);
 		scanner->initScan(); //\todo <- can we get rid of this?
 		if ( arg->isAction("pluginbatch") ){
 			scanner->scan1d();

@@ -6,10 +6,10 @@
  *  
  **/
 
-#include "PDF_Datasets_Abs.h"
+#include "PDF_Datasets.h"
 
 
-PDF_Datasets_Abs::PDF_Datasets_Abs(RooWorkspace* w, int nObs, OptParser* opt) 
+PDF_Datasets::PDF_Datasets(RooWorkspace* w, int nObs, OptParser* opt) 
 : PDF_Abs(nObs){
   wspc            = w;//new RooWorkspace(*w);
   obsName         = "default_internal_observables_set_name";
@@ -29,8 +29,8 @@ PDF_Datasets_Abs::PDF_Datasets_Abs(RooWorkspace* w, int nObs, OptParser* opt)
   minNll          = 0;
 };
 
-PDF_Datasets_Abs::PDF_Datasets_Abs(RooWorkspace* w)
-: PDF_Datasets_Abs(w,1, NULL)
+PDF_Datasets::PDF_Datasets(RooWorkspace* w)
+: PDF_Datasets(w,1, NULL)
 {
   name    = "PDF_DatasetTutorial";
   title   = "PDF_DatasetTutorial";
@@ -46,35 +46,35 @@ PDF_Datasets_Abs::PDF_Datasets_Abs(RooWorkspace* w)
   
 };
 
-PDF_Datasets_Abs::~PDF_Datasets_Abs(){
+PDF_Datasets::~PDF_Datasets(){
   delete wspc;
 };
 
-void PDF_Datasets_Abs::initData(const TString& name){
+void PDF_Datasets::initData(const TString& name){
   if(isDataSet){
-    std::cout << "WARNING in PDF_Datasets_Abs::initData -- Data already set" << std::endl; 
-    std::cout << "WARNING in PDF_Datasets_Abs::initData -- Data will not be overwritten" << std::endl; 
-    std::cout << "WARNING in PDF_Datasets_Abs::initData -- !!!" << std::endl; 
+    std::cout << "WARNING in PDF_Datasets::initData -- Data already set" << std::endl; 
+    std::cout << "WARNING in PDF_Datasets::initData -- Data will not be overwritten" << std::endl; 
+    std::cout << "WARNING in PDF_Datasets::initData -- !!!" << std::endl; 
     return;
   }
   dataName    = name;
   data        = (RooDataSet*) wspc->data(dataName);
   if(data) isDataSet   = true;
   else{
-    std::cout << "FATAL in PDF_Datasets_Abs::initData -- Data: " << dataName << " not found in workspace" << std::endl; 
+    std::cout << "FATAL in PDF_Datasets::initData -- Data: " << dataName << " not found in workspace" << std::endl; 
     exit(-1);
   }
-  std::cout << "INFO in PDF_Datasets_Abs::initData -- Data initialized" << std::endl;
+  std::cout << "INFO in PDF_Datasets::initData -- Data initialized" << std::endl;
   return;
 };
 
 //
 // Sets the name of the set containing the observables, minus the global observables.
 //
-void  PDF_Datasets_Abs::initObservables(const TString& setName){
+void  PDF_Datasets::initObservables(const TString& setName){
     
   if(! isPdfInitialized() ){
-    std::cerr << "FATAL in PDF_Datasets_Abs::initObservables -- first call PDF_Datasets_Abs::initPdf to init the PDF!" << std::endl;
+    std::cerr << "FATAL in PDF_Datasets::initObservables -- first call PDF_Datasets::initPdf to init the PDF!" << std::endl;
     exit(EXIT_FAILURE);
   }
   obsName = setName;
@@ -82,7 +82,7 @@ void  PDF_Datasets_Abs::initObservables(const TString& setName){
   areObsSet = true;
 };
 
-void  PDF_Datasets_Abs::initGlobalObservables(const TString& setName){
+void  PDF_Datasets::initGlobalObservables(const TString& setName){
   globalObsName = setName;
   // The global observables in the workspace are set to their observed value.
   // This value is saved.
@@ -93,22 +93,22 @@ void  PDF_Datasets_Abs::initGlobalObservables(const TString& setName){
 
 
 
-void  PDF_Datasets_Abs::initObservables(){
-    std::cout << "ERROR in PDF_Datasets_Abs::initObservables():"<<endl;
+void  PDF_Datasets::initObservables(){
+    std::cout << "ERROR in PDF_Datasets::initObservables():"<<endl;
     std::cout << "This function is not supported for dataset scans." << std::endl; 
     std::cout << "You must define the RooArgSet of observables in the Workspace." << std::endl; 
     std::cout << "The name of the set in the workspace must be passed to the PDF object via " <<std::endl;
-    std::cout << "PDF_Datasets_Abs::initObservables(const TString& setName)" << std::endl; 
+    std::cout << "PDF_Datasets::initObservables(const TString& setName)" << std::endl; 
     exit(EXIT_FAILURE);
 };
 
-void  PDF_Datasets_Abs::initParameters(const TString& setName){
+void  PDF_Datasets::initParameters(const TString& setName){
   if( areParametersSet() ){ 
-    std::cout << "WARNING in PDF_Datasets_Abs::initParameters -- Parameters already set" << std::endl; 
+    std::cout << "WARNING in PDF_Datasets::initParameters -- Parameters already set" << std::endl; 
     return;
   }
   if(! isPdfInitialized() ){
-    std::cout << "FATAL in PDF_Datasets_Abs::initParameters -- first call PDF_Datasets_Abs::initPdf to init the PDF!" << std::endl;
+    std::cout << "FATAL in PDF_Datasets::initParameters -- first call PDF_Datasets::initPdf to init the PDF!" << std::endl;
     exit(-1);
   }
   parName = setName;
@@ -116,50 +116,50 @@ void  PDF_Datasets_Abs::initParameters(const TString& setName){
   areParsSet = true;
 };
 
-void  PDF_Datasets_Abs::initConstraints(const TString& setName){
+void  PDF_Datasets::initConstraints(const TString& setName){
   constraintName = setName;
 };
 
-void  PDF_Datasets_Abs::initParameters(){
-    std::cout << "ERROR in PDF_Datasets_Abs::initParameters():"<<endl;
+void  PDF_Datasets::initParameters(){
+    std::cout << "ERROR in PDF_Datasets::initParameters():"<<endl;
     std::cout << "This function is not supported for dataset scans." << std::endl; 
     std::cout << "You must define the RooArgSet of parameters in the Workspace." << std::endl; 
     std::cout << "The name of the set in the workspace must be passed to the PDF object via " <<std::endl;
-    std::cout << "PDF_Datasets_Abs::initObservables(const TString& setName)" << std::endl; 
+    std::cout << "PDF_Datasets::initObservables(const TString& setName)" << std::endl; 
     exit(EXIT_FAILURE);
 };
 
-void PDF_Datasets_Abs::initPDF(const TString& name){
+void PDF_Datasets::initPDF(const TString& name){
   if(isPdfSet){
-    std::cout << "ERROR in PDF_Datasets_Abs::initPDF -- PDF already set" << std::endl; 
+    std::cout << "ERROR in PDF_Datasets::initPDF -- PDF already set" << std::endl; 
     exit(EXIT_FAILURE);
   }
   pdfName  = name;
   pdf      = wspc->pdf(pdfName);
   if(pdf) isPdfSet  = true;
   else{
-    std::cout << "FATAL in PDF_Datasets_Abs::initPDF -- PDF: " << pdfName << " not found in workspace" << std::endl; 
+    std::cout << "FATAL in PDF_Datasets::initPDF -- PDF: " << pdfName << " not found in workspace" << std::endl; 
     exit(EXIT_FAILURE);
   }
 
-  std::cout << "INFO in PDF_Datasets_Abs::initPDF -- PDF initialized" << std::endl;
+  std::cout << "INFO in PDF_Datasets::initPDF -- PDF initialized" << std::endl;
   return;
 };
 
-void PDF_Datasets_Abs::setVarRange(const TString &varName, const TString &rangeName, 
+void PDF_Datasets::setVarRange(const TString &varName, const TString &rangeName, 
                                   const double &rangeMin, const double &rangeMax){
   RooRealVar* var = wspc->var(varName);
   if(!var){
-    std::cout << "ERROR in PDF_Datasets_Abs::setVarRange -- No Var with Name: " 
+    std::cout << "ERROR in PDF_Datasets::setVarRange -- No Var with Name: " 
               << varName << " found!!" << std::endl;
     return;
   }
   if(!(rangeName== "free" || rangeName== "phys" || rangeName == "scan" || rangeName == "bboos" || rangeName == "force")){
-    std::cout << "ERROR in PDF_Datasets_Abs::setVarRange -- UNKNOWN range name! -- return" << std::endl;
+    std::cout << "ERROR in PDF_Datasets::setVarRange -- UNKNOWN range name! -- return" << std::endl;
   }
   RooMsgService::instance().setGlobalKillBelow(ERROR);
   if(rangeMin == rangeMax){
-    std::cout << "WARNING in PDF_Datasets_Abs::setVarRange -- rangeMin == rangeMax! If you want to set parameter constant "
+    std::cout << "WARNING in PDF_Datasets::setVarRange -- rangeMin == rangeMax! If you want to set parameter constant "
               << "use e.g. RooRealVar::setConstant. Expect crash in CL calculation!" << std::endl;
   }
   var->setRange(rangeName, rangeMin, rangeMax);
@@ -167,13 +167,13 @@ void PDF_Datasets_Abs::setVarRange(const TString &varName, const TString &rangeN
 };
 
 
-void PDF_Datasets_Abs::setToyData(RooDataSet* ds){
+void PDF_Datasets::setToyData(RooDataSet* ds){
   toyObservables  = ds; 
   isToyDataSet    = kTRUE;
   return;
 };
 
-void PDF_Datasets_Abs::print(){
+void PDF_Datasets::print(){
   if(isPdfSet){
     std::cout << "PDF:\t" << this->getPdfName() << std::endl;
   }
@@ -185,14 +185,14 @@ void PDF_Datasets_Abs::print(){
 };
 
 
-OptParser*   PDF_Datasets_Abs::getArg(){
+OptParser*   PDF_Datasets::getArg(){
   std::cout<<"ERROR: getting the options parser from the pdf has been deprecated"<<std::endl;
   std::cout<<"(This is up for discussion of course)"<<std::endl;
   exit(EXIT_FAILURE);
 }
 
 
-void  PDF_Datasets_Abs::generateToysGlobalObservables(int SeedShift){
+void  PDF_Datasets::generateToysGlobalObservables(int SeedShift){
 
   // \todo: use seed shift
   
@@ -210,7 +210,7 @@ void  PDF_Datasets_Abs::generateToysGlobalObservables(int SeedShift){
 }
 
 
-RooFitResult* PDF_Datasets_Abs::fit(bool fitToys){
+RooFitResult* PDF_Datasets::fit(bool fitToys){
 
   if(this->notSetupToFit(fitToys)){
     std::cout << "FATAL in PDF_DatasetTutorial::fit -- There is no PDF or (toy)data set to fit!" << std::endl;  
@@ -225,7 +225,7 @@ RooFitResult* PDF_Datasets_Abs::fit(bool fitToys){
     std::cout<< "These are usually Gaussians that constrain parameters via global observables."<<std::endl;
     std::cout<< "This set can be empty."<<std::endl;
     std::cout<< "By default its name should be 'default_internal_constraint_set_name'."<<std::endl;
-    std::cout<< "Other names can be passed via PDF_Datasets_Abs::initConstraints"<<std::endl;
+    std::cout<< "Other names can be passed via PDF_Datasets::initConstraints"<<std::endl;
       exit(EXIT_FAILURE);
     }
   
@@ -247,7 +247,7 @@ RooFitResult* PDF_Datasets_Abs::fit(bool fitToys){
   return result;
 };
 
-void   PDF_Datasets_Abs::generateToys(int SeedShift) {
+void   PDF_Datasets::generateToys(int SeedShift) {
   TRandom3 rndm(0);
 
   //\todo set seed according to seed SeedShift

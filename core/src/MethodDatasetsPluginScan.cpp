@@ -17,7 +17,7 @@
 ///
 /// The default constructor for the dataset plugin scan
 ///
-MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets_Abs* PDF, OptParser* opt, bool provideFitResult):
+MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets* PDF, OptParser* opt, bool provideFitResult):
   MethodPluginScan(opt),
   pdf                 (PDF),
   probPValues         (NULL),

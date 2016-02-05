@@ -20,7 +20,7 @@
 
 #include "MethodPluginScan.h"
 #include "ProgressBar.h"
-#include "PDF_Datasets_Abs.h"
+#include "PDF_Datasets.h"
 #include "RooSlimFitResult.h"
 #include "TLeaf.h"
 #include "TBranch.h"
@@ -28,7 +28,7 @@
 class MethodDatasetsPluginScan : public MethodPluginScan
 {
 public:
-    MethodDatasetsPluginScan(PDF_Datasets_Abs* PDF, OptParser* opt, 
+    MethodDatasetsPluginScan(PDF_Datasets* PDF, OptParser* opt, 
                             bool provideFitResult = true);
     void                drawDebugPlots(int runMin, int runMax, TString fileNameBaseIn = "default");
     float               getParValAtScanpoint(float point, TString parName);
@@ -49,7 +49,7 @@ public:
     inline  void        setExtProfileLH(TTree* tree){profileLHPoints = tree; externalProfileLH = true;};
     inline  void        addFile(TString name){inputFiles.push_back(name);};
 
-    PDF_Datasets_Abs*        pdf;
+    PDF_Datasets*        pdf;
     TH1F*                   probPValues;
     TTree*                  profileLHPoints;
     bool                    drawPlots;

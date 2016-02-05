@@ -1,7 +1,7 @@
 #include "PDF_DatasetTutorial.h"
 #include "RooExponential.h"
 
-PDF_DatasetTutorial::PDF_DatasetTutorial(RooWorkspace* w): PDF_Datasets_Abs(w){}
+PDF_DatasetTutorial::PDF_DatasetTutorial(RooWorkspace* w): PDF_Datasets(w){}
 PDF_DatasetTutorial::~PDF_DatasetTutorial(){};
 
 RooFitResult* PDF_DatasetTutorial::fit(bool fitToys){
@@ -23,7 +23,7 @@ RooFitResult* PDF_DatasetTutorial::fit(bool fitToys){
 		std::cout<< "These are usually Gaussians that constrain parameters via global observables."<<std::endl;
 		std::cout<< "This set can be empty."<<std::endl;
 		std::cout<< "By default its name should be 'default_internal_constraint_set_name'."<<std::endl;
-		std::cout<< "Other names can be passed via PDF_Datasets_Abs::initConstraints"<<std::endl;
+		std::cout<< "Other names can be passed via PDF_Datasets::initConstraints"<<std::endl;
 		  exit(EXIT_FAILURE);
 	  }
   

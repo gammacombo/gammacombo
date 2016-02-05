@@ -13,17 +13,17 @@
  *  
  **/
 
-#ifndef PDF_Datasets_Abs_h
-#define PDF_Datasets_Abs_h
+#ifndef PDF_Datasets_h
+#define PDF_Datasets_h
 
 #include "PDF_Abs.h"
 
-class PDF_Datasets_Abs : public PDF_Abs
+class PDF_Datasets : public PDF_Abs
 {
 public:
-  PDF_Datasets_Abs(RooWorkspace* w, int nObs, OptParser* opt);
-  PDF_Datasets_Abs(RooWorkspace* w);
-  ~PDF_Datasets_Abs();
+  PDF_Datasets(RooWorkspace* w, int nObs, OptParser* opt);
+  PDF_Datasets(RooWorkspace* w);
+  ~PDF_Datasets();
   void                  deleteNLL(){if(_NLL){delete _NLL; _NLL=NULL;}};
 
   virtual RooFitResult* fit(bool fitToys = kTRUE);
