@@ -266,9 +266,9 @@ void   PDF_Datasets::generateToys(int SeedShift) {
 void PDF_Datasets::initializeRandomGenerator(int seedShift){
   
   if(seedShift == 0){
-    // If the seed is zero the seed is set to a random value which [...]
-    // depends on the lowest 4 bytes of TUUID. 
-    // The UUID will be identical if SetSeed(0) is called with time smaller than 100 ns.
+    // From the ROOT documentation:
+    // if seed is 0 [...] a TUUID is generated and used to fill the first 8 integers of the seed array.
+    // In this case the seed is guaranteed to be unique in space and time. 
     RooRandom::randomGenerator()->SetSeed(0);
   } else {
     // calculate unique seed for deterministic random generation
