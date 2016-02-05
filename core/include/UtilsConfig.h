@@ -68,6 +68,8 @@ namespace Utils
 		highrb,
 		highstattoy,
 		lhcb,
+    lhcb_md,
+    lhcb_mi,
 		lhcb2011,
 		lhcb2012,
 		lhcb2013,
