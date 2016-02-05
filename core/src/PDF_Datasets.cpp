@@ -194,7 +194,7 @@ OptParser*   PDF_Datasets::getArg(){
 
 void  PDF_Datasets::generateToysGlobalObservables(int SeedShift){
 
-  // \todo: use seed shift
+  initializeRandomGenerator(SeedShift);
   
   //obtain the part of the PDF that can generate the global observables
   auto constraintPdf  = new RooProdPdf("constraintPdf","",*wspc->set(constraintName));
@@ -248,12 +248,35 @@ RooFitResult* PDF_Datasets::fit(bool fitToys){
 };
 
 void   PDF_Datasets::generateToys(int SeedShift) {
-  TRandom3 rndm(0);
 
-  //\todo set seed according to seed SeedShift
-
+  initializeRandomGenerator(SeedShift);
   RooDataSet* toys = this->pdf->generate(*observables, RooFit::Extended(kTRUE));
 
   this->toyObservables  = toys; 
   this->isToyDataSet    = kTRUE;
+}
+
+/*! \brief Initializes the random generator
+ *
+ *  If seedShift is set to zero, the machine environment is used to generate
+ *  a hopefully unique random seed. 
+ *  If seedShift is nonzero, a deterministic seed is calculated from the seedShift 
+ *  several command line call parameters.
+ */
+void PDF_Datasets::initializeRandomGenerator(int seedShift){
+  
+  if(seedShift == 0){
+    // If the seed is zero the seed is set to a random value which [...]
+    // depends on the lowest 4 bytes of TUUID. 
+    // The UUID will be identical if SetSeed(0) is called with time smaller than 100 ns.
+    RooRandom::randomGenerator()->SetSeed(0);
+  } else {
+    // calculate unique seed for deterministic random generation
+    if(arg==NULL){
+      std::cerr<<"Error in PDF_Datasets::initializeRandomGenerator."<<std::endl;
+      std::cerr<<"You must pass the OptParser in the constructor in order to use this function."<<std::endl;
+      exit(EXIT_FAILURE);
+    }
+    RooRandom::randomGenerator()->SetSeed(seedShift + (arg->nrun)*(arg->ntoys)*(arg->npoints1d));
+  }
 }

@@ -80,6 +80,7 @@ public:
 
 
 protected:
+  void initializeRandomGenerator(int seedShift);
   RooWorkspace*   wspc;
   RooDataSet*     data;
   RooAbsReal*     _NLL; // possible pointer to minimization function 
