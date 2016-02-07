@@ -8,6 +8,7 @@ parser.add_option("-p","--plotsPerLine",type="int",default=-1,help="Plots to dis
 parser.add_option("-c","--colorScheme",default="maroon",help="html color (as string) for borders etc.")
 parser.add_option("-u","--upload",default=None, help='Upload location on afs web server')
 parser.add_option("-l","--lxplus",default=False, action="store_true", help='If already running on lxplus')
+parser.add_option("-T","--date", default=None,help="Filter only files modified after this date - format dd/mm/yyyy. Default=%default")
 parser.add_option("-r","--regex",default=None, help='Each plot name must match this regex')
 parser.add_option("-d","--dir",default="plots",help='Directory with plots in')
 parser.add_option("-n","--newLoc",default=None, help='Copy plots and html file into a seperate location')
@@ -15,6 +16,8 @@ parser.add_option("-n","--newLoc",default=None, help='Copy plots and html file i
 
 import os
 import re
+import time
+import datetime
 regex=None
 if opts.regex:
 	regex = re.compile(opts.regex)
@@ -37,11 +40,18 @@ def gatherFiles(path):
     if root != path:
       break
     for fil in files:
-			if regex:
-				if regex.match(fil):
-					ret_files.append( os.path.join(root, fil) )
-			else:
-				ret_files.append( os.path.join(root, fil) )
+      # check regex
+      if regex:
+        if not regex.match(fil):
+          continue
+      # check modified date
+      if opts.date:
+        d = datetime.datetime( int(opts.date.split('/')[2]), int(opts.date.split('/')[1]), int(opts.date.split('/')[0]) )
+        dsecs = (d-datetime.datetime(1970,1,1)).total_seconds()
+        if os.path.getmtime(os.path.join(root,fil)) < dsecs:
+          continue
+      # add to list
+      ret_files.append( os.path.join(root, fil) )
 
   return ret_files
 
