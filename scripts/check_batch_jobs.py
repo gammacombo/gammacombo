@@ -10,6 +10,7 @@ parser.add_option("-t","--date", default=None,help="Filter only folders modified
 parser.add_option("-R","--resubmit",default=None,help="Resubmit jobs (pass Queued, Failed, Running, All). Completed jobs don't get resubmitted. Default=%default")
 parser.add_option("-q","--queue",default=None,help='Queue to resubmit jobs to. Default=%default')
 parser.add_option("-n","--skipBackUp",default=False,action="store_true", help="Dont backup old files. Default=%default")
+parser.add_option("-c","--clearLinks",default=False,action="store_true", help="Clear old files / links out the way")
 (opts,args) = parser.parse_args()
 
 import sys
@@ -109,7 +110,7 @@ if opts.synch:
     timestamp = int(time.time())
     os.system('mkdir -p root/back_up/%d'%timestamp)
     os.system('mv root/scan* root/back_up/%d/'%timestamp)
-  
+
   # now link the root files
   print 'Synching files'
   nSynch = 0
@@ -125,6 +126,9 @@ if opts.synch:
       for fil in match_files:
         target_loc = os.path.join(os.getcwd(),target_dir,fil)
         original_loc = os.path.join(os.getcwd(),root,fil)
+        # clear target location is requested
+        if opts.clearLinks:
+          os.system('rm -f %s'%target_loc)
         exec_line = 'ln -s %s %s'%(original_loc,target_loc)
         #print exec_line
         os.system(exec_line)
