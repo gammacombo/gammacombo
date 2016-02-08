@@ -1301,11 +1301,18 @@ void MethodAbsScan::calcCLintervalsSimple()
 
 }
 
-const std::pair<double, double> MethodAbsScan::getBorders(const TGraph& graph, const double confidence_level){
+/*!
+\brief determines the borders of the confidence interval by linear or qubic interpolation.
+\param graph The graph holding the p-values.
+\param confidence_level The confidence level at which the interval is to be determined.
+\param qubic Optional parameter. False by default. If true, qubic interpolation is used. 
+*/
+const std::pair<double, double> MethodAbsScan::getBorders(const TGraph& graph, const double confidence_level, bool qubic){
 
   const double p_val = 1 - confidence_level;
-  // performing a conservative linear interpolation
-  TMVA::TSpline1 splines("splines", new TGraph(graph));
+  TSpline* splines = NULL;
+  if(qubic) splines = new TSpline3();
+
 
   double min_edge = graph.GetX()[0];
   // will never return smaller edge than min_edge
@@ -1316,13 +1323,14 @@ const std::pair<double, double> MethodAbsScan::getBorders(const TGraph& graph, c
   double upper_edge = max_edge;
 
   for(double point = min_edge; point < max_edge; point+= (max_edge-min_edge)/scan_steps){
-    if(splines.Eval(point)>p_val){
+ 	
+   if(graph.Eval(point, splines)>p_val){
       lower_edge = point;
       break;
     }
   }
   for(double point = max_edge; point > min_edge; point-= (max_edge-min_edge)/scan_steps){
-    if(splines.Eval(point)>p_val){
+    if(graph.Eval(point, splines)>p_val){
       upper_edge = point;
       break;
     }
