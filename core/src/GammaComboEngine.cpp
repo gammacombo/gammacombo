@@ -1465,52 +1465,43 @@ void GammaComboEngine::scanDataSet()
 {
    if ( arg->info || arg->latex ) return;
 
+
 	/////////////////////////////////////////////////////
 	//
-	// PROB
+	// PLUGIN and PROB are both done by MethodDatastsPluginScan
 	//
 	/////////////////////////////////////////////////////
 
-	if ( !arg->isAction("plugin") && !arg->isAction("pluginbatch") )
-	{
-		cerr << "ERROR : For now, only plugin scans are supported when running on a dataset" << endl;
-		exit(EXIT_FAILURE);
+	
+	MethodDatasetsPluginScan *scanner = new MethodDatasetsPluginScan( (PDF_Datasets*) pdf[0], arg);
+	scanner->initScan(); //\todo <- can we get rid of this?
+	if ( arg->isAction("pluginbatch") ){
+		scanner->scan1d();
+	} else if ( arg->isAction("plugin") ){
+		scanner->readScan1dTrees(arg->jmin[0], arg->jmax[0]);
+		/////////////////////////////////////////////////////
+		// Plotting
+		/////////////////////////////////////////////////////
+		plot->addScanner(scanner);
+		MethodProbScan* sc = dynamic_cast<MethodProbScan*>(scanner->getProfileLH());
+		plot->addScanner(sc);
+		scanner->calcCLintervals();
+		sc->calcCLintervals();
+		plot->Draw();
+	} else {
+		/////////////////////////////
+		// doing a prob scan
+		/////////////////////////////
+		scanner->performProbScanOnly(true);
+		scanner->scan1d();
+		scanner->readScan1dTrees(1,1);
+		MethodProbScan* sc = dynamic_cast<MethodProbScan*>(scanner->getProfileLH());
+		plot->addScanner(sc);
+		sc->calcCLintervals();
+		plot->Draw();
+
 	}
-
-	/////////////////////////////////////////////////////
-	//
-	// PLUGIN
-	//
-	/////////////////////////////////////////////////////
-
-	else if ( arg->isAction("plugin") || arg->isAction("pluginbatch") )
-	{
-		MethodDatasetsPluginScan *scanner = new MethodDatasetsPluginScan( (PDF_Datasets*) pdf[0], arg);
-		scanner->initScan(); //\todo <- can we get rid of this?
-		if ( arg->isAction("pluginbatch") ){
-			scanner->scan1d();
-		} else if ( arg->isAction("plugin") ){
-			scanner->readScan1dTrees(arg->jmin[0], arg->jmax[0]);
-			/////////////////////////////////////////////////////
-			//
-			// Plotting
-			//
-			/////////////////////////////////////////////////////
-			plot->addScanner(scanner);
-			MethodProbScan* sc = dynamic_cast<MethodProbScan*>(scanner->getProfileLH());
-			plot->addScanner(sc);
-			scanner->calcCLintervals();
-			sc->calcCLintervals();
-			plot->Draw();
-		} else {
-			cout << "ERROR : Unsupported action" << endl;
-			exit(EXIT_FAILURE);
-		}
-	} else 
-	{
-		cout << "ERROR : Invalid combination of options for running on a dataset" << endl;
-		exit(EXIT_FAILURE);
-	}
+	
 }
 
 

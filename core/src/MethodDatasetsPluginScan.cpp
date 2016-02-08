@@ -680,7 +680,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       << " filled in bin " << i+1 << " at: " << scanpoint << endl;
     }
     
-
+    if(doProbScanOnly) nToys = 0;
     for ( int j = 0; j<nToys; j++ )
     {
       
@@ -1156,6 +1156,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       //because they are saved as a a snapshot and we cannot delete snapshots.
       
     } // End of toys loop
+    if(doProbScanOnly) toyTree.fill();
 
     // reset
     setParameters(w, pdf->getParName(), parsFunctionCall->get(0));
@@ -1168,7 +1169,6 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
   outputFile->Write();
   outputFile->Close();
   delete parsFunctionCall;
-  // if (!(arg->isAction("pluginbatch"))) readScan1dTrees(nRun, nRun); \todo: In fact, I have to figure out how to structure the meaning of plugin/pluginbatch properly
   return 0;
 }
 
