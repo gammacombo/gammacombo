@@ -280,23 +280,55 @@ TChain* MethodDatasetsPluginScan::readFiles(int runMin, int runMax, int &nFilesR
   int _nFilesRead = 0;
   // Align files names with scan1d/scan1d
 
-  TString dirname = "root/scan1dDatasetsPlugin_"+this->pdf->getPdfName()+"_"+scanVar1;
-  TString fileNameBase = (fileNameBaseIn.EqualTo("default")) ? dirname+"/scan1dDatasetsPlugin_"+this->pdf->getPdfName()+"_"+scanVar1+"_run" : fileNameBaseIn;
-  
-  if(!explicitInputFile){
-    for (int i=runMin; i<=runMax; i++){
-      TString file = Form(fileNameBase+"%i.root", i);
-      cout << "MethodDatasetsPluginScan::readScan1dTrees() : opening " << file << "\r";
-      if ( !FileExists(file) ){
-        if ( arg->verbose ) cout << "MethodDatasetsPluginScan::readScan1dTrees() : ERROR : File not found: " + file + " ..." << endl;
-        _nFilesMissing += 1;
-        continue;
-      }
-      if ( arg->verbose ) cout << "MethodDatasetsPluginScan::readScan1dTrees() : reading " + file + " ..." << endl;
+  if(doProbScanOnly){
+    TString file = (fileBase=="none") ? Form("root/scan1dDatasetsProb_"+this->pdf->getPdfName()+"_%ip"+"_"+scanVar1+"_run1.root",arg->npoints1d,1) : fileBase ;
+    if ( !FileExists(file) ){
+          if ( arg->verbose ) cout << "MethodDatasetsPluginScan::readScan1dTrees() : ERROR : File not found: " + file + " ..." << endl;
+          _nFilesMissing += 1;
+        }
+    else{
       c->Add(file);
-      _nFilesRead += 1;
+      _nFilesRead+=1;
     }
-    if(inputFiles.size()!=0){
+  }else{
+    TString dirname = "root/scan1dDatasetsPlugin_"+this->pdf->getPdfName()+"_"+scanVar1;
+    TString fileNameBase = (fileNameBaseIn.EqualTo("default")) ? dirname+"/scan1dDatasetsPlugin_"+this->pdf->getPdfName()+"_"+scanVar1+"_run" : fileNameBaseIn;
+    
+    if(!explicitInputFile){
+      for (int i=runMin; i<=runMax; i++){
+        TString file = Form(fileNameBase+"%i.root", i);
+        cout << "MethodDatasetsPluginScan::readScan1dTrees() : opening " << file << "\r";
+        if ( !FileExists(file) ){
+          if ( arg->verbose ) cout << "MethodDatasetsPluginScan::readScan1dTrees() : ERROR : File not found: " + file + " ..." << endl;
+          _nFilesMissing += 1;
+          continue;
+        }
+        if ( arg->verbose ) cout << "MethodDatasetsPluginScan::readScan1dTrees() : reading " + file + " ..." << endl;
+        c->Add(file);
+        _nFilesRead += 1;
+      }
+      if(inputFiles.size()!=0){
+        for(TString &file : inputFiles){
+          if ( !FileExists(file) ){
+            if ( arg->verbose ) cout << "MethodDatasetsPluginScan::readScan1dTrees() : ERROR : File not found: " + file + " ..." << endl;
+            _nFilesMissing += 1;
+          }
+          cout << "MethodDatasetsPluginScan::readScan1dTrees() : " << file << endl;
+          c->Add(file);
+          _nFilesRead += 1;
+        }
+      }
+      cout << "MethodDatasetsPluginScan::readScan1dTrees() : read files: " << _nFilesRead 
+           << ", missing files: " << _nFilesMissing 
+           << "                                                               "
+           << "                    " << endl; // many spaces to overwrite the above \r
+      cout << "MethodDatasetsPluginScan::readScan1dTrees() : " << fileNameBase+"*.root" << endl;
+      if ( _nFilesRead==0 ){
+        cout << "MethodDatasetsPluginScan::readScan1dTrees() : no files read!" << endl;
+        exit(1);
+      }
+    }
+    else{
       for(TString &file : inputFiles){
         if ( !FileExists(file) ){
           if ( arg->verbose ) cout << "MethodDatasetsPluginScan::readScan1dTrees() : ERROR : File not found: " + file + " ..." << endl;
@@ -306,31 +338,11 @@ TChain* MethodDatasetsPluginScan::readFiles(int runMin, int runMax, int &nFilesR
         c->Add(file);
         _nFilesRead += 1;
       }
+      cout << "MethodDatasetsPluginScan::readScan1dTrees() : read files: " << _nFilesRead << endl  
+           << ", missing files: " << _nFilesMissing 
+           << "                                                               "
+           << "                    " << endl; // many spaces to overwrite the above \r
     }
-    cout << "MethodDatasetsPluginScan::readScan1dTrees() : read files: " << _nFilesRead 
-         << ", missing files: " << _nFilesMissing 
-         << "                                                               "
-         << "                    " << endl; // many spaces to overwrite the above \r
-    cout << "MethodDatasetsPluginScan::readScan1dTrees() : " << fileNameBase+"*.root" << endl;
-    if ( _nFilesRead==0 ){
-      cout << "MethodDatasetsPluginScan::readScan1dTrees() : no files read!" << endl;
-      exit(1);
-    }
-  }
-  else{
-    for(TString &file : inputFiles){
-      if ( !FileExists(file) ){
-        if ( arg->verbose ) cout << "MethodDatasetsPluginScan::readScan1dTrees() : ERROR : File not found: " + file + " ..." << endl;
-        _nFilesMissing += 1;
-      }
-      cout << "MethodDatasetsPluginScan::readScan1dTrees() : " << file << endl;
-      c->Add(file);
-      _nFilesRead += 1;
-    }
-    cout << "MethodDatasetsPluginScan::readScan1dTrees() : read files: " << _nFilesRead << endl  
-         << ", missing files: " << _nFilesMissing 
-         << "                                                               "
-         << "                    " << endl; // many spaces to overwrite the above \r
   }
   nFilesRead = _nFilesRead;
   nFilesMissing = _nFilesMissing;
@@ -372,7 +384,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
   TH1F *h_fracGoodToys  = (TH1F*)hCL->Clone("h_fracGoodToys");
   TH1F *h_pVals         = new TH1F("p","p", 200, 0.0, 1e-2);
   Long64_t nentries     = t.GetEntries();
-  cout << "MethodDatasetsPluginScan::readScan1dTrees() : total number of toys per scanpoint: " << (double) nentries / (double)21 << endl;
+  cout << "MethodDatasetsPluginScan::readScan1dTrees() : total number of toys per scanpoint: " << (double) nentries / (double)nPoints1d << endl;
   Long64_t nfailed      = 0;
   Long64_t nwrongrun    = 0;
   Long64_t n0better     = 0;
@@ -428,9 +440,9 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     if ( inPhysicalRegion && t.chi2minGlobalToy > this->chi2minGlobal ){ //t.chi2minGlobal ){
       h_gof->Fill(t.scanpoint);
     }
-    
+    std::cout<<"valid"<<valid<<std::endl;
     // all toys
-    if ( valid ){//inPhysicalRegion ){
+    if ( valid || doProbScanOnly){//inPhysicalRegion ){
       // not efficient! TMath::Prob evaluated each toy, only needed once.
       // come up with smarter way
       h_all->Fill(t.scanpoint);
@@ -557,7 +569,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
   system("mkdir -p "+dirname);
   TString fName;
   if(doProbScanOnly){
-    fName = (fileBase=="none") ? Form("root/scan1dDatasetsProb_"+this->pdf->getPdfName()+"_%ip"+"_"+scanVar1+"_run%i.root",arg->npoints1d,nRun) : fileBase ;
+    //I assume that always nRun==1, is that correct?
+    fName = (fileBase=="none") ? Form("root/scan1dDatasetsProb_"+this->pdf->getPdfName()+"_%ip"+"_"+scanVar1+"_run%i.root",arg->npoints1d,1) : fileBase ;
   }
   else{
     fName = Form(dirname+"/scan1dDatasetsPlugin_"+this->pdf->getPdfName()+"_"+scanVar1+"_run%i.root", nRun);
