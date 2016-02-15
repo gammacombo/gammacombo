@@ -8,7 +8,7 @@ class PDF_DatasetTutorial : public PDF_Datasets_Abs
 {
 public:
   PDF_DatasetTutorial(RooWorkspace* w);
-  RooFitResult* fit(bool fitToys = kTRUE);
+  RooFitResult* fit(bool fitToys = kTRUE) override;
   void          generateToys(int SeedShift = 0) override;
   ~PDF_DatasetTutorial();
 
