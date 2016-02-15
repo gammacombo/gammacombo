@@ -18,7 +18,7 @@
 #include "TPaveText.h"
 #include "TF1.h"
 #include "TDatime.h"
-#include "TMVA/TSpline1.h"
+#include "TSpline.h"
 
 #include "Utils.h"
 #include "OneMinusClPlotAbs.h"
@@ -121,7 +121,7 @@ class MethodAbsScan
 		void 							setXscanRange(float min, float max);
 		void 							setYscanRange(float min, float max);
 		void							calcCLintervalsSimple();
-		const std::pair<double, double> getBorders(const TGraph& graph, const double confidence_level);
+		const std::pair<double, double> getBorders(const TGraph& graph, const double confidence_level, bool qubic=false);
 
 		vector<RooSlimFitResult*> allResults;           ///< All fit results we encounter along the scan.
 		vector<RooSlimFitResult*> curveResults;         ///< All fit results of the the points that make it into the 1-CL curve.

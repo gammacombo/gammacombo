@@ -173,7 +173,7 @@ ADD_SHARED_LIBRARY( ${PROJECT_NAME}Components ${CORE_LIB_SOURCES} )
 # add the ROOT dictionary to the list of dependencies
 add_dependencies( ${PROJECT_NAME}Components ${PROJECT_NAME}Dict )
 # add ROOT libraries to the linker command
-TARGET_LINK_LIBRARIES( ${PROJECT_NAME}Components ${ROOT_LIBRARIES} -lTMVA )
+TARGET_LINK_LIBRARIES( ${PROJECT_NAME}Components ${ROOT_LIBRARIES} )
 
 ######################################
 #

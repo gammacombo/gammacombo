@@ -13,20 +13,21 @@
  *  
  **/
 
-#ifndef PDF_Datasets_Abs_h
-#define PDF_Datasets_Abs_h
+#ifndef PDF_Datasets_h
+#define PDF_Datasets_h
 
 #include "PDF_Abs.h"
 
-class PDF_Datasets_Abs : public PDF_Abs
+class PDF_Datasets : public PDF_Abs
 {
 public:
-  PDF_Datasets_Abs(RooWorkspace* w, int nObs, OptParser* opt);
-  ~PDF_Datasets_Abs();
+  PDF_Datasets(RooWorkspace* w, int nObs, OptParser* opt);
+  PDF_Datasets(RooWorkspace* w);
+  ~PDF_Datasets();
   void                  deleteNLL(){if(_NLL){delete _NLL; _NLL=NULL;}};
 
-  virtual RooFitResult* fit(bool fitToys = kTRUE) = 0;
-  virtual void          generateToys(int SeedShift = 0) = 0;
+  virtual RooFitResult* fit(bool fitToys = kTRUE);
+  virtual void          generateToys(int SeedShift = 0);
   virtual void          generateToysGlobalObservables(int SeedShift = 0);
   
   void                  initData(const TString& name);
@@ -72,11 +73,14 @@ public:
   inline  bool          isPdfInitialized(){ return isPdfSet; };
   inline  bool          isDataInitialized(){ return isDataSet; };
   inline  bool          notSetupToFit(bool fitToys){return (!(isPdfSet && isDataSet) || (fitToys && !(isPdfSet && isToyDataSet))); }; // this comes from a previous if-statement
+
+
   int                   NCPU;         //> number of CPU used
   float                 minNll;
 
 
 protected:
+  void initializeRandomGenerator(int seedShift);
   RooWorkspace*   wspc;
   RooDataSet*     data;
   RooAbsReal*     _NLL; // possible pointer to minimization function 

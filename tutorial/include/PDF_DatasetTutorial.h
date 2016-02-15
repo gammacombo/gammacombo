@@ -1,10 +1,10 @@
 #ifndef PDF_DatasetTutorial_h
 #define PDF_DatasetTutorial_h
 
-#include "PDF_Datasets_Abs.h"
+#include "PDF_Datasets.h"
  
 
-class PDF_DatasetTutorial : public PDF_Datasets_Abs
+class PDF_DatasetTutorial : public PDF_Datasets
 {
 public:
   PDF_DatasetTutorial(RooWorkspace* w);

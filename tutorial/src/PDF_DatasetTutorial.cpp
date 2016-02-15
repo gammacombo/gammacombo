@@ -1,23 +1,7 @@
 #include "PDF_DatasetTutorial.h"
 #include "RooExponential.h"
 
-PDF_DatasetTutorial::PDF_DatasetTutorial(RooWorkspace* w)
-: PDF_Datasets_Abs(w,1, NULL)
-{
-  name    = "PDF_DatasetTutorial";
-  title   = "PDF_DatasetTutorial";
-  data = (RooDataSet*)wspc->data("data"); //> set real Dataset 
-  if(data){
-    isDataSet = kTRUE;
-    std::cout << "INFO in PDF_DatasetTutorial::PDF_DatasetTutorial -- Dataset initialized" << std::endl;
-  }
-  else{
-    std::cout << "FATAL in PDF_DatasetTutorial::PDF_DatasetTutorial -- no Dataset with name 'data' found in workspace!" << std::endl;
-    isDataSet = kFALSE;
-  }
-  
-  drawFitsDebug  = kFALSE;
-}
+PDF_DatasetTutorial::PDF_DatasetTutorial(RooWorkspace* w): PDF_Datasets(w){}
 PDF_DatasetTutorial::~PDF_DatasetTutorial(){};
 
 RooFitResult* PDF_DatasetTutorial::fit(bool fitToys){
@@ -39,7 +23,7 @@ RooFitResult* PDF_DatasetTutorial::fit(bool fitToys){
 		std::cout<< "These are usually Gaussians that constrain parameters via global observables."<<std::endl;
 		std::cout<< "This set can be empty."<<std::endl;
 		std::cout<< "By default its name should be 'default_internal_constraint_set_name'."<<std::endl;
-		std::cout<< "Other names can be passed via PDF_Datasets_Abs::initConstraints"<<std::endl;
+		std::cout<< "Other names can be passed via PDF_Datasets::initConstraints"<<std::endl;
 		  exit(EXIT_FAILURE);
 	  }
   
@@ -59,18 +43,7 @@ RooFitResult* PDF_DatasetTutorial::fit(bool fitToys){
                                       ,RooFit::Strategy(3)
                                       ,RooFit::Minimizer("Minuit2","minimize")
                                       );
-  
-//
-//  RooPlot* plot = getWorkspace()->var("mass")->frame();
-//  dataToFit->plotOn(plot);	
-//  pdf->plotOn(plot);
-//  TCanvas c("c","c",1024, 768);
-//  plot->Draw();
-//  if (fitToys){
-//	  c.SaveAs("plots/pdf/testfitplot"+TString(std::to_string(rand()%10))+".pdf");
-//  } else {
-//	  c.SaveAs(TString("plots/pdf/fitdata/testfitplot"+std::to_string(getWorkspace()->var("branchingRatio")->getVal()*10000)+".pdf"));
-//  }
+
 
   RooMsgService::instance().setSilentMode(kFALSE);
   RooMsgService::instance().setGlobalKillBelow(INFO);
