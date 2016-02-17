@@ -869,6 +869,29 @@ void GammaComboEngine::make2dPluginScan(MethodPluginScan *scannerPlugin, int cId
 	}
 }
 
+///
+/// Perform the 1D berger boos scan. Runs toys in batch mode, and
+/// reads them back in.
+///
+/// \param scannerPlugin - the scanner to run the scan with
+/// \param cId - the id of this combination on the command line
+///
+void GammaComboEngine::make1dBergerBoosScan(MethodBergerBoosScan *scannerBergerBoos, int cId)
+{
+	scannerBergerBoos->initScan();
+  scannerBergerBoos->setNBergerBoosPointsPerScanpoint( arg->nBBpoints );
+	if ( arg->isAction("bbbatch") ){
+		scannerBergerBoos->scan1d(arg->nrun);
+	}
+	else {
+		scannerBergerBoos->readScan1dTrees(arg->jmin[cId],arg->jmax[cId]);
+		scannerBergerBoos->calcCLintervals();
+	}
+	if ( !arg->isAction("bbbatch") ){
+		scannerBergerBoos->saveScanner(m_fnamebuilder->getFileNameScanner(scannerBergerBoos));
+	}
+}
+
 /// Perform the coverage scanner
 ///
 /// \param scanner - the scanner to run the scan with
@@ -1277,7 +1300,7 @@ void GammaComboEngine::scan()
 		//
 		/////////////////////////////////////////////////////
 
-		if ( !arg->isAction("plugin") && !arg->isAction("pluginbatch") && !arg->isAction("coverage") && !arg->isAction("coveragebatch") )
+		if ( !arg->isAction("plugin") && !arg->isAction("pluginbatch") && !arg->isAction("coverage") && !arg->isAction("coveragebatch") && !arg->isAction("bb") && !arg->isAction("bbbatch") )
 		{
 			MethodProbScan *scannerProb = new MethodProbScan(c);
 			// pvalue corrector

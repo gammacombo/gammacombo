@@ -134,7 +134,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("log");
 	availableOptions.push_back("magnetic");
   availableOptions.push_back("nbatchjobs");
-	//availableOptions.push_back("nBBpoints");
+  //availableOptions.push_back("nBBpoints");
 	availableOptions.push_back("nosyst");
 	availableOptions.push_back("npoints");
 	availableOptions.push_back("npoints2dx");
@@ -435,6 +435,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	vAction.push_back("runtoys");
 	//vAction.push_back("scantree");
 	vAction.push_back("test");
+  vAction.push_back("uniform");
+  vAction.push_back("gaus");
 	ValuesConstraint<string> cAction(vAction);
 	TCLAP::MultiArg<string> actionArg("a", "action", "Perform action", false, &cAction);
 	TCLAP::MultiArg<string> varArg("", "var", "Scan variable (default: g). Can be given twice, in which case "

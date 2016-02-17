@@ -270,6 +270,18 @@ void MethodPluginScan::computePvalue1d(RooSlimFitResult* plhScan, double chi2min
 	// the toys need to be generated.
 	setParameters(w, parsName, plhScan, true);
 
+  // Berger Boos
+  if ( arg->isAction("uniform") ) {
+    //   set parameter ranges to their bb range
+    const RooArgSet* pars = w->set(parsName);
+    TIterator* it = pars->createIterator();
+    while(RooRealVar* var = (RooRealVar*)it->Next()){
+      setLimit( var, "bboos" );
+    }
+    if (verbose) pars->Print("v");
+    randomizeParameters(w, parsName);
+  }
+
 	// save nuisances for start parameters
 	frCache.storeParsAtGlobalMin(w->set(parsName));
 
@@ -470,9 +482,14 @@ int MethodPluginScan::scan1d(int nRun)
 	}
 
 	if ( arg->debug ) myFit->print();
-	TString dirname = "root/scan1dPlugin_"+name+"_"+scanVar1;
+	TString dirname = "root/scan1dPlugin";
+  if ( arg->isAction("bb") ) dirname += "BergerBoos";
+  dirname += "_"+name+"_"+scanVar1;
 	system("mkdir -p "+dirname);
-	t.writeToFile(Form(dirname+"/scan1dPlugin_"+name+"_"+scanVar1+"_run%i.root", nRun));
+  TString fname = "/scan1dPlugin";
+  if ( arg->isAction("bb") ) fname += "BergerBoos";
+  fname += Form("_"+name+"_"+scanVar1+"_run%i.root",nRun);
+	t.writeToFile((dirname+fname).Data());
 	delete myFit;
 	delete pb;
 	return 0;
@@ -681,9 +698,14 @@ void MethodPluginScan::scan2d(int nRun)
 	}
 
 	// save tree
-	TString dirname = "root/scan2dPlugin_"+name+"_"+scanVar1+"_"+scanVar2;
+	TString dirname = "root/scan2dPlugin";
+  if ( arg->isAction("bb") ) dirname += "BergerBoos";
+  dirname += "_"+name+"_"+scanVar1+"_"+scanVar2;
 	system("mkdir -p "+dirname);
-	t.writeToFile(Form(dirname+"/scan2dPlugin_"+name+"_"+scanVar1+"_"+scanVar2+"_run%i.root", nRun));
+  TString fname = "/scan1dPlugin";
+  if ( arg->isAction("bb") ) fname += "BergerBoos";
+  fname += Form("_"+name+"_"+scanVar1+"_"+scanVar2+"_run%i.root",nRun);
+	t.writeToFile((dirname+fname).Data());
 	delete pb;
 }
 
@@ -857,8 +879,12 @@ void MethodPluginScan::readScan1dTrees(int runMin, int runMax)
 	TChain *c = new TChain("plugin");
 	int nFilesMissing = 0;
 	int nFilesRead = 0;
-	TString dirname = "root/scan1dPlugin_"+name+"_"+scanVar1;
-	TString fileNameBase = dirname+"/scan1dPlugin_"+name+"_"+scanVar1+"_run";
+  TString dirname = "root/scan1dPlugin";
+  if ( arg->isAction("bb") ) dirname += "BergerBoos";
+  dirname += "_"+name+"_"+scanVar1;
+	TString fileNameBase = dirname+"/scan1dPlugin";
+  if ( arg->isAction("bb") ) fileNameBase += "BergerBoos";
+  fileNameBase += "_"+name+"_"+scanVar1+"_run";
 	if ( arg->debug ) cout << "MethodPluginScan::readScan1dTrees() : ";
 	cout << "reading files: " << fileNameBase+"*.root" << endl;
 	for (int i=runMin; i<=runMax; i++){
@@ -912,8 +938,12 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
 	TChain *chain = new TChain("plugin");
 	int nFilesMissing = 0;
 	int nFilesRead = 0;
-	TString dirname = "root/scan2dPlugin_"+name+"_"+scanVar1+"_"+scanVar2;
-	TString fileNameBase = dirname+"/scan2dPlugin_"+name+"_"+scanVar1+"_"+scanVar2+"_run";
+  TString dirname = "root/scan2dPlugin";
+  if ( arg->isAction("bb") ) dirname += "BergerBoos";
+  dirname += "_"+name+"_"+scanVar1+"_"+scanVar2;
+	TString fileNameBase = dirname+"/scan2dPlugin";
+  if ( arg->isAction("bb") ) fileNameBase += "BergerBoos";
+  fileNameBase += "_"+name+"_"+scanVar1+"_"+scanVar2+"_run";
 	if ( arg->debug ) cout << "MethodPluginScan::readScan2dTrees() : ";
 	cout << "reading files: " << fileNameBase+"*.root" << endl;
 	for (int i=runMin; i<=runMax; i++) {
