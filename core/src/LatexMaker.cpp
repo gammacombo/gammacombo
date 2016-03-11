@@ -21,7 +21,7 @@ void LatexMaker::writeFile()
   RooArgList *observables = pdf->getObservables();
   vector<TString> labels  = pdf->getLatexObservables();
 
-  outfile << "\\begin{align}" << endl;
+  outfile << "\\begin{alignat}{3}" << endl;
   for ( int i=0; i<pdf->getNobs(); i++ ) {
 
     RooRealVar *var = (RooRealVar*)observables->at(i);
@@ -32,14 +32,20 @@ void LatexMaker::writeFile()
     if ( i < labels.size() ) title = labels[i];
 
     if ( var->getVal() < 0. ) {
-      outfile << Form("%-30s \\phantom{OO} &=            %7.5f  & {}\\pm{} & %7.5f \\phantom{1} & {}\\pm{} & %7.5f \\phantom{1} \\\\", title.Data(), var->getVal(), pdf->StatErr[i], pdf->SystErr[i]) << endl;
+      outfile << Form("& %-20s  & \\;=\\;            %7.5f  \\;\\pm\\; & %7.5f \\;\\pm\\; & %7.5f \\nonumber", title.Data(), var->getVal(), pdf->StatErr[i], pdf->SystErr[i]);
     }
     else {
-      outfile << Form("%-30s \\phantom{OO} &=  \\phantom{-}%7.5f  & {}\\pm{} & %7.5f \\phantom{1} & {}\\pm{} & %7.5f \\phantom{1} \\\\", title.Data(), var->getVal(), pdf->StatErr[i], pdf->SystErr[i]) << endl;
+      outfile << Form("& %-20s  & \\;=\\;  \\phantom{-}%7.5f  \\;\\pm\\; & %7.5f \\;\\pm\\; & %7.5f \\nonumber", title.Data(), var->getVal(), pdf->StatErr[i], pdf->SystErr[i]);
+    }
+    if ( i<pdf->getNobs()-1 ) {
+      outfile << " \\\\" << endl;
+    }
+    else {
+      outfile << endl;
     }
 
   }
-  outfile << "\\end{align}" << endl;
+  outfile << "\\end{alignat}" << endl;
 
   outfile.close();
 
@@ -82,17 +88,20 @@ void LatexMaker::writeCorrMatrix( ofstream& file, TMatrixDSym mat, RooArgList *o
     file << Form("%-15s",title.Data());
 
     for (int j=0; j < mat.GetNcols(); j++) {
-      if ( mat[i][j] < 0 ) {
-        file << Form(" &  %4.2f",mat[i][j]);
+      if ( TMath::Abs(mat[i][j]-1) < 1.e-3 ) {
+        file << " &       1";
       }
-      else if ( TMath::Abs(mat[i][j]-1) < 1.e-6 ) {
-        file << " &      1";
+      else if ( TMath::Abs(mat[i][j]) < 1.e-3 ) {
+        file << " &       0";
+      }
+      else if ( mat[i][j] < 0 ) {
+        file << Form(" &  %5.3f",mat[i][j]);
       }
       else if ( mat[i][j] > 0 ) {
-        file << Form(" &   %4.2f",mat[i][j]);
+        file << Form(" &   %5.3f",mat[i][j]);
       }
       else {
-        file << " &      0";
+        file << " &       0";
       }
     }
     file << "  \\\\" << endl;

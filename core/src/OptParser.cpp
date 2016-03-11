@@ -76,6 +76,8 @@ OptParser::OptParser():
 	plotprelim = false;
 	plotpulls = false;
 	plotunoff = false;
+  plotymin = -99.;
+  plotymax = -99.;
 	pluginPlotRangeMax = -100;
 	pluginPlotRangeMin = -100;
 	intprob = false;
@@ -146,6 +148,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("physrange");
   availableOptions.push_back("plotext");
 	availableOptions.push_back("plotid");
+  availableOptions.push_back("plotrangey");
 	availableOptions.push_back("intprob");
 	availableOptions.push_back("po");
 	availableOptions.push_back("prelim");
@@ -318,6 +321,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::ValueArg<string> scanrangeyArg("", "scanrangey", "For 2D plots, restrict the scan range "
 			"of the y variable to a given range. "
 			"Format: --scanrangey min:max.", false, "default", "string");
+  TCLAP::ValueArg<string> plotrangeyArg("", "plotrangey", "Plot range of the y-axis for 1D plots. Default 0:1. For log plots 1.e-3:1. "
+      "Format: --plotrangey min:max.",false, "default", "string");
 	TCLAP::ValueArg<int> ndivArg("", "ndiv", "Set the number of axis divisions (x axis in 1d and 2d plots): "
 			"ndiv=N1 + 100*N2 + 10000*N3, "
 			"N1 = number of 1st divisions (N2 = 2nd, N3 = 3rd). Default is 407. To enable bin optimization, pre-pend "
@@ -579,6 +584,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "po" ) ) cmd.add( plotpluginonlyArg );
 	if ( isIn<TString>(bookedOptions, "pluginplotrange" ) ) cmd.add( pluginplotrangeArg );
 	if ( isIn<TString>(bookedOptions, "intprob" ) ) cmd.add( intprobArg );
+  if ( isIn<TString>(bookedOptions, "plotrangey" ) ) cmd.add( plotrangeyArg );
 	if ( isIn<TString>(bookedOptions, "plotnsigmacont" ) ) cmd.add(plotnsigmacontArg);
 	if ( isIn<TString>(bookedOptions, "plotid" ) ) cmd.add(plotidArg);
   if ( isIn<TString>(bookedOptions, "plotext" ) ) cmd.add(plotextArg);
@@ -847,6 +853,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 	// --scanrange
 	parseRange(scanrangeArg.getValue(), scanrangeMin, scanrangeMax);
 	parseRange(scanrangeyArg.getValue(), scanrangeyMin, scanrangeyMax);
+
+  // --plotrange
+  parseRange(plotrangeyArg.getValue(), plotymin, plotymax );
 
 	// --prange
 	tmp = physrangeArg.getValue();
