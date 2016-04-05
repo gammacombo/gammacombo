@@ -270,16 +270,37 @@ void MethodPluginScan::computePvalue1d(RooSlimFitResult* plhScan, double chi2min
 	// the toys need to be generated.
 	setParameters(w, parsName, plhScan, true);
 
-  // Berger Boos
+  // Kenzie-Cousins-Highland (randomize nuisance parameters within a uniform range)
   if ( arg->isAction("uniform") ) {
-    //   set parameter ranges to their bb range
+    //   set parameter ranges to their bb range (should be something wide 95, 99% CL)
     const RooArgSet* pars = w->set(parsName);
     TIterator* it = pars->createIterator();
     while(RooRealVar* var = (RooRealVar*)it->Next()){
       setLimit( var, "bboos" );
     }
-    if (verbose) pars->Print("v");
+    if (verbose) {
+      cout << "Uniform generating from:" << endl;
+      pars->Print("v");
+    }
     randomizeParameters(w, parsName);
+    if (verbose) {
+      cout << "Set:" << endl;
+      w->set(parsName)->Print("v");
+    }
+  }
+
+  // Cousins-Highland (randomize nuisance parameters according to a Gaussian with their
+  // best fit value and uncertainty from the PLH scan)
+  if ( arg->isAction("gaus") ) {
+    if (verbose) {
+      cout << "Gaussian generating from:" << endl;
+      plhScan->floatParsFinal().Print("v");
+    }
+    randomizeParametersGaussian(w, parsName, plhScan);
+    if (verbose) {
+      cout << "Set:" << endl;
+      w->set(parsName)->Print("v");
+    }
   }
 
 	// save nuisances for start parameters
@@ -586,7 +607,44 @@ void MethodPluginScan::scan2d(int nRun)
 								"id=[%i,%i], val=[%f,%f]\n", iCurveRes1, iCurveRes2, scanpoint1, scanpoint2);
 					}
 					extCurveResult = new RooArgList(profileLH->curveResults2d[iCurveRes1][iCurveRes2]->floatParsFinal());
-					setParameters(w, parsName, extCurveResult);
+
+          // Set nuisances. This is the point in parameter space where
+          // the toys need to be generated.
+          setParameters(w, parsName, extCurveResult);
+
+          // Kenzie-Cousins-Highland (randomize nuisance parameters within a uniform range)
+          if ( arg->isAction("uniform") ) {
+            // set parameter ranges to their bb range (should be something wide 95, 99% CL)
+            const RooArgSet* pars = w->set(parsName);
+            TIterator* it = pars->createIterator();
+            while ( RooRealVar* var = (RooRealVar*)it->Next() ) {
+              setLimit( var, "bboos" );
+            }
+            if (verbose) {
+              cout << "Uniform generating from:" << endl;
+              pars->Print("v");
+            }
+            randomizeParameters(w, parsName);
+            if (verbose) {
+              cout << "Set:" << endl;
+              w->set(parsName)->Print("v");
+            }
+          }
+
+          // Cousins-Highland (randomize nuisance parameters according to a Gaussian with their
+          // best fit value and uncertainty from the PLH scan)
+          if ( arg->isAction("gaus") ) {
+            if (verbose) {
+              cout << "Gaussian generating from:" << endl;
+              profileLH->curveResults2d[iCurveRes1][iCurveRes2]->floatParsFinal().Print("v");
+            }
+            randomizeParametersGaussian(w, parsName, profileLH->curveResults2d[iCurveRes1][iCurveRes2]);
+            if (verbose) {
+              cout << "Set:" << endl;
+              w->set(parsName)->Print("v");
+            }
+          }
+
 					t.chi2min = profileLH->curveResults2d[iCurveRes1][iCurveRes2]->minNll();
 
 					// check if the scan variable here differs from that of
