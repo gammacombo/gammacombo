@@ -47,6 +47,7 @@ namespace Utils
 		cdf2013,
     check,
 		ckm2014,
+		ckm2015,
 		cleo,
 		cleo2001,
 		cleo2009,
@@ -117,6 +118,7 @@ namespace Utils
     onlyGsDGs,
     pdg,
 		sneha,
+    statonly,
     test,
     test1,
     test2,
@@ -136,6 +138,7 @@ namespace Utils
 		useParametric,
 		usePolarCoords,
 		useTradObs,
+    ut2014,
     world_average,
 		zero
 	};
