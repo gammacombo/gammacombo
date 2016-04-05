@@ -689,8 +689,8 @@ void GammaComboEngine::savePlot()
 void GammaComboEngine::defineColors()
 {
 	// no --color option was given on the command line
-	if ( arg->color.size()==0 )
-	{
+	//if ( arg->color.size()==0 )
+	//{
 		// define line colors for 1-CL curves
 		colorsLine.push_back(arg->combid.size()==1 ? kBlue-8 : kBlue-5);
 		colorsLine.push_back(kGreen-8);
@@ -702,9 +702,9 @@ void GammaComboEngine::defineColors()
 		colorsText.push_back(TColor::GetColor("#234723"));
 		colorsText.push_back(kOrange+3);
 		colorsText.push_back(kMagenta-8);
-	}
-	else
-	{
+	//}
+	//else
+	//{
 		colorsLine.push_back(TColor::GetColor("#1b9e77")); // sea green
 		colorsLine.push_back(TColor::GetColor("#d95f02")); // dark orange
 		colorsLine.push_back(TColor::GetColor("#7570b3")); // medium purple
@@ -725,7 +725,7 @@ void GammaComboEngine::defineColors()
       //colorsText.push_back(cb.darklightcolor(colorsLine[i], 0.5));
 		  colorsText.push_back( colorsLine[i] );
     }
-	}
+    //}
 
 	// default for any additional scanner
 	for ( int i=colorsLine.size(); i<arg->combid.size(); i++ ){
@@ -866,6 +866,29 @@ void GammaComboEngine::make2dPluginScan(MethodPluginScan *scannerPlugin, int cId
 		scannerPlugin->plotOn(plotf);
 		plotf->DrawFull();
 		plotf->save();
+	}
+}
+
+///
+/// Perform the 1D berger boos scan. Runs toys in batch mode, and
+/// reads them back in.
+///
+/// \param scannerPlugin - the scanner to run the scan with
+/// \param cId - the id of this combination on the command line
+///
+void GammaComboEngine::make1dBergerBoosScan(MethodBergerBoosScan *scannerBergerBoos, int cId)
+{
+	scannerBergerBoos->initScan();
+  scannerBergerBoos->setNBergerBoosPointsPerScanpoint( arg->nBBpoints );
+	if ( arg->isAction("bbbatch") ){
+		scannerBergerBoos->scan1d(arg->nrun);
+	}
+	else {
+		scannerBergerBoos->readScan1dTrees(arg->jmin[cId],arg->jmax[cId]);
+		scannerBergerBoos->calcCLintervals();
+	}
+	if ( !arg->isAction("bbbatch") ){
+		scannerBergerBoos->saveScanner(m_fnamebuilder->getFileNameScanner(scannerBergerBoos));
 	}
 }
 
@@ -1277,7 +1300,7 @@ void GammaComboEngine::scan()
 		//
 		/////////////////////////////////////////////////////
 
-		if ( !arg->isAction("plugin") && !arg->isAction("pluginbatch") && !arg->isAction("coverage") && !arg->isAction("coveragebatch") )
+		if ( !arg->isAction("plugin") && !arg->isAction("pluginbatch") && !arg->isAction("coverage") && !arg->isAction("coveragebatch") && !arg->isAction("bb") && !arg->isAction("bbbatch") )
 		{
 			MethodProbScan *scannerProb = new MethodProbScan(c);
 			// pvalue corrector

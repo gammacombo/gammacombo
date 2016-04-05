@@ -110,6 +110,7 @@ class OptParser
 		bool		probimprove;
 		bool		printcor;
     float           printSolX;
+    float           printSolY;
 		vector<int>   	qh;
     TString         queue;
 		vector<TString> relation;

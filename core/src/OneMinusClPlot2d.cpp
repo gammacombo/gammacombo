@@ -300,11 +300,15 @@ bool OneMinusClPlot2d::hasHistoType(histogramType t)
 ///
 /// Draw a line stating the CL content of the contours.
 ///
-void OneMinusClPlot2d::drawCLcontent()
+void OneMinusClPlot2d::drawCLcontent(bool isFull)
 {
 	float xLow, yLow;
 	xLow = 0.17;
 	yLow = 0.15;
+  if ( isFull ) {
+    xLow = 0.11;
+    yLow = 0.11;
+  }
 	TPaveText *t1 = new TPaveText(xLow, yLow, xLow+0.20, yLow+0.125, "BRNDC");
 	t1->SetBorderSize(0);
 	t1->SetFillStyle(0);
@@ -312,6 +316,7 @@ void OneMinusClPlot2d::drawCLcontent()
 	t1->SetTextFont(font);
 	t1->SetTextSize(labelsize*0.6);
 	t1->SetTextColor(kGray+1);
+  if ( isFull ) t1->SetTextColor( kRed );
 	TString text;
 	text = "contours hold ";
 	if ( arg->plot2dcl[0]>0 || (histos.size()==1 && hasHistoType(kPvalue)) ){
@@ -360,6 +365,23 @@ void OneMinusClPlot2d::DrawFull()
 	hChi2->GetZaxis()->SetRangeUser(zMin,zMax);
 	hChi2->GetZaxis()->SetTitle(histosType[0]==kChi2?"#Delta#chi^{2}":"p-value");
 	hChi2->Draw("colz");
+
+  // draw contours if requested
+  ConfidenceContours* cont = new ConfidenceContours(arg);
+  cont->computeContours(histos[0], histosType[0], 0);
+  vector<int> linecolor { kRed, kRed, kRed, kRed, kRed };
+  //vector<int> linestyle { kDashed, kDashed, kDashed, kDashed, kDashed };
+  vector<int> linestyle { 1, 2, 3, 4, 5 };
+  TColor *col = gROOT->GetColor(0);
+  col->SetAlpha(1.);
+  vector<int> fillcolor { 0, 0, 0, 0, 0 };
+  vector<int> fillstyle { 0, 0, 0, 0, 0 };
+  cont->setStyle( linecolor, linestyle, fillcolor, fillstyle );
+  cont->setTransparency( 1. );
+  cont->Draw();
+
+	if ( !arg->isQuickhack(15) ) drawCLcontent(true);
+
 	TPaveText *title = new TPaveText(.10,.92,.90,.99,"BRNDC");
 	title->AddText(Form("%s for %s",histosType[0]==kChi2?"#Delta#chi^{2}":"p-value",scanners[0]->getTitle().Data()));
 	title->SetBorderSize(0);

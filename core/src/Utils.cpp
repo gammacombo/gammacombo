@@ -425,6 +425,29 @@ void Utils::randomizeParameters(RooWorkspace* w, TString setname)
 	}
 }
 
+//
+// Randomize all parameters according to a Gaussian centered on their
+// best fit value with a width of their uncertainty
+//
+void Utils::randomizeParametersGaussian(RooWorkspace* w, TString setname, RooSlimFitResult *r)
+{
+  RooArgList list = r->floatParsFinal();
+  TIterator* it = list.createIterator();
+  while ( RooRealVar* p = (RooRealVar*)it->Next() ) {
+    RooRealVar *var = (RooRealVar*)w->var( p->GetName() );
+    if ( p->isConstant() ) {
+      var->setVal( p->getVal() );
+    }
+    else {
+      double randnumb = RooRandom::randomGenerator()->Gaus( p->getVal(), p->getError() );
+      // make sure it's in range
+      if ( randnumb < var->getMin() ) randnumb = var->getMin() ;
+      if ( randnumb > var->getMax() ) randnumb = var->getMax() ;
+      var->setVal( randnumb );
+    }
+  }
+}
+
 ///
 /// Set each parameter in workspace to the values found
 /// in the fit result

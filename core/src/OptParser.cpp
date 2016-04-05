@@ -85,6 +85,7 @@ OptParser::OptParser():
 	probimprove = false;
 	printcor = false;
   printSolX = -999.;
+  printSolY = -999.;
   queue = "";
 	scanforce = false;
 	scanrangeMax = -101;
@@ -134,7 +135,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("log");
 	availableOptions.push_back("magnetic");
   availableOptions.push_back("nbatchjobs");
-	//availableOptions.push_back("nBBpoints");
+  //availableOptions.push_back("nBBpoints");
 	availableOptions.push_back("nosyst");
 	availableOptions.push_back("npoints");
 	availableOptions.push_back("npoints2dx");
@@ -153,6 +154,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("po");
 	availableOptions.push_back("prelim");
   availableOptions.push_back("printsolx");
+  availableOptions.push_back("printsoly");
 	availableOptions.push_back("probforce");
 	//availableOptions.push_back("probimprove");
 	availableOptions.push_back("ps");
@@ -360,6 +362,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"Format: --grouppos xmin:ymin in normalized coordinates [0,1]. To use default values "
 			"for one coordinate, use 'def': --grouppos def:y.", false, "default", "string");
   TCLAP::ValueArg<float> printSolXArg("","printsolx", "x coordinate to print solution at in 1D plots", false, -999., "float");
+  TCLAP::ValueArg<float> printSolYArg("","printsoly", "y coordinate to shift solution by in 1D plots", false, -999., "float");
   TCLAP::ValueArg<string> queueArg("q","queue","Batch queue to submit to. If none is given then the scripts will be written but not submitted.", false, "", "string");
   TCLAP::ValueArg<int> batchstartnArg("","batchstartn", "number of first batch job (e.g. if you have already submitted 100 you can submit another 100 starting from 101)", false, 1, "int");
   TCLAP::ValueArg<int> nbatchjobsArg("","nbatchjobs", "number of jobs to write scripts for and submit to batch system", false, 0, "int");
@@ -435,6 +438,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	vAction.push_back("runtoys");
 	//vAction.push_back("scantree");
 	vAction.push_back("test");
+  vAction.push_back("uniform");
+  vAction.push_back("gaus");
 	ValuesConstraint<string> cAction(vAction);
 	TCLAP::MultiArg<string> actionArg("a", "action", "Perform action", false, &cAction);
 	TCLAP::MultiArg<string> varArg("", "var", "Scan variable (default: g). Can be given twice, in which case "
@@ -473,6 +478,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"16: In parameter evolution plots, add also the full evolution over the scan, in addition to just plotting the best evolution.\n"
       "17: In 2D plots with the PLUGIN and PROB methods, plot the PLUGIN first then the PROB.\n"
       "18: In 2D plots with PLUGIN and PROB methods, set legend titles as PLUGIN and PROB instead of (Plugin) and (Prob).\n"
+      "19: In 1D plots, no vertical lines.\n"
+      "20: In 1D plots, only central value line.\n"
 			, false, "int");
 	TCLAP::MultiArg<string> titleArg("", "title", "Override the title of a combination. "
 			"If 'default' is given, the default title for that combination is used. "
@@ -579,6 +586,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "probimprove" ) ) cmd.add( probimproveArg );
 	if ( isIn<TString>(bookedOptions, "probforce" ) ) cmd.add( probforceArg );
   if ( isIn<TString>(bookedOptions, "printsolx" ) ) cmd.add( printSolXArg );
+  if ( isIn<TString>(bookedOptions, "printsoly" ) ) cmd.add( printSolYArg );
 	if ( isIn<TString>(bookedOptions, "printcor" ) ) cmd.add( printcorArg );
 	if ( isIn<TString>(bookedOptions, "prelim" ) ) cmd.add( plotprelimArg );
 	if ( isIn<TString>(bookedOptions, "po" ) ) cmd.add( plotpluginonlyArg );
@@ -683,6 +691,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	plotunoff         = plotunoffArg.getValue();
 	printcor          = printcorArg.getValue();
   printSolX         = printSolXArg.getValue();
+  printSolY         = printSolYArg.getValue();
 	probforce         = probforceArg.getValue();
 	probimprove       = probimproveArg.getValue();
 	qh                = qhArg.getValue();
