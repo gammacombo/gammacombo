@@ -53,6 +53,7 @@ class OptParser
 		vector<vector<FixPar> >     fixParameters;
 		vector<vector<RangePar> >   physRanges;
     vector<vector<TString> >    removeRanges;
+    vector<vector<TString> >    randomizeToyVars;
 		TString	group;
 		TString	groupPos;
 		int             id;

@@ -161,6 +161,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("pulls");
 	availableOptions.push_back("qh");
   availableOptions.push_back("queue");
+  availableOptions.push_back("randomizeToyVars");
   availableOptions.push_back("removeRange");
 	availableOptions.push_back("sn");
 	availableOptions.push_back("sn2d");
@@ -504,6 +505,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"Example: --prange def --prange 'g=1.7:1.9,r_dk=0.09:0.2' \n"
       "Set to -999:-999 to remove range \n"
 			, false, "string");
+  TCLAP::MultiArg<string> randomizeToyVarsArg("","randomizeToyVars", "A list of nuisance parameters to randomize in the toy generation for the plugin method when the -a uniform, -a flat or -a gaus methods are also used. Pass as comma sepearted list e.g --randomizeToyVars 'r_dk,r_dpi,d_dk' . Pass once per combiner. If nothing is given here but you pass -a uniform, flat or gaus then ALL nuisance parameter values will be varied in the toys."
+      , false, "string");
   TCLAP::MultiArg<string> removeRangeArg("","removeRange","Remove the range entirely of one or more parameters in a combination. "
       "The range are enforced through the --pr option."
       "If 'all' is given, all parameter ranges are removed"
@@ -579,6 +582,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "scanforce" ) ) cmd.add( scanforceArg );
 	if ( isIn<TString>(bookedOptions, "relation" ) ) cmd.add(relationArg);
   if ( isIn<TString>(bookedOptions, "removeRange" ) ) cmd.add(removeRangeArg);
+  if ( isIn<TString>(bookedOptions, "randomizeToyVars" ) ) cmd.add(randomizeToyVarsArg);
 	if ( isIn<TString>(bookedOptions, "qh" ) ) cmd.add(qhArg);
   if ( isIn<TString>(bookedOptions, "queue") ) cmd.add(queueArg);
 	if ( isIn<TString>(bookedOptions, "pulls" ) ) cmd.add( plotpullsArg );
@@ -898,6 +902,18 @@ void OptParser::parseArguments(int argc, char* argv[])
 		//}
 	//}
 	//exit(0);
+
+  // --randomizeToyVars
+  tmp = randomizeToyVarsArg.getValue();
+  for ( int i = 0; i < tmp.size(); i++ ) { // loop over instances of --randomizeToyVars
+    TObjArray *parsArray = TString(tmp[i]).Tokenize(","); // split string at ","
+    vector<TString> pars;
+    for ( int j=0; j<parsArray->GetEntries(); j++){
+      TString par = ((TObjString*)parsArray->At(j))->GetString();
+      pars.push_back(par);
+    }
+    randomizeToyVars.push_back(pars);
+  }
 
   // --removeRange
   tmp = removeRangeArg.getValue();

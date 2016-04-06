@@ -1165,6 +1165,21 @@ void GammaComboEngine::adjustRanges(Combiner *c, int cId)
 }
 
 ///
+/// Helper function for scan(): Makes named sets for any toy variations that were requested
+///
+void GammaComboEngine::setupToyVariationSets(Combiner *c, int cId)
+{
+  if ( cId < arg->randomizeToyVars.size() ) {
+    TString toyVarList = "";
+    for ( int j=0; j<arg->randomizeToyVars[cId].size(); j++ ) {
+      toyVarList += arg->randomizeToyVars[cId][j];
+      if ( j < arg->randomizeToyVars[cId].size()-1 ) toyVarList += ",";
+    }
+    c->getWorkspace()->defineSet( "toy_"+c->getPdfName(), toyVarList.Data() );
+  }
+}
+
+///
 /// Helper function for scan(): Checks if for a given combid (the
 /// running index of the -c argument) a start parameter file was
 /// configured (-l) argument. If so, it is returned, else the default
@@ -1272,6 +1287,9 @@ void GammaComboEngine::scan()
 
 		// adjust ranges according to the command line - only possible before combining
 		adjustRanges(c, i);
+
+    // set up parameter sets for the parameters to vary within the toys (if requested)
+    setupToyVariationSets(c, i);
 
 		// make graphviz dot files
 		printCombinerStructure(c);
