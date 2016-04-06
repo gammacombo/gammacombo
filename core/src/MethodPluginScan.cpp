@@ -505,10 +505,14 @@ int MethodPluginScan::scan1d(int nRun)
 	if ( arg->debug ) myFit->print();
 	TString dirname = "root/scan1dPlugin";
   if ( arg->isAction("bb") ) dirname += "BergerBoos";
+  if ( arg->isAction("uniform") ) dirname += "Uniform";
+  if ( arg->isAction("gaus") ) dirname += "Gaus";
   dirname += "_"+name+"_"+scanVar1;
 	system("mkdir -p "+dirname);
   TString fname = "/scan1dPlugin";
   if ( arg->isAction("bb") ) fname += "BergerBoos";
+  if ( arg->isAction("uniform") ) fname += "Uniform";
+  if ( arg->isAction("gaus") ) fname += "Gaus";
   fname += Form("_"+name+"_"+scanVar1+"_run%i.root",nRun);
 	t.writeToFile((dirname+fname).Data());
 	delete myFit;
@@ -615,7 +619,7 @@ void MethodPluginScan::scan2d(int nRun)
           // Kenzie-Cousins-Highland (randomize nuisance parameters within a uniform range)
           if ( arg->isAction("uniform") ) {
             // set parameter ranges to their bb range (should be something wide 95, 99% CL)
-            const RooArgSet* pars = w->set(parsName);
+            const RooArgSet* pars = w->set(toysName) ? w->set(toysName) : w->set(parsName);
             TIterator* it = pars->createIterator();
             while ( RooRealVar* var = (RooRealVar*)it->Next() ) {
               setLimit( var, "bboos" );
@@ -638,7 +642,7 @@ void MethodPluginScan::scan2d(int nRun)
               cout << "Gaussian generating from:" << endl;
               profileLH->curveResults2d[iCurveRes1][iCurveRes2]->floatParsFinal().Print("v");
             }
-            randomizeParametersGaussian(w, parsName, profileLH->curveResults2d[iCurveRes1][iCurveRes2]);
+            randomizeParametersGaussian(w, toysName, profileLH->curveResults2d[iCurveRes1][iCurveRes2]);
             if (verbose) {
               cout << "Set:" << endl;
               w->set(parsName)->Print("v");
@@ -758,10 +762,14 @@ void MethodPluginScan::scan2d(int nRun)
 	// save tree
 	TString dirname = "root/scan2dPlugin";
   if ( arg->isAction("bb") ) dirname += "BergerBoos";
+  if ( arg->isAction("uniform") ) dirname += "Uniform";
+  if ( arg->isAction("gaus") ) dirname += "Gaus";
   dirname += "_"+name+"_"+scanVar1+"_"+scanVar2;
 	system("mkdir -p "+dirname);
   TString fname = "/scan1dPlugin";
   if ( arg->isAction("bb") ) fname += "BergerBoos";
+  if ( arg->isAction("uniform") ) fname += "Uniform";
+  if ( arg->isAction("gaus") ) fname += "Gaus";
   fname += Form("_"+name+"_"+scanVar1+"_"+scanVar2+"_run%i.root",nRun);
 	t.writeToFile((dirname+fname).Data());
 	delete pb;
@@ -939,9 +947,13 @@ void MethodPluginScan::readScan1dTrees(int runMin, int runMax)
 	int nFilesRead = 0;
   TString dirname = "root/scan1dPlugin";
   if ( arg->isAction("bb") ) dirname += "BergerBoos";
+  if ( arg->isAction("uniform") ) dirname += "Uniform";
+  if ( arg->isAction("gaus") ) dirname += "Gaus";
   dirname += "_"+name+"_"+scanVar1;
 	TString fileNameBase = dirname+"/scan1dPlugin";
   if ( arg->isAction("bb") ) fileNameBase += "BergerBoos";
+  if ( arg->isAction("uniform") ) fileNameBase += "Uniform";
+  if ( arg->isAction("gaus") ) fileNameBase += "Gaus";
   fileNameBase += "_"+name+"_"+scanVar1+"_run";
 	if ( arg->debug ) cout << "MethodPluginScan::readScan1dTrees() : ";
 	cout << "reading files: " << fileNameBase+"*.root" << endl;
@@ -998,9 +1010,13 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
 	int nFilesRead = 0;
   TString dirname = "root/scan2dPlugin";
   if ( arg->isAction("bb") ) dirname += "BergerBoos";
+  if ( arg->isAction("uniform") ) dirname += "Uniform";
+  if ( arg->isAction("gaus") ) dirname += "Gaus";
   dirname += "_"+name+"_"+scanVar1+"_"+scanVar2;
 	TString fileNameBase = dirname+"/scan2dPlugin";
   if ( arg->isAction("bb") ) fileNameBase += "BergerBoos";
+  if ( arg->isAction("uniform") ) fileNameBase += "Uniform";
+  if ( arg->isAction("gaus") ) fileNameBase += "Gaus";
   fileNameBase += "_"+name+"_"+scanVar1+"_"+scanVar2+"_run";
 	if ( arg->debug ) cout << "MethodPluginScan::readScan2dTrees() : ";
 	cout << "reading files: " << fileNameBase+"*.root" << endl;
