@@ -945,6 +945,7 @@ void MethodPluginScan::readScan1dTrees(int runMin, int runMax)
 	TChain *c = new TChain("plugin");
 	int nFilesMissing = 0;
 	int nFilesRead = 0;
+  // configure file name
   TString dirname = "root/scan1dPlugin";
   if ( arg->isAction("bb") ) dirname += "BergerBoos";
   if ( arg->isAction("uniform") ) dirname += "Uniform";
@@ -955,6 +956,8 @@ void MethodPluginScan::readScan1dTrees(int runMin, int runMax)
   if ( arg->isAction("uniform") ) fileNameBase += "Uniform";
   if ( arg->isAction("gaus") ) fileNameBase += "Gaus";
   fileNameBase += "_"+name+"_"+scanVar1+"_run";
+  // read different files if requested
+  if ( arg->toyFiles != "" && arg->toyFiles != "default" ) fileNameBase = arg->toyFiles;
 	if ( arg->debug ) cout << "MethodPluginScan::readScan1dTrees() : ";
 	cout << "reading files: " << fileNameBase+"*.root" << endl;
 	for (int i=runMin; i<=runMax; i++){
@@ -1008,6 +1011,7 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
 	TChain *chain = new TChain("plugin");
 	int nFilesMissing = 0;
 	int nFilesRead = 0;
+  // configure file name
   TString dirname = "root/scan2dPlugin";
   if ( arg->isAction("bb") ) dirname += "BergerBoos";
   if ( arg->isAction("uniform") ) dirname += "Uniform";
@@ -1018,7 +1022,10 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
   if ( arg->isAction("uniform") ) fileNameBase += "Uniform";
   if ( arg->isAction("gaus") ) fileNameBase += "Gaus";
   fileNameBase += "_"+name+"_"+scanVar1+"_"+scanVar2+"_run";
-	if ( arg->debug ) cout << "MethodPluginScan::readScan2dTrees() : ";
+  // read different file if requested 
+  if ( arg->toyFiles != "" && arg->toyFiles != "default" ) fileNameBase = arg->toyFiles;
+	
+  if ( arg->debug ) cout << "MethodPluginScan::readScan2dTrees() : ";
 	cout << "reading files: " << fileNameBase+"*.root" << endl;
 	for (int i=runMin; i<=runMax; i++) {
 		TString file = Form(fileNameBase+"%i.root", i);

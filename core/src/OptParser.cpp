@@ -93,6 +93,7 @@ OptParser::OptParser():
 	scanrangeyMax = -102;
 	scanrangeyMin = -102;
 	smooth2d = false;
+  toyFiles = "";
 	usage = false;
 	verbose = false;
 }
@@ -169,6 +170,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("scanrange");
 	availableOptions.push_back("scanrangey");
 	availableOptions.push_back("smooth2d");
+  availableOptions.push_back("toyFiles");
 	availableOptions.push_back("title");
 	availableOptions.push_back("usage");
 	availableOptions.push_back("unoff");
@@ -388,6 +390,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"Format (range):  -j min-max \n"
 			"Format (single): -j n", false, "string");
 	TCLAP::ValueArg<string> jobdirArg("", "jobdir", "Give absolute job-directory if working on batch systems.", false, "default", "string");
+  TCLAP::ValueArg<string> toyFilesArg("", "toyFiles", "Pass some different toy files, for example if you want 1D projection of 2D FC.", false, "default", "string" );
 
 	// --------------- switch arguments
   TCLAP::SwitchArg batcheosArg("","batcheos", "When submitting batch jobs (for plugin) write the output to eos", false);
@@ -574,6 +577,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "usage" ) ) cmd.add( usageArg );
 	if ( isIn<TString>(bookedOptions, "unoff" ) ) cmd.add( plotunoffArg );
 	if ( isIn<TString>(bookedOptions, "title" ) ) cmd.add( titleArg );
+  if ( isIn<TString>(bookedOptions, "toyFiles" ) ) cmd.add( toyFilesArg );
 	if ( isIn<TString>(bookedOptions, "sn2d" ) ) cmd.add(sn2dArg);
 	if ( isIn<TString>(bookedOptions, "sn" ) ) cmd.add(snArg);
 	if ( isIn<TString>(bookedOptions, "smooth2d" ) ) cmd.add( smooth2dArg );
@@ -703,6 +707,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	savenuisances1d   = snArg.getValue();
 	scanforce         = scanforceArg.getValue();
 	smooth2d          = smooth2dArg.getValue();
+  toyFiles          = toyFilesArg.getValue();
 	usage             = usageArg.getValue();
 	verbose           = verboseArg.getValue();
 
