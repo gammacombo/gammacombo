@@ -273,7 +273,7 @@ void MethodPluginScan::computePvalue1d(RooSlimFitResult* plhScan, double chi2min
   // Kenzie-Cousins-Highland (randomize nuisance parameters within a uniform range)
   if ( arg->isAction("uniform") ) {
     //   set parameter ranges to their bb range (should be something wide 95, 99% CL)
-    const RooArgSet* pars = w->set(parsName);
+    const RooArgSet* pars = w->set(toysName) ? w->set(toysName) : w->set(parsName);
     TIterator* it = pars->createIterator();
     while(RooRealVar* var = (RooRealVar*)it->Next()){
       setLimit( var, "bboos" );
@@ -296,7 +296,7 @@ void MethodPluginScan::computePvalue1d(RooSlimFitResult* plhScan, double chi2min
       cout << "Gaussian generating from:" << endl;
       plhScan->floatParsFinal().Print("v");
     }
-    randomizeParametersGaussian(w, parsName, plhScan);
+    randomizeParametersGaussian(w, toysName, plhScan);
     if (verbose) {
       cout << "Set:" << endl;
       w->set(parsName)->Print("v");

@@ -79,6 +79,7 @@ namespace Utils
 	void mergeNamedSets(RooWorkspace *w, TString mergedSet, TString set1, TString set2);
 	void randomizeParameters(RooWorkspace* w, TString setname);
 	void randomizeParametersGaussian(RooWorkspace* w, TString setname, RooSlimFitResult *r);
+	void randomizeParametersUniform(RooWorkspace* w, TString setname, RooSlimFitResult *r, double sigmaRange);
 	void setParameters(const RooAbsCollection* setMe, const RooAbsCollection* values);
 	void setParameters(RooWorkspace* w, TString parname, const RooAbsCollection* set);
 	void setParameters(RooWorkspace* w, TString parname, RooFitResult* r, bool constAndFloat=false);

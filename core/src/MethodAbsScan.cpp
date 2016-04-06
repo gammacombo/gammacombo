@@ -41,6 +41,7 @@
 	obsName  = "obs_"+combiner->getPdfName();
 	parsName = "par_"+combiner->getPdfName();
 	thName   = "th_"+combiner->getPdfName();
+  toysName = "toy_"+combiner->getPdfName();
 	chi2minGlobal = 0.0;
 	chi2minGlobalFound = false;
 	lineStyle = 0;
