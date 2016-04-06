@@ -40,6 +40,8 @@ void BatchScriptWriter::writeScripts(OptParser *arg, vector<Combiner*> *cmb){
       cout << "BatchScriptWriter::writeScripts() : ERROR : only need to write batch scripts for pluginbatch method" << endl;
       exit(1);
     }
+    if ( arg->isAction("uniform") ) methodname += "Uniform";
+    if ( arg->isAction("gaus") ) methodname += "Gaus";
 
     cout << "Writing submission scripts for combination " << c->getName() << endl;
 
