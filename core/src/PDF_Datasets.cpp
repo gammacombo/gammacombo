@@ -261,7 +261,10 @@ void   PDF_Datasets::generateToys(int SeedShift) {
   initializeRandomGenerator(SeedShift);
   RooDataSet* toys = this->pdf->generate(*observables, RooFit::Extended(kTRUE));
 
-  if(this->toyObservables) delete this->toyObservables;
+  // Having the delete in here causes a segmentation fault, likely due to a double free
+  // related to Root's internal memory management. Therefore we do not delete,
+  // which might or might not cause a memory leak.
+  // if(this->toyObservables) delete this->toyObservables;
   this->toyObservables  = toys; 
   this->isToyDataSet    = kTRUE;
 }

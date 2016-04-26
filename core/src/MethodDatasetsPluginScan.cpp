@@ -46,7 +46,7 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets* PDF, OptParser*
     dataFreeFitResult = result;  
   }
   chi2minGlobal      = 2*dataFreeFitResult->minNll();
-  std::cout << "=============== Global Minimum (2*-Log(Likelihood)) set to: 2*" << result->minNll() << " = " << chi2minGlobal << endl;
+  std::cout << "=============== Global Minimum (2*-Log(Likelihood)) set to: 2*" << dataFreeFitResult->minNll() << " = " << chi2minGlobal << endl;
   chi2minGlobalFound = true;  // check workspace content 
 
   if ( !w->set(pdf->getObsName()) ) { cerr << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no '" + pdf->getObsName() + "' set found in workspace" << endl; exit(1); }
