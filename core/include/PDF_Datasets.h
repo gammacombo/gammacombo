@@ -29,13 +29,14 @@ public:
   virtual RooFitResult* fit(bool fitToys = kTRUE);
   virtual void          generateToys(int SeedShift = 0);
   virtual void          generateToysGlobalObservables(int SeedShift = 0);
-  
+
+  void                  initConstraints(const TString& setName);  
   void                  initData(const TString& name);
   void                  initObservables(const TString& setName);
   virtual void          initObservables();  //overriding the inherited virtual method
-  void                  initConstraints(const TString& setName);
   void                  initGlobalObservables(const TString& setName);
-  void                  initParameters(const TString& setName);
+  void                  initParameters(const TString& setName);  
+  void                  initParameters(const vector<TString>& parNames);
   virtual void          initParameters(); //overriding the inherited virtual method
   void                  initPDF(const TString& name);
 
@@ -44,7 +45,7 @@ public:
   TString               getDataName(){return dataName;};
   inline int            getFitStatus(){return fitStatus;};
   inline int            getFitStrategy(){return fitStrategy;};
-  TString               getGlobalParsName(){return globalParsName;};
+  TString               getGlobalObsName(){return globalObsName;};
   float                 getMinNllFree(){return minNllFree;};
   float                 getMinNllScan(){return minNllScan;};
   TString               getObsName(){return obsName;};
@@ -54,8 +55,8 @@ public:
   TString               getPdfName(){return pdfName;};
   RooWorkspace*         getWorkspace(){return wspc;};
   // setters
-  inline void           setConstraints(const TString& setName){constraintName = setName;};
-  inline void           setDataName(const TString& objName){dataName = objName;};
+  //inline void           setConstraints(const TString& setName){constraintName = setName;};
+  //inline void           setDataName(const TString& objName){dataName = objName;};
   inline void           setFitStatus(int stat = 0){fitStatus = stat;};
   inline void           setFitStrategy(int strat = 0){fitStrategy = strat;};
   inline void           setMinNllFree(float mnll){minNllFree = mnll;}; 
@@ -64,10 +65,9 @@ public:
   void                  setVarRange(const TString &varName, const TString &rangeName, 
                                     const double &rangeMin, const double &rangeMax);
   void                  setToyData(RooDataSet* ds);
-  void                  setGlobalObservables(bool toToys);
+  // void                  setGlobalObservables(bool toToys);
 
   void                  print();
-
   inline  bool          areObservablesSet(){ return areObsSet; };
   inline  bool          areParametersSet(){ return areParsSet; };
   inline  bool          isPdfInitialized(){ return isPdfSet; };
@@ -84,6 +84,7 @@ protected:
   RooWorkspace*   wspc;
   RooDataSet*     data;
   RooAbsReal*     _NLL; // possible pointer to minimization function 
+  RooAbsPdf*      _constraintPdf;  
   TString         pdfName; //> name of the pdf in the workspace
   TString         obsName;
   TString         parName;

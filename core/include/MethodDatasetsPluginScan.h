@@ -28,8 +28,7 @@
 class MethodDatasetsPluginScan : public MethodPluginScan
 {
 public:
-    MethodDatasetsPluginScan(PDF_Datasets* PDF, OptParser* opt, 
-                            bool provideFitResult = true);
+    MethodDatasetsPluginScan(PDF_Datasets* PDF, OptParser* opt, RooFitResult* result=NULL);
     void                drawDebugPlots(int runMin, int runMax, TString fileNameBaseIn = "default");
     float               getParValAtScanpoint(float point, TString parName);
     MethodProbScan*     getProfileLH(){return this->profileLH;};

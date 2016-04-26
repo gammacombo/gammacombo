@@ -18,7 +18,7 @@ ToyTree::ToyTree(PDF_Datasets *p, OptParser* opt, TChain* t){
 	this->pdfName  = "pdf_"+p->getPdfName();
 	this->obsName  = p->getObsName();
 	this->parsName = p->getParName();
-  	globName = p->getGlobalParsName();
+  this->globName = p->getGlobalObsName();
 	this->thName   = "";
 	this->initMembers(t);
 	this->storeObs  = false;
@@ -182,7 +182,7 @@ void ToyTree::init()
 	    if(this->storeGlob){
 	      delete it; 
 	      if(w->set(globName)==NULL){
-	      	cerr<<"Unable to store parameters of global contraints because no set called "+globName
+	      	cerr<<"Unable to store parameters of global constraints because no set called "+globName
 	      		<<" is defined in the workspace. "<<endl;
 	      		//\todo Implement init function in PDF_Datasets to enabe the user to set the name of this set in the workspace. 
 	      		exit(EXIT_FAILURE);
