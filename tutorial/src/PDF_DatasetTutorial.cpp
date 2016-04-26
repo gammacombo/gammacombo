@@ -4,7 +4,7 @@
 PDF_DatasetTutorial::PDF_DatasetTutorial(RooWorkspace* w): PDF_Datasets(w){}
 PDF_DatasetTutorial::~PDF_DatasetTutorial(){};
 
-RooFitResult* PDF_DatasetTutorial::fit(bool fitToys){
+RooFitResult* PDF_DatasetTutorial::fit(cost RooDataSet* dataToFit){
   if(this->notSetupToFit(fitToys)){
     std::cout << "FATAL in PDF_DatasetTutorial::fit -- There is no PDF or (toy)data set to fit!" << std::endl;  
     return NULL;
@@ -30,11 +30,7 @@ RooFitResult* PDF_DatasetTutorial::fit(bool fitToys){
   // Turn off RooMsg
   RooMsgService::instance().setGlobalKillBelow(ERROR);
   RooMsgService::instance().setSilentMode(kTRUE);
-  // Choose Dataset to fit to
-  RooDataSet* dataToFit = (fitToys) ? this->toyObservables : this->data ;
   
-  if(fitToys)   wspc->loadSnapshot(globalObsToySnapshotName);
-  else          wspc->loadSnapshot(globalObsDataSnapshotName);
   
   RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() 
                                       ,RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName))
