@@ -17,7 +17,7 @@
 ///
 /// The default constructor for the dataset plugin scan
 ///
-MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets* PDF, OptParser* opt, bool provideFitResult):
+MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets* PDF, OptParser* opt, RooFitResult* result):
   MethodPluginScan(opt),
   pdf                 (PDF),
   probPValues         (NULL),
@@ -36,22 +36,19 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets* PDF, OptParser*
   if ( arg->var.size()>1 ) scanVar2 = arg->var[1];
   inputFiles.clear();        
 
-  if(provideFitResult){
+  if(!result){
     if (w->obj("data_fit_result") == NULL){ //\todo: support passing the name of the fit result in the workspace.
       cerr << "ERROR: The workspace must contain the fit result of the fit to data. The name of the fit result must be 'data_fit_result'. " <<endl;
       exit(EXIT_FAILURE);
     }
-    RooFitResult* result = (RooFitResult*) w->obj("data_fit_result");
-    chi2minGlobal      = 2*result->minNll();
-    std::cout << "=============== Global Minimum (2*-Log(Likelihood)) set to: 2*" << result->minNll() << " = " << chi2minGlobal << endl;
-    chi2minGlobalFound = true;
-    dataFreeFitResult = result;
+    dataFreeFitResult = (RooFitResult*) w->obj("data_fit_result");
   }else{
-    // \todo: support the case where no result is passed.
-    cerr << "ERROR: The workspace must contain the fit result of the fit to data. The name of the fit result must be 'data_fit_result'. " <<endl;
-    exit(EXIT_FAILURE);
+    dataFreeFitResult = result;  
   }
-  // check workspace content 
+  chi2minGlobal      = 2*dataFreeFitResult->minNll();
+  std::cout << "=============== Global Minimum (2*-Log(Likelihood)) set to: 2*" << result->minNll() << " = " << chi2minGlobal << endl;
+  chi2minGlobalFound = true;  // check workspace content 
+
   if ( !w->set(pdf->getObsName()) ) { cerr << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no '" + pdf->getObsName() + "' set found in workspace" << endl; exit(1); }
   if ( !w->set(pdf->getParName()) ) { cerr << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no '" + pdf->getParName() + "' set found in workspace" << endl; exit(1); }
 }
@@ -281,7 +278,7 @@ TChain* MethodDatasetsPluginScan::readFiles(int runMin, int runMax, int &nFilesR
   // Align files names with scan1d/scan1d
 
   if(doProbScanOnly){
-    TString file = (fileBase=="none") ? Form("root/scan1dDatasetsProb_"+this->pdf->getPdfName()+"_%ip"+"_"+scanVar1+"_run1.root",arg->npoints1d,1) : fileBase ;
+    TString file = (fileBase=="none") ? Form("root/scan1dDatasetsProb_"+this->pdf->getName()+"_%ip"+"_"+scanVar1+"_run1.root",arg->npoints1d,1) : fileBase ;
     if ( !FileExists(file) ){
           if ( arg->verbose ) cout << "MethodDatasetsPluginScan::readScan1dTrees() : ERROR : File not found: " + file + " ..." << endl;
           _nFilesMissing += 1;
@@ -291,8 +288,8 @@ TChain* MethodDatasetsPluginScan::readFiles(int runMin, int runMax, int &nFilesR
       _nFilesRead+=1;
     }
   }else{
-    TString dirname = "root/scan1dDatasetsPlugin_"+this->pdf->getPdfName()+"_"+scanVar1;
-    TString fileNameBase = (fileNameBaseIn.EqualTo("default")) ? dirname+"/scan1dDatasetsPlugin_"+this->pdf->getPdfName()+"_"+scanVar1+"_run" : fileNameBaseIn;
+    TString dirname = "root/scan1dDatasetsPlugin_"+this->pdf->getName()+"_"+scanVar1;
+    TString fileNameBase = (fileNameBaseIn.EqualTo("default")) ? dirname+"/scan1dDatasetsPlugin_"+this->pdf->getName()+"_"+scanVar1+"_run" : fileNameBaseIn;
     
     if(!explicitInputFile){
       for (int i=runMin; i<=runMax; i++){
@@ -565,15 +562,15 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
   // \todo: Can we really assume that the value of the parameter in the workspace is on its best free fit value?
 
   // Define outputfile   
-  TString dirname = "root/scan1dDatasetsPlugin_"+this->pdf->getPdfName()+"_"+scanVar1;
+  TString dirname = "root/scan1dDatasetsPlugin_"+this->pdf->getName()+"_"+scanVar1;
   system("mkdir -p "+dirname);
   TString fName;
   if(doProbScanOnly){
     //I assume that always nRun==1, is that correct?
-    fName = (fileBase=="none") ? Form("root/scan1dDatasetsProb_"+this->pdf->getPdfName()+"_%ip"+"_"+scanVar1+"_run%i.root",arg->npoints1d,1) : fileBase ;
+    fName = (fileBase=="none") ? Form("root/scan1dDatasetsProb_"+this->pdf->getName()+"_%ip"+"_"+scanVar1+"_run%i.root",arg->npoints1d,1) : fileBase ;
   }
   else{
-    fName = Form(dirname+"/scan1dDatasetsPlugin_"+this->pdf->getPdfName()+"_"+scanVar1+"_run%i.root", nRun);
+    fName = Form(dirname+"/scan1dDatasetsPlugin_"+this->pdf->getName()+"_"+scanVar1+"_run%i.root", nRun);
   }
   TFile* outputFile       = new TFile(fName, "RECREATE");
   

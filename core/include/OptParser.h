@@ -101,6 +101,8 @@ class OptParser
 		bool            plotprelim;
 		vector<int>     plotsolutions;
 		bool            plotunoff;
+    float           plotymin;
+    float           plotymax;
 		bool            intprob;
 		float           pluginPlotRangeMin;
 		float           pluginPlotRangeMax;
