@@ -152,6 +152,26 @@ void MethodDatasetsPluginScan::initScan(){
 }
 
 ///
+/// Prepare environment depending on data or toy fit
+///
+RooFitResult* MethodDatasetsPluginScan::loadAndFit(bool fitToys, PDF_Datasets* pdf){
+  if(fitToys){
+    if(!w->loadSnapshot(pdf->globalObsToySnapshotName)){
+      std::cout << "FATAL in MethodDatasetsPluginScan::loadAndFit() - No snapshot globalObsToySnapshotName found!\n" << std::endl;
+      exit(EXIT_FAILURE);
+    };
+    return pdf->fit(pdf->getToyObservables());
+  }
+  else{
+    if(!w->loadSnapshot(pdf->globalObsDataSnapshotName)){
+      std::cout << "FATAL in MethodDatasetsPluginScan::loadAndFit() - No snapshot globalObsToySnapshotName found!\n" << std::endl;
+      exit(EXIT_FAILURE);
+    };
+    return pdf->fit(pdf->getData());
+  }
+};
+
+///
 /// load Parameter limits
 /// by default the "free" limit is loaded, can be changed to "phys" by command line argument
 ///
@@ -565,15 +585,28 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
   TString dirname = "root/scan1dDatasetsPlugin_"+this->pdf->getName()+"_"+scanVar1;
   system("mkdir -p "+dirname);
   TString fName;
+  TString probResName =(fileBase=="none") ? Form("root/scan1dDatasetsProb_"+this->pdf->getName()+"_%ip"+"_"+scanVar1,arg->npoints1d) : fileBase ;
+  TFile* outputFile = NULL;
   if(doProbScanOnly){
-    //I assume that always nRun==1, is that correct?
-    fName = (fileBase=="none") ? Form("root/scan1dDatasetsProb_"+this->pdf->getName()+"_%ip"+"_"+scanVar1+"_run%i.root",arg->npoints1d,1) : fileBase ;
+     outputFile       = new TFile(probResName, "RECREATE");  
+  } 
+  else
+  {
+    if( arg->probScanResult != "notSet"){
+      probResName = arg->probScanResult;
+    }
+    TFile* probResFile = TFile::Open(probResName);
+    if(!probResFile){
+        std::cout << "ERROR in MethodDatasetsPluginScan::scan1d - Prob scan result file not found." << std::endl
+                  << "Please run the prob scan before running the plugin scan. " << std::endl
+                  << "The result file of the prob scan can be specified via the --probScanResult command line argument." << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    this->setExtProfileLH((TTree*) probResFile->Get("plugin"));
+    outputFile = new TFile(Form(dirname+"/scan1dDatasetsPlugin_"+this->pdf->getName()+"_"+scanVar1+"_run%i.root", nRun),"RECREATE");
   }
-  else{
-    fName = Form(dirname+"/scan1dDatasetsPlugin_"+this->pdf->getName()+"_"+scanVar1+"_run%i.root", nRun);
-  }
-  TFile* outputFile       = new TFile(fName, "RECREATE");
   
+
   // Define a TH1D for prob values of the scan
   probPValues = new TH1F("probPValues","p Values of a prob Scan", nPoints1d, parameterToScan_min, parameterToScan_max);
 
@@ -612,7 +645,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       continue;
     }
 
-    if(!externalProfileLH || doProbScanOnly){
+    if(doProbScanOnly){
       // FIT TO REAL DATA WITH FIXED HYPOTHESIS(=SCANPOINT).
       // THIS GIVES THE NUMERATOR FOR THE PROFILE LIKELIHOOD AT THE GIVEN HYPOTHESIS
       // THE RESULTING NUISANCE PARAMETERS TOGETHER WITH THE GIVEN HYPOTHESIS ARE ALSO 
@@ -623,7 +656,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       parameterToScan->setVal(scanpoint);
       parameterToScan->setConstant(true);
       
-      RooFitResult *result = this->pdf->fit(kFALSE); // false -> fit on data
+      RooFitResult *result = this->loadAndFit(kFALSE,this->pdf); // false -> fit on data
+      // RooFitResult *result = this->pdf->fit(kFALSE); // false -> fit on data
       assert(result);
       if(arg->debug){ 
         cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - minNll data scan fix " << 2*result->minNll() << endl;
@@ -706,8 +740,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       w->loadSnapshot(plhName);
 
       this->pdf->generateToys(); // this is generating the toy dataset
-      this->pdf->generateToysGlobalObservables(); // this is generating the toy global observables
-      
+      this->pdf->generateToysGlobalObservables(); // this is generating the toy global observables and saves globalObs in snapshot
+
       // \todo: comment the following back in once I know how we do thiat
       //      t.storeParsGau( we need to pass a rooargset of the means of the global observables here);  
 
@@ -717,12 +751,14 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       if(arg->debug)cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - perform scan toy fit" << endl;
       // set parameters to data scan fit
 
-      w->loadSnapshot(plhName); //\todo: remove this?
-  
+      w->loadSnapshot(plhName); 
+      
       parameterToScan->setVal(scanpoint); // I think it should already be on this value from loading the snapshot.
       parameterToScan->setConstant(true);
       this->pdf->setFitStrategy(0);
-      RooFitResult* r   = this->pdf->fit(kTRUE); // kTrue makes sure the fit is to toy data and to toy global observables
+      // LOAD globOBs snapshot first
+      RooFitResult* r   = this->loadAndFit(kTRUE,this->pdf); // kTrue makes sure the fit is to toy data and to toy global observables
+      // RooFitResult* r   = this->pdf->fit(kTRUE); // kTrue makes sure the fit is to toy data and to toy global observables
       assert(r);
       pdf->setMinNllScan(pdf->minNll);
 
@@ -761,7 +797,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
           }
           pdf->setFitStrategy(1);
           delete r;
-          r = pdf->fit(kTRUE);
+          r = this->loadAndFit(kTRUE,this->pdf);
           pdf->setMinNllScan(pdf->minNll);
           assert(r);
           if (std::isinf(pdf->getMinNllScan()) || std::isnan(pdf->getMinNllScan())) {
@@ -798,7 +834,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             }
             pdf->setFitStrategy(2);
             delete r;
-            r = pdf->fit(kTRUE);
+            r = this->loadAndFit(kTRUE,this->pdf);
             assert(r);
           }
       }   
@@ -837,7 +873,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       
       // Fit
       // pdf->setFitStrategy(0);
-      RooFitResult* r1  = this->pdf->fit(kTRUE); // kTrue makes sure the fit is to toy data and to toy global observables
+      RooFitResult* r1  = this->loadAndFit(kTRUE,this->pdf); // kTrue makes sure the fit is to toy data and to toy global observables
       assert(r1);
       pdf->setMinNllFree(pdf->minNll);
       toyTree.chi2minGlobalToy = 2*r1->minNll();
@@ -945,7 +981,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
           if(refit){
             cout << "----> refit with strategy: " << pdf->getFitStrategy() << endl;
             delete r1;
-            r1  = this->pdf->fit(kTRUE);
+            r1  = this->loadAndFit(kTRUE,this->pdf);
             assert(r1);
             pdf->setMinNllFree(pdf->minNll);
             toyTree.chi2minGlobalToy = 2*r1->minNll();
@@ -1049,7 +1085,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
               if(refit2nd){
                 cout << "----> refit with strategy: " << pdf->getFitStrategy() << endl;
                 delete r1;
-                r1  = this->pdf->fit(kTRUE);
+                r1  = this->loadAndFit(kTRUE,this->pdf);
                 assert(r1);
                 pdf->setMinNllFree(pdf->minNll); 
                 toyTree.chi2minGlobalToy = 2*r1->minNll();
@@ -1095,7 +1131,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         if(parameterToScan->getVal() < 1e-13) parameterToScan->setVal(0.67e-12);
         parameterToScan->setConstant(false); 
         pdf->deleteNLL();
-        RooFitResult* r_tmp = pdf->fit(kTRUE);
+        RooFitResult* r_tmp = this->loadAndFit(kTRUE,this->pdf);
         assert(r_tmp);
         if(r_tmp->status()==0 && r_tmp->minNll()<r1->minNll() && r_tmp->minNll()>-1e27){
           pdf->setMinNllFree(pdf->minNll); 

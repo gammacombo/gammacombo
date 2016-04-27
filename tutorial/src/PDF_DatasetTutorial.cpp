@@ -4,11 +4,7 @@
 PDF_DatasetTutorial::PDF_DatasetTutorial(RooWorkspace* w): PDF_Datasets(w){}
 PDF_DatasetTutorial::~PDF_DatasetTutorial(){};
 
-RooFitResult* PDF_DatasetTutorial::fit(cost RooDataSet* dataToFit){
-  if(this->notSetupToFit(fitToys)){
-    std::cout << "FATAL in PDF_DatasetTutorial::fit -- There is no PDF or (toy)data set to fit!" << std::endl;  
-    return NULL;
-  }
+RooFitResult* PDF_DatasetTutorial::fit(RooDataSet* dataToFit){
   	//\todo: move the following into separate method in the ABS class
 	//\todo: also check if all the other argsets and co can be found
 	//\todo: in exchange, get rid of the memeber variables that check initalization, except for the pdf itself.
