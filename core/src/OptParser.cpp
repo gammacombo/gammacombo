@@ -403,7 +403,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::SwitchArg scanforceArg("f", "scanforce", "Use a stronger minimum finding method for the Plugin method.", false);
 	TCLAP::SwitchArg probforceArg("", "probforce", "Use a stronger minimum finding method for the Prob method.", false);
 	TCLAP::SwitchArg probimproveArg("", "probimprove", "Use IMPROVE minimum finding for the Prob method.", false);
-	TCLAP::ValueArg<string> probScanResultArg("", "probScanResult", "Result of a probScan used as input for a Datasets Plugin Scan",false, "","string");
+	TCLAP::ValueArg<string> probScanResultArg("", "probScanResult", "Result of a probScan used as input for a Datasets Plugin Scan",false, "notSet","string");
 	TCLAP::SwitchArg largestArg("", "largest", "Report largest CL interval: lowest boundary of "
 			"all intervals to highest boundary of all intervals. Useful if two intervals are very "
 			"close together.", false);

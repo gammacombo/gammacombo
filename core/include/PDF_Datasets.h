@@ -50,15 +50,11 @@ public:
   float                 getMinNllFree(){return minNllFree;};
   float                 getMinNllScan(){return minNllScan;};
   TString               getObsName(){return obsName;};
-  //const RooArgSet*      getObservables();
   TString               getParName(){return parName;};
-  //const RooArgSet*      getParameters();
   TString               getPdfName(){return pdfName;};
   RooDataSet*           getToyObservables(){return this->toyObservables;};
   RooWorkspace*         getWorkspace(){return wspc;};
   // setters
-  //inline void           setConstraints(const TString& setName){constraintName = setName;};
-  //inline void           setDataName(const TString& objName){dataName = objName;};
   inline void           setFitStatus(int stat = 0){fitStatus = stat;};
   inline void           setFitStrategy(int strat = 0){fitStrategy = strat;};
   inline void           setMinNllFree(float mnll){minNllFree = mnll;}; 
@@ -67,9 +63,9 @@ public:
   void                  setVarRange(const TString &varName, const TString &rangeName, 
                                     const double &rangeMin, const double &rangeMax);
   void                  setToyData(RooDataSet* ds);
-  // void                  setGlobalObservables(bool toToys);
 
   void                  print();
+  void                  printParameters();
   inline  bool          areObservablesSet(){ return areObsSet; };
   inline  bool          areParametersSet(){ return areParsSet; };
   inline  bool          isPdfInitialized(){ return isPdfSet; };

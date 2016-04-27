@@ -45,7 +45,6 @@ public:
     virtual int         scan1d(int nRun=1);
     void                setFileBase(const TString& fname){fileBase = fname;}; // possibility to change probScan file name
     inline  void        setInputFile(TString name){inputFiles.push_back(name); explicitInputFile=true;};
-    inline  void        setExtProfileLH(TTree* tree){profileLHPoints = tree; externalProfileLH = true;};
     inline  void        addFile(TString name){inputFiles.push_back(name);};
 
     PDF_Datasets*        pdf;
@@ -63,6 +62,7 @@ public:
 
 private:
     RooFitResult*           loadAndFit(bool fitToys, PDF_Datasets* pdf);
+    inline  void        setExtProfileLH(TTree* tree){profileLHPoints = tree; externalProfileLH = true;};
 };
 
 #endif
