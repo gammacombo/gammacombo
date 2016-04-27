@@ -1475,7 +1475,7 @@ void GammaComboEngine::scanDataSet()
 	MethodDatasetsPluginScan *scanner = new MethodDatasetsPluginScan( (PDF_Datasets*) pdf[0], arg);
 	scanner->initScan(); //\todo <- can we get rid of this?
 	if ( arg->isAction("pluginbatch") ){
-		scanner->scan1d();
+		scanner->scan1d(arg->nrun);
 	} else if ( arg->isAction("plugin") ){
 		scanner->readScan1dTrees(arg->jmin[0], arg->jmax[0]);
 		/////////////////////////////////////////////////////
