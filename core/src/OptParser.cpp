@@ -83,6 +83,7 @@ OptParser::OptParser():
 	intprob = false;
 	probforce = false;
 	probimprove = false;
+	probScanResult = "notSet";
 	printcor = false;
   printSolX = -999.;
   queue = "";
@@ -153,7 +154,8 @@ void OptParser::defineOptions()
 	availableOptions.push_back("po");
 	availableOptions.push_back("prelim");
   availableOptions.push_back("printsolx");
-	availableOptions.push_back("probforce");
+	availableOptions.push_back("probforce");  
+	availableOptions.push_back("probScanResult");
 	//availableOptions.push_back("probimprove");
 	availableOptions.push_back("ps");
 	availableOptions.push_back("pulls");
@@ -401,6 +403,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::SwitchArg scanforceArg("f", "scanforce", "Use a stronger minimum finding method for the Plugin method.", false);
 	TCLAP::SwitchArg probforceArg("", "probforce", "Use a stronger minimum finding method for the Prob method.", false);
 	TCLAP::SwitchArg probimproveArg("", "probimprove", "Use IMPROVE minimum finding for the Prob method.", false);
+	TCLAP::ValueArg<string> probScanResultArg("", "probScanResult", "Result of a probScan used as input for a Datasets Plugin Scan",false, "","string");
 	TCLAP::SwitchArg largestArg("", "largest", "Report largest CL interval: lowest boundary of "
 			"all intervals to highest boundary of all intervals. Useful if two intervals are very "
 			"close together.", false);
@@ -578,7 +581,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "ps" ) ) cmd.add( plotsolutionsArg );
 	if ( isIn<TString>(bookedOptions, "probimprove" ) ) cmd.add( probimproveArg );
 	if ( isIn<TString>(bookedOptions, "probforce" ) ) cmd.add( probforceArg );
-  if ( isIn<TString>(bookedOptions, "printsolx" ) ) cmd.add( printSolXArg );
+  if ( isIn<TString>(bookedOptions, "probScanResult" ) ) cmd.add(probScanResultArg);
+	if ( isIn<TString>(bookedOptions, "printsolx" ) ) cmd.add( printSolXArg );
 	if ( isIn<TString>(bookedOptions, "printcor" ) ) cmd.add( printcorArg );
 	if ( isIn<TString>(bookedOptions, "prelim" ) ) cmd.add( plotprelimArg );
 	if ( isIn<TString>(bookedOptions, "po" ) ) cmd.add( plotpluginonlyArg );
@@ -685,6 +689,7 @@ void OptParser::parseArguments(int argc, char* argv[])
   printSolX         = printSolXArg.getValue();
 	probforce         = probforceArg.getValue();
 	probimprove       = probimproveArg.getValue();
+  probScanResult    = probScanResultArg.getValue();
 	qh                = qhArg.getValue();
   queue             = TString(queueArg.getValue());
 	savenuisances1d   = snArg.getValue();

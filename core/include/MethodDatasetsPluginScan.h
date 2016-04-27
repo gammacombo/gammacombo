@@ -60,6 +60,9 @@ public:
     TChain*                 chain;
     RooFitResult*           dataFreeFitResult;
     TString                 fileBase;
+
+private:
+    RooFitResult*           loadAndFit(bool fitToys, PDF_Datasets* pdf);
 };
 
 #endif

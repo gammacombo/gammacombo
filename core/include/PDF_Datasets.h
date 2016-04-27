@@ -26,7 +26,7 @@ public:
   ~PDF_Datasets();
   void                  deleteNLL(){if(_NLL){delete _NLL; _NLL=NULL;}};
 
-  virtual RooFitResult* fit(bool fitToys = kTRUE);
+  virtual RooFitResult* fit(RooDataSet* dataToFit);
   virtual void          generateToys(int SeedShift = 0);
   virtual void          generateToysGlobalObservables(int SeedShift = 0);
 
@@ -43,6 +43,7 @@ public:
   OptParser*            getArg();
   TString               getConstraintName(){return constraintName;};
   TString               getDataName(){return dataName;};
+  RooDataSet*           getData(){return this->data;};
   inline int            getFitStatus(){return fitStatus;};
   inline int            getFitStrategy(){return fitStrategy;};
   TString               getGlobalObsName(){return globalObsName;};
@@ -53,6 +54,7 @@ public:
   TString               getParName(){return parName;};
   //const RooArgSet*      getParameters();
   TString               getPdfName(){return pdfName;};
+  RooDataSet*           getToyObservables(){return this->toyObservables;};
   RooWorkspace*         getWorkspace(){return wspc;};
   // setters
   //inline void           setConstraints(const TString& setName){constraintName = setName;};
@@ -78,6 +80,10 @@ public:
   int                   NCPU;         //> number of CPU used
   float                 minNll;
 
+  const TString         globalObsDataSnapshotName = "globalObsDataSnapshotName";
+  //> name of a snapshot that stores the values of the global observables in data
+  const TString         globalObsToySnapshotName = "globalObsToySnapshotName";
+  //> name of a snapshot that stores the latest simulated values for the global observables
 
 protected:
   void initializeRandomGenerator(int seedShift);
@@ -92,10 +98,6 @@ protected:
   TString         constraintName; //> name of the set with all constraint pdfs 
   TString         globalParsName; //> name of the set of global parameters in the workspace, that is, the parameters that occur (not only) in the  constraints...
   TString         globalObsName;   //> name of the set of global observables in the workspace.
-  const TString         globalObsDataSnapshotName = "globalObsDataSnapshotName";
-  //> name of a snapshot that stores the values of the global observables in data
-  const TString         globalObsToySnapshotName = "globalObsToySnapshotName";
-  //> name of a snapshot that stores the latest simulated values for the global observables
   OptParser*      arg;
   int             fitStrategy;
   int             fitStatus;
