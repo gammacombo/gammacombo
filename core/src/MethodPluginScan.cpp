@@ -856,6 +856,7 @@ void MethodPluginScan::readScan1dTrees(int runMin, int runMax)
 {
 
 	TChain *c = new TChain("plugin");
+	int nFilesMissing = 0;
 	int nFilesRead = 0;
 	TString dirname = "root/scan1dPlugin_"+name+"_"+scanVar1;
 	TString fileNameBase = dirname+"/scan1dPlugin_"+name+"_"+scanVar1+"_run";
