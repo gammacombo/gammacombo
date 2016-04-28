@@ -864,8 +864,10 @@ void MethodPluginScan::readScan1dTrees(int runMin, int runMax)
 	for (int i=runMin; i<=runMax; i++){
 		TString file = Form(fileNameBase+"%i.root", i);
 		if ( !FileExists(file) ){
-			cerr << "ERROR : File not found: " + file << endl;
-			exit(EXIT_FAILURE);
+			cout << "WARNING : File not found: " + file + " ..." << endl;
+			nFilesMissing += 1;
+			continue;
+
 		}
 		if ( arg->verbose ) cout << "reading " + file << endl;
 		c->Add(file);
