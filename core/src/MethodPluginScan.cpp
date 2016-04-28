@@ -867,7 +867,6 @@ void MethodPluginScan::readScan1dTrees(int runMin, int runMax)
 			cout << "WARNING : File not found: " + file + " ..." << endl;
 			nFilesMissing += 1;
 			continue;
-
 		}
 		if ( arg->verbose ) cout << "reading " + file << endl;
 		c->Add(file);
