@@ -214,9 +214,10 @@ int MethodCoverageScan::scan1d(int nRun)
 	}
 
   // save trees
-  TString dirname = "root/scan1dCoverage_"+name+"_"+scanVar1;
+  TString idStr = arg->id<0 ? "0" : Form("%d",arg->id);
+  TString dirname = "root/scan1dCoverage_"+name+"_"+scanVar1+"_id"+idStr;
   system("mkdir -p "+dirname);
-  TFile *f = new TFile(Form(dirname+"/scan1dCoverage_"+name+"_"+scanVar1+"_run%i.root", nRun), "recreate");
+  TFile *f = new TFile(Form(dirname+"/scan1dCoverage_"+name+"_"+scanVar1+"_id"+idStr+"_run%i.root", nRun), "recreate");
   t->Write();
   f->Close();
   return 0;
@@ -229,8 +230,9 @@ void MethodCoverageScan::readScan1dTrees(int runMin, int runMax) {
 	int nFilesMissing = 0;
 	int nFilesRead = 0;
 
-	TString dirname = "root/scan1dCoverage_"+name+"_"+scanVar1;
-	TString fileNameBase = dirname+"/scan1dCoverage_"+name+"_"+scanVar1+"_run";
+  TString idStr = arg->id<0 ? "0" : Form("%d",arg->id);
+	TString dirname = "root/scan1dCoverage_"+name+"_"+scanVar1+"_id"+idStr;
+	TString fileNameBase = dirname+"/scan1dCoverage_"+name+"_"+scanVar1+"_id"+idStr+"_run";
 	if ( arg->debug ) cout << "MethodCoverageScan::readScan1dTrees() : ";
 	cout << "reading files: " << fileNameBase+"*.root" << endl;
 	for (int i=runMin; i<=runMax; i++){
