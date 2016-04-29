@@ -87,6 +87,7 @@ OptParser::OptParser():
   printSolX = -999.;
   printSolY = -999.;
   queue = "";
+  save = "";
 	scanforce = false;
 	scanrangeMax = -101;
 	scanrangeMin = -101;
@@ -164,6 +165,7 @@ void OptParser::defineOptions()
   availableOptions.push_back("queue");
   availableOptions.push_back("randomizeToyVars");
   availableOptions.push_back("removeRange");
+  availableOptions.push_back("save");
 	availableOptions.push_back("sn");
 	availableOptions.push_back("sn2d");
 	availableOptions.push_back("scanforce");
@@ -391,6 +393,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"Format (single): -j n", false, "string");
 	TCLAP::ValueArg<string> jobdirArg("", "jobdir", "Give absolute job-directory if working on batch systems.", false, "default", "string");
   TCLAP::ValueArg<string> toyFilesArg("", "toyFiles", "Pass some different toy files, for example if you want 1D projection of 2D FC.", false, "default", "string" );
+  TCLAP::ValueArg<string> saveArg("","save", "Save the workspace this file name", false, "", "string");
 
 	// --------------- switch arguments
   TCLAP::SwitchArg batcheosArg("","batcheos", "When submitting batch jobs (for plugin) write the output to eos", false);
@@ -584,6 +587,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "scanrangey" ) ) cmd.add( scanrangeyArg );
 	if ( isIn<TString>(bookedOptions, "scanrange" ) ) cmd.add( scanrangeArg );
 	if ( isIn<TString>(bookedOptions, "scanforce" ) ) cmd.add( scanforceArg );
+  if ( isIn<TString>(bookedOptions, "save" ) ) cmd.add( saveArg );
 	if ( isIn<TString>(bookedOptions, "relation" ) ) cmd.add(relationArg);
   if ( isIn<TString>(bookedOptions, "removeRange" ) ) cmd.add(removeRangeArg);
   if ( isIn<TString>(bookedOptions, "randomizeToyVars" ) ) cmd.add(randomizeToyVarsArg);
@@ -704,6 +708,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	probimprove       = probimproveArg.getValue();
 	qh                = qhArg.getValue();
   queue             = TString(queueArg.getValue());
+  save              = saveArg.getValue();
 	savenuisances1d   = snArg.getValue();
 	scanforce         = scanforceArg.getValue();
 	smooth2d          = smooth2dArg.getValue();

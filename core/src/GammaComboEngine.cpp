@@ -1254,6 +1254,40 @@ void GammaComboEngine::makeLatex(Combiner *c)
 }
 
 ///
+/// save workspace
+///
+void GammaComboEngine::saveWorkspace( Combiner *c, int i )
+{
+  // if --pr then make the ranges
+  if ( arg->enforcePhysRange ) setLimit( c->getParameters(), "phys" );
+
+  // first write a copy THE PDF into the workspace
+  const RooAbsPdf *thePdf         = c->getPdf();
+  const RooArgSet *theParameters  = c->getParameters();
+  const RooArgSet *theObservables = c->getObservables();
+
+  RooAbsPdf *savePdf = (RooAbsPdf*)thePdf->Clone("ThePdf");
+  c->getWorkspace()->import( *savePdf, Silence() );
+  c->getWorkspace()->defineSet( "TheParameters", *theParameters );
+  c->getWorkspace()->defineSet( "TheObservables", *theObservables );
+
+  // set the name of the workspace associated with combiner id
+  int cId = arg->combid[i];
+  c->getWorkspace()->SetName( Form("w%d",cId) );
+
+  // if the first instance then write directly to file
+  if ( i==0 ) {
+    c->getWorkspace()->writeToFile( arg->save );
+  }
+  // otherwise add it to the file
+  else {
+    TFile *tf = TFile::Open( arg->save, "UPDATE" );
+    c->getWorkspace()->Write();
+    tf->Close();
+  }
+}
+
+///
 /// scan engine
 ///
 void GammaComboEngine::scan()
@@ -1309,8 +1343,9 @@ void GammaComboEngine::scan()
 		// printout and latex
 		c->print();
 		if ( arg->debug ) c->getWorkspace()->Print("v");
+    if ( arg->save != "" ) saveWorkspace( c, i );
     if ( arg->latex ) makeLatex( c );
-    if ( arg->info || arg->latex ) continue;
+    if ( arg->info || arg->latex || arg->save!="" ) continue;
 
 		/////////////////////////////////////////////////////
 		//
@@ -1538,7 +1573,7 @@ void GammaComboEngine::run()
 	customizeCombinerTitles();
 	setUpPlot();
 	scan(); // most thing gets done here
-  if ( arg->info || arg->latex ) return; // if only info is requested then we can go home
+  if ( arg->info || arg->latex || arg->save!="" ) return; // if only info is requested then we can go home
 	if (!arg->isAction("pluginbatch") && !arg->isAction("coveragebatch") && !arg->isAction("coverage") ) savePlot();
 	cout << endl;
 	t.Stop();
