@@ -547,18 +547,19 @@ void MethodAbsScan::calcCLintervals()
 	cout << "CONFIDENCE INTERVALS for combination " << name << endl << endl;
 	clintervals1sigma.clear(); // clear, else calling this function twice doesn't work
 	clintervals2sigma.clear();
+  clintervals3sigma.clear();
 	int n = hCL->GetNbinsX();
 	RooRealVar* par = w->var(scanVar1);
 
 	for ( int iSol=0; iSol<solutions.size(); iSol++ )
 	{
-		float CL[2]      = {0.6827, 0.9545};
-		float CLhi[2]    = {0.0};
-		float CLhiErr[2] = {0.0};
-		float CLlo[2]    = {0.0};
-		float CLloErr[2] = {0.0};
+		float CL[3]      = {0.6827, 0.9545, 0.9973 };
+		float CLhi[3]    = {0.0};
+		float CLhiErr[3] = {0.0};
+		float CLlo[3]    = {0.0};
+		float CLloErr[3] = {0.0};
 
-		for ( int c=0; c<2; c++ )
+		for ( int c=0; c<3; c++ )
 		{
 			CLlo[c] = hCL->GetXaxis()->GetXmin();
 			CLhi[c] = hCL->GetXaxis()->GetXmax();
@@ -604,6 +605,7 @@ void MethodAbsScan::calcCLintervals()
 				cli.central = sol;
 				if ( c==0 ) clintervals1sigma.push_back(cli);
 				if ( c==1 ) clintervals2sigma.push_back(cli);
+				if ( c==2 ) clintervals3sigma.push_back(cli);
 			}
 		}
 	}
@@ -708,6 +710,7 @@ void MethodAbsScan::printCLintervals()
 	clp.setDegrees(isAngle(w->var(scanVar1)));
 	clp.addIntervals(clintervals1sigma);
 	clp.addIntervals(clintervals2sigma);
+	clp.addIntervals(clintervals3sigma);
 	clp.print();
 	clp.savePython();
 	cout << endl;
@@ -719,6 +722,7 @@ void MethodAbsScan::printCLintervals()
 		bool cont=false;
 		for ( int j=0; j<clintervals1sigma.size(); j++ ) if ( clintervals1sigma[j].min<sol && sol<clintervals1sigma[j].max ) cont=true;
 		for ( int j=0; j<clintervals2sigma.size(); j++ ) if ( clintervals2sigma[j].min<sol && sol<clintervals2sigma[j].max ) cont=true;
+		for ( int j=0; j<clintervals3sigma.size(); j++ ) if ( clintervals3sigma[j].min<sol && sol<clintervals3sigma[j].max ) cont=true;
 		if ( cont==true ) continue;
 		if ( w->var(scanVar1)->getUnit()==TString("Rad") ) sol = RadToDeg(sol);
 		int d = arg->digits;
@@ -750,6 +754,7 @@ CLInterval MethodAbsScan::getCLintervalCentral(int sigma)
 	vector<CLInterval> intervals;
 	if ( sigma==1 ) intervals = clintervals1sigma;
 	else if ( sigma==2 ) intervals = clintervals2sigma;
+  else if ( sigma==3) intervals = clintervals3sigma;
 	else{
 		cout << "MethodAbsScan::getCLintervalCentral() : ERROR : no such CL intervals! sigma=" << sigma << endl;
 		exit(1);

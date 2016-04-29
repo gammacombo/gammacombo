@@ -36,6 +36,16 @@ int MethodCoverageScan::scan1d(int nRun)
 
 	// set up a root tree to save results
 	float tSol = 0.0;
+  float tSolProbErr1Low = 0.0;
+  float tSolProbErr1Up  = 0.0;
+  float tSolProbErr2Low = 0.0;
+  float tSolProbErr2Up  = 0.0;
+  float tSolProbErr3Low = 0.0;
+  float tSolProbErr3Up  = 0.0;
+  vector<float> paramVals;
+  for ( int i=0; i<combiner->getParameterNames().size(); i++ ) {
+    paramVals.push_back( 0.0 );
+  }
 	float tChi2free = 0.0;
 	float tChi2scan = 0.0;
 	float tSolGen;
@@ -44,6 +54,16 @@ int MethodCoverageScan::scan1d(int nRun)
   int   tnRun;
 	TTree *t = new TTree("coverage", "Coverage Toys Tree");
 	t->Branch("sol",                  &tSol,          "sol/F");                // central value
+  t->Branch("solProbErr1Low",           &tSolProbErr1Low,   "solProbErr1Low/F");         // 1 sigma err
+  t->Branch("solProbErr1Up",            &tSolProbErr1Up,    "solProbErr1Up/F");          // 1 sigma err
+  t->Branch("solProbErr2Low",           &tSolProbErr2Low,   "solProbErr2Low/F");         // 2 sigma err
+  t->Branch("solProbErr2Up",            &tSolProbErr2Up,    "solProbErr2Up/F");          // 2 sigma err
+  t->Branch("solProbErr3Low",           &tSolProbErr3Low,   "solProbErr3Low/F");         // 3 sigma err
+  t->Branch("solProbErr3Up",            &tSolProbErr3Up,    "solProbErr3Up/F");          // 3 sigma err
+  // also want central values for nuisance params
+  for ( int i=0; i<combiner->getParameterNames().size(); i++ ) {
+    t->Branch( combiner->getParameterNames()[i].c_str(), &paramVals[i], (combiner->getParameterNames()[i]+"/F").c_str() );
+  }
 	t->Branch("chi2free",             &tChi2free,     "chi2free/F");           // chi2 value of free fit
 	t->Branch("chi2scan",             &tChi2scan,     "chi2scan/F");           // chi2 value of scan fit
 	t->Branch("solGen",               &tSolGen,       "solgen/F");             // central value of point where coverage is tested
@@ -55,7 +75,7 @@ int MethodCoverageScan::scan1d(int nRun)
   tnRun = nRun;
 
   // combine
-  combiner->combine();
+  if ( !combiner->isCombined() ) combiner->combine();
 
 	// set up a ToyTree to save the results from the
 	// plugin toys
@@ -98,6 +118,25 @@ int MethodCoverageScan::scan1d(int nRun)
 		//if ( arg->isAction("test") && i<10 ){
 			//scanToy(combiner, plot, i);
 		//}
+    MethodProbScan *probScanner = new MethodProbScan( combiner );
+    probScanner->initScan();
+    probScanner->scan1d();
+    vector<RooSlimFitResult*> firstScanSolutions = probScanner->getSolutions();
+    for ( int i=0; i<firstScanSolutions.size(); i++ ){
+      probScanner->loadParameters( firstScanSolutions[i] );
+      probScanner->scan1d(true);
+    }
+    probScanner->confirmSolutions();
+    probScanner->printLocalMinima();
+    CLInterval probSig1Int = probScanner->getCLintervalCentral(1);
+    CLInterval probSig2Int = probScanner->getCLintervalCentral(2);
+    CLInterval probSig3Int = probScanner->getCLintervalCentral(3);
+    tSolProbErr1Low = probSig1Int.min;
+    tSolProbErr1Up  = probSig1Int.max;
+    tSolProbErr2Low = probSig2Int.min;
+    tSolProbErr2Up  = probSig2Int.max;
+    tSolProbErr3Low = probSig3Int.min;
+    tSolProbErr3Up  = probSig3Int.max;
 
 		if ( arg->debug ){
 			cout << "PARAMETERS AFTER TOY SCAN" << endl;
@@ -125,6 +164,11 @@ int MethodCoverageScan::scan1d(int nRun)
 		tSol = w->var(varName)->getVal();
 		rToyFree->Print();
 		delete rToyFreeFull;
+
+    // can fill values of fit parameters here
+    for ( int i=0; i<combiner->getParameterNames().size(); i++ ) {
+      paramVals[i] = w->var( combiner->getParameterNames()[i].c_str() )->getVal();
+    }
 
 		cout << "SCAN" << endl;
 		setParameters(w, parName, frCache.getParsAtFunctionCall());
