@@ -36,6 +36,7 @@ int MethodCoverageScan::scan1d(int nRun)
 
 	// set up a root tree to save results
 	float tSol = 0.0;
+  float tSolScan = 0.0;
   float tSolProbErr1Low = 0.0;
   float tSolProbErr1Up  = 0.0;
   float tSolProbErr2Low = 0.0;
@@ -54,6 +55,7 @@ int MethodCoverageScan::scan1d(int nRun)
   int   tnRun;
 	TTree *t = new TTree("coverage", "Coverage Toys Tree");
 	t->Branch("sol",                  &tSol,          "sol/F");                // central value
+	t->Branch("solScan",                  &tSolScan,          "solScan/F");                // central value
   t->Branch("solProbErr1Low",           &tSolProbErr1Low,   "solProbErr1Low/F");         // 1 sigma err
   t->Branch("solProbErr1Up",            &tSolProbErr1Up,    "solProbErr1Up/F");          // 1 sigma err
   t->Branch("solProbErr2Low",           &tSolProbErr2Low,   "solProbErr2Low/F");         // 2 sigma err
@@ -118,26 +120,6 @@ int MethodCoverageScan::scan1d(int nRun)
 		//if ( arg->isAction("test") && i<10 ){
 			//scanToy(combiner, plot, i);
 		//}
-    MethodProbScan *probScanner = new MethodProbScan( combiner );
-    probScanner->initScan();
-    probScanner->scan1d();
-    vector<RooSlimFitResult*> firstScanSolutions = probScanner->getSolutions();
-    for ( int i=0; i<firstScanSolutions.size(); i++ ){
-      probScanner->loadParameters( firstScanSolutions[i] );
-      probScanner->scan1d(true);
-    }
-    probScanner->confirmSolutions();
-    probScanner->printLocalMinima();
-    CLInterval probSig1Int = probScanner->getCLintervalCentral(1);
-    CLInterval probSig2Int = probScanner->getCLintervalCentral(2);
-    CLInterval probSig3Int = probScanner->getCLintervalCentral(3);
-    tSolProbErr1Low = probSig1Int.min;
-    tSolProbErr1Up  = probSig1Int.max;
-    tSolProbErr2Low = probSig2Int.min;
-    tSolProbErr2Up  = probSig2Int.max;
-    tSolProbErr3Low = probSig3Int.min;
-    tSolProbErr3Up  = probSig3Int.max;
-
 		if ( arg->debug ){
 			cout << "PARAMETERS AFTER TOY SCAN" << endl;
 			combiner->getParameters()->Print("v");
@@ -201,6 +183,30 @@ int MethodCoverageScan::scan1d(int nRun)
 		c3->cd();
 		hPvalues->Draw();
 		c3->Update();
+
+    // now do the uncertainty scan for the Prob method
+    MethodProbScan *probScanner = new MethodProbScan( combiner );
+    probScanner->initScan();
+    probScanner->loadParameters( rToyFree ); // load parameters from forced fit
+    probScanner->scan1d();
+    //vector<RooSlimFitResult*> firstScanSolutions = probScanner->getSolutions();
+    //for ( int i=0; i<firstScanSolutions.size(); i++ ){
+      //probScanner->loadParameters( firstScanSolutions[i] );
+      //probScanner->scan1d(true);
+    //}
+    probScanner->confirmSolutions();
+    probScanner->printLocalMinima();
+    CLInterval probSig1Int = probScanner->getCLintervalCentral(1);
+    CLInterval probSig2Int = probScanner->getCLintervalCentral(2);
+    CLInterval probSig3Int = probScanner->getCLintervalCentral(3);
+    tSolScan        = probSig1Int.central;
+    tSolProbErr1Low = probSig1Int.min;
+    tSolProbErr1Up  = probSig1Int.max;
+    tSolProbErr2Low = probSig2Int.min;
+    tSolProbErr2Up  = probSig2Int.max;
+    tSolProbErr3Low = probSig3Int.min;
+    tSolProbErr3Up  = probSig3Int.max;
+
 
 		// fill tree
 		t->Fill();
