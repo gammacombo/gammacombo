@@ -49,8 +49,15 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets* PDF, OptParser*
   std::cout << "=============== Global Minimum (2*-Log(Likelihood)) set to: 2*" << dataFreeFitResult->minNll() << " = " << chi2minGlobal << endl;
   chi2minGlobalFound = true;  // check workspace content 
 
-  if ( !w->set(pdf->getObsName()) ) { cerr << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no '" + pdf->getObsName() + "' set found in workspace" << endl; exit(1); }
-  if ( !w->set(pdf->getParName()) ) { cerr << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no '" + pdf->getParName() + "' set found in workspace" << endl; exit(1); }
+  if ( !w->set(pdf->getObsName()) ) { 
+    cerr << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no '" + pdf->getObsName() + "' set found in workspace" << endl; 
+    cerr << " You can specify the name of the set in the workspace using the pdf->initObservables(..) method.";
+    exit(EXIT_FAILURE); 
+  }
+  if ( !w->set(pdf->getParName()) ) { 
+    cerr << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no '" + pdf->getParName() + "' set found in workspace" << endl; 
+    exit(EXIT_FAILURE); 
+  }
 }
 
 float MethodDatasetsPluginScan::getParValAtScanpoint(float point, TString parName){
@@ -83,15 +90,7 @@ void MethodDatasetsPluginScan::initScan(){
     cout << "MethodDatasetsPluginScan::initScan() :         Choose an existing one using: --var par" << endl << endl;
     cout << "  Available parameters:" << endl;
     cout << "  ---------------------" << endl << endl << "  ";
-    int parcounter = 0;
-    TIterator* it = pdf->getParameters()->createIterator();
-    while ( RooRealVar* p = (RooRealVar*)it->Next() ){
-      cout << p->GetName() << " ";
-      parcounter += 1;
-      if ( parcounter%5==0 ) cout << endl << "  ";
-    }
-    delete it;
-    cout << endl << endl;
+    pdf->printParameters();
     exit(1);
   }
   if ( arg->scanrangeMin != arg->scanrangeMax ) par1->setRange("scan", arg->scanrangeMin, arg->scanrangeMax);
@@ -298,10 +297,10 @@ TChain* MethodDatasetsPluginScan::readFiles(int runMin, int runMax, int &nFilesR
   // Align files names with scan1d/scan1d
 
   if(doProbScanOnly){
-    TString file = (fileBase=="none") ? Form("root/scan1dDatasetsProb_"+this->pdf->getName()+"_%ip"+"_"+scanVar1+"_run1.root",arg->npoints1d,1) : fileBase ;
+    TString file = (fileBase=="none") ? Form("root/scan1dDatasetsProb_"+this->pdf->getName()+"_%ip"+"_"+scanVar1,arg->npoints1d) : fileBase ;
     if ( !FileExists(file) ){
-          if ( arg->verbose ) cout << "MethodDatasetsPluginScan::readScan1dTrees() : ERROR : File not found: " + file + " ..." << endl;
-          _nFilesMissing += 1;
+          cerr << "MethodDatasetsPluginScan::readFiles() : ERROR : File not found: " + file + " ..." << endl;
+          exit(EXIT_FAILURE);
         }
     else{
       c->Add(file);
@@ -314,48 +313,48 @@ TChain* MethodDatasetsPluginScan::readFiles(int runMin, int runMax, int &nFilesR
     if(!explicitInputFile){
       for (int i=runMin; i<=runMax; i++){
         TString file = Form(fileNameBase+"%i.root", i);
-        cout << "MethodDatasetsPluginScan::readScan1dTrees() : opening " << file << "\r";
+        cout << "MethodDatasetsPluginScan::readFiles() : opening " << file << "\r";
         if ( !FileExists(file) ){
-          if ( arg->verbose ) cout << "MethodDatasetsPluginScan::readScan1dTrees() : ERROR : File not found: " + file + " ..." << endl;
+          if ( arg->verbose ) cout << "MethodDatasetsPluginScan::readFiles() : ERROR : File not found: " + file + " ..." << endl;
           _nFilesMissing += 1;
           continue;
         }
-        if ( arg->verbose ) cout << "MethodDatasetsPluginScan::readScan1dTrees() : reading " + file + " ..." << endl;
+        if ( arg->verbose ) cout << "MethodDatasetsPluginScan::readFiles() : reading " + file + " ..." << endl;
         c->Add(file);
         _nFilesRead += 1;
       }
       if(inputFiles.size()!=0){
         for(TString &file : inputFiles){
           if ( !FileExists(file) ){
-            if ( arg->verbose ) cout << "MethodDatasetsPluginScan::readScan1dTrees() : ERROR : File not found: " + file + " ..." << endl;
+            if ( arg->verbose ) cout << "MethodDatasetsPluginScan::readFiles() : ERROR : File not found: " + file + " ..." << endl;
             _nFilesMissing += 1;
           }
-          cout << "MethodDatasetsPluginScan::readScan1dTrees() : " << file << endl;
+          cout << "MethodDatasetsPluginScan::readFiles() : " << file << endl;
           c->Add(file);
           _nFilesRead += 1;
         }
       }
-      cout << "MethodDatasetsPluginScan::readScan1dTrees() : read files: " << _nFilesRead 
+      cout << "MethodDatasetsPluginScan::readFiles() : read files: " << _nFilesRead
            << ", missing files: " << _nFilesMissing 
            << "                                                               "
            << "                    " << endl; // many spaces to overwrite the above \r
-      cout << "MethodDatasetsPluginScan::readScan1dTrees() : " << fileNameBase+"*.root" << endl;
+      cout << "MethodDatasetsPluginScan::readFiles() : " << fileNameBase+"*.root" << endl;
       if ( _nFilesRead==0 ){
-        cout << "MethodDatasetsPluginScan::readScan1dTrees() : no files read!" << endl;
+        cout << "MethodDatasetsPluginScan::readFiles() : no files read!" << endl;
         exit(1);
       }
     }
     else{
       for(TString &file : inputFiles){
         if ( !FileExists(file) ){
-          if ( arg->verbose ) cout << "MethodDatasetsPluginScan::readScan1dTrees() : ERROR : File not found: " + file + " ..." << endl;
+          if ( arg->verbose ) cout << "MethodDatasetsPluginScan::readFiles() : ERROR : File not found: " + file + " ..." << endl;
           _nFilesMissing += 1;
         }
-        cout << "MethodDatasetsPluginScan::readScan1dTrees() : " << file << endl;
+        cout << "MethodDatasetsPluginScan::readFiles() : " << file << endl;
         c->Add(file);
         _nFilesRead += 1;
       }
-      cout << "MethodDatasetsPluginScan::readScan1dTrees() : read files: " << _nFilesRead << endl  
+      cout << "MethodDatasetsPluginScan::readFiles() : read files: " << _nFilesRead << endl
            << ", missing files: " << _nFilesMissing 
            << "                                                               "
            << "                    " << endl; // many spaces to overwrite the above \r
@@ -597,7 +596,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
     }
     TFile* probResFile = TFile::Open(probResName);
     if(!probResFile){
-        std::cout << "ERROR in MethodDatasetsPluginScan::scan1d - Prob scan result file not found." << std::endl
+        std::cout << "ERROR in MethodDatasetsPluginScan::scan1d - Prob scan result file not found in " << std::endl
+                  << probResName << std::endl
                   << "Please run the prob scan before running the plugin scan. " << std::endl
                   << "The result file of the prob scan can be specified via the --probScanResult command line argument." << std::endl;
         exit(EXIT_FAILURE);

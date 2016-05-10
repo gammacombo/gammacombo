@@ -854,6 +854,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
 ///
 void MethodPluginScan::readScan1dTrees(int runMin, int runMax)
 {
+
 	TChain *c = new TChain("plugin");
 	int nFilesMissing = 0;
 	int nFilesRead = 0;
@@ -864,21 +865,20 @@ void MethodPluginScan::readScan1dTrees(int runMin, int runMax)
 	for (int i=runMin; i<=runMax; i++){
 		TString file = Form(fileNameBase+"%i.root", i);
 		if ( !FileExists(file) ){
-			if ( arg->verbose ) cout << "ERROR : File not found: " + file + " ..." << endl;
+			cout << "WARNING : File not found: " + file + " ..." << endl;
 			nFilesMissing += 1;
 			continue;
 		}
-		if ( arg->verbose ) cout << "reading " + file + " ..." << endl;
+		if ( arg->verbose ) cout << "reading " + file << endl;
 		c->Add(file);
 		nFilesRead += 1;
 	}
 	if ( arg->debug ) cout << "MethodPluginScan::readScan1dTrees() : ";
 	cout << "read toy files: " << nFilesRead;
-	cout << ", missing files: " << nFilesMissing << endl;
 	if ( nFilesRead==0 ){
 		if ( arg->debug ) cout << "MethodPluginScan::readScan1dTrees() : ";
-		cout << "ERROR : no files read!" << endl;
-		exit(1);
+		cerr << "ERROR : no files read!" << endl;
+		exit(EXIT_FAILURE);
 	}
 
 	ToyTree t(combiner, c);

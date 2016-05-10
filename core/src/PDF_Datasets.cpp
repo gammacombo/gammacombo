@@ -193,6 +193,19 @@ void PDF_Datasets::print(){
   return;
 };
 
+void PDF_Datasets::printParameters(){
+  int parcounter = 0;
+  TIterator* it = this->parameters->createIterator();
+  while ( RooRealVar* p = (RooRealVar*)it->Next() ){
+    cout << p->GetName() << " ";
+    parcounter += 1;
+    if ( parcounter%5==0 ) cout << endl << "  ";
+  }
+  delete it;
+  cout << endl << endl;
+};
+
+
 
 OptParser*   PDF_Datasets::getArg(){
   std::cout<<"ERROR: getting the options parser from the pdf has been deprecated"<<std::endl;
@@ -284,3 +297,5 @@ void PDF_Datasets::initializeRandomGenerator(int seedShift){
     RooRandom::randomGenerator()->SetSeed(seedShift + (arg->nrun)*(arg->ntoys)*(arg->npoints1d));
   }
 }
+
+
