@@ -586,15 +586,15 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
   TString fName;
   TString probResName =(fileBase=="none") ? Form("root/scan1dDatasetsProb_"+this->pdf->getName()+"_%ip"+"_"+scanVar1,arg->npoints1d) : fileBase ;
   TFile* outputFile = NULL;
+  TFile* probResFile = NULL;
   if(doProbScanOnly){
      outputFile       = new TFile(probResName, "RECREATE");  
   } 
-  else
-  {
+  else {
     if( arg->probScanResult != "notSet"){
       probResName = arg->probScanResult;
     }
-    TFile* probResFile = TFile::Open(probResName);
+    probResFile = TFile::Open(probResName);
     if(!probResFile){
         std::cout << "ERROR in MethodDatasetsPluginScan::scan1d - Prob scan result file not found in " << std::endl
                   << probResName << std::endl
@@ -621,6 +621,13 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
   // to the outside.
   RooDataSet* parsFunctionCall = new RooDataSet("parsFunctionCall", "parsFunctionCall", *w->set(pdf->getParName()));
   parsFunctionCall->add(*w->set(pdf->getParName()));
+
+
+  // define a workspace to store plugin values of the nuisance parameters for different scan points
+  // of course we only need this during the prob scan
+  RooWorkspace pluginValuesWorkspace("pluginValuesWorkspace","pluginValuesWorkspace");
+  // (it does not hurt if we store a few more paremeters)
+  pluginValuesWorkspace.import(w->allVars());
       
   // start scan
   cout << "MethodDatasetsPluginScan::scan1d() : starting ... with " << nPoints1d << " scanpoints..." << endl;
@@ -645,6 +652,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       continue;
     }
 
+
+
     if(doProbScanOnly){
       // FIT TO REAL DATA WITH FIXED HYPOTHESIS(=SCANPOINT).
       // THIS GIVES THE NUMERATOR FOR THE PROFILE LIKELIHOOD AT THE GIVEN HYPOTHESIS
@@ -653,12 +662,19 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       // Here the scanvar has to be fixed -> this is done once per scanpoint 
       // and provides the scanner with the DeltaChi2 for the data as reference
       // additionally the nuisances are set to the resulting fit values
+      
       parameterToScan->setVal(scanpoint);
       parameterToScan->setConstant(true);
       
       RooFitResult *result = this->loadAndFit(kFALSE,this->pdf); // false -> fit on data
-      // RooFitResult *result = this->pdf->fit(kFALSE); // false -> fit on data
       assert(result);
+
+      // store values of nuisance parameters in output file for later loading
+      // (it does not hurt if we store a few more paremeters)
+      const std::string name = "parameters_at_point_" + std::to_string(i) + "_argset";
+      pluginValuesWorkspace.saveSnapshot(name.c_str(), w->allVars(), kTRUE); 
+      // According to the documentation, this should work without kTRUE, but it does not.
+
       if(arg->debug){ 
         cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - minNll data scan fix " << 2*result->minNll() << endl;
         cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - Data Scan fit result" << endl;
@@ -675,8 +691,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 
       if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - parameters value stored in ToyTree for scanpoint " << i+1 << endl;
       this->pdf->deleteNLL();
-    }
-    else{
+    } else {
       if(this->loadPLHPoint(scanpoint,i)){
         if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - scan point " << i+1 
           << " loaded from external PLH scan file" << endl; 
@@ -691,9 +706,6 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
     // After doing the fit with the parameter of interest constrained to the scanpoint,
     // we are now saving the fit values of the nuisance parameters. These values will be
     // used to generate toys according to the PLUGIN method.
-    RooArgSet allVars = w->allVars();
-    TString plhName = Form("profileLHPoint_%i",i);
-    w->saveSnapshot(plhName,allVars);
 
     RooDataSet* parsGlobalMinScanPoint = new RooDataSet("parsGlobalMinScanPoint", "parsGlobalMinScanPoint", *w->set(pdf->getParName()));
     parsGlobalMinScanPoint->add(*w->set(pdf->getParName()));
@@ -737,7 +749,12 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 
       // Set nuisance parameters to the values from the fit to data with fixed parameter of interest.
       // This is called the PLUGIN method.
-      w->loadSnapshot(plhName);
+  
+      // these are not only the nuisance parameter values, but all values
+      const RooArgSet* prob_fit_result_values = this->getParevolPointByIndex(i, probResFile);
+      // assign the loaded parameter values to the parameters owned by the fit function.
+      w->allVars() = *prob_fit_result_values;
+
 
       this->pdf->generateToys(); // this is generating the toy dataset
       this->pdf->generateToysGlobalObservables(); // this is generating the toy global observables and saves globalObs in snapshot
@@ -749,9 +766,9 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       // 2. Fit to toys with parameter of interest fixed to scanpoint
       //
       if(arg->debug)cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - perform scan toy fit" << endl;
-      // set parameters to data scan fit
 
-      w->loadSnapshot(plhName); 
+      // set parameters to data scan fit again
+      w->allVars() = *prob_fit_result_values;
       
       parameterToScan->setVal(scanpoint); // I think it should already be on this value from loading the snapshot.
       parameterToScan->setConstant(true);
@@ -867,7 +884,9 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       if(arg->debug)cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - perform free toy fit" << endl;
       // Use parameters from the scanfit to data
       
-      w->loadSnapshot(plhName); // not sure why we are loading this here. Maybe it helps to get a nice starting point.
+      // not sure why we are loading this here. Maybe it helps to get a nice starting point.
+      //w->loadSnapshot(plhName);
+      w->allVars() = *prob_fit_result_values;
 
       parameterToScan->setConstant(false);
       
@@ -1202,7 +1221,11 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       //because they are saved as a a snapshot and we cannot delete snapshots.
       
     } // End of toys loop
-    if(doProbScanOnly) toyTree.fill();
+    if(doProbScanOnly){
+      toyTree.fill();
+      outputFile->Add(&pluginValuesWorkspace);
+    }
+
 
     // reset
     setParameters(w, pdf->getParName(), parsFunctionCall->get(0));
@@ -1352,3 +1375,18 @@ void MethodDatasetsPluginScan::printDebug(const RooFitResult& r){
           << std::resetiosflags(std::ios::fixed) 
           << std::resetiosflags(std::ios::scientific);
 };
+
+
+RooSlimFitResult* MethodDatasetsPluginScan::getParevolPoint(float scanpoint){
+  std::cout << "ERROR: not implemented for MethodDatasetsPluginScan, use loadParevolPointByIndex() instad" <<std::endl;
+  exit(EXIT_FAILURE);
+}
+
+///
+/// Load the snapshots that contain the right nuisance param. values for generating toys
+///
+const RooArgSet* MethodDatasetsPluginScan::getParevolPointByIndex(int index, TFile* file){
+  RooWorkspace* pluginValuesWorkspace = (RooWorkspace*) file->Get("pluginValuesWorkspace");
+  const std::string name = "parameters_at_point_" + std::to_string(index) + "_argset";
+  return pluginValuesWorkspace->getSnapshot(name.c_str());
+}
