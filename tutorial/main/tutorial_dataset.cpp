@@ -21,6 +21,7 @@ int main(int argc, char* argv[])
 
   // How to run the tutorial:
   // bin/tutorial_dataset_build_workspace
+  // bin/tutorial_dataset --var branchingRatio --npoints 10 --scanrange 1e-7:3e-6
   // bin/tutorial_dataset -a pluginbatch --var branchingRatio --lightfiles --ntoys 50  --npoints 10 --scanrange 1e-7:3e-6
   // bin/tutorial_dataset -a plugin --var branchingRatio --lightfiles -i
 	
