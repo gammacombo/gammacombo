@@ -688,15 +688,6 @@ void MethodDatasetsPluginScan::scan1d_prob()
     if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - parameters value stored in ToyTree for scanpoint " << i+1 << endl;
     this->pdf->deleteNLL();
 
-
-    // After doing the fit with the parameter of interest constrained to the scanpoint,
-    // we are now saving the fit values of the nuisance parameters. These values will be
-    // used to generate toys according to the PLUGIN method.
-
-    RooDataSet* parsGlobalMinScanPoint = new RooDataSet("parsGlobalMinScanPoint", "parsGlobalMinScanPoint", *w->set(pdf->getParName()));
-    parsGlobalMinScanPoint->add(*w->set(pdf->getParName()));
-    
-    if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - stored parameter values for scanpoint " << i+1 << endl;
       
 
     // get the chi2 of the data
@@ -728,8 +719,6 @@ void MethodDatasetsPluginScan::scan1d_prob()
   
     // reset
     setParameters(w, pdf->getParName(), parsFunctionCall->get(0));
-    //delete result;
-    delete parsGlobalMinScanPoint;
     //setParameters(w, pdf->getObsName(), obsDataset->get(0));
     toyTree.writeToFile();
   } // End of npoints loop
@@ -846,8 +835,6 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
     // we are now saving the fit values of the nuisance parameters. These values will be
     // used to generate toys according to the PLUGIN method.
 
-    RooDataSet* parsGlobalMinScanPoint = new RooDataSet("parsGlobalMinScanPoint", "parsGlobalMinScanPoint", *w->set(pdf->getParName()));
-    parsGlobalMinScanPoint->add(*w->set(pdf->getParName()));
     
     if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - stored parameter values for scanpoint " << i+1 << endl;
       
@@ -875,10 +862,12 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
       << " filled in bin " << i+1 << " at: " << scanpoint << endl;
     }
     
+    // Load the parameter values from the fit to data with fixed parameter of interest.
+    // These ehre are not only the nuisance parameter values, but all values.
+    // However, just the nuisance parameters would in principle be enough.
+    const RooArgSet* prob_fit_result_values = this->getParevolPointByIndex(i, probResFile);  
     for ( int j = 0; j<nToys; j++ )
     {
-      
-
       if(arg->debug) cout << ">> new toy\n" << endl;
       this->pdf->setMinNllFree(0);
       this->pdf->setMinNllScan(0);
@@ -886,11 +875,7 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
       // 1. Generate toys
 
       // Set nuisance parameters to the values from the fit to data with fixed parameter of interest.
-      // This is called the PLUGIN method.
-  
-      // these are not only the nuisance parameter values, but all values
-      const RooArgSet* prob_fit_result_values = this->getParevolPointByIndex(i, probResFile);
-      // assign the loaded parameter values to the parameters owned by the fit function.
+      // This is called the PLUGIN method.(Here, we are setting ALL parameters, not only the nuisance ones)
       w->allVars() = *prob_fit_result_values;
 
 
@@ -1363,7 +1348,7 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
     // reset
     setParameters(w, pdf->getParName(), parsFunctionCall->get(0));
     //delete result;
-    delete parsGlobalMinScanPoint;
+    
     //setParameters(w, pdf->getObsName(), obsDataset->get(0));
     toyTree.writeToFile();
   } // End of npoints loop
