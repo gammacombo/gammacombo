@@ -60,8 +60,12 @@ public:
     RooFitResult*           dataFreeFitResult;
     TString                 fileBase;
 
+protected:
+    RooSlimFitResult*   getParevolPoint(float scanpoint);
+    const RooArgSet*    getParevolPointByIndex(int index, TFile* file);
+
 private:
-    RooFitResult*           loadAndFit(bool fitToys, PDF_Datasets* pdf);
+    RooFitResult*       loadAndFit(bool fitToys, PDF_Datasets* pdf);
     inline  void        setExtProfileLH(TTree* tree){profileLHPoints = tree; externalProfileLH = true;};
 };
 

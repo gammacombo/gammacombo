@@ -110,7 +110,7 @@ if (HAS_CPP11)
 elseif (HAS_CPP11_ALTERNATIVE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 else()
-  message("No C++11 support.  Moving on.")
+  message(FATAL_ERROR "No C++11 support.")
 endif()
 
 # set additional compiler flags
