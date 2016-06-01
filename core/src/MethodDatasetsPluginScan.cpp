@@ -560,12 +560,193 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     << Form("(%.1f+/-%.1f)%%", fitprobabilityVal*100., fitprobabilityErr*100.) << endl;
 }
 
+
 ///
-/// Perform the 1d Plugin scan.
-/// Saves chi2 values and the prob-Scan p-values in a root tree
+/// Switch between prob and plugin scan.
+/// For the datasets stuff, we do not yet have a MethodDatasetsProbScan class, so we do it all in 
+/// MethodDatasetsPluginScan
 /// \param nRun Part of the root tree file name to facilitate parallel production.
 ///
 int MethodDatasetsPluginScan::scan1d(int nRun)
+{
+  if(doProbScanOnly){
+    this->scan1d_prob();
+  } else {
+    this->scan1d_plugin(nRun);
+  }
+
+}
+
+
+///
+/// Perform the 1d Prob scan.
+/// Saves chi2 values and the prob-Scan p-values in a root tree
+/// For the datasets stuff, we do not yet have a MethodDatasetsProbScan class, so we do it all in 
+/// MethodDatasetsPluginScan
+/// \param nRun Part of the root tree file name to facilitate parallel production.
+///
+void MethodDatasetsPluginScan::scan1d_prob()
+{
+  // Necessary for parallelization 
+  RooRandom::randomGenerator()->SetSeed(0);
+  // Set limit to all parameters. 
+  this->loadParameterLimits(); /// Default is "free", if not changed by cmd-line parameter
+
+
+  // Define scan parameter and scan range.
+  RooRealVar *parameterToScan = w->var(scanVar1);
+  float parameterToScan_min = hCL->GetXaxis()->GetXmin();
+  float parameterToScan_max = hCL->GetXaxis()->GetXmax();
+  double freeDataFitValue = parameterToScan->getVal();
+  // \todo: Can we really assume that the value of the parameter in the workspace is on its best free fit value?
+
+  // Define outputfile   
+  TString dirname = "root/scan1dDatasetsPlugin_"+this->pdf->getName()+"_"+scanVar1;
+  system("mkdir -p "+dirname);
+  TString fName;
+  TString probResName =(fileBase=="none") ? Form("root/scan1dDatasetsProb_"+this->pdf->getName()+"_%ip"+"_"+scanVar1,arg->npoints1d) : fileBase ;
+  TFile* outputFile = new TFile(probResName, "RECREATE");  
+  
+  // Define a TH1D for prob values of the scan
+  probPValues = new TH1F("probPValues","p Values of a prob Scan", nPoints1d, parameterToScan_min, parameterToScan_max);
+
+  // Set up toy root tree
+  ToyTree toyTree(this->pdf, arg);
+  toyTree.init();
+  toyTree.nrun = -999; //\todo: why does this branch even exist in the output tree of the prob scan?
+  
+  // Save parameter values that were active at function
+  // call. We'll reset them at the end to be transparent
+  // to the outside.
+  RooDataSet* parsFunctionCall = new RooDataSet("parsFunctionCall", "parsFunctionCall", *w->set(pdf->getParName()));
+  parsFunctionCall->add(*w->set(pdf->getParName()));
+
+
+  // define a workspace to store plugin values of the nuisance parameters for different scan points
+  // of course we only need this during the prob scan
+  RooWorkspace pluginValuesWorkspace("pluginValuesWorkspace","pluginValuesWorkspace");
+  // (it does not hurt if we store a few more paremeters)
+  pluginValuesWorkspace.import(w->allVars());
+      
+  // start scan
+  cout << "MethodDatasetsPluginScan::scan1d() : starting ... with " << nPoints1d << " scanpoints..." << endl;
+  ProgressBar progressBar(arg, nPoints1d);
+  for ( int i=0; i<nPoints1d; i++ )
+  {
+    progressBar.progress();
+    // scanpoint is calculated using min, max, which are the hCL x-Axis limits set in this->initScan()
+    // this uses the "scan" range, as expected 
+    // don't add half the bin size. try to solve this within plotting method
+
+    float scanpoint = parameterToScan_min + (parameterToScan_max-parameterToScan_min)*(double)i/((double)nPoints1d-1);
+  
+    toyTree.scanpoint = scanpoint;
+    
+    if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - scanpoint calculated in scanpoint " << i+1 << " as: " << scanpoint << endl;
+
+    // don't scan in unphysical region
+    // by default this means checking against "free" range
+    if ( scanpoint < parameterToScan->getMin() || scanpoint > parameterToScan->getMax()+2e-13 ){ 
+      cout << "not obvious: " << scanpoint << " < " << parameterToScan->getMin() << " and " << scanpoint << " > " << parameterToScan->getMax()+2e-13 << endl;
+      continue;
+    }
+
+    // FIT TO REAL DATA WITH FIXED HYPOTHESIS(=SCANPOINT).
+    // THIS GIVES THE NUMERATOR FOR THE PROFILE LIKELIHOOD AT THE GIVEN HYPOTHESIS
+    // THE RESULTING NUISANCE PARAMETERS TOGETHER WITH THE GIVEN HYPOTHESIS ARE ALSO 
+    // USED WHEN SIMULATING THE TOY DATA FOR THE FELDMAN-COUSINS METHOD FOR THIS HYPOTHESIS(=SCANPOINT)
+    // Here the scanvar has to be fixed -> this is done once per scanpoint 
+    // and provides the scanner with the DeltaChi2 for the data as reference
+    // additionally the nuisances are set to the resulting fit values
+    
+    parameterToScan->setVal(scanpoint);
+    parameterToScan->setConstant(true);
+    
+    RooFitResult *result = this->loadAndFit(kFALSE,this->pdf); // false -> fit on data
+    assert(result);
+
+    // store values of nuisance parameters in output file for later loading
+    // (it does not hurt if we store a few more paremeters)
+    const std::string name = "parameters_at_point_" + std::to_string(i) + "_argset";
+    pluginValuesWorkspace.saveSnapshot(name.c_str(), w->allVars(), kTRUE); 
+    // According to the documentation, this should work without kTRUE, but it does not.
+
+    if(arg->debug){ 
+      cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - minNll data scan fix " << 2*result->minNll() << endl;
+      cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - Data Scan fit result" << endl;
+      result->Print("v");
+    }
+    if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - RooSlimFitResult saved, fit converged for scanpoint " << i+1 << endl;
+    toyTree.statusScanData = result->status();
+    
+    // set chi2 of fixed fit: scan fit on data
+    toyTree.chi2min           = 2*result->minNll();
+    toyTree.covQualScanData   = result->covQual();
+    toyTree.scanbest  = freeDataFitValue;
+
+
+    if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - parameters value stored in ToyTree for scanpoint " << i+1 << endl;
+    this->pdf->deleteNLL();
+
+
+    // After doing the fit with the parameter of interest constrained to the scanpoint,
+    // we are now saving the fit values of the nuisance parameters. These values will be
+    // used to generate toys according to the PLUGIN method.
+
+    RooDataSet* parsGlobalMinScanPoint = new RooDataSet("parsGlobalMinScanPoint", "parsGlobalMinScanPoint", *w->set(pdf->getParName()));
+    parsGlobalMinScanPoint->add(*w->set(pdf->getParName()));
+    
+    if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - stored parameter values for scanpoint " << i+1 << endl;
+      
+
+    // get the chi2 of the data
+    if(this->chi2minGlobalFound){
+      toyTree.chi2minGlobal     = this->getChi2minGlobal();
+    }
+    else{
+      cout << "FATAL in MethodDatasetsPluginScan::scan1d() - Global Minimum not set!" << endl;
+      cout << "FATAL in MethodDatasetsPluginScan::scan1d() - Cannot continue with scan" << endl;
+      exit(-1);
+    }
+    
+    toyTree.storeParsPll();
+
+    // Importance sampling ** interesting idea think about it
+    // int nActualToys = nToys;
+    // if ( arg->importance ){
+    float plhPvalue = TMath::Prob(toyTree.chi2min-toyTree.chi2minGlobal,1);
+    probPValues->SetBinContent(probPValues->FindBin(scanpoint), plhPvalue);
+    toyTree.genericProbPValue = plhPvalue;
+    if(arg->debug){
+      cout << "INFO in MethodDatasetsPluginScan::scan1d() - Chi2 pValue " << plhPvalue 
+      << " filled in bin " << i+1 << " at: " << scanpoint << endl;
+    }
+    
+  
+    toyTree.fill();
+    outputFile->Add(&pluginValuesWorkspace);
+  
+    // reset
+    setParameters(w, pdf->getParName(), parsFunctionCall->get(0));
+    //delete result;
+    delete parsGlobalMinScanPoint;
+    //setParameters(w, pdf->getObsName(), obsDataset->get(0));
+    toyTree.writeToFile();
+  } // End of npoints loop
+
+  this->profileLH = new MethodProbScan(this->pdf, this->getArg(), probPValues, this->pdf->getPdfName());
+  outputFile->Write();
+  outputFile->Close();
+  delete parsFunctionCall;
+}
+
+
+
+///
+/// Perform the 1d Plugin scan.
+/// \param nRun Part of the root tree file name to facilitate parallel production.
+///
+void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
 {
   // Necessary for parallelization 
   RooRandom::randomGenerator()->SetSeed(0);
@@ -587,24 +768,21 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
   TString probResName =(fileBase=="none") ? Form("root/scan1dDatasetsProb_"+this->pdf->getName()+"_%ip"+"_"+scanVar1,arg->npoints1d) : fileBase ;
   TFile* outputFile = NULL;
   TFile* probResFile = NULL;
-  if(doProbScanOnly){
-     outputFile       = new TFile(probResName, "RECREATE");  
-  } 
-  else {
-    if( arg->probScanResult != "notSet"){
-      probResName = arg->probScanResult;
-    }
-    probResFile = TFile::Open(probResName);
-    if(!probResFile){
-        std::cout << "ERROR in MethodDatasetsPluginScan::scan1d - Prob scan result file not found in " << std::endl
-                  << probResName << std::endl
-                  << "Please run the prob scan before running the plugin scan. " << std::endl
-                  << "The result file of the prob scan can be specified via the --probScanResult command line argument." << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    this->setExtProfileLH((TTree*) probResFile->Get("plugin"));
-    outputFile = new TFile(Form(dirname+"/scan1dDatasetsPlugin_"+this->pdf->getName()+"_"+scanVar1+"_run%i.root", nRun),"RECREATE");
+  
+  if( arg->probScanResult != "notSet"){
+    probResName = arg->probScanResult;
   }
+  probResFile = TFile::Open(probResName);
+  if(!probResFile){
+      std::cout << "ERROR in MethodDatasetsPluginScan::scan1d - Prob scan result file not found in " << std::endl
+                << probResName << std::endl
+                << "Please run the prob scan before running the plugin scan. " << std::endl
+                << "The result file of the prob scan can be specified via the --probScanResult command line argument." << std::endl;
+      exit(EXIT_FAILURE);
+  }
+  this->setExtProfileLH((TTree*) probResFile->Get("plugin"));
+  outputFile = new TFile(Form(dirname+"/scan1dDatasetsPlugin_"+this->pdf->getName()+"_"+scanVar1+"_run%i.root", nRun),"RECREATE");
+
   
 
   // Define a TH1D for prob values of the scan
@@ -654,54 +832,15 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 
 
 
-    if(doProbScanOnly){
-      // FIT TO REAL DATA WITH FIXED HYPOTHESIS(=SCANPOINT).
-      // THIS GIVES THE NUMERATOR FOR THE PROFILE LIKELIHOOD AT THE GIVEN HYPOTHESIS
-      // THE RESULTING NUISANCE PARAMETERS TOGETHER WITH THE GIVEN HYPOTHESIS ARE ALSO 
-      // USED WHEN SIMULATING THE TOY DATA FOR THE FELDMAN-COUSINS METHOD FOR THIS HYPOTHESIS(=SCANPOINT)
-      // Here the scanvar has to be fixed -> this is done once per scanpoint 
-      // and provides the scanner with the DeltaChi2 for the data as reference
-      // additionally the nuisances are set to the resulting fit values
-      
-      parameterToScan->setVal(scanpoint);
-      parameterToScan->setConstant(true);
-      
-      RooFitResult *result = this->loadAndFit(kFALSE,this->pdf); // false -> fit on data
-      assert(result);
-
-      // store values of nuisance parameters in output file for later loading
-      // (it does not hurt if we store a few more paremeters)
-      const std::string name = "parameters_at_point_" + std::to_string(i) + "_argset";
-      pluginValuesWorkspace.saveSnapshot(name.c_str(), w->allVars(), kTRUE); 
-      // According to the documentation, this should work without kTRUE, but it does not.
-
-      if(arg->debug){ 
-        cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - minNll data scan fix " << 2*result->minNll() << endl;
-        cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - Data Scan fit result" << endl;
-        result->Print("v");
-      }
-      if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - RooSlimFitResult saved, fit converged for scanpoint " << i+1 << endl;
-      toyTree.statusScanData = result->status();
-      
-      // set chi2 of fixed fit: scan fit on data
-      toyTree.chi2min           = 2*result->minNll();
-      toyTree.covQualScanData   = result->covQual();
-      if(doProbScanOnly)  toyTree.scanbest  = freeDataFitValue;
-
-
-      if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - parameters value stored in ToyTree for scanpoint " << i+1 << endl;
-      this->pdf->deleteNLL();
-    } else {
-      if(this->loadPLHPoint(scanpoint,i)){
-        if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - scan point " << i+1 
-          << " loaded from external PLH scan file" << endl; 
-      }
-      // Get chi2 and status from tree
-
-      toyTree.statusScanData  = this->getParValAtScanpoint(scanpoint,"statusScanData");
-      toyTree.chi2min         = this->getParValAtScanpoint(scanpoint,"chi2min");
-      toyTree.covQualScanData = this->getParValAtScanpoint(scanpoint,"covQualScanData");
+    if(this->loadPLHPoint(scanpoint,i)){
+      if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - scan point " << i+1 
+        << " loaded from external PLH scan file" << endl; 
     }
+    // Get chi2 and status from tree
+
+    toyTree.statusScanData  = this->getParValAtScanpoint(scanpoint,"statusScanData");
+    toyTree.chi2min         = this->getParValAtScanpoint(scanpoint,"chi2min");
+    toyTree.covQualScanData = this->getParValAtScanpoint(scanpoint,"covQualScanData");
 
     // After doing the fit with the parameter of interest constrained to the scanpoint,
     // we are now saving the fit values of the nuisance parameters. These values will be
@@ -736,7 +875,6 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       << " filled in bin " << i+1 << " at: " << scanpoint << endl;
     }
     
-    if(doProbScanOnly) nToys = 0;
     for ( int j = 0; j<nToys; j++ )
     {
       
@@ -1221,12 +1359,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       //because they are saved as a a snapshot and we cannot delete snapshots.
       
     } // End of toys loop
-    if(doProbScanOnly){
-      toyTree.fill();
-      outputFile->Add(&pluginValuesWorkspace);
-    }
-
-
+    
     // reset
     setParameters(w, pdf->getParName(), parsFunctionCall->get(0));
     //delete result;
@@ -1238,8 +1371,9 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
   outputFile->Write();
   outputFile->Close();
   delete parsFunctionCall;
-  return 0;
 }
+
+
 
 void MethodDatasetsPluginScan::drawDebugPlots(int runMin, int runMax, TString fileNameBaseIn){
   int nFilesRead, nFilesMissing;
@@ -1266,6 +1400,10 @@ void MethodDatasetsPluginScan::drawDebugPlots(int runMin, int runMax, TString fi
   c->Draw("chi2minGlobalToy",cut, "normSAME");
   //cout << "draw takes a while" << endl;
 };
+
+
+
+
 
 ///
 /// Assumption: root file is given to the scanner which only has toy at a specific scanpoint, not necessary!

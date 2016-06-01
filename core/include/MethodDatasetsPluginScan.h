@@ -67,6 +67,8 @@ protected:
 private:
     RooFitResult*       loadAndFit(bool fitToys, PDF_Datasets* pdf);
     inline  void        setExtProfileLH(TTree* tree){profileLHPoints = tree; externalProfileLH = true;};
+    void                scan1d_plugin(int nRun);
+    void                scan1d_prob();
 };
 
 #endif
