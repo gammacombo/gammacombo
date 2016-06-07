@@ -705,7 +705,25 @@ void MethodDatasetsPluginScan::scan1d_prob()
     // Importance sampling ** interesting idea think about it
     // int nActualToys = nToys;
     // if ( arg->importance ){
-    float plhPvalue = TMath::Prob(toyTree.chi2min-toyTree.chi2minGlobal,1);
+
+    double test_statistic_value = toyTree.chi2min-toyTree.chi2minGlobal;
+    float plhPvalue = -1;  // initialize to error value
+
+    if ( test_statistic_value > 0){
+      // this is the normal case
+      plhPvalue = TMath::Prob(test_statistic_value,1);
+    } else {
+      cout << "\nMethodDatasetsPluginScan::scan1d_prob() : WARNING : Test statistic is negative, forcing it to zero" << std::endl
+           << "Fit at scan point " << i << " as higher likelihood than free fit." << std::endl
+           << "This should not happen except for very small underflows. " << std::endl
+           << "Value of test statistic is " << test_statistic_value << std::endl
+           << "An equal upwards fluctuaion corresponds to a p value of " << TMath::Prob(abs(test_statistic_value),1) << std::endl;
+           test_statistic_value = 0;
+           // TMath::Prob will return 0 if the Argument is slightly below zero. As we are working with a float-zero we can not rely on it here:
+           // TMath::Prob( 0 ) returns 1
+           plhPvalue = 0;
+    }
+
     probPValues->SetBinContent(probPValues->FindBin(scanpoint), plhPvalue);
     toyTree.genericProbPValue = plhPvalue;
     if(arg->debug){
