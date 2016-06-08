@@ -721,7 +721,7 @@ void MethodDatasetsPluginScan::scan1d_prob()
            test_statistic_value = 0;
            // TMath::Prob will return 0 if the Argument is slightly below zero. As we are working with a float-zero we can not rely on it here:
            // TMath::Prob( 0 ) returns 1
-           plhPvalue = 0;
+           plhPvalue = 1;
     }
 
     probPValues->SetBinContent(probPValues->FindBin(scanpoint), plhPvalue);
