@@ -69,6 +69,7 @@ private:
     inline  void        setExtProfileLH(TTree* tree){profileLHPoints = tree; externalProfileLH = true;};
     void                scan1d_plugin(int nRun);
     void                scan1d_prob();
+    double              getPValueTTestStatistic(double test_statistic_value);
 };
 
 #endif

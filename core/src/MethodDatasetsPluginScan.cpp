@@ -456,13 +456,12 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     if ( inPhysicalRegion && t.chi2minGlobalToy > this->chi2minGlobal ){ //t.chi2minGlobal ){
       h_gof->Fill(t.scanpoint);
     }
-    std::cout<<"valid"<<valid<<std::endl;
     // all toys
     if ( valid || doProbScanOnly){//inPhysicalRegion ){
       // not efficient! TMath::Prob evaluated each toy, only needed once.
       // come up with smarter way
       h_all->Fill(t.scanpoint);
-      h_probPValues->SetBinContent(h_probPValues->FindBin(t.scanpoint), TMath::Prob(t.chi2min-this->chi2minGlobal,1)); //t.chi2minGlobal, 1));
+      h_probPValues->SetBinContent(h_probPValues->FindBin(t.scanpoint), this->getPValueTTestStatistic(t.chi2min-this->chi2minGlobal)); //t.chi2minGlobal));
       if(t.scanpoint == 0.0) n0all++;
     }
 
@@ -607,8 +606,6 @@ void MethodDatasetsPluginScan::scan1d_prob()
   TString probResName =(fileBase=="none") ? Form("root/scan1dDatasetsProb_"+this->pdf->getName()+"_%ip"+"_"+scanVar1,arg->npoints1d) : fileBase ;
   TFile* outputFile = new TFile(probResName, "RECREATE");  
   
-  // Define a TH1D for prob values of the scan
-  probPValues = new TH1F("probPValues","p Values of a prob Scan", nPoints1d, parameterToScan_min, parameterToScan_max);
 
   // Set up toy root tree
   ToyTree toyTree(this->pdf, arg);
@@ -701,37 +698,7 @@ void MethodDatasetsPluginScan::scan1d_prob()
     }
     
     toyTree.storeParsPll();
-
-    // Importance sampling ** interesting idea think about it
-    // int nActualToys = nToys;
-    // if ( arg->importance ){
-
-    double test_statistic_value = toyTree.chi2min-toyTree.chi2minGlobal;
-    float plhPvalue = -1;  // initialize to error value
-
-    if ( test_statistic_value > 0){
-      // this is the normal case
-      plhPvalue = TMath::Prob(test_statistic_value,1);
-    } else {
-      cout << "\nMethodDatasetsPluginScan::scan1d_prob() : WARNING : Test statistic is negative, forcing it to zero" << std::endl
-           << "Fit at scan point " << i << " as higher likelihood than free fit." << std::endl
-           << "This should not happen except for very small underflows when the scan point is at the best fit value. " << std::endl
-           << "Value of test statistic is " << test_statistic_value << std::endl
-           << "An equal upwards fluctuaion corresponds to a p value of " << TMath::Prob(abs(test_statistic_value),1) << std::endl;
-           test_statistic_value = 0;
-           // TMath::Prob will return 0 if the Argument is slightly below zero. As we are working with a float-zero we can not rely on it here:
-           // TMath::Prob( 0 ) returns 1
-           plhPvalue = 1;
-    }
-
-    probPValues->SetBinContent(probPValues->FindBin(scanpoint), plhPvalue);
-    toyTree.genericProbPValue = plhPvalue;
-    if(arg->debug){
-      cout << "INFO in MethodDatasetsPluginScan::scan1d() - Chi2 pValue " << plhPvalue 
-      << " filled in bin " << i+1 << " at: " << scanpoint << endl;
-    }
-    
-  
+    toyTree.genericProbPValue = this->getPValueTTestStatistic(toyTree.chi2min-toyTree.chi2minGlobal);
     toyTree.fill();
     outputFile->Add(&pluginValuesWorkspace);
   
@@ -741,13 +708,26 @@ void MethodDatasetsPluginScan::scan1d_prob()
     toyTree.writeToFile();
   } // End of npoints loop
 
-  this->profileLH = new MethodProbScan(this->pdf, this->getArg(), probPValues, this->pdf->getPdfName());
   outputFile->Write();
   outputFile->Close();
   delete parsFunctionCall;
 }
 
-
+double MethodDatasetsPluginScan::getPValueTTestStatistic(double test_statistic_value){
+    if ( test_statistic_value > 0){
+      // this is the normal case
+      return TMath::Prob(test_statistic_value,1);
+    } else {
+      cout << "MethodDatasetsPluginScan::scan1d_prob() : WARNING : Test statistic is negative, forcing it to zero" << std::endl
+           << "Fit at current scan point has higher likelihood than free fit." << std::endl
+           << "This should not happen except for very small underflows when the scan point is at the best fit value. " << std::endl
+           << "Value of test statistic is " << test_statistic_value << std::endl
+           << "An equal upwards fluctuaion corresponds to a p value of " << TMath::Prob(abs(test_statistic_value),1) << std::endl;
+           // TMath::Prob will return 0 if the Argument is slightly below zero. As we are working with a float-zero we can not rely on it here:
+           // TMath::Prob( 0 ) returns 1
+      return 1.;
+    }
+}
 
 ///
 /// Perform the 1d Plugin scan.
@@ -869,10 +849,7 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
     
     toyTree.storeParsPll();
 
-    // Importance sampling ** interesting idea think about it
-    // int nActualToys = nToys;
-    // if ( arg->importance ){
-    float plhPvalue = TMath::Prob(toyTree.chi2min-toyTree.chi2minGlobal,1);
+    float plhPvalue = this->getPValueTTestStatistic(toyTree.chi2min-toyTree.chi2minGlobal);
     probPValues->SetBinContent(probPValues->FindBin(scanpoint), plhPvalue);
     toyTree.genericProbPValue = plhPvalue;
     if(arg->debug){
