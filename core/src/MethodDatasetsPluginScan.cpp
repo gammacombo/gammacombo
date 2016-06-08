@@ -715,7 +715,7 @@ void MethodDatasetsPluginScan::scan1d_prob()
     } else {
       cout << "\nMethodDatasetsPluginScan::scan1d_prob() : WARNING : Test statistic is negative, forcing it to zero" << std::endl
            << "Fit at scan point " << i << " as higher likelihood than free fit." << std::endl
-           << "This should not happen except for very small underflows. " << std::endl
+           << "This should not happen except for very small underflows when the scan point is at the best fit value. " << std::endl
            << "Value of test statistic is " << test_statistic_value << std::endl
            << "An equal upwards fluctuaion corresponds to a p value of " << TMath::Prob(abs(test_statistic_value),1) << std::endl;
            test_statistic_value = 0;
