@@ -772,9 +772,6 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
 
   
 
-  // Define a TH1D for prob values of the scan
-  probPValues = new TH1F("probPValues","p Values of a prob Scan", nPoints1d, parameterToScan_min, parameterToScan_max);
-
   // Set up toy root tree
   
   ToyTree toyTree(this->pdf, arg);
@@ -848,14 +845,7 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
     }
     
     toyTree.storeParsPll();
-
-    float plhPvalue = this->getPValueTTestStatistic(toyTree.chi2min-toyTree.chi2minGlobal);
-    probPValues->SetBinContent(probPValues->FindBin(scanpoint), plhPvalue);
-    toyTree.genericProbPValue = plhPvalue;
-    if(arg->debug){
-      cout << "INFO in MethodDatasetsPluginScan::scan1d() - Chi2 pValue " << plhPvalue 
-      << " filled in bin " << i+1 << " at: " << scanpoint << endl;
-    }
+    toyTree.genericProbPValue = this->getPValueTTestStatistic(toyTree.chi2min-toyTree.chi2minGlobal);
     
     // Load the parameter values from the fit to data with fixed parameter of interest.
     // These ehre are not only the nuisance parameter values, but all values.
@@ -1347,7 +1337,6 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
     //setParameters(w, pdf->getObsName(), obsDataset->get(0));
     toyTree.writeToFile();
   } // End of npoints loop
-  this->profileLH = new MethodProbScan(this->pdf, this->getArg(), probPValues, this->pdf->getPdfName());
   outputFile->Write();
   outputFile->Close();
   delete parsFunctionCall;
