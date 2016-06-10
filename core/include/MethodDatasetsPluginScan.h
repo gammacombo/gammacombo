@@ -60,7 +60,7 @@ public:
 
 protected:
     RooSlimFitResult*   getParevolPoint(float scanpoint);
-    const RooArgSet*    getParevolPointByIndex(int index);
+    void                setParevolPointByIndex(int index);
 
 private:
     RooFitResult*       loadAndFit(bool fitToys, PDF_Datasets* pdf);

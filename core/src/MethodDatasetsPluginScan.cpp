@@ -34,7 +34,7 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets* PDF, OptParser*
   name =  PDF->getName();
   
   if ( arg->var.size()>1 ) scanVar2 = arg->var[1];
-  inputFiles.clear();        
+  inputFiles.clear();
 
   if(!result){
     if (w->obj("data_fit_result") == NULL){ //\todo: support passing the name of the fit result in the workspace.
@@ -716,7 +716,8 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
     // this uses the "scan" range, as expected 
     // don't add half the bin size. try to solve this within plotting method
 
-    float scanpoint = parameterToScan_min + (parameterToScan_max-parameterToScan_min)*(double)i/((double)nPoints1d-1);
+    double stepwidth = (parameterToScan_max-parameterToScan_min)/((double)nPoints1d-1);
+    float scanpoint = parameterToScan_min + stepwidth * (double)i;
 	
     toyTree.scanpoint = scanpoint;
     
@@ -729,9 +730,8 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
       continue;
     }
 
-    // Load the parameter values from the fit to data with fixed parameter of interest.
-    const RooArgSet* prob_fit_result_values = this->getParevolPointByIndex(i);
-    w->allVars() = *prob_fit_result_values;
+    // Load the parameter values (nuisance parameters and parameter of interest) from the fit to data with fixed parameter of interest.
+    this->setParevolPointByIndex(i);
 
     std::cout<< "---------------------" <<std::endl;
     std::cout<< w->var("exponent")->getVal()<<std::endl;
@@ -761,9 +761,10 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
       
       // 1. Generate toys
 
-      // Set nuisance parameters to the values from the fit to data with fixed parameter of interest.
+      // Set all parameters (nuisance parameters and parameter of interest) to the values from the fit to data with fixed parameter of interest.
       // This is called the PLUGIN method.(Here, we are setting ALL parameters, not only the nuisance ones)
-      w->allVars() = *prob_fit_result_values;
+      this->setParevolPointByIndex(i);
+      assert(scanpoint - w->var("branchingRatio")->getVal() < stepwidth / 100.);
 
 
       this->pdf->generateToys(); // this is generating the toy dataset
@@ -778,9 +779,9 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
       if(arg->debug)cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - perform scan toy fit" << endl;
 
       // set parameters to data scan fit again
-      w->allVars() = *prob_fit_result_values;
-      
-      parameterToScan->setVal(scanpoint); // I think it should already be on this value from loading the snapshot.
+      this->setParevolPointByIndex(i);
+      assert(scanpoint - w->var("branchingRatio")->getVal() < stepwidth / 100.);
+
       parameterToScan->setConstant(true);
       this->pdf->setFitStrategy(0);
       // LOAD globOBs snapshot first
@@ -894,9 +895,7 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
       if(arg->debug)cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - perform free toy fit" << endl;
       // Use parameters from the scanfit to data
       
-      // not sure why we are loading this here. Maybe it helps to get a nice starting point.
-      //w->loadSnapshot(plhName);
-      w->allVars() = *prob_fit_result_values;
+      this->setParevolPointByIndex(i);
 
       parameterToScan->setConstant(false);
       
@@ -1387,14 +1386,14 @@ void MethodDatasetsPluginScan::printDebug(const RooFitResult& r){
 
 
 RooSlimFitResult* MethodDatasetsPluginScan::getParevolPoint(float scanpoint){
-  std::cout << "ERROR: not implemented for MethodDatasetsPluginScan, use loadParevolPointByIndex() instad" <<std::endl;
+  std::cout << "ERROR: not implemented for MethodDatasetsPluginScan, use setParevolPointByIndex() instad" <<std::endl;
   exit(EXIT_FAILURE);
 }
 
 ///
 /// Load the snapshots that contain the right nuisance param. values for generating toys
 ///
-const RooArgSet* MethodDatasetsPluginScan::getParevolPointByIndex(int index){
+void MethodDatasetsPluginScan::setParevolPointByIndex(int index){
   // RooWorkspace* pluginValuesWorkspace = (RooWorkspace*) file->Get("pluginValuesWorkspace");
   // const std::string name = "parameters_at_point_" + std::to_string(index) + "_argset";
   // return pluginValuesWorkspace->getSnapshot(name.c_str());
@@ -1420,5 +1419,4 @@ const RooArgSet* MethodDatasetsPluginScan::getParevolPointByIndex(int index){
     float scanParVal    = parLeaf->GetValue();
     p->setVal(scanParVal);
   }
-  return pars;
 }
