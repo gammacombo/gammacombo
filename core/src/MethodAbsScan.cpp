@@ -547,7 +547,7 @@ void MethodAbsScan::calcCLintervals()
 		cout << endl;
 	}
 
-	if(true){
+	if(solutions.empty()){
 		cout 	<< "MethodAbsScan::calcCLintervals() : Solutions vector empty. "
 								<<"Using simple method with  linear splines."<<endl;;
 		this->calcCLintervalsSimple();
@@ -562,7 +562,7 @@ void MethodAbsScan::calcCLintervals()
 
 	for ( int iSol=0; iSol<solutions.size(); iSol++ )
 	{
-		float CL[2]      = {0.6827, 0.95};
+		float CL[2]      = {0.6827, 0.9545};
 		float CLhi[2]    = {0.0};
 		float CLhiErr[2] = {0.0};
 		float CLlo[2]    = {0.0};
@@ -642,7 +642,7 @@ void MethodAbsScan::calcCLintervals()
 	//
 	for ( int iBoundary=0; iBoundary<2; iBoundary++ )
 	{
-		float CL[2]      = {0.6827, 0.95};
+		float CL[2]      = {0.6827, 0.9545};
 		float CLhi[2]    = {0.0};
 		float CLhiErr[2] = {0.0};
 		float CLlo[2]    = {0.0};
@@ -701,10 +701,6 @@ void MethodAbsScan::calcCLintervals()
 					CL[c]);
 			if ( CLloErr[c]!=0 || CLhiErr[c]!=0 ) printf(", accuracy = [%1.5f, %1.5f]", CLloErr[c], CLhiErr[c]);
 			if ( unit!="" ) cout << ", ["<<unit<<"]";
-			cout << ", " << methodName << " (boundary scan)" << endl;
-			std::cout.precision(5);
-			std::cout<<"\n"<<std::scientific<<par->GetName()<<" = ["<<CLlo[c]<<", "<<CLhi[c]<<"] @ ";
-			std::cout<<CL[c];
 			cout << ", " << methodName << " (boundary scan)" << endl;
 		}
 	}
@@ -1290,7 +1286,7 @@ void MethodAbsScan::calcCLintervalsSimple()
   clintervals1sigma.clear(); 
   clintervals2sigma.clear();
   
-  double levels[2] = {0.6827, 0.95};
+  double levels[2] = {0.6827, 0.9545};
   for (int c=0;c<2;c++){
     const std::pair<double, double> borders = getBorders(TGraph(this->hCL), levels[c]);
     CLInterval cli;
