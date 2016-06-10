@@ -182,78 +182,7 @@ void MethodDatasetsPluginScan::loadParameterLimits(){
   delete it;
 }
 
-///
-/// If an external profile likelihood is given the 
-/// parameter evolution point do have to get loaded
-///
-/// Method looks up the external tree index or compares scanpoint values
-///
-/// \param point    value of the current scanpoint 
-///
-/// \param index    load Entry of the external TTree (if the entry does not match 
-///                 scanpoint, Warning will be printed)
-///
-bool MethodDatasetsPluginScan::loadPLHPoint(float point, int index){
-  if(index!=-1){
-    return loadPLHPoint(index);
-  }
-  else{
-    int ind=-2;
-    TBranch* b    = (TBranch*)this->profileLHPoints->GetBranch("scanpoint");
-    int entries   = b->GetEntries();
-    for(int i = 0; i<entries; i++){
-      this->profileLHPoints->GetEntry(i);
-      TLeaf* l          = b->GetLeaf("scanpoint");
-      float treePoint   = l->GetValue();
-      if(fabs((treePoint-point)/point) < 1e-5){
-        ind=i;
-      }
-    }
-    if(ind==-2){
-      cout << "MethodDatasetsPluginScan::loadPLHPoint(float point, int index) : ERROR : no scanpoint (" << point << ") found!" << endl; 
-      return false;
-    }
-    else return loadPLHPoint(ind);
-  }
-};
 
-bool MethodDatasetsPluginScan::loadPLHPoint(int index){
-  int fail_count = 0;
-  bool success = 0;
-  this->profileLHPoints->GetEntry(index);
-  RooArgSet* pars          = (RooArgSet*)this->pdf->getWorkspace()->set(pdf->getParName());
-  TIterator* it;
-  if(pars){
-    it = pars->createIterator();
-  }
-  else{
-    cout << "MethodDatasetsPluginScan::loadPLHPoint(int index) : ERROR : no parameter set (" 
-         << pdf->getParName() << ") found in workspace!" << endl; 
-    return success;
-  }
-  while ( RooRealVar* p = (RooRealVar*)it->Next() ){
-    TString parName     = p->GetName();
-    TLeaf* parLeaf      = (TLeaf*)this->profileLHPoints->GetLeaf(parName+"_start");
-    if(parLeaf){
-      float scanParVal    = parLeaf->GetValue();
-      p->setVal(scanParVal);
-    }
-    else{
-        cout << "MethodDatasetsPluginScan::loadPLHPoint(int index) : ERROR : no var (" << parName 
-        << ") found in PLH scan file!" << endl;
-        fail_count++;
-    }
-  }
-  if(fail_count>0){
-    cout << "MethodDatasetsPluginScan::loadPLHPoint(int index) : ERROR : some values not loaded: \n" 
-    << fail_count << " out of " << pars->getSize() << " parameters not found!" 
-        << " unable to fully load PLH scan point!" << endl;
-    return false;
-  }
-  else{
-      return success;
-  } 
-};
 ///
 /// Print settings member of MethodDatasetsPluginScan
 ///
@@ -619,12 +548,6 @@ void MethodDatasetsPluginScan::scan1d_prob()
   parsFunctionCall->add(*w->set(pdf->getParName()));
 
 
-  // define a workspace to store plugin values of the nuisance parameters for different scan points
-  // of course we only need this during the prob scan
-  RooWorkspace pluginValuesWorkspace("pluginValuesWorkspace","pluginValuesWorkspace");
-  // (it does not hurt if we store a few more paremeters)
-  pluginValuesWorkspace.import(w->allVars());
-      
   // start scan
   cout << "MethodDatasetsPluginScan::scan1d() : starting ... with " << nPoints1d << " scanpoints..." << endl;
   ProgressBar progressBar(arg, nPoints1d);
@@ -662,11 +585,10 @@ void MethodDatasetsPluginScan::scan1d_prob()
     RooFitResult *result = this->loadAndFit(kFALSE,this->pdf); // false -> fit on data
     assert(result);
 
-    // store values of nuisance parameters in output file for later loading
-    // (it does not hurt if we store a few more paremeters)
-    const std::string name = "parameters_at_point_" + std::to_string(i) + "_argset";
-    pluginValuesWorkspace.saveSnapshot(name.c_str(), w->allVars(), kTRUE); 
-    // According to the documentation, this should work without kTRUE, but it does not.
+    std::cout<< "---------------------" <<std::endl;
+    std::cout<< w->var("exponent")->getVal()<<std::endl;
+    std::cout<< "---------------------" <<std::endl;
+
 
     if(arg->debug){ 
       cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - minNll data scan fix " << 2*result->minNll() << endl;
@@ -700,7 +622,6 @@ void MethodDatasetsPluginScan::scan1d_prob()
     toyTree.storeParsPll();
     toyTree.genericProbPValue = this->getPValueTTestStatistic(toyTree.chi2min-toyTree.chi2minGlobal);
     toyTree.fill();
-    outputFile->Add(&pluginValuesWorkspace);
   
     // reset
     setParameters(w, pdf->getParName(), parsFunctionCall->get(0));
@@ -784,12 +705,6 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
   RooDataSet* parsFunctionCall = new RooDataSet("parsFunctionCall", "parsFunctionCall", *w->set(pdf->getParName()));
   parsFunctionCall->add(*w->set(pdf->getParName()));
 
-
-  // define a workspace to store plugin values of the nuisance parameters for different scan points
-  // of course we only need this during the prob scan
-  RooWorkspace pluginValuesWorkspace("pluginValuesWorkspace","pluginValuesWorkspace");
-  // (it does not hurt if we store a few more paremeters)
-  pluginValuesWorkspace.import(w->allVars());
       
   // start scan
   cout << "MethodDatasetsPluginScan::scan1d() : starting ... with " << nPoints1d << " scanpoints..." << endl;
@@ -814,25 +729,17 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
       continue;
     }
 
+    // Load the parameter values from the fit to data with fixed parameter of interest.
+    const RooArgSet* prob_fit_result_values = this->getParevolPointByIndex(i);
+    w->allVars() = *prob_fit_result_values;
 
-
-    if(this->loadPLHPoint(scanpoint,i)){
-      if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - scan point " << i+1 
-        << " loaded from external PLH scan file" << endl; 
-    }
-    // Get chi2 and status from tree
+    std::cout<< "---------------------" <<std::endl;
+    std::cout<< w->var("exponent")->getVal()<<std::endl;
+    std::cout<< "---------------------" <<std::endl;
 
     toyTree.statusScanData  = this->getParValAtScanpoint(scanpoint,"statusScanData");
     toyTree.chi2min         = this->getParValAtScanpoint(scanpoint,"chi2min");
     toyTree.covQualScanData = this->getParValAtScanpoint(scanpoint,"covQualScanData");
-
-    // After doing the fit with the parameter of interest constrained to the scanpoint,
-    // we are now saving the fit values of the nuisance parameters. These values will be
-    // used to generate toys according to the PLUGIN method.
-
-    
-    if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - stored parameter values for scanpoint " << i+1 << endl;
-      
 
     // get the chi2 of the data
     if(this->chi2minGlobalFound){
@@ -840,17 +747,12 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
     }
     else{
       cout << "FATAL in MethodDatasetsPluginScan::scan1d() - Global Minimum not set!" << endl;
-      cout << "FATAL in MethodDatasetsPluginScan::scan1d() - Cannot continue with scan" << endl;
-      exit(-1);
+      exit(EXIT_FAILURE);
     }
     
     toyTree.storeParsPll();
     toyTree.genericProbPValue = this->getPValueTTestStatistic(toyTree.chi2min-toyTree.chi2minGlobal);
     
-    // Load the parameter values from the fit to data with fixed parameter of interest.
-    // These ehre are not only the nuisance parameter values, but all values.
-    // However, just the nuisance parameters would in principle be enough.
-    const RooArgSet* prob_fit_result_values = this->getParevolPointByIndex(i, probResFile);  
     for ( int j = 0; j<nToys; j++ )
     {
       if(arg->debug) cout << ">> new toy\n" << endl;
@@ -1492,8 +1394,31 @@ RooSlimFitResult* MethodDatasetsPluginScan::getParevolPoint(float scanpoint){
 ///
 /// Load the snapshots that contain the right nuisance param. values for generating toys
 ///
-const RooArgSet* MethodDatasetsPluginScan::getParevolPointByIndex(int index, TFile* file){
-  RooWorkspace* pluginValuesWorkspace = (RooWorkspace*) file->Get("pluginValuesWorkspace");
-  const std::string name = "parameters_at_point_" + std::to_string(index) + "_argset";
-  return pluginValuesWorkspace->getSnapshot(name.c_str());
+const RooArgSet* MethodDatasetsPluginScan::getParevolPointByIndex(int index){
+  // RooWorkspace* pluginValuesWorkspace = (RooWorkspace*) file->Get("pluginValuesWorkspace");
+  // const std::string name = "parameters_at_point_" + std::to_string(index) + "_argset";
+  // return pluginValuesWorkspace->getSnapshot(name.c_str());
+
+  this->profileLHPoints->GetEntry(index);
+  RooArgSet* pars          = (RooArgSet*)this->pdf->getWorkspace()->set(pdf->getParName());
+
+  //\todo: make sure this is checked during pdf init, do not check again here
+  if(!pars){
+    cout << "MethodDatasetsPluginScan::loadPLHPoint(int index) : ERROR : no parameter set found in workspace!" << endl; 
+    exit(EXIT_FAILURE);
+  }
+  
+  TIterator* it = pars->createIterator();
+  while ( RooRealVar* p = (RooRealVar*)it->Next() ){
+    TString parName     = p->GetName();
+    TLeaf* parLeaf      = (TLeaf*)this->profileLHPoints->GetLeaf(parName+"_start");
+    if(!parLeaf){
+      cout << "MethodDatasetsPluginScan::loadPLHPoint(int index) : ERROR : no var (" << parName
+      << ") found in PLH scan file!" << endl;
+      exit(EXIT_FAILURE);
+    }
+    float scanParVal    = parLeaf->GetValue();
+    p->setVal(scanParVal);
+  }
+  return pars;
 }

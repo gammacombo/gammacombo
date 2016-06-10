@@ -110,7 +110,7 @@ int main()
   RooArgSet dataset_observables_set(mass, "datasetObservables");
 
   //one constraining the parameters
-  RooArgSet parameters_set(branchingRatio, norm_constant, "parameters");
+  RooArgSet parameters_set(branchingRatio, norm_constant, exponent, n_bkg, "parameters");
 
   /////////////////////////////////////////////////////////
   //

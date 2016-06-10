@@ -34,8 +34,6 @@ public:
     MethodProbScan*     getProfileLH(){return this->profileLH;};
     virtual void        initScan();
     void                loadParameterLimits();
-    bool                loadPLHPoint(float point, int index=-1);
-    bool                loadPLHPoint(int index);
     inline  void        performProbScanOnly(bool yesNo=true){doProbScanOnly = yesNo;};
     void                performBootstrapTest(int nSamples=1000, const TString& ext ="");
     virtual void        print();
@@ -62,7 +60,7 @@ public:
 
 protected:
     RooSlimFitResult*   getParevolPoint(float scanpoint);
-    const RooArgSet*    getParevolPointByIndex(int index, TFile* file);
+    const RooArgSet*    getParevolPointByIndex(int index);
 
 private:
     RooFitResult*       loadAndFit(bool fitToys, PDF_Datasets* pdf);
