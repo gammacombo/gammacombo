@@ -484,6 +484,7 @@ void OptParser::parseArguments(int argc, char* argv[])
       "18: In 2D plots with PLUGIN and PROB methods, set legend titles as PLUGIN and PROB instead of (Plugin) and (Prob).\n"
       "19: In 1D plots, no vertical lines.\n"
       "20: In 1D plots, only central value line.\n"
+      "21: Don't add the solution to 1D 1-CL plots.\n"
 			, false, "int");
 	TCLAP::MultiArg<string> titleArg("", "title", "Override the title of a combination. "
 			"If 'default' is given, the default title for that combination is used. "
