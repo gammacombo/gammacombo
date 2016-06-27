@@ -50,6 +50,7 @@
 		nPoints1d(opt->npoints1d),
 		nPoints2dx(opt->npoints2dx),
 		nPoints2dy(opt->npoints2dy),
+		pvalueCorrectorSet(false),
 		chi2minGlobal(0.0),
 		chi2minGlobalFound(false),
 		lineStyle(0),
