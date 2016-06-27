@@ -766,7 +766,7 @@ void MethodPluginScan::scan2d(int nRun)
   if ( arg->isAction("gaus") ) dirname += "Gaus";
   dirname += "_"+name+"_"+scanVar1+"_"+scanVar2;
 	system("mkdir -p "+dirname);
-  TString fname = "/scan1dPlugin";
+  TString fname = "/scan2dPlugin";
   if ( arg->isAction("bb") ) fname += "BergerBoos";
   if ( arg->isAction("uniform") ) fname += "Uniform";
   if ( arg->isAction("gaus") ) fname += "Gaus";
@@ -1022,9 +1022,9 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
   if ( arg->isAction("uniform") ) fileNameBase += "Uniform";
   if ( arg->isAction("gaus") ) fileNameBase += "Gaus";
   fileNameBase += "_"+name+"_"+scanVar1+"_"+scanVar2+"_run";
-  // read different file if requested 
+  // read different file if requested
   if ( arg->toyFiles != "" && arg->toyFiles != "default" ) fileNameBase = arg->toyFiles;
-	
+
   if ( arg->debug ) cout << "MethodPluginScan::readScan2dTrees() : ";
 	cout << "reading files: " << fileNameBase+"*.root" << endl;
 	for (int i=runMin; i<=runMax; i++) {
