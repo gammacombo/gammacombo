@@ -117,6 +117,8 @@ class MethodAbsScan
 		void                            setChi2minGlobal(double x);
 		void                            setSolutions(vector<RooSlimFitResult*> s);
 		inline void                     setVerbose(bool yesNo=true){verbose = yesNo;};
+    inline void                     setHCL( TH1F *h ) { hCL = h; };
+    inline void                     setHchisq( TH1F *h ) { hChi2min = h; };
 		void 							setXscanRange(float min, float max);
 		void 							setYscanRange(float min, float max);
 
