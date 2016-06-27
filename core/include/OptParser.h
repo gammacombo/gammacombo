@@ -115,6 +115,7 @@ class OptParser
 		vector<int>   	qh;
     TString         queue;
 		vector<TString> relation;
+    TString         save;
 		vector<float>   savenuisances1d;
 		vector<float>   savenuisances2dx;
 		vector<float>   savenuisances2dy;
