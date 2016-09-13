@@ -81,6 +81,7 @@ class OptParser
     int             ncoveragetoys;
 		int		nrun;
 		int		ntoys;
+    int   nsmooth;
 		TString 	parsavefile;
 		bool		parevol;
 		vector<int>	pevid;

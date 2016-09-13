@@ -59,6 +59,7 @@ OptParser::OptParser():
   ncoveragetoys = -99;
 	nrun = -99;
 	ntoys = -99;
+	nsmooth = 1;
 	parevol = false;
   plotext = "";
 	plotid = -99;
@@ -146,6 +147,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("ncoveragetoys");
 	availableOptions.push_back("nrun");
 	availableOptions.push_back("ntoys");
+	availableOptions.push_back("nsmooth");
 	//availableOptions.push_back("pevid");
 	availableOptions.push_back("pr");
 	availableOptions.push_back("physrange");
@@ -239,6 +241,7 @@ void OptParser::bookPluginOptions()
 	bookedOptions.push_back("npointstoy");
 	bookedOptions.push_back("nrun");
 	bookedOptions.push_back("ntoys");
+	bookedOptions.push_back("nsmooth");
 	//bookedOptions.push_back("pevid");
 	bookedOptions.push_back("pr");
 	bookedOptions.push_back("physrange");
@@ -375,6 +378,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::ValueArg<int> idArg("", "id", "When making controlplots (--controlplots), only consider the "
 			"scan point with this ID, that is a specific value of the scan parameter. "
 			, false, -1, "int");
+  TCLAP::ValueArg<int> nsmoothArg("", "nsmooth", "number of smoothings to apply to final 1-CL plot. Default: 1", false, 1, "int");
 	TCLAP::ValueArg<int> ntoysArg("", "ntoys", "number of toy experiments per job. Default: 25", false, 25, "int");
 	TCLAP::ValueArg<int> nrunArg("", "nrun", "Number of toy run. To be used with --action pluginbatch.", false, 1, "int");
 	TCLAP::ValueArg<int> npointsArg("", "npoints", "Number of scan points used by the Prob method. \n"
@@ -613,6 +617,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "pr" ) ) cmd.add( prArg );
 	if ( isIn<TString>(bookedOptions, "physrange" ) ) cmd.add(physrangeArg);
 	if ( isIn<TString>(bookedOptions, "pevid" ) ) cmd.add( pevidArg );
+  if ( isIn<TString>(bookedOptions, "nsmooth" ) ) cmd.add(nsmoothArg);
 	if ( isIn<TString>(bookedOptions, "ntoys" ) ) cmd.add(ntoysArg);
 	if ( isIn<TString>(bookedOptions, "nrun" ) ) cmd.add(nrunArg);
 	if ( isIn<TString>(bookedOptions, "npointstoy" ) ) cmd.add(npointstoyArg);
@@ -689,8 +694,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 	npoints2dy        = npoints2dyArg.getValue()==-1 ? (npointsArg.getValue()==-1 ? 50 : npointsArg.getValue()) : npoints2dyArg.getValue();
 	npointstoy        = npointstoyArg.getValue();
   ncoveragetoys     = ncoveragetoysArg.getValue();
-	nrun	          = nrunArg.getValue();
-	ntoys	          = ntoysArg.getValue();
+	nrun	            = nrunArg.getValue();
+	ntoys	            = ntoysArg.getValue();
+  nsmooth           = nsmoothArg.getValue();
 	parevol           = parevolArg.getValue();
 	pevid             = pevidArg.getValue();
   plotext           = plotextArg.getValue();
