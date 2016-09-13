@@ -252,7 +252,7 @@ void OneMinusClPlot2d::addScanner(MethodAbsScan* s)
 		histosType.push_back(kPvalue);
 		histos.push_back(s->getHCL2d());
 	}
-	if ( arg->smooth2d ) histos[histos.size()-1]->Smooth();
+	if ( arg->smooth2d ) for ( int i=0; i<arg->nsmooth; i++ ) { histos[histos.size()-1]->Smooth(); }
 	title = s->getTitle();
 	m_contours.push_back(0);
 	m_contours_computed.push_back(false);
@@ -269,7 +269,7 @@ void OneMinusClPlot2d::addFile(TString fName)
 		return;
 	}
 	histos.push_back(hCL);
-	if ( arg->smooth2d ) histos[histos.size()-1]->Smooth();
+	if ( arg->smooth2d ) for ( int i=0; i<arg->nsmooth; i++ ) { histos[histos.size()-1]->Smooth(); }
 	histosType.push_back(kPvalue);
 	m_contours.push_back(0);
 	m_contours_computed.push_back(false);
