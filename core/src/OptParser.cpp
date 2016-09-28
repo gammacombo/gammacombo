@@ -495,6 +495,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 			, false, "int");
 	TCLAP::MultiArg<string> titleArg("", "title", "Override the title of a combination. "
 			"If 'default' is given, the default title for that combination is used. "
+            "If 'noleg' is given, this entry is not shown in the legend. "
 			"Example: --title 'This is the 1. combination.' --title 'And this the second.'", false, "string");
 	TCLAP::MultiArg<string> fixArg("", "fix", "Fix one or more parameters in a combination. "
 			"If 'none' is given, all parameters are floated (default). "
