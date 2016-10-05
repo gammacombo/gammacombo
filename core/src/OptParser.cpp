@@ -601,13 +601,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "ps" ) ) cmd.add( plotsolutionsArg );
 	if ( isIn<TString>(bookedOptions, "probimprove" ) ) cmd.add( probimproveArg );
 	if ( isIn<TString>(bookedOptions, "probforce" ) ) cmd.add( probforceArg );
-<<<<<<< HEAD
   if ( isIn<TString>(bookedOptions, "probScanResult" ) ) cmd.add(probScanResultArg);
 	if ( isIn<TString>(bookedOptions, "printsolx" ) ) cmd.add( printSolXArg );
-=======
-  if ( isIn<TString>(bookedOptions, "printsolx" ) ) cmd.add( printSolXArg );
   if ( isIn<TString>(bookedOptions, "printsoly" ) ) cmd.add( printSolYArg );
->>>>>>> origin/development
 	if ( isIn<TString>(bookedOptions, "printcor" ) ) cmd.add( printcorArg );
 	if ( isIn<TString>(bookedOptions, "prelim" ) ) cmd.add( plotprelimArg );
 	if ( isIn<TString>(bookedOptions, "po" ) ) cmd.add( plotpluginonlyArg );

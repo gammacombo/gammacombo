@@ -17,7 +17,7 @@
 ///
 /// The default constructor for the dataset plugin scan
 ///
-MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets* PDF, OptParser* opt, RooFitResult* result):
+MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets* PDF, OptParser* opt):
   MethodPluginScan(opt),
   pdf                 (PDF),
   probPValues         (NULL),
@@ -28,6 +28,7 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets* PDF, OptParser*
   dataFreeFitResult   (NULL),
   fileBase            ("none")
   {
+  chi2minGlobalFound = true; // the free fit to data must be done and must be saved to the workspace before gammacombo is even called
   methodName = "DatasetsPlugin";
   w = PDF->getWorkspace();
   title = PDF->getTitle();
@@ -36,18 +37,14 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets* PDF, OptParser*
   if ( arg->var.size()>1 ) scanVar2 = arg->var[1];
   inputFiles.clear();
 
-  if(!result){
-    if (w->obj("data_fit_result") == NULL){ //\todo: support passing the name of the fit result in the workspace.
-      cerr << "ERROR: The workspace must contain the fit result of the fit to data. The name of the fit result must be 'data_fit_result'. " <<endl;
-      exit(EXIT_FAILURE);
-    }
-    dataFreeFitResult = (RooFitResult*) w->obj("data_fit_result");
-  }else{
-    dataFreeFitResult = result;  
+  
+  if (w->obj("data_fit_result") == NULL){ //\todo: support passing the name of the fit result in the workspace.
+    cerr << "ERROR: The workspace must contain the fit result of the fit to data. The name of the fit result must be 'data_fit_result'. " <<endl;
+    exit(EXIT_FAILURE);
   }
-  chi2minGlobal      = 2*dataFreeFitResult->minNll();
-  std::cout << "=============== Global Minimum (2*-Log(Likelihood)) set to: 2*" << dataFreeFitResult->minNll() << " = " << chi2minGlobal << endl;
-  chi2minGlobalFound = true;  // check workspace content 
+  dataFreeFitResult = (RooFitResult*) w->obj("data_fit_result");
+  chi2minGlobal = 2*dataFreeFitResult->minNll();
+  std::cout << "=============== Global Minimum (2*-Log(Likelihood)) is: 2*" << dataFreeFitResult->minNll() << " = " << chi2minGlobal << endl;
 
   if ( !w->set(pdf->getObsName()) ) { 
     cerr << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no '" + pdf->getObsName() + "' set found in workspace" << endl; 
@@ -60,25 +57,17 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets* PDF, OptParser*
   }
 }
 
-float MethodDatasetsPluginScan::getParValAtScanpoint(float point, TString parName){
-  TBranch* b    = (TBranch*)this->profileLHPoints->GetBranch("scanpoint");
-  int entries   = b->GetEntries();
-  for(int i = 0; i<entries; i++){
-    this->profileLHPoints->GetEntry(i);
-    TLeaf* l          = b->GetLeaf("scanpoint");
-    float treePoint   = l->GetValue();
-    float diff = (point != 0) ? fabs((treePoint-point)/point) : fabs((treePoint-point)/1e-10);
-    
-    if(diff < 1e-5){
-      TLeaf* var      = this->profileLHPoints->GetLeaf(parName);
-      if(!var){
-        cout << "MethodDatasetsPluginScan::getParValAtScanpoint() : ERROR : variable (" << parName << ") found!" << endl;
-        return -1e12; 
-      }
-      return var->GetValue();
-      }
+float MethodDatasetsPluginScan::getParValAtScanpoint(int index, TString parName){
+
+  this->profileLHPoints->GetEntry(index);
+  TLeaf* var = this->profileLHPoints->GetLeaf(parName);
+  if(!var){
+    cout << "MethodDatasetsPluginScan::getParValAtScanpoint() : ERROR : variable (" << parName << ") not found!" << endl;
+    exit(EXIT_FAILURE);
   }
-};
+  return var->GetValue();
+}
+
 void MethodDatasetsPluginScan::initScan(){
   if ( arg->debug ) cout << "MethodDatasetsPluginScan::initScan() : initializing ..." << endl;
 
@@ -150,6 +139,45 @@ void MethodDatasetsPluginScan::initScan(){
   }     
 }
 
+
+
+
+void MethodDatasetsPluginScan::setExtProfileLH(TTree* tree){
+
+  //make sure that the scan points in the tree match number 
+  //of scan points and the scan range that we are using now.
+  TBranch* b    = (TBranch*)this->profileLHPoints->GetBranch("scanpoint");
+  int entriesInTree = b->GetEntries();
+  if(nPoints1d != entriesInTree){
+    std::cout<<"Number of scan points in tree saved from prob scan do not match number of scan points used in plugin scan."<<std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+
+  float parameterToScan_min = hCL->GetXaxis()->GetXmin();
+  this->profileLHPoints->GetEntry(0);
+  float minTreePoint = b->GetLeaf("scanpoint")->GetValue();
+  if((minTreePoint - parameterToScan_min)/minTreePoint < 1e-5){
+    std::cout<<"Lowest scan point in tree saved from prob scan does not match lowest scan point used in plugin scan."<<std::endl;
+    std::cout<<"Alternatively, this could be a problem with the heuristics used for checking the equality of two floats"<<std::endl;
+    exit(EXIT_FAILURE); 
+  }
+
+  float parameterToScan_max = hCL->GetXaxis()->GetXmax();
+  this->profileLHPoints->GetEntry(entriesInTree-1);
+  float maxTreePoint = b->GetLeaf("scanpoint")->GetValue();
+  if((maxTreePoint - parameterToScan_max)/maxTreePoint < 1e-5){
+    std::cout<<"Max scan point in tree saved from prob scan probably does not match max scan point used in plugin scan."<<std::endl;
+    std::cout<<"Alternatively, this could be a problem with the heuristics used for checking the equality of two floats"<<std::endl;
+    exit(EXIT_FAILURE); 
+  }
+
+  // if all is fine, assign and proceed.
+  profileLHPoints = tree;
+  externalProfileLH = true;
+};
+
+
 ///
 /// Prepare environment depending on data or toy fit
 ///
@@ -184,36 +212,6 @@ void MethodDatasetsPluginScan::loadParameterLimits(){
 
 
 
-bool MethodDatasetsPluginScan::loadPLHPoint(int index){
-  int fail_count = 0;
-  this->profileLHPoints->GetEntry(index);
-  RooArgSet* pars          = (RooArgSet*)this->pdf->getWorkspace()->set(pdf->getParName());
-  TIterator* it;
-  if(pars){
-    it = pars->createIterator();
-  }
-  else{
-    cout << "MethodDatasetsPluginScan::loadPLHPoint(int index) : ERROR : no parameter set (" 
-         << pdf->getParName() << ") found in workspace!" << endl; 
-    exit(EXIT_FAILURE);
-  }
-  while ( RooRealVar* p = (RooRealVar*)it->Next() ){
-    TString parName     = p->GetName();
-    TLeaf* parLeaf      = (TLeaf*)this->profileLHPoints->GetLeaf(parName+"_start");
-    if(parLeaf){
-      float scanParVal    = parLeaf->GetValue();
-      p->setVal(scanParVal);
-    }
-    else{
-        cout << "MethodDatasetsPluginScan::loadPLHPoint(int index) : ERROR : no var (" << parName 
-        << ") found in PLH scan file!" << endl;
-        exit(EXIT_FAILURE);
-    }
-  }
-  
-  return true;
-  
-};
 
 ///
 /// Print settings member of MethodDatasetsPluginScan
@@ -617,26 +615,11 @@ void MethodDatasetsPluginScan::scan1d_prob()
     RooFitResult *result = this->loadAndFit(kFALSE,this->pdf); // false -> fit on data
     assert(result);
 
-    std::cout<< "---------------------" <<std::endl;
-    std::cout<< w->var("exponent")->getVal()<<std::endl;
-    std::cout<< "---------------------" <<std::endl;
-
-<<<<<<< HEAD
-=======
-      if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - parameters value stored in ToyTree for scanpoint " << i+1 << endl;
-      this->pdf->deleteNLL();
-    }
-    else{
-      this->loadPLHPoint(scanpoint,i);
-      // Get chi2 and status from tree
->>>>>>> origin/datasets_dev
-
     if(arg->debug){ 
       cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - minNll data scan fix " << 2*result->minNll() << endl;
       cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - Data Scan fit result" << endl;
       result->Print("v");
     }
-    if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - RooSlimFitResult saved, fit converged for scanpoint " << i+1 << endl;
     toyTree.statusScanData = result->status();
     
     // set chi2 of fixed fit: scan fit on data
@@ -644,8 +627,7 @@ void MethodDatasetsPluginScan::scan1d_prob()
     toyTree.covQualScanData   = result->covQual();
     toyTree.scanbest  = freeDataFitValue;
 
-<<<<<<< HEAD
-=======
+
     // After doing the fit with the parameter of interest constrained to the scanpoint,
     // we are now saving the fit values of the nuisance parameters. These values will be
     // used to generate toys according to the PLUGIN method.
@@ -653,7 +635,6 @@ void MethodDatasetsPluginScan::scan1d_prob()
     RooArgSet allVars = w->allVars();
     TString plhName = Form("profileLHPoint_%i",i);
     w->saveSnapshot(plhName,allVars);
->>>>>>> origin/datasets_dev
 
     if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - parameters value stored in ToyTree for scanpoint " << i+1 << endl;
     this->pdf->deleteNLL();
@@ -784,13 +765,9 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
     // Load the parameter values (nuisance parameters and parameter of interest) from the fit to data with fixed parameter of interest.
     this->setParevolPointByIndex(i);
 
-    std::cout<< "---------------------" <<std::endl;
-    std::cout<< w->var("exponent")->getVal()<<std::endl;
-    std::cout<< "---------------------" <<std::endl;
-
-    toyTree.statusScanData  = this->getParValAtScanpoint(scanpoint,"statusScanData");
-    toyTree.chi2min         = this->getParValAtScanpoint(scanpoint,"chi2min");
-    toyTree.covQualScanData = this->getParValAtScanpoint(scanpoint,"covQualScanData");
+    toyTree.statusScanData  = this->getParValAtScanpoint(i, "statusScanData");
+    toyTree.chi2min         = this->getParValAtScanpoint(i, "chi2min");
+    toyTree.covQualScanData = this->getParValAtScanpoint(i, "covQualScanData");
 
     // get the chi2 of the data
     if(this->chi2minGlobalFound){
@@ -1454,7 +1431,7 @@ void MethodDatasetsPluginScan::setParevolPointByIndex(int index){
 
   //\todo: make sure this is checked during pdf init, do not check again here
   if(!pars){
-    cout << "MethodDatasetsPluginScan::loadPLHPoint(int index) : ERROR : no parameter set found in workspace!" << endl; 
+    cout << "MethodDatasetsPluginScan::setParevolPointByIndex(int index) : ERROR : no parameter set found in workspace!" << endl; 
     exit(EXIT_FAILURE);
   }
   
@@ -1463,7 +1440,7 @@ void MethodDatasetsPluginScan::setParevolPointByIndex(int index){
     TString parName     = p->GetName();
     TLeaf* parLeaf      = (TLeaf*)this->profileLHPoints->GetLeaf(parName+"_start");
     if(!parLeaf){
-      cout << "MethodDatasetsPluginScan::loadPLHPoint(int index) : ERROR : no var (" << parName
+      cout << "MethodDatasetsPluginScan::setParevolPointByIndex(int index) : ERROR : no var (" << parName
       << ") found in PLH scan file!" << endl;
       exit(EXIT_FAILURE);
     }

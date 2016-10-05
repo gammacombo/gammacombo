@@ -28,9 +28,9 @@
 class MethodDatasetsPluginScan : public MethodPluginScan
 {
 public:
-    MethodDatasetsPluginScan(PDF_Datasets* PDF, OptParser* opt, RooFitResult* result=NULL);
+    MethodDatasetsPluginScan(PDF_Datasets* PDF, OptParser* opt);
     void                drawDebugPlots(int runMin, int runMax, TString fileNameBaseIn = "default");
-    float               getParValAtScanpoint(float point, TString parName);
+    float               getParValAtScanpoint(int index, TString parName);
     MethodProbScan*     getProfileLH(){return this->profileLH;};
     virtual void        initScan();
     void                loadParameterLimits();
@@ -64,7 +64,7 @@ protected:
 
 private:
     RooFitResult*       loadAndFit(bool fitToys, PDF_Datasets* pdf);
-    inline  void        setExtProfileLH(TTree* tree){profileLHPoints = tree; externalProfileLH = true;};
+    void                setExtProfileLH(TTree* tree);
     void                scan1d_plugin(int nRun);
     void                scan1d_prob();
     double              getPValueTTestStatistic(double test_statistic_value);

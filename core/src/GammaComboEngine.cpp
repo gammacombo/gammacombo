@@ -1344,14 +1344,11 @@ void GammaComboEngine::scan()
 		// printout and latex
 		c->print();
 		if ( arg->debug ) c->getWorkspace()->Print("v");
-<<<<<<< HEAD
-	if ( arg->latex ) makeLatex( c );
-	if ( arg->info || arg->latex ) continue;
-=======
+
     if ( arg->save != "" ) saveWorkspace( c, i );
     if ( arg->latex ) makeLatex( c );
     if ( arg->info || arg->latex || arg->save!="" ) continue;
->>>>>>> origin/development
+
 
 		/////////////////////////////////////////////////////
 		//
@@ -1619,7 +1616,6 @@ void GammaComboEngine::run(bool runOnDatSet)
 	if (!runOnDatSet) checkCombinationArg();
 	checkColorArg();
 	checkAsimovArg();
-<<<<<<< HEAD
 	if(runOnDatSet){
 		if ( !cmb.empty() ){
 			cout << "ERROR : Please do not define any combiners when running on a dataset" << endl;
@@ -1636,17 +1632,7 @@ void GammaComboEngine::run(bool runOnDatSet)
 		setUpPlot();
 		scan(); // most thing gets done here
 	}
-	if ( arg->info || arg->latex ) return; // if only info is requested then we can go home
-=======
-	//scaleDownErrors();
-	if ( arg->nosyst ) disableSystematics();
-	makeAddDelCombinations();
-  if ( arg->nbatchjobs>0 ) writebatchscripts();
-	customizeCombinerTitles();
-	setUpPlot();
-	scan(); // most thing gets done here
-  if ( arg->info || arg->latex || arg->save!="" ) return; // if only info is requested then we can go home
->>>>>>> origin/development
+	if ( arg->info || arg->latex || arg->save!=""  ) return; // if only info is requested then we can go home
 	if (!arg->isAction("pluginbatch") && !arg->isAction("coveragebatch") && !arg->isAction("coverage") ) savePlot();
 	cout << endl;
 	t.Stop();
