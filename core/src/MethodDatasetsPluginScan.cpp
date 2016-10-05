@@ -183,6 +183,38 @@ void MethodDatasetsPluginScan::loadParameterLimits(){
 }
 
 
+
+bool MethodDatasetsPluginScan::loadPLHPoint(int index){
+  int fail_count = 0;
+  this->profileLHPoints->GetEntry(index);
+  RooArgSet* pars          = (RooArgSet*)this->pdf->getWorkspace()->set(pdf->getParName());
+  TIterator* it;
+  if(pars){
+    it = pars->createIterator();
+  }
+  else{
+    cout << "MethodDatasetsPluginScan::loadPLHPoint(int index) : ERROR : no parameter set (" 
+         << pdf->getParName() << ") found in workspace!" << endl; 
+    exit(EXIT_FAILURE);
+  }
+  while ( RooRealVar* p = (RooRealVar*)it->Next() ){
+    TString parName     = p->GetName();
+    TLeaf* parLeaf      = (TLeaf*)this->profileLHPoints->GetLeaf(parName+"_start");
+    if(parLeaf){
+      float scanParVal    = parLeaf->GetValue();
+      p->setVal(scanParVal);
+    }
+    else{
+        cout << "MethodDatasetsPluginScan::loadPLHPoint(int index) : ERROR : no var (" << parName 
+        << ") found in PLH scan file!" << endl;
+        exit(EXIT_FAILURE);
+    }
+  }
+  
+  return true;
+  
+};
+
 ///
 /// Print settings member of MethodDatasetsPluginScan
 ///
@@ -589,6 +621,15 @@ void MethodDatasetsPluginScan::scan1d_prob()
     std::cout<< w->var("exponent")->getVal()<<std::endl;
     std::cout<< "---------------------" <<std::endl;
 
+<<<<<<< HEAD
+=======
+      if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - parameters value stored in ToyTree for scanpoint " << i+1 << endl;
+      this->pdf->deleteNLL();
+    }
+    else{
+      this->loadPLHPoint(scanpoint,i);
+      // Get chi2 and status from tree
+>>>>>>> origin/datasets_dev
 
     if(arg->debug){ 
       cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - minNll data scan fix " << 2*result->minNll() << endl;
@@ -603,6 +644,16 @@ void MethodDatasetsPluginScan::scan1d_prob()
     toyTree.covQualScanData   = result->covQual();
     toyTree.scanbest  = freeDataFitValue;
 
+<<<<<<< HEAD
+=======
+    // After doing the fit with the parameter of interest constrained to the scanpoint,
+    // we are now saving the fit values of the nuisance parameters. These values will be
+    // used to generate toys according to the PLUGIN method.
+
+    RooArgSet allVars = w->allVars();
+    TString plhName = Form("profileLHPoint_%i",i);
+    w->saveSnapshot(plhName,allVars);
+>>>>>>> origin/datasets_dev
 
     if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - parameters value stored in ToyTree for scanpoint " << i+1 << endl;
     this->pdf->deleteNLL();

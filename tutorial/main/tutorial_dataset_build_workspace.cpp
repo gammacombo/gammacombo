@@ -100,16 +100,17 @@ int main()
   //
   /////////////////////////////////////////////////////////
 
-  //One constraining the constraint PDFs,
+  //One contaninting the constraint PDFs,
   RooArgSet constraint_set(norm_constant_constraint, "constraint_set");
 
-  //one constraining the global Observables,
+  //one containing the global Observables,
   RooArgSet global_observables_set(norm_constant_obs, "global_observables_set");
 
-  //one constraining the normal Observables (the bin variables in the datasets usually) and
+  //one containing the normal Observables (the bin variables in the datasets usually) and
   RooArgSet dataset_observables_set(mass, "datasetObservables");
 
-  //one constraining the parameters
+
+  //one containing the parameters
   RooArgSet parameters_set(branchingRatio, norm_constant, exponent, n_bkg, "parameters");
 
   /////////////////////////////////////////////////////////
