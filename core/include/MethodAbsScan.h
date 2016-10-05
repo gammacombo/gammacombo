@@ -118,6 +118,8 @@ class MethodAbsScan
 		void                            setChi2minGlobal(double x);
 		void                            setSolutions(vector<RooSlimFitResult*> s);
 		inline void                     setVerbose(bool yesNo=true){verbose = yesNo;};
+    inline void                     setHCL( TH1F *h ) { hCL = h; };
+    inline void                     setHchisq( TH1F *h ) { hChi2min = h; };
 		void 							setXscanRange(float min, float max);
 		void 							setYscanRange(float min, float max);
 		void							calcCLintervalsSimple();
@@ -131,6 +133,7 @@ class MethodAbsScan
 		vector<RooSlimFitResult*> solutions;            ///< Local minima filled by saveSolutions() and saveSolutions2d().
 		vector<CLInterval> clintervals1sigma;           ///< all 1 sigma intervals that were found by calcCLintervals()
 		vector<CLInterval> clintervals2sigma;           ///< all 2 sigma intervals that were found by calcCLintervals()
+		vector<CLInterval> clintervals3sigma;           ///< all 3 sigma intervals that were found by calcCLintervals()
 
 	protected:
 
@@ -143,6 +146,7 @@ class MethodAbsScan
 		TString obsName;    ///< dataset name of observables, derived from name
 		TString parsName;   ///< set name of physics parameters, derived from name
 		TString thName;     ///< set name of theory parameters, derived from name
+    TString toysName;   ///< set name of parameters to vary in toys
 		TString scanVar1;   ///< scan parameter
 		TString scanVar2;   ///< second scan parameter if we're scanning 2d
 		int nPoints1d;      ///< number of scan points used by 1d scan

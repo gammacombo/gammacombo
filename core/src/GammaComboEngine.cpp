@@ -691,8 +691,8 @@ void GammaComboEngine::savePlot()
 void GammaComboEngine::defineColors()
 {
 	// no --color option was given on the command line
-	if ( arg->color.size()==0 )
-	{
+	//if ( arg->color.size()==0 )
+	//{
 		// define line colors for 1-CL curves
 		colorsLine.push_back(arg->combid.size()==1 ? kBlue-8 : kBlue-5);
 		colorsLine.push_back(kGreen-8);
@@ -704,9 +704,9 @@ void GammaComboEngine::defineColors()
 		colorsText.push_back(TColor::GetColor("#234723"));
 		colorsText.push_back(kOrange+3);
 		colorsText.push_back(kMagenta-8);
-	}
-	else
-	{
+	//}
+	//else
+	//{
 		colorsLine.push_back(TColor::GetColor("#1b9e77")); // sea green
 		colorsLine.push_back(TColor::GetColor("#d95f02")); // dark orange
 		colorsLine.push_back(TColor::GetColor("#7570b3")); // medium purple
@@ -726,7 +726,6 @@ void GammaComboEngine::defineColors()
 		for ( int i=0; i<colorsLine.size(); i++ ){
 		//colorsText.push_back(cb.darklightcolor(colorsLine[i], 0.5));
 		colorsText.push_back( colorsLine[i] );
-	}
 	}
 
 	// default for any additional scanner
@@ -868,6 +867,29 @@ void GammaComboEngine::make2dPluginScan(MethodPluginScan *scannerPlugin, int cId
 		scannerPlugin->plotOn(plotf);
 		plotf->DrawFull();
 		plotf->save();
+	}
+}
+
+///
+/// Perform the 1D berger boos scan. Runs toys in batch mode, and
+/// reads them back in.
+///
+/// \param scannerPlugin - the scanner to run the scan with
+/// \param cId - the id of this combination on the command line
+///
+void GammaComboEngine::make1dBergerBoosScan(MethodBergerBoosScan *scannerBergerBoos, int cId)
+{
+	scannerBergerBoos->initScan();
+  scannerBergerBoos->setNBergerBoosPointsPerScanpoint( arg->nBBpoints );
+	if ( arg->isAction("bbbatch") ){
+		scannerBergerBoos->scan1d(arg->nrun);
+	}
+	else {
+		scannerBergerBoos->readScan1dTrees(arg->jmin[cId],arg->jmax[cId]);
+		scannerBergerBoos->calcCLintervals();
+	}
+	if ( !arg->isAction("bbbatch") ){
+		scannerBergerBoos->saveScanner(m_fnamebuilder->getFileNameScanner(scannerBergerBoos));
 	}
 }
 
@@ -1144,6 +1166,21 @@ void GammaComboEngine::adjustRanges(Combiner *c, int cId)
 }
 
 ///
+/// Helper function for scan(): Makes named sets for any toy variations that were requested
+///
+void GammaComboEngine::setupToyVariationSets(Combiner *c, int cId)
+{
+  if ( cId < arg->randomizeToyVars.size() ) {
+    TString toyVarList = "";
+    for ( int j=0; j<arg->randomizeToyVars[cId].size(); j++ ) {
+      toyVarList += arg->randomizeToyVars[cId][j];
+      if ( j < arg->randomizeToyVars[cId].size()-1 ) toyVarList += ",";
+    }
+    c->getWorkspace()->defineSet( "toy_"+c->getPdfName(), toyVarList.Data() );
+  }
+}
+
+///
 /// Helper function for scan(): Checks if for a given combid (the
 /// running index of the -c argument) a start parameter file was
 /// configured (-l) argument. If so, it is returned, else the default
@@ -1218,6 +1255,40 @@ void GammaComboEngine::makeLatex(Combiner *c)
 }
 
 ///
+/// save workspace
+///
+void GammaComboEngine::saveWorkspace( Combiner *c, int i )
+{
+  // if --pr then make the ranges
+  if ( arg->enforcePhysRange ) setLimit( c->getParameters(), "phys" );
+
+  // first write a copy THE PDF into the workspace
+  const RooAbsPdf *thePdf         = c->getPdf();
+  const RooArgSet *theParameters  = c->getParameters();
+  const RooArgSet *theObservables = c->getObservables();
+
+  RooAbsPdf *savePdf = (RooAbsPdf*)thePdf->Clone("ThePdf");
+  c->getWorkspace()->import( *savePdf, Silence() );
+  c->getWorkspace()->defineSet( "TheParameters", *theParameters );
+  c->getWorkspace()->defineSet( "TheObservables", *theObservables );
+
+  // set the name of the workspace associated with combiner id
+  int cId = arg->combid[i];
+  c->getWorkspace()->SetName( Form("w%d",cId) );
+
+  // if the first instance then write directly to file
+  if ( i==0 ) {
+    c->getWorkspace()->writeToFile( arg->save );
+  }
+  // otherwise add it to the file
+  else {
+    TFile *tf = TFile::Open( arg->save, "UPDATE" );
+    c->getWorkspace()->Write();
+    tf->Close();
+  }
+}
+
+///
 /// scan engine
 ///
 void GammaComboEngine::scan()
@@ -1252,6 +1323,9 @@ void GammaComboEngine::scan()
 		// adjust ranges according to the command line - only possible before combining
 		adjustRanges(c, i);
 
+    // set up parameter sets for the parameters to vary within the toys (if requested)
+    setupToyVariationSets(c, i);
+
 		// make graphviz dot files
 		printCombinerStructure(c);
 
@@ -1270,8 +1344,14 @@ void GammaComboEngine::scan()
 		// printout and latex
 		c->print();
 		if ( arg->debug ) c->getWorkspace()->Print("v");
+<<<<<<< HEAD
 	if ( arg->latex ) makeLatex( c );
 	if ( arg->info || arg->latex ) continue;
+=======
+    if ( arg->save != "" ) saveWorkspace( c, i );
+    if ( arg->latex ) makeLatex( c );
+    if ( arg->info || arg->latex || arg->save!="" ) continue;
+>>>>>>> origin/development
 
 		/////////////////////////////////////////////////////
 		//
@@ -1279,7 +1359,7 @@ void GammaComboEngine::scan()
 		//
 		/////////////////////////////////////////////////////
 
-		if ( !arg->isAction("plugin") && !arg->isAction("pluginbatch") && !arg->isAction("coverage") && !arg->isAction("coveragebatch") )
+		if ( !arg->isAction("plugin") && !arg->isAction("pluginbatch") && !arg->isAction("coverage") && !arg->isAction("coveragebatch") && !arg->isAction("bb") && !arg->isAction("bbbatch") )
 		{
 			MethodProbScan *scannerProb = new MethodProbScan(c);
 			// pvalue corrector
@@ -1539,6 +1619,7 @@ void GammaComboEngine::run(bool runOnDatSet)
 	if (!runOnDatSet) checkCombinationArg();
 	checkColorArg();
 	checkAsimovArg();
+<<<<<<< HEAD
 	if(runOnDatSet){
 		if ( !cmb.empty() ){
 			cout << "ERROR : Please do not define any combiners when running on a dataset" << endl;
@@ -1556,6 +1637,16 @@ void GammaComboEngine::run(bool runOnDatSet)
 		scan(); // most thing gets done here
 	}
 	if ( arg->info || arg->latex ) return; // if only info is requested then we can go home
+=======
+	//scaleDownErrors();
+	if ( arg->nosyst ) disableSystematics();
+	makeAddDelCombinations();
+  if ( arg->nbatchjobs>0 ) writebatchscripts();
+	customizeCombinerTitles();
+	setUpPlot();
+	scan(); // most thing gets done here
+  if ( arg->info || arg->latex || arg->save!="" ) return; // if only info is requested then we can go home
+>>>>>>> origin/development
 	if (!arg->isAction("pluginbatch") && !arg->isAction("coveragebatch") && !arg->isAction("coverage") ) savePlot();
 	cout << endl;
 	t.Stop();

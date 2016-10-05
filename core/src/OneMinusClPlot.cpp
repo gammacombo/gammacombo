@@ -352,9 +352,13 @@ void OneMinusClPlot::drawSolutions()
 
 		// draw vertical lines at central value and
 		// upper/lower errors
-		drawVerticalLine(xCentral, color, kSolid);
-		drawVerticalLine(xCLmin, color, kDashed);
-		drawVerticalLine(xCLmax, color, kDashed);
+    if ( ! arg->isQuickhack(19) ) {
+      drawVerticalLine(xCentral, color, kSolid);
+      if ( ! arg->isQuickhack(20) ) {
+        drawVerticalLine(xCLmin, color, kDashed);
+        drawVerticalLine(xCLmax, color, kDashed);
+      }
+    }
 
 		// draw text box with numerical values after the lines,
 		// so that it doesn't get covered
@@ -368,6 +372,11 @@ void OneMinusClPlot::drawSolutions()
 			yNumberMin = yNumberMinFirst / pow(3.0, iDrawn); // move down by a constant shift on log scale
 			yNumberMax = yNumberMin*2.;
 		}
+    // if printsoly option then move a bit
+    if ( arg->printSolY > 0. ) {
+      yNumberMin += arg->printSolY;
+      yNumberMax += arg->printSolY;
+    }
 
 		// compute x position of the printed central value
 		float xNumberMin, xNumberMax;

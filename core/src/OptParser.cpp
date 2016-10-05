@@ -86,13 +86,16 @@ OptParser::OptParser():
 	probScanResult = "notSet";
 	printcor = false;
   printSolX = -999.;
+  printSolY = -999.;
   queue = "";
+  save = "";
 	scanforce = false;
 	scanrangeMax = -101;
 	scanrangeMin = -101;
 	scanrangeyMax = -102;
 	scanrangeyMin = -102;
 	smooth2d = false;
+  toyFiles = "";
 	usage = false;
 	verbose = false;
 }
@@ -135,7 +138,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("log");
 	availableOptions.push_back("magnetic");
   availableOptions.push_back("nbatchjobs");
-	//availableOptions.push_back("nBBpoints");
+  //availableOptions.push_back("nBBpoints");
 	availableOptions.push_back("nosyst");
 	availableOptions.push_back("npoints");
 	availableOptions.push_back("npoints2dx");
@@ -156,18 +159,22 @@ void OptParser::defineOptions()
   availableOptions.push_back("printsolx");
 	availableOptions.push_back("probforce");  
 	availableOptions.push_back("probScanResult");
+  availableOptions.push_back("printsoly");
 	//availableOptions.push_back("probimprove");
 	availableOptions.push_back("ps");
 	availableOptions.push_back("pulls");
 	availableOptions.push_back("qh");
   availableOptions.push_back("queue");
+  availableOptions.push_back("randomizeToyVars");
   availableOptions.push_back("removeRange");
+  availableOptions.push_back("save");
 	availableOptions.push_back("sn");
 	availableOptions.push_back("sn2d");
 	availableOptions.push_back("scanforce");
 	availableOptions.push_back("scanrange");
 	availableOptions.push_back("scanrangey");
 	availableOptions.push_back("smooth2d");
+  availableOptions.push_back("toyFiles");
 	availableOptions.push_back("title");
 	availableOptions.push_back("usage");
 	availableOptions.push_back("unoff");
@@ -362,6 +369,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"Format: --grouppos xmin:ymin in normalized coordinates [0,1]. To use default values "
 			"for one coordinate, use 'def': --grouppos def:y.", false, "default", "string");
   TCLAP::ValueArg<float> printSolXArg("","printsolx", "x coordinate to print solution at in 1D plots", false, -999., "float");
+  TCLAP::ValueArg<float> printSolYArg("","printsoly", "y coordinate to shift solution by in 1D plots", false, -999., "float");
   TCLAP::ValueArg<string> queueArg("q","queue","Batch queue to submit to. If none is given then the scripts will be written but not submitted.", false, "", "string");
   TCLAP::ValueArg<int> batchstartnArg("","batchstartn", "number of first batch job (e.g. if you have already submitted 100 you can submit another 100 starting from 101)", false, 1, "int");
   TCLAP::ValueArg<int> nbatchjobsArg("","nbatchjobs", "number of jobs to write scripts for and submit to batch system", false, 0, "int");
@@ -386,6 +394,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"Format (range):  -j min-max \n"
 			"Format (single): -j n", false, "string");
 	TCLAP::ValueArg<string> jobdirArg("", "jobdir", "Give absolute job-directory if working on batch systems.", false, "default", "string");
+  TCLAP::ValueArg<string> toyFilesArg("", "toyFiles", "Pass some different toy files, for example if you want 1D projection of 2D FC.", false, "default", "string" );
+  TCLAP::ValueArg<string> saveArg("","save", "Save the workspace this file name", false, "", "string");
 
 	// --------------- switch arguments
   TCLAP::SwitchArg batcheosArg("","batcheos", "When submitting batch jobs (for plugin) write the output to eos", false);
@@ -438,6 +448,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	vAction.push_back("runtoys");
 	//vAction.push_back("scantree");
 	vAction.push_back("test");
+  vAction.push_back("uniform");
+  vAction.push_back("gaus");
 	ValuesConstraint<string> cAction(vAction);
 	TCLAP::MultiArg<string> actionArg("a", "action", "Perform action", false, &cAction);
 	TCLAP::MultiArg<string> varArg("", "var", "Scan variable (default: g). Can be given twice, in which case "
@@ -476,6 +488,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"16: In parameter evolution plots, add also the full evolution over the scan, in addition to just plotting the best evolution.\n"
       "17: In 2D plots with the PLUGIN and PROB methods, plot the PLUGIN first then the PROB.\n"
       "18: In 2D plots with PLUGIN and PROB methods, set legend titles as PLUGIN and PROB instead of (Plugin) and (Prob).\n"
+      "19: In 1D plots, no vertical lines.\n"
+      "20: In 1D plots, only central value line.\n"
+      "21: Don't add the solution to 1D 1-CL plots.\n"
 			, false, "int");
 	TCLAP::MultiArg<string> titleArg("", "title", "Override the title of a combination. "
 			"If 'default' is given, the default title for that combination is used. "
@@ -500,6 +515,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"Example: --prange def --prange 'g=1.7:1.9,r_dk=0.09:0.2' \n"
       "Set to -999:-999 to remove range \n"
 			, false, "string");
+  TCLAP::MultiArg<string> randomizeToyVarsArg("","randomizeToyVars", "A list of nuisance parameters to randomize in the toy generation for the plugin method when the -a uniform, -a flat or -a gaus methods are also used. Pass as comma sepearted list e.g --randomizeToyVars 'r_dk,r_dpi,d_dk' . Pass once per combiner. If nothing is given here but you pass -a uniform, flat or gaus then ALL nuisance parameter values will be varied in the toys."
+      , false, "string");
   TCLAP::MultiArg<string> removeRangeArg("","removeRange","Remove the range entirely of one or more parameters in a combination. "
       "The range are enforced through the --pr option."
       "If 'all' is given, all parameter ranges are removed"
@@ -567,22 +584,30 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "usage" ) ) cmd.add( usageArg );
 	if ( isIn<TString>(bookedOptions, "unoff" ) ) cmd.add( plotunoffArg );
 	if ( isIn<TString>(bookedOptions, "title" ) ) cmd.add( titleArg );
+  if ( isIn<TString>(bookedOptions, "toyFiles" ) ) cmd.add( toyFilesArg );
 	if ( isIn<TString>(bookedOptions, "sn2d" ) ) cmd.add(sn2dArg);
 	if ( isIn<TString>(bookedOptions, "sn" ) ) cmd.add(snArg);
 	if ( isIn<TString>(bookedOptions, "smooth2d" ) ) cmd.add( smooth2dArg );
 	if ( isIn<TString>(bookedOptions, "scanrangey" ) ) cmd.add( scanrangeyArg );
 	if ( isIn<TString>(bookedOptions, "scanrange" ) ) cmd.add( scanrangeArg );
 	if ( isIn<TString>(bookedOptions, "scanforce" ) ) cmd.add( scanforceArg );
+  if ( isIn<TString>(bookedOptions, "save" ) ) cmd.add( saveArg );
 	if ( isIn<TString>(bookedOptions, "relation" ) ) cmd.add(relationArg);
   if ( isIn<TString>(bookedOptions, "removeRange" ) ) cmd.add(removeRangeArg);
+  if ( isIn<TString>(bookedOptions, "randomizeToyVars" ) ) cmd.add(randomizeToyVarsArg);
 	if ( isIn<TString>(bookedOptions, "qh" ) ) cmd.add(qhArg);
   if ( isIn<TString>(bookedOptions, "queue") ) cmd.add(queueArg);
 	if ( isIn<TString>(bookedOptions, "pulls" ) ) cmd.add( plotpullsArg );
 	if ( isIn<TString>(bookedOptions, "ps" ) ) cmd.add( plotsolutionsArg );
 	if ( isIn<TString>(bookedOptions, "probimprove" ) ) cmd.add( probimproveArg );
 	if ( isIn<TString>(bookedOptions, "probforce" ) ) cmd.add( probforceArg );
+<<<<<<< HEAD
   if ( isIn<TString>(bookedOptions, "probScanResult" ) ) cmd.add(probScanResultArg);
 	if ( isIn<TString>(bookedOptions, "printsolx" ) ) cmd.add( printSolXArg );
+=======
+  if ( isIn<TString>(bookedOptions, "printsolx" ) ) cmd.add( printSolXArg );
+  if ( isIn<TString>(bookedOptions, "printsoly" ) ) cmd.add( printSolYArg );
+>>>>>>> origin/development
 	if ( isIn<TString>(bookedOptions, "printcor" ) ) cmd.add( printcorArg );
 	if ( isIn<TString>(bookedOptions, "prelim" ) ) cmd.add( plotprelimArg );
 	if ( isIn<TString>(bookedOptions, "po" ) ) cmd.add( plotpluginonlyArg );
@@ -687,14 +712,17 @@ void OptParser::parseArguments(int argc, char* argv[])
 	plotunoff         = plotunoffArg.getValue();
 	printcor          = printcorArg.getValue();
   printSolX         = printSolXArg.getValue();
+  printSolY         = printSolYArg.getValue();
 	probforce         = probforceArg.getValue();
 	probimprove       = probimproveArg.getValue();
   probScanResult    = probScanResultArg.getValue();
 	qh                = qhArg.getValue();
   queue             = TString(queueArg.getValue());
+  save              = saveArg.getValue();
 	savenuisances1d   = snArg.getValue();
 	scanforce         = scanforceArg.getValue();
 	smooth2d          = smooth2dArg.getValue();
+  toyFiles          = toyFilesArg.getValue();
 	usage             = usageArg.getValue();
 	verbose           = verboseArg.getValue();
 
@@ -894,6 +922,18 @@ void OptParser::parseArguments(int argc, char* argv[])
 		//}
 	//}
 	//exit(0);
+
+  // --randomizeToyVars
+  tmp = randomizeToyVarsArg.getValue();
+  for ( int i = 0; i < tmp.size(); i++ ) { // loop over instances of --randomizeToyVars
+    TObjArray *parsArray = TString(tmp[i]).Tokenize(","); // split string at ","
+    vector<TString> pars;
+    for ( int j=0; j<parsArray->GetEntries(); j++){
+      TString par = ((TObjString*)parsArray->At(j))->GetString();
+      pars.push_back(par);
+    }
+    randomizeToyVars.push_back(pars);
+  }
 
   // --removeRange
   tmp = removeRangeArg.getValue();

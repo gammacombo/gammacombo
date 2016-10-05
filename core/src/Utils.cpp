@@ -425,6 +425,57 @@ void Utils::randomizeParameters(RooWorkspace* w, TString setname)
 	}
 }
 
+//
+// Randomize all parameters according to a Gaussian centered on their
+// best fit value with a width of their uncertainty
+//
+void Utils::randomizeParametersGaussian(RooWorkspace* w, TString setname, RooSlimFitResult *r)
+{
+  RooArgList list = r->floatParsFinal();
+  TIterator* it = list.createIterator();
+  while ( RooRealVar* p = (RooRealVar*)it->Next() ) {
+    RooRealVar *var = (RooRealVar*)w->var( p->GetName() );
+    if ( w->set(setname) ) {
+      if ( ! w->set(setname)->find( p->GetName() ) ) continue;
+    }
+    if ( p->isConstant() ) {
+      var->setVal( p->getVal() );
+    }
+    else {
+      double randnumb = RooRandom::randomGenerator()->Gaus( p->getVal(), p->getError() );
+      // make sure it's in range (if not then throw again)
+      while ( randnumb < var->getMin() || randnumb > var->getMax() ) {
+        randnumb = RooRandom::randomGenerator()->Gaus( p->getVal(), p->getError() );
+      }
+      var->setVal( randnumb );
+    }
+  }
+}
+
+//
+// Randomize all parameters according to a flat distribution within
+// some number of sigma of the best fit value
+//
+void Utils::randomizeParametersUniform(RooWorkspace* w, TString setname, RooSlimFitResult *r, double sigmaRange)
+{
+  RooArgList list = r->floatParsFinal();
+  TIterator* it = list.createIterator();
+  while ( RooRealVar* p = (RooRealVar*)it->Next() ) {
+    RooRealVar *var = (RooRealVar*)w->var( p->GetName() );
+    if ( p->isConstant() ) {
+      var->setVal( p->getVal() );
+    }
+    else {
+      double randnumb = RooRandom::randomGenerator()->Uniform( p->getVal()-sigmaRange*p->getError(), p->getVal()+sigmaRange*p->getError() );
+      // make sure it's in range (if not then throw again)
+      while ( randnumb < var->getMin() || randnumb > var->getMax() ) {
+        randnumb = RooRandom::randomGenerator()->Gaus( p->getVal(), p->getError() );
+      }
+      var->setVal( randnumb );
+    }
+  }
+}
+
 ///
 /// Set each parameter in workspace to the values found
 /// in the fit result

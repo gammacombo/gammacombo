@@ -270,6 +270,39 @@ void MethodPluginScan::computePvalue1d(RooSlimFitResult* plhScan, double chi2min
 	// the toys need to be generated.
 	setParameters(w, parsName, plhScan, true);
 
+  // Kenzie-Cousins-Highland (randomize nuisance parameters within a uniform range)
+  if ( arg->isAction("uniform") ) {
+    //   set parameter ranges to their bb range (should be something wide 95, 99% CL)
+    const RooArgSet* pars = w->set(toysName) ? w->set(toysName) : w->set(parsName);
+    TIterator* it = pars->createIterator();
+    while(RooRealVar* var = (RooRealVar*)it->Next()){
+      setLimit( var, "bboos" );
+    }
+    if (verbose) {
+      cout << "Uniform generating from:" << endl;
+      pars->Print("v");
+    }
+    randomizeParameters(w, parsName);
+    if (verbose) {
+      cout << "Set:" << endl;
+      w->set(parsName)->Print("v");
+    }
+  }
+
+  // Cousins-Highland (randomize nuisance parameters according to a Gaussian with their
+  // best fit value and uncertainty from the PLH scan)
+  if ( arg->isAction("gaus") ) {
+    if (verbose) {
+      cout << "Gaussian generating from:" << endl;
+      plhScan->floatParsFinal().Print("v");
+    }
+    randomizeParametersGaussian(w, toysName, plhScan);
+    if (verbose) {
+      cout << "Set:" << endl;
+      w->set(parsName)->Print("v");
+    }
+  }
+
 	// save nuisances for start parameters
 	frCache.storeParsAtGlobalMin(w->set(parsName));
 
@@ -470,9 +503,18 @@ int MethodPluginScan::scan1d(int nRun)
 	}
 
 	if ( arg->debug ) myFit->print();
-	TString dirname = "root/scan1dPlugin_"+name+"_"+scanVar1;
+	TString dirname = "root/scan1dPlugin";
+  if ( arg->isAction("bb") ) dirname += "BergerBoos";
+  if ( arg->isAction("uniform") ) dirname += "Uniform";
+  if ( arg->isAction("gaus") ) dirname += "Gaus";
+  dirname += "_"+name+"_"+scanVar1;
 	system("mkdir -p "+dirname);
-	t.writeToFile(Form(dirname+"/scan1dPlugin_"+name+"_"+scanVar1+"_run%i.root", nRun));
+  TString fname = "/scan1dPlugin";
+  if ( arg->isAction("bb") ) fname += "BergerBoos";
+  if ( arg->isAction("uniform") ) fname += "Uniform";
+  if ( arg->isAction("gaus") ) fname += "Gaus";
+  fname += Form("_"+name+"_"+scanVar1+"_run%i.root",nRun);
+	t.writeToFile((dirname+fname).Data());
 	delete myFit;
 	delete pb;
 	return 0;
@@ -569,7 +611,44 @@ void MethodPluginScan::scan2d(int nRun)
 								"id=[%i,%i], val=[%f,%f]\n", iCurveRes1, iCurveRes2, scanpoint1, scanpoint2);
 					}
 					extCurveResult = new RooArgList(profileLH->curveResults2d[iCurveRes1][iCurveRes2]->floatParsFinal());
-					setParameters(w, parsName, extCurveResult);
+
+          // Set nuisances. This is the point in parameter space where
+          // the toys need to be generated.
+          setParameters(w, parsName, extCurveResult);
+
+          // Kenzie-Cousins-Highland (randomize nuisance parameters within a uniform range)
+          if ( arg->isAction("uniform") ) {
+            // set parameter ranges to their bb range (should be something wide 95, 99% CL)
+            const RooArgSet* pars = w->set(toysName) ? w->set(toysName) : w->set(parsName);
+            TIterator* it = pars->createIterator();
+            while ( RooRealVar* var = (RooRealVar*)it->Next() ) {
+              setLimit( var, "bboos" );
+            }
+            if (verbose) {
+              cout << "Uniform generating from:" << endl;
+              pars->Print("v");
+            }
+            randomizeParameters(w, parsName);
+            if (verbose) {
+              cout << "Set:" << endl;
+              w->set(parsName)->Print("v");
+            }
+          }
+
+          // Cousins-Highland (randomize nuisance parameters according to a Gaussian with their
+          // best fit value and uncertainty from the PLH scan)
+          if ( arg->isAction("gaus") ) {
+            if (verbose) {
+              cout << "Gaussian generating from:" << endl;
+              profileLH->curveResults2d[iCurveRes1][iCurveRes2]->floatParsFinal().Print("v");
+            }
+            randomizeParametersGaussian(w, toysName, profileLH->curveResults2d[iCurveRes1][iCurveRes2]);
+            if (verbose) {
+              cout << "Set:" << endl;
+              w->set(parsName)->Print("v");
+            }
+          }
+
 					t.chi2min = profileLH->curveResults2d[iCurveRes1][iCurveRes2]->minNll();
 
 					// check if the scan variable here differs from that of
@@ -681,9 +760,18 @@ void MethodPluginScan::scan2d(int nRun)
 	}
 
 	// save tree
-	TString dirname = "root/scan2dPlugin_"+name+"_"+scanVar1+"_"+scanVar2;
+	TString dirname = "root/scan2dPlugin";
+  if ( arg->isAction("bb") ) dirname += "BergerBoos";
+  if ( arg->isAction("uniform") ) dirname += "Uniform";
+  if ( arg->isAction("gaus") ) dirname += "Gaus";
+  dirname += "_"+name+"_"+scanVar1+"_"+scanVar2;
 	system("mkdir -p "+dirname);
-	t.writeToFile(Form(dirname+"/scan2dPlugin_"+name+"_"+scanVar1+"_"+scanVar2+"_run%i.root", nRun));
+  TString fname = "/scan1dPlugin";
+  if ( arg->isAction("bb") ) fname += "BergerBoos";
+  if ( arg->isAction("uniform") ) fname += "Uniform";
+  if ( arg->isAction("gaus") ) fname += "Gaus";
+  fname += Form("_"+name+"_"+scanVar1+"_"+scanVar2+"_run%i.root",nRun);
+	t.writeToFile((dirname+fname).Data());
 	delete pb;
 }
 
@@ -858,8 +946,19 @@ void MethodPluginScan::readScan1dTrees(int runMin, int runMax)
 	TChain *c = new TChain("plugin");
 	int nFilesMissing = 0;
 	int nFilesRead = 0;
-	TString dirname = "root/scan1dPlugin_"+name+"_"+scanVar1;
-	TString fileNameBase = dirname+"/scan1dPlugin_"+name+"_"+scanVar1+"_run";
+  // configure file name
+  TString dirname = "root/scan1dPlugin";
+  if ( arg->isAction("bb") ) dirname += "BergerBoos";
+  if ( arg->isAction("uniform") ) dirname += "Uniform";
+  if ( arg->isAction("gaus") ) dirname += "Gaus";
+  dirname += "_"+name+"_"+scanVar1;
+	TString fileNameBase = dirname+"/scan1dPlugin";
+  if ( arg->isAction("bb") ) fileNameBase += "BergerBoos";
+  if ( arg->isAction("uniform") ) fileNameBase += "Uniform";
+  if ( arg->isAction("gaus") ) fileNameBase += "Gaus";
+  fileNameBase += "_"+name+"_"+scanVar1+"_run";
+  // read different files if requested
+  if ( arg->toyFiles != "" && arg->toyFiles != "default" ) fileNameBase = arg->toyFiles;
 	if ( arg->debug ) cout << "MethodPluginScan::readScan1dTrees() : ";
 	cout << "reading files: " << fileNameBase+"*.root" << endl;
 	for (int i=runMin; i<=runMax; i++){
@@ -912,9 +1011,21 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
 	TChain *chain = new TChain("plugin");
 	int nFilesMissing = 0;
 	int nFilesRead = 0;
-	TString dirname = "root/scan2dPlugin_"+name+"_"+scanVar1+"_"+scanVar2;
-	TString fileNameBase = dirname+"/scan2dPlugin_"+name+"_"+scanVar1+"_"+scanVar2+"_run";
-	if ( arg->debug ) cout << "MethodPluginScan::readScan2dTrees() : ";
+  // configure file name
+  TString dirname = "root/scan2dPlugin";
+  if ( arg->isAction("bb") ) dirname += "BergerBoos";
+  if ( arg->isAction("uniform") ) dirname += "Uniform";
+  if ( arg->isAction("gaus") ) dirname += "Gaus";
+  dirname += "_"+name+"_"+scanVar1+"_"+scanVar2;
+	TString fileNameBase = dirname+"/scan2dPlugin";
+  if ( arg->isAction("bb") ) fileNameBase += "BergerBoos";
+  if ( arg->isAction("uniform") ) fileNameBase += "Uniform";
+  if ( arg->isAction("gaus") ) fileNameBase += "Gaus";
+  fileNameBase += "_"+name+"_"+scanVar1+"_"+scanVar2+"_run";
+  // read different file if requested 
+  if ( arg->toyFiles != "" && arg->toyFiles != "default" ) fileNameBase = arg->toyFiles;
+	
+  if ( arg->debug ) cout << "MethodPluginScan::readScan2dTrees() : ";
 	cout << "reading files: " << fileNameBase+"*.root" << endl;
 	for (int i=runMin; i<=runMax; i++) {
 		TString file = Form(fileNameBase+"%i.root", i);

@@ -53,6 +53,7 @@ class OptParser
 		vector<vector<FixPar> >     fixParameters;
 		vector<vector<RangePar> >   physRanges;
     vector<vector<TString> >    removeRanges;
+    vector<vector<TString> >    randomizeToyVars;
 		TString	group;
 		TString	groupPos;
 		int             id;
@@ -111,9 +112,11 @@ class OptParser
 		TString 				probScanResult;
 		bool		printcor;
     float           printSolX;
+    float           printSolY;
 		vector<int>   	qh;
     TString         queue;
 		vector<TString> relation;
+    TString         save;
 		vector<float>   savenuisances1d;
 		vector<float>   savenuisances2dx;
 		vector<float>   savenuisances2dy;
@@ -124,6 +127,7 @@ class OptParser
 		float           scanrangeyMax;
 		bool    smooth2d;
 		vector<TString> title;
+    TString         toyFiles;
 		bool            usage;
 		vector<TString> var;
 		bool		verbose;

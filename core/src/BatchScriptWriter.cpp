@@ -40,6 +40,8 @@ void BatchScriptWriter::writeScripts(OptParser *arg, vector<Combiner*> *cmb){
       cout << "BatchScriptWriter::writeScripts() : ERROR : only need to write batch scripts for pluginbatch method" << endl;
       exit(1);
     }
+    if ( arg->isAction("uniform") ) methodname += "Uniform";
+    if ( arg->isAction("gaus") ) methodname += "Gaus";
 
     cout << "Writing submission scripts for combination " << c->getName() << endl;
 
@@ -50,10 +52,16 @@ void BatchScriptWriter::writeScripts(OptParser *arg, vector<Combiner*> *cmb){
     if ( arg->var.size()>1) {
       dirname += "_"+arg->var[1];
     }
+    if ( arg->isAction("coveragebatch") ) {
+      dirname += arg->id<0 ? "_id0" : Form("_id%d",arg->id);
+    }
     TString scripts_dir_path = "sub/" + dirname;
     TString outf_dir = "root/" + dirname;
     system(Form("mkdir -p %s",scripts_dir_path.Data()));
     TString scriptname = "scan1d"+methodname+"_"+c->getName()+"_"+arg->var[0];
+    if ( arg->isAction("coveragebatch") ) {
+      scriptname += arg->id<0 ? "_id0" : Form("_id%d",arg->id) ;
+    }
     // if write to eos then make the directory
     if ( arg->batcheos ) {
       time_t t = time(0);
@@ -131,6 +139,6 @@ void BatchScriptWriter::writeScript(TString fname, TString outfloc, int jobn, Op
   system(Form("chmod +x %s",fname.Data()));
 
   if ( arg->queue != "" ) {
-    system(Form("bsub -q %s -o %s/%s.log %s/%s",arg->queue.Data(),cwd,fname.Data(),cwd,fname.Data()));
+    system(Form("bsub -R \"rusage[mem=40000]\" -q %s -o %s/%s.log %s/%s",arg->queue.Data(),cwd,fname.Data(),cwd,fname.Data()));
   }
 }
