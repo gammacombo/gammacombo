@@ -14,6 +14,9 @@
 #include <algorithm>
 #include <ios>
 #include <iomanip>
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
+
 ///
 /// The default constructor for the dataset plugin scan
 ///
@@ -146,7 +149,7 @@ void MethodDatasetsPluginScan::setExtProfileLH(TTree* tree){
 
   //make sure that the scan points in the tree match number 
   //of scan points and the scan range that we are using now.
-  TBranch* b    = (TBranch*)this->profileLHPoints->GetBranch("scanpoint");
+  TBranch* b    = (TBranch*)tree->GetBranch("scanpoint");
   int entriesInTree = b->GetEntries();
   if(nPoints1d != entriesInTree){
     std::cout<<"Number of scan points in tree saved from prob scan do not match number of scan points used in plugin scan."<<std::endl;
@@ -155,18 +158,19 @@ void MethodDatasetsPluginScan::setExtProfileLH(TTree* tree){
 
 
   float parameterToScan_min = hCL->GetXaxis()->GetXmin();
-  this->profileLHPoints->GetEntry(0);
+  float parameterToScan_max = hCL->GetXaxis()->GetXmax();
+
+  tree->GetEntry(0);
   float minTreePoint = b->GetLeaf("scanpoint")->GetValue();
-  if((minTreePoint - parameterToScan_min)/minTreePoint < 1e-5){
+  if((minTreePoint - parameterToScan_min)/std::max(parameterToScan_max, parameterToScan_min) > 1e-5){
     std::cout<<"Lowest scan point in tree saved from prob scan does not match lowest scan point used in plugin scan."<<std::endl;
     std::cout<<"Alternatively, this could be a problem with the heuristics used for checking the equality of two floats"<<std::endl;
     exit(EXIT_FAILURE); 
   }
 
-  float parameterToScan_max = hCL->GetXaxis()->GetXmax();
-  this->profileLHPoints->GetEntry(entriesInTree-1);
+  tree->GetEntry(entriesInTree-1);
   float maxTreePoint = b->GetLeaf("scanpoint")->GetValue();
-  if((maxTreePoint - parameterToScan_max)/maxTreePoint < 1e-5){
+  if((maxTreePoint - parameterToScan_max)/std::max(parameterToScan_max, parameterToScan_min) > 1e-5){
     std::cout<<"Max scan point in tree saved from prob scan probably does not match max scan point used in plugin scan."<<std::endl;
     std::cout<<"Alternatively, this could be a problem with the heuristics used for checking the equality of two floats"<<std::endl;
     exit(EXIT_FAILURE); 
@@ -528,8 +532,10 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
 int MethodDatasetsPluginScan::scan1d(int nRun)
 {
   if(doProbScanOnly){
+    cout<<"CALLING MethodDatasetsPluginScan::scan1d_prob"<<std::endl;
     this->scan1d_prob();
   } else {
+    cout<<"CALLING MethodDatasetsPluginScan::scan1d_plugin"<<std::endl;
     this->scan1d_plugin(nRun);
   }
 
@@ -579,7 +585,7 @@ void MethodDatasetsPluginScan::scan1d_prob()
 
 
   // start scan
-  cout << "MethodDatasetsPluginScan::scan1d() : starting ... with " << nPoints1d << " scanpoints..." << endl;
+  cout << "MethodDatasetsPluginScan::scan1d_prob() : starting ... with " << nPoints1d << " scanpoints..." << endl;
   ProgressBar progressBar(arg, nPoints1d);
   for ( int i=0; i<nPoints1d; i++ )
   {
@@ -592,13 +598,13 @@ void MethodDatasetsPluginScan::scan1d_prob()
   
     toyTree.scanpoint = scanpoint;
     
-    if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - scanpoint calculated in scanpoint " << i+1 << " as: " << scanpoint << endl;
+    if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d_prob() - scanpoint in step " << i << " : " << scanpoint << endl;
 
     // don't scan in unphysical region
     // by default this means checking against "free" range
     if ( scanpoint < parameterToScan->getMin() || scanpoint > parameterToScan->getMax()+2e-13 ){ 
-      cout << "not obvious: " << scanpoint << " < " << parameterToScan->getMin() << " and " << scanpoint << " > " << parameterToScan->getMax()+2e-13 << endl;
-      continue;
+      cout << "it seems we are scanning in an unphysical region: " << scanpoint << " < " << parameterToScan->getMin() << " or " << scanpoint << " > " << parameterToScan->getMax()+2e-13 << endl;
+      exit(EXIT_FAILURE);
     }
 
     // FIT TO REAL DATA WITH FIXED HYPOTHESIS(=SCANPOINT).
@@ -616,9 +622,9 @@ void MethodDatasetsPluginScan::scan1d_prob()
     assert(result);
 
     if(arg->debug){ 
-      cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - minNll data scan fix " << 2*result->minNll() << endl;
-      cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - Data Scan fit result" << endl;
-      result->Print("v");
+      cout << "DEBUG in MethodDatasetsPluginScan::scan1d_prob() - minNll data scan fix " << 2*result->minNll() << endl;
+      // cout << "DEBUG in MethodDatasetsPluginScan::scan1d_prob() - Data Scan fit result" << endl;
+      // result->Print("v");
     }
     toyTree.statusScanData = result->status();
     
@@ -636,20 +642,18 @@ void MethodDatasetsPluginScan::scan1d_prob()
     TString plhName = Form("profileLHPoint_%i",i);
     w->saveSnapshot(plhName,allVars);
 
-    if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - parameters value stored in ToyTree for scanpoint " << i+1 << endl;
+    if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d_prob() - parameters value stored in ToyTree for scanpoint " << i+1 << endl;
     this->pdf->deleteNLL();
 
       
 
+    if(!this->chi2minGlobalFound){
+      cout << "FATAL in MethodDatasetsPluginScan::scan1d_prob() - Global Minimum not set!" << endl;
+      exit(EXIT_FAILURE);
+    }
+    
     // get the chi2 of the data
-    if(this->chi2minGlobalFound){
-      toyTree.chi2minGlobal     = this->getChi2minGlobal();
-    }
-    else{
-      cout << "FATAL in MethodDatasetsPluginScan::scan1d() - Global Minimum not set!" << endl;
-      cout << "FATAL in MethodDatasetsPluginScan::scan1d() - Cannot continue with scan" << endl;
-      exit(-1);
-    }
+    toyTree.chi2minGlobal     = this->getChi2minGlobal();
     
     toyTree.storeParsPll();
     toyTree.genericProbPValue = this->getPValueTTestStatistic(toyTree.chi2min-toyTree.chi2minGlobal);
@@ -660,6 +664,7 @@ void MethodDatasetsPluginScan::scan1d_prob()
     //setParameters(w, pdf->getObsName(), obsDataset->get(0));
     toyTree.writeToFile();
   } // End of npoints loop
+  std::cout<<"Wrote ToyTree to file"<<std::endl;
 
   outputFile->Write();
   outputFile->Close();
@@ -688,6 +693,11 @@ double MethodDatasetsPluginScan::getPValueTTestStatistic(double test_statistic_v
 ///
 void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
 {
+
+  // //current working directory
+  // boost::filesystem::path full_path( boost::filesystem::initial_path<boost::filesystem::path>() );
+  // std::cout<<"initial path according to boost "<<full_path<<std::endl;
+
   // Necessary for parallelization 
   RooRandom::randomGenerator()->SetSeed(0);
   // Set limit to all parameters. 
@@ -739,7 +749,7 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
 
       
   // start scan
-  cout << "MethodDatasetsPluginScan::scan1d() : starting ... with " << nPoints1d << " scanpoints..." << endl;
+  cout << "MethodDatasetsPluginScan::scan1d_plugin() : starting ... with " << nPoints1d << " scanpoints..." << endl;
   ProgressBar progressBar(arg, nPoints1d);
   for ( int i=0; i<nPoints1d; i++ )
   {
@@ -753,7 +763,7 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
 	
     toyTree.scanpoint = scanpoint;
     
-    if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - scanpoint calculated in scanpoint " << i+1 << " as: " << scanpoint << endl;
+    if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d_plugin() - scanpoint in step " << i << " : " << scanpoint << endl;
 
     // don't scan in unphysical region
     // by default this means checking against "free" range
@@ -774,7 +784,7 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
       toyTree.chi2minGlobal     = this->getChi2minGlobal();
     }
     else{
-      cout << "FATAL in MethodDatasetsPluginScan::scan1d() - Global Minimum not set!" << endl;
+      cout << "FATAL in MethodDatasetsPluginScan::scan1d_plugin() - Global Minimum not set!" << endl;
       exit(EXIT_FAILURE);
     }
     
@@ -792,7 +802,7 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
       // Set all parameters (nuisance parameters and parameter of interest) to the values from the fit to data with fixed parameter of interest.
       // This is called the PLUGIN method.(Here, we are setting ALL parameters, not only the nuisance ones)
       this->setParevolPointByIndex(i);
-      assert(scanpoint - w->var("branchingRatio")->getVal() < stepwidth / 100.);
+      assert(scanpoint - w->var(scanVar1)->getVal() < stepwidth / 100.);
 
 
       this->pdf->generateToys(); // this is generating the toy dataset
@@ -804,11 +814,11 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
       //
       // 2. Fit to toys with parameter of interest fixed to scanpoint
       //
-      if(arg->debug)cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - perform scan toy fit" << endl;
+      if(arg->debug)cout << "DEBUG in MethodDatasetsPluginScan::scan1d_plugin() - perform scan toy fit" << endl;
 
       // set parameters to data scan fit again
       this->setParevolPointByIndex(i);
-      assert(scanpoint - w->var("branchingRatio")->getVal() < stepwidth / 100.);
+      assert(scanpoint - w->var(scanVar1)->getVal() < stepwidth / 100.);
 
       parameterToScan->setConstant(true);
       this->pdf->setFitStrategy(0);
@@ -920,7 +930,7 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
       //
       // 2. Fit to toys with free parameter of interest
       //
-      if(arg->debug)cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - perform free toy fit" << endl;
+      if(arg->debug)cout << "DEBUG in MethodDatasetsPluginScan::scan1d_plugin() - perform free toy fit" << endl;
       // Use parameters from the scanfit to data
       
       this->setParevolPointByIndex(i);
@@ -1242,7 +1252,7 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
           r1->Print("");
         }
 
-        cout << "DEBUG in MethodDatasetsPluginScan::scan1d() - ToyTree 2*minNll free fit: " << toyTree.chi2minGlobalToy << endl;
+        cout << "DEBUG in MethodDatasetsPluginScan::scan1d_plugin() - ToyTree 2*minNll free fit: " << toyTree.chi2minGlobalToy << endl;
       }
 
       
@@ -1390,6 +1400,9 @@ void MethodDatasetsPluginScan::performBootstrapTest(int nSamples, const TString&
   hist->SetLineWidth(2);
   hist->Fit("gaus");
   hist->Draw();
+
+
+
   c->SaveAs(Form("plots/root/"+name+"_bootStrap_%i_samples_with_%i_toys_"+ext+".root",nSamples,numberOfToys));
   c->SaveAs(Form("plots/C/"+name+"_bootStrap_%i_samples_with_%i_toys_"+ext+".C",nSamples,numberOfToys));
   c->SaveAs(Form("plots/pdf/"+name+"_bootStrap_%i_samples_with_%i_toys_"+ext+".pdf",nSamples,numberOfToys));
