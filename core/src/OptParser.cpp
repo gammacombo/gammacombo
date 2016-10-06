@@ -492,6 +492,7 @@ void OptParser::parseArguments(int argc, char* argv[])
       "19: In 1D plots, no vertical lines.\n"
       "20: In 1D plots, only central value line.\n"
       "21: Don't add the solution to 1D 1-CL plots.\n"
+      "22: In 1D plots draw the legend without changing the y-axis (need also --leg off option).\n"
 			, false, "int");
 	TCLAP::MultiArg<string> titleArg("", "title", "Override the title of a combination. "
 			"If 'default' is given, the default title for that combination is used. "
