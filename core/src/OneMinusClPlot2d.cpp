@@ -434,7 +434,7 @@ void OneMinusClPlot2d::drawLegend()
 			g->SetMarkerSize(markersize[styleId]);
 			TString options = "f";
 			if ( scanners[i]->getDrawSolution() ) options += "p"; // only plot marker symbol when solutions are plotted
-			m_legend->AddEntry(g, scanners[i]->getTitle(), options);
+			if ( scanners[i]->getTitle() != "noleg" ) m_legend->AddEntry(g, scanners[i]->getTitle(), options);
 		}
 	}
 	m_legend->Draw();

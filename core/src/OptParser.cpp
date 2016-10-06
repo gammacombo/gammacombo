@@ -35,6 +35,7 @@ OptParser::OptParser():
 	debug = false;
 	digits = -99;
 	enforcePhysRange = false;
+    filenamechange = "";
 	group = "GammaCombo";
 	groupPos = "";
 	id = -99;
@@ -119,6 +120,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("debug");
 	availableOptions.push_back("digits");
 	availableOptions.push_back("evol");
+    availableOptions.push_back("filename");
 	availableOptions.push_back("fix");
 	availableOptions.push_back("ext");
 	availableOptions.push_back("id");
@@ -364,6 +366,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"rejcet low-statistics outliers. Format: --pluginplotrange min-max.", false, "default", "string");
 	TCLAP::ValueArg<int> plotnsigmacontArg("", "ncontours", "plot this many sigma contours in 2d plots (max 5)", false, 2, "int");
 	TCLAP::ValueArg<string> filenameadditionArg("","ext","Add this piece into the file name (in case you don't want files/plots to be overwritten", false, "", "string");
+    TCLAP::ValueArg<string> filenamechangeArg("","filename", "Change filename to this name (after the basename of the executable)", false, "", "string");
 	TCLAP::ValueArg<string> plotgroupArg("", "group", "Set the group logo. Use '--group off' to disable the logo. "
 			"See also --grouppos. Default: GammaCombo", false, "GammaCombo", "string");
 	TCLAP::ValueArg<string> plotgroupposArg("", "grouppos", "Set the position of the group logo. "
@@ -496,6 +499,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 			, false, "int");
 	TCLAP::MultiArg<string> titleArg("", "title", "Override the title of a combination. "
 			"If 'default' is given, the default title for that combination is used. "
+            "If 'noleg' is given, this entry is not shown in the legend. "
 			"Example: --title 'This is the 1. combination.' --title 'And this the second.'", false, "string");
 	TCLAP::MultiArg<string> fixArg("", "fix", "Fix one or more parameters in a combination. "
 			"If 'none' is given, all parameters are floated (default). "
@@ -649,6 +653,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "grouppos" ) ) cmd.add( plotgroupposArg );
 	if ( isIn<TString>(bookedOptions, "fix" ) ) cmd.add(fixArg);
 	if ( isIn<TString>(bookedOptions, "ext" ) ) cmd.add(filenameadditionArg);
+    if ( isIn<TString>(bookedOptions, "filename" ) ) cmd.add( filenamechangeArg );
 	if ( isIn<TString>(bookedOptions, "evol" ) ) cmd.add(parevolArg);
 	if ( isIn<TString>(bookedOptions, "digits" ) ) cmd.add(digitsArg);
 	if ( isIn<TString>(bookedOptions, "debug" ) ) cmd.add(debugArg);
@@ -673,6 +678,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	digits            = digitsArg.getValue();
 	enforcePhysRange  = prArg.getValue();
 	filenameaddition  = filenameadditionArg.getValue();
+    filenamechange    = filenamechangeArg.getValue();
 	group             = plotgroupArg.getValue();
 	id                = idArg.getValue();
 	importance        = importanceArg.getValue();
