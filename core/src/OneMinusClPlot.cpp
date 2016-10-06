@@ -162,7 +162,7 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
   // plot y range
   float plotYMax;
   float plotYMin;
-  if ( plotLegend ) {
+  if ( plotLegend && !arg->isQuickhack(22) ) {
     if ( arg->plotlog ) { plotYMin = 1.e-3; plotYMax = 10.; }
     else                { plotYMin = 0.0  ; plotYMax = 1.3; }
   }
@@ -239,12 +239,12 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 		TGaxis *axisr = 0;
 		if ( arg->plotlog ){
 			float f3min = 1e-3;
-			float f3max = plotLegend ? 10. : 1.;
+			float f3max = (plotLegend && !arg->isQuickhack(22)) ? 10. : 1.;
 			TF1 *f3 = new TF1("f3","log10(x)",f3min,f3max);
 			axisr = new TGaxis(xmax, f3min, xmax, f3max, "f3", 510, "G+");
 		}
 		else{
-			axisr = new TGaxis(xmax, ymin, xmax, ymax, 0, plotLegend ? 1.3 : 1.0, 407, "+");
+			axisr = new TGaxis(xmax, ymin, xmax, ymax, 0, (plotLegend && !arg->isQuickhack(22)) ? 1.3 : 1.0, 407, "+");
 		}
 		axisr->SetLabelSize(0);
 		axisr->SetLineWidth(1);
@@ -302,7 +302,7 @@ void OneMinusClPlot::scan1dPlotSimple(MethodAbsScan* s, bool first)
 	s->getHCL()->GetYaxis()->SetLabelSize(labelsize);
 	s->getHCL()->GetXaxis()->SetTitleSize(titlesize);
 	s->getHCL()->GetYaxis()->SetTitleSize(titlesize);
-	if ( plotLegend ){
+	if ( plotLegend && !arg->isQuickhack(22) ){
 		if ( arg->plotlog ) s->getHCL()->GetYaxis()->SetRangeUser(1e-3,10);
 		else                s->getHCL()->GetYaxis()->SetRangeUser(0.0,1.3);
 	}
@@ -512,7 +512,11 @@ void OneMinusClPlot::Draw()
 
 	// Legend:
 	// make the legend short, the text will extend over the boundary, but the symbol will be shorter
-	TLegend* leg = new TLegend(0.19,0.78,0.5,0.9440559);
+  float legendXmin = arg->plotlegx!=-1. ? arg->plotlegx : 0.19 ;
+  float legendYmin = arg->plotlegy!=-1. ? arg->plotlegy : 0.78 ;
+  float legendXmax = legendXmin + ( arg->plotlegsizex!=-1. ? arg->plotlegsizex : 0.31 ) ;
+  float legendYmax = legendYmin + ( arg->plotlegsizey!=-1. ? arg->plotlegsizey : 0.1640559 ) ;
+	TLegend* leg = new TLegend(legendXmin,legendYmin,legendXmax,legendYmax);
 	leg->SetFillColor(kWhite);
 	leg->SetFillStyle(0);
 	leg->SetLineColor(kWhite);
@@ -551,6 +555,7 @@ void OneMinusClPlot::Draw()
 		}
 	drawSolutions();
 	if ( plotLegend ) leg->Draw();
+  if ( arg->isQuickhack(22) ) leg->Draw();
 	m_mainCanvas->Update();
 	drawCLguideLines();
 

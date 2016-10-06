@@ -721,7 +721,7 @@ void GammaComboEngine::defineColors()
 		//   second colour scheme
 
 		ColorBuilder cb;
-		for ( int i=0; i<colorsLine.size(); i++ ){
+		for ( int i=4; i<colorsLine.size(); i++ ){
       //colorsText.push_back(cb.darklightcolor(colorsLine[i], 0.5));
 		  colorsText.push_back( colorsLine[i] );
     }
