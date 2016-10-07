@@ -104,6 +104,7 @@ namespace Utils
 
 	void savePlot(TCanvas *c1, TString name);
 	bool FileExists( TString strFilename );
+	void assertFileExists(TString strFilename);
 	template<class T> inline bool isIn(vector<T> vec, T var){return (find(vec.begin(), vec.end(), var) != vec.end());};
 
 	static int uniqueRootNameId = 0;

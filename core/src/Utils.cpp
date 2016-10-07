@@ -1141,3 +1141,9 @@ TCanvas* Utils::newNoWarnTCanvas(TString name, TString title, int x, int y, int 
 }
 
 
+void Utils::assertFileExists( TString strFilename ){
+    if ( !FileExists(strFilename) ){
+        cout << "ERROR : File not found: " + strFilename << endl;
+        exit(EXIT_FAILURE);
+    }
+}
