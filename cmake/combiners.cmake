@@ -18,7 +18,7 @@ SET( COMBINER_MODULES
   #belle2
   #belle2_Vub
   #Vub_Vcb
-  bsmumu
+  #bsmumu
   #bs24mu
 )
 
