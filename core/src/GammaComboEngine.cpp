@@ -1570,7 +1570,7 @@ void GammaComboEngine::scanDataSet()
 		/////////////////////////////
 		scanner->performProbScanOnly(true);
 		scanner->scan1d();
-		scanner->readScan1dTrees(1,1);
+		scanner->readScan1dTrees_prob();
 		MethodProbScan* sc = dynamic_cast<MethodProbScan*>(scanner->getProfileLH());
 		plot->addScanner(sc);
 		sc->calcCLintervals();

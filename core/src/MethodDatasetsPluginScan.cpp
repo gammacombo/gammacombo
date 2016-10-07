@@ -234,7 +234,7 @@ TChain* MethodDatasetsPluginScan::readFiles(int runMin, int runMax, int &nFilesR
     TString file = Form("root/scan1dDatasetsProb_"+this->pdf->getName()+"_%ip"+"_"+scanVar1+".root", arg->npoints1d);
     Utils::assertFileExists(file);
     c->Add(file);
-    nFilesRead = 1;
+    _nFilesRead = 1;
   
   }else{
     TString dirname = "root/scan1dDatasetsPlugin_"+this->pdf->getName()+"_"+scanVar1;
@@ -267,7 +267,10 @@ TChain* MethodDatasetsPluginScan::readFiles(int runMin, int runMax, int &nFilesR
   return c;
 }
 
-
+//////////
+// This is the Plugin version of the method, there is also a version of the method for the prob scan, with _prob suffix.
+// \todo: Like for the normal gammacombo stuff, use a seperate class for the PROB scan! This is MethodDatasetsPLUGINScan.cpp, after all
+/////////////
 void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString fileNameBaseIn)
 {
   int nFilesRead, nFilesMissing;
@@ -304,7 +307,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
   TH1F *h_fracGoodToys  = (TH1F*)hCL->Clone("h_fracGoodToys");
   TH1F *h_pVals         = new TH1F("p","p", 200, 0.0, 1e-2);
   Long64_t nentries     = t.GetEntries();
-  cout << "MethodDatasetsPluginScan::readScan1dTrees() : total number of toys per scanpoint: " << (double) nentries / (double)nPoints1d << endl;
+  cout << "MethodDatasetsPluginScan::readScan1dTrees() : average number of toys per scanpoint: " << (double) nentries / (double)nPoints1d << endl;
   Long64_t nfailed      = 0;
   Long64_t nwrongrun    = 0;
   Long64_t n0better     = 0;
@@ -322,7 +325,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
   {
     // status bar
     if (((int)i % (int)(nentries/printFreq)) == 0)
-      cout << "MethodDatasetsPluginScan::readScan1dTrees() : reading toys " 
+      cout << "MethodDatasetsPluginScan::readScan1dTrees() : reading entries " 
            << Form("%.0f",(float)i/(float)nentries*100.) << "%   \r" << flush;
     // load entry
     t.GetEntry(i);
@@ -415,8 +418,8 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     float p = nbetter/nall;
     hCL->SetBinContent(i, p);
     hCL->SetBinError(i, sqrt(p * (1.-p)/nall));
-	cout << "At scanpoint "<< std::scientific << hCL->GetBinCenter(i)<<": ===== number of toys for pValue calculation: " << nbetter << endl;
-	cout << "At scanpoint "<<hCL->GetBinCenter(i)<<": ===== pValue: " << p << endl;
+  cout << "At scanpoint "<< std::scientific << hCL->GetBinCenter(i)<<": ===== number of toys for pValue calculation: " << nbetter << endl;
+  cout << "At scanpoint "<<hCL->GetBinCenter(i)<<": ===== pValue: " << p << endl;
   }
 
   if(arg->debug || drawPlots){
@@ -461,6 +464,48 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
   float fitprobabilityErr = sqrt(fitprobabilityVal * (1.-fitprobabilityVal)/nall);
   cout << "MethodDatasetsPluginScan::readScan1dTrees() : fit prob of best-fit point: "
     << Form("(%.1f+/-%.1f)%%", fitprobabilityVal*100., fitprobabilityErr*100.) << endl;
+}
+
+
+void MethodDatasetsPluginScan::readScan1dTrees_prob()
+{
+  int nFilesRead, nFilesMissing;
+  TChain* c = this->readFiles(1, 1, nFilesRead, nFilesMissing, TString("default"));
+  ToyTree t(this->pdf, this->arg, c);
+  t.open();
+  
+  float halfBinWidth = (t.getScanpointMax()-t.getScanpointMin())/((float)t.getScanpointN())/2;//-1.)/2;
+  /// \todo replace this such that there's always one bin per scan point, but still the range is the scan range.
+  /// \todo Also, if we use the min/max from the tree, we have the problem that they are not exactly
+  /// the scan range, so that the axis won't show the lowest and highest number.
+  /// \todo If the scan range was changed after the toys were generate, we absolutely have
+  /// to derive the range from the root files - else we'll have bining effects.
+  delete hCL;
+  hCL = new TH1F("hCL", "hCL", t.getScanpointN(), t.getScanpointMin()-halfBinWidth, t.getScanpointMax()+halfBinWidth);
+  if(arg->debug){
+    printf("DEBUG %i %f %f %f\n", t.getScanpointN(), t.getScanpointMin()-halfBinWidth, t.getScanpointMax()+halfBinWidth, halfBinWidth);
+  }
+ 
+  TH1F *h_probPValues   = (TH1F*)hCL->Clone("h_probPValues");
+  Long64_t nentries     = t.GetEntries();
+ 
+
+  t.activateCoreBranchesOnly();                       ///< speeds up the event loop
+  TString alternateTestStatName = scanVar1+"_free";
+  t.activateBranch(alternateTestStatName);
+  for (Long64_t i = 0; i < nentries; i++)
+  {
+    // status bar
+      cout << "MethodDatasetsPluginScan::readScan1dTrees() : reading entries " 
+           << Form("%.0f",(float)i/(float)nentries*100.) << "%   \r" << flush;
+    // load entry
+    t.GetEntry(i);
+    h_probPValues->SetBinContent(h_probPValues->FindBin(t.scanpoint), this->getPValueTTestStatistic(t.chi2min-this->chi2minGlobal)); //t.chi2minGlobal));
+  }
+  cout << "MethodDatasetsPluginScan::readScan1dTrees() : reading done.           \n" << endl;
+
+  this->profileLH = new MethodProbScan(pdf, this->getArg(), h_probPValues);
+  // goodness-of-fit
 }
 
 
