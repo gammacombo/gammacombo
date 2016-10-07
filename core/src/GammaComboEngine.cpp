@@ -1555,12 +1555,13 @@ void GammaComboEngine::scanDataSet()
 		scanner->scan1d(arg->nrun);
 	} else if ( arg->isAction("plugin") ){
 		scanner->readScan1dTrees(arg->jmin[0], arg->jmax[0]);
+		MethodProbScan* sc = dynamic_cast<MethodProbScan*>(scanner->getProfileLH());
 		/////////////////////////////////////////////////////
 		// Plotting
 		/////////////////////////////////////////////////////
-		plot->addScanner(scanner);
-		MethodProbScan* sc = dynamic_cast<MethodProbScan*>(scanner->getProfileLH());
+		scanner->setLineColor(1);
 		plot->addScanner(sc);
+		plot->addScanner(scanner);
 		scanner->calcCLintervals();
 		sc->calcCLintervals();
 		plot->Draw();
@@ -1570,7 +1571,7 @@ void GammaComboEngine::scanDataSet()
 		/////////////////////////////
 		scanner->performProbScanOnly(true);
 		scanner->scan1d();
-		scanner->readScan1dTrees(1,1);
+		scanner->readScan1dTrees_prob();
 		MethodProbScan* sc = dynamic_cast<MethodProbScan*>(scanner->getProfileLH());
 		plot->addScanner(sc);
 		sc->calcCLintervals();
