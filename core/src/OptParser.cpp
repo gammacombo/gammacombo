@@ -35,6 +35,7 @@ OptParser::OptParser():
 	debug = false;
 	digits = -99;
 	enforcePhysRange = false;
+    filenamechange = "";
 	group = "GammaCombo";
 	groupPos = "";
 	id = -99;
@@ -59,6 +60,7 @@ OptParser::OptParser():
   ncoveragetoys = -99;
 	nrun = -99;
 	ntoys = -99;
+	nsmooth = 1;
 	parevol = false;
   plotext = "";
 	plotid = -99;
@@ -119,6 +121,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("debug");
 	availableOptions.push_back("digits");
 	availableOptions.push_back("evol");
+    availableOptions.push_back("filename");
 	availableOptions.push_back("fix");
 	availableOptions.push_back("ext");
 	availableOptions.push_back("id");
@@ -147,6 +150,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("ncoveragetoys");
 	availableOptions.push_back("nrun");
 	availableOptions.push_back("ntoys");
+	availableOptions.push_back("nsmooth");
 	//availableOptions.push_back("pevid");
 	availableOptions.push_back("pr");
 	availableOptions.push_back("physrange");
@@ -241,6 +245,7 @@ void OptParser::bookPluginOptions()
 	bookedOptions.push_back("npointstoy");
 	bookedOptions.push_back("nrun");
 	bookedOptions.push_back("ntoys");
+	bookedOptions.push_back("nsmooth");
 	//bookedOptions.push_back("pevid");
 	bookedOptions.push_back("pr");
 	bookedOptions.push_back("physrange");
@@ -363,6 +368,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"rejcet low-statistics outliers. Format: --pluginplotrange min-max.", false, "default", "string");
 	TCLAP::ValueArg<int> plotnsigmacontArg("", "ncontours", "plot this many sigma contours in 2d plots (max 5)", false, 2, "int");
 	TCLAP::ValueArg<string> filenameadditionArg("","ext","Add this piece into the file name (in case you don't want files/plots to be overwritten", false, "", "string");
+    TCLAP::ValueArg<string> filenamechangeArg("","filename", "Change filename to this name (after the basename of the executable)", false, "", "string");
 	TCLAP::ValueArg<string> plotgroupArg("", "group", "Set the group logo. Use '--group off' to disable the logo. "
 			"See also --grouppos. Default: GammaCombo", false, "GammaCombo", "string");
 	TCLAP::ValueArg<string> plotgroupposArg("", "grouppos", "Set the position of the group logo. "
@@ -377,6 +383,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::ValueArg<int> idArg("", "id", "When making controlplots (--controlplots), only consider the "
 			"scan point with this ID, that is a specific value of the scan parameter. "
 			, false, -1, "int");
+  TCLAP::ValueArg<int> nsmoothArg("", "nsmooth", "number of smoothings to apply to final 1-CL plot. Default: 1", false, 1, "int");
 	TCLAP::ValueArg<int> ntoysArg("", "ntoys", "number of toy experiments per job. Default: 25", false, 25, "int");
 	TCLAP::ValueArg<int> nrunArg("", "nrun", "Number of toy run. To be used with --action pluginbatch.", false, 1, "int");
 	TCLAP::ValueArg<int> npointsArg("", "npoints", "Number of scan points used by the Prob method. \n"
@@ -491,9 +498,11 @@ void OptParser::parseArguments(int argc, char* argv[])
       "19: In 1D plots, no vertical lines.\n"
       "20: In 1D plots, only central value line.\n"
       "21: Don't add the solution to 1D 1-CL plots.\n"
+      "22: In 1D plots draw the legend without changing the y-axis (need also --leg off option).\n"
 			, false, "int");
 	TCLAP::MultiArg<string> titleArg("", "title", "Override the title of a combination. "
 			"If 'default' is given, the default title for that combination is used. "
+            "If 'noleg' is given, this entry is not shown in the legend. "
 			"Example: --title 'This is the 1. combination.' --title 'And this the second.'", false, "string");
 	TCLAP::MultiArg<string> fixArg("", "fix", "Fix one or more parameters in a combination. "
 			"If 'none' is given, all parameters are floated (default). "
@@ -617,6 +626,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "pr" ) ) cmd.add( prArg );
 	if ( isIn<TString>(bookedOptions, "physrange" ) ) cmd.add(physrangeArg);
 	if ( isIn<TString>(bookedOptions, "pevid" ) ) cmd.add( pevidArg );
+  if ( isIn<TString>(bookedOptions, "nsmooth" ) ) cmd.add(nsmoothArg);
 	if ( isIn<TString>(bookedOptions, "ntoys" ) ) cmd.add(ntoysArg);
 	if ( isIn<TString>(bookedOptions, "nrun" ) ) cmd.add(nrunArg);
 	if ( isIn<TString>(bookedOptions, "npointstoy" ) ) cmd.add(npointstoyArg);
@@ -647,6 +657,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "grouppos" ) ) cmd.add( plotgroupposArg );
 	if ( isIn<TString>(bookedOptions, "fix" ) ) cmd.add(fixArg);
 	if ( isIn<TString>(bookedOptions, "ext" ) ) cmd.add(filenameadditionArg);
+    if ( isIn<TString>(bookedOptions, "filename" ) ) cmd.add( filenamechangeArg );
 	if ( isIn<TString>(bookedOptions, "evol" ) ) cmd.add(parevolArg);
 	if ( isIn<TString>(bookedOptions, "digits" ) ) cmd.add(digitsArg);
 	if ( isIn<TString>(bookedOptions, "debug" ) ) cmd.add(debugArg);
@@ -671,6 +682,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	digits            = digitsArg.getValue();
 	enforcePhysRange  = prArg.getValue();
 	filenameaddition  = filenameadditionArg.getValue();
+    filenamechange    = filenamechangeArg.getValue();
 	group             = plotgroupArg.getValue();
 	id                = idArg.getValue();
 	importance        = importanceArg.getValue();
@@ -693,8 +705,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 	npoints2dy        = npoints2dyArg.getValue()==-1 ? (npointsArg.getValue()==-1 ? 50 : npointsArg.getValue()) : npoints2dyArg.getValue();
 	npointstoy        = npointstoyArg.getValue();
   ncoveragetoys     = ncoveragetoysArg.getValue();
-	nrun	          = nrunArg.getValue();
-	ntoys	          = ntoysArg.getValue();
+	nrun	            = nrunArg.getValue();
+	ntoys	            = ntoysArg.getValue();
+  nsmooth           = nsmoothArg.getValue();
 	parevol           = parevolArg.getValue();
 	pevid             = pevidArg.getValue();
   plotext           = plotextArg.getValue();

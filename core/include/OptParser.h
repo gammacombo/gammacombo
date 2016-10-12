@@ -49,6 +49,7 @@ class OptParser
 		bool            debug;
 		int		        digits;
 		bool            enforcePhysRange;
+        TString         filenamechange;
 		TString         filenameaddition;
 		vector<vector<FixPar> >     fixParameters;
 		vector<vector<RangePar> >   physRanges;
@@ -81,6 +82,7 @@ class OptParser
     int             ncoveragetoys;
 		int		nrun;
 		int		ntoys;
+    int   nsmooth;
 		TString 	parsavefile;
 		bool		parevol;
 		vector<int>	pevid;
