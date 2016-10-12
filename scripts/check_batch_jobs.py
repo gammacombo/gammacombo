@@ -3,17 +3,51 @@
 from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("-d","--dir",default="sub",help="Directory to check in. Default=%default")
-parser.add_option("-s","--synch",default=False,action="store_true",help="Synch the output root files to the root directory")
+parser.add_option("-s","--synch",default=False,action="store_true",help="Synch the output root files to the root directory. Default=%default")
+parser.add_option("-S","--synchdir",default=None,help="Synch to this directory (if different from directory with jobs scripts e.g. if files are stored on eos. Default=%default")
+parser.add_option("-r","--regex",default=None,help="Filter folders by this regex. Default=%default")
+parser.add_option("-t","--date", default=None,help="Filter only folders modified after this date - format dd/mm/yyyy. Default=%default")
+parser.add_option("-R","--resubmit",default=None,help="Resubmit jobs (pass Queued, Failed, Running, All). Completed jobs don't get resubmitted. Default=%default")
+parser.add_option("-q","--queue",default=None,help='Queue to resubmit jobs to. Default=%default')
+parser.add_option("-n","--skipBackUp",default=False,action="store_true", help="Dont backup old files. Default=%default")
+parser.add_option("-c","--clearLinks",default=False,action="store_true", help="Clear old files / links out the way")
 (opts,args) = parser.parse_args()
+
+import sys
+allowed_resubmits = ['Queued','Failed','All','Running']
+if opts.resubmit:
+  if opts.resubmit not in allowed_resubmits:
+    sys.exit('--resubmit must be one of Queued, Failed, Running, All')
 
 import os
 import fnmatch
+import re
+import time
+import datetime
+regex=None
+if opts.regex:
+  regex = re.compile(opts.regex)
 
 job_dirs = []
 
 for root, dirs, files in os.walk(opts.dir):
   if root==opts.dir: continue
-  if root not in job_dirs: job_dirs.append(root) 
+  if root not in job_dirs:
+    include = True
+    # check regex
+    if regex:
+      if not regex.match(root):
+        include = False
+    # check modified date
+    if opts.date:
+      d = datetime.datetime( int(opts.date.split('/')[2]), int(opts.date.split('/')[1]), int(opts.date.split('/')[0]) )
+      dsecs = (d-datetime.datetime(1970,1,1)).total_seconds()
+      if os.path.getmtime(root) < dsecs:
+        include = False
+    
+    # if it passes then include it
+    if include:
+      job_dirs.append(root) 
 
 for job_dir in job_dirs:
   done = []
@@ -40,6 +74,25 @@ for job_dir in job_dirs:
     if len(run)>0:     print '\tRunning: ', len(run), '/', len(scripts)
     if len(done)>0:    print '\tComplete:', len(done), '/', len(scripts)
 
+    resubmits = []
+    if opts.resubmit:
+      if opts.resubmit=='Queued' or opts.resubmit=='All':
+        resubmits += waiting
+      if opts.resubmit=='Failed' or opts.resubmit=='All':
+        resubmits += fail
+      if opts.resubmit=='Running' or opts.resubmit=='All':
+        resubmits += run
+    
+    if opts.resubmit:
+      print 'Will resubmit %d jobs:'%len(resubmits)
+      for job in resubmits:
+        full_path = '%s/%s/%s'%(os.getcwd(),job_dir,job.split('.sh')[0]+'.sh')
+        if opts.queue:
+          line = 'bsub -q %s -o %s.log %s'%(opts.queue,full_path,full_path)
+          os.system(line)
+        else:
+          print '\t', os.path.basename( full_path ) 
+
 import time
 
 if opts.synch:
@@ -48,28 +101,36 @@ if opts.synch:
   for root,dirs, files in os.walk('root'):
     if root!='root': continue
     for dir in dirs:
-      if 'scan' in dir:
+      if dir in job_dirs:
         back_up_req = True
         break
   # do back up if needed
-  if back_up_req:
+  if back_up_req and not opts.skipBackUp:
     os.system('mkdir -p root/back_up')
     timestamp = int(time.time())
     os.system('mkdir -p root/back_up/%d'%timestamp)
     os.system('mv root/scan* root/back_up/%d/'%timestamp)
-  
+
   # now link the root files
   print 'Synching files'
   nSynch = 0
   for job_dir in job_dirs:
-    for root, dirs, files in os.walk(job_dir):
+    synch_dir = job_dir
+    if opts.synchdir:
+      synch_dir = synch_dir.replace(opts.dir,opts.synchdir)
+    print synch_dir
+    for root, dirs, files in os.walk(synch_dir):
       match_files = fnmatch.filter(files,"*.root")
-      target_dir = root.replace('sub/','root/')
+      target_dir = root.replace(opts.synchdir,'root/')
       os.system('mkdir -p %s'%target_dir)
       for fil in match_files:
         target_loc = os.path.join(os.getcwd(),target_dir,fil)
         original_loc = os.path.join(os.getcwd(),root,fil)
+        # clear target location is requested
+        if opts.clearLinks:
+          os.system('rm -f %s'%target_loc)
         exec_line = 'ln -s %s %s'%(original_loc,target_loc)
+        #print exec_line
         os.system(exec_line)
         nSynch += 1
 

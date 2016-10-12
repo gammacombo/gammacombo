@@ -31,7 +31,7 @@ class OneMinusClPlot2d : public OneMinusClPlotAbs
 		void            addFile(TString fName);
 		void            Draw();
 		void            DrawFull();
-		void		drawCLcontent();
+		void		        drawCLcontent(bool isFull=false);
 		void            drawMarker(float x, float y, int color=0, int style=3, float size=2.0);
 		void            drawGroup();
 		void            drawSolutions();
@@ -57,7 +57,7 @@ class OneMinusClPlot2d : public OneMinusClPlotAbs
 
 		void            drawLegend();
 		bool 		    hasHistoType(histogramType t);
-		void            makeNewPlotStyle(TString htmlColor);
+		void            makeNewPlotStyle(TString htmlColor, int ROOTColor=-1);
 
 		vector<histogramType>       histosType; ///< defines if histogram is interpreted as p-value or chi2
 		vector<ConfidenceContours*> m_contours; ///< holds the contours for each scanner

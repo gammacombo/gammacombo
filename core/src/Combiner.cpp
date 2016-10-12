@@ -250,7 +250,7 @@ void Combiner::setParametersConstant()
 ///
 RooAbsPdf* Combiner::getPdf()
 {
-	if ( _isCombined ){
+	if ( !_isCombined ){
 		cout << "Combiner::getPdf() : ERROR : Combiner needs to be combined first!" << endl;
 		assert(0);
 	}
@@ -393,7 +393,12 @@ void Combiner::adjustPhysRange(TString varName, float min, float max)
 		cout << varName << ". Skipping." << endl;
 		return;
 	}
-	w->var(varName)->setRange("phys", min, max);
+  if ( min <= -999 && max <= -999 ) {
+    w->var(varName)->removeRange();
+  }
+  else {
+    w->var(varName)->setRange("phys", min, max);
+  }
 }
 
 ///
@@ -486,8 +491,10 @@ void Combiner::setObservablesToToyValues()
 	RooMsgService::instance().setStreamStatus(1,kTRUE);
 	const RooArgSet* toyData = dataset->get(0);
 	if ( arg->debug ){
-		cout << "Combiner::setObservablesToToyValues() : generated toy observables:" << endl;
+		cout << "Combiner::setObservablesToToyValues() : generated toy observables from:" << endl;
 		getObservables()->Print("v");
+		cout << "Combiner::setObservablesToToyValues() : generated toy observables to:" << endl;
+    toyData->Print("v");
 	}
 	setParameters(w, "obs_"+pdfName, toyData);
 	delete dataset;

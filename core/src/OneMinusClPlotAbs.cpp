@@ -57,7 +57,7 @@ void OneMinusClPlotAbs::save()
 		cout << "OneMinusClPlotAbs::save() : ERROR : Empty canvas. Call Draw() or DrawFull() before saving!" << endl;
 		return;
 	}
-	savePlot(m_mainCanvas, name);
+	savePlot(m_mainCanvas, name + arg->plotext);
 }
 
 ///
@@ -73,11 +73,11 @@ void OneMinusClPlotAbs::drawGroup(float yPos)
 {
 	if ( arg->group==TString("off") ) return;
 	m_mainCanvas->cd();
-	float xPos = 0.5;
+	float xPos = 0.7;
 	float xLow, yLow;
 	if ( arg->plotgroupx==-1 ) xLow = xPos; else xLow = arg->plotgroupx;
 	if ( arg->plotgroupy==-1 ) yLow = yPos; else yLow = arg->plotgroupy;
-	TPaveText *t1 = new TPaveText(xLow, yLow, 0.925, yLow+0.125, "BRNDC");
+	TPaveText *t1 = new TPaveText(xLow, yLow, xLow+0.225, yLow+0.125, "BRNDC");
 	t1->SetBorderSize(0);
 	t1->SetFillStyle(0);
 	t1->SetTextAlign(32);

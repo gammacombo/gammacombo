@@ -689,28 +689,31 @@ void GammaComboEngine::savePlot()
 void GammaComboEngine::defineColors()
 {
 	// no --color option was given on the command line
-	if ( arg->color.size()==0 )
-	{
+	//if ( arg->color.size()==0 )
+	//{
 		// define line colors for 1-CL curves
 		colorsLine.push_back(arg->combid.size()==1 ? kBlue-8 : kBlue-5);
 		colorsLine.push_back(kGreen-8);
 		colorsLine.push_back(kOrange-8);
-		colorsLine.push_back(kViolet-7);
+		colorsLine.push_back(kMagenta-6);
 
 		// define text colors for drawn central values
 		colorsText.push_back(arg->combid.size()==1 ? kBlack : TColor::GetColor("#23236b"));
 		colorsText.push_back(TColor::GetColor("#234723"));
 		colorsText.push_back(kOrange+3);
-		colorsText.push_back(kViolet-7);
-	}
-	else
-	{
-		colorsLine.push_back(TColor::GetColor("#1b9e77"));
-		colorsLine.push_back(TColor::GetColor("#d95f02"));
-		colorsLine.push_back(TColor::GetColor("#7570b3"));
-		colorsLine.push_back(TColor::GetColor("#e7298a"));
-		colorsLine.push_back(TColor::GetColor("#66a61e"));
-		colorsLine.push_back(TColor::GetColor("#e6ab02"));
+		colorsText.push_back(kMagenta-8);
+	//}
+	//else
+	//{
+		colorsLine.push_back(TColor::GetColor("#1b9e77")); // sea green
+		colorsLine.push_back(TColor::GetColor("#d95f02")); // dark orange
+		colorsLine.push_back(TColor::GetColor("#7570b3")); // medium purple
+		colorsLine.push_back(TColor::GetColor("#e7298a")); // medium violet red
+		colorsLine.push_back(TColor::GetColor("#66a61e")); // forest green
+		colorsLine.push_back(TColor::GetColor("#e6ab02")); // goldenrod
+    colorsLine.push_back(TColor::GetColor("#a6761d")); // chocolate
+    colorsLine.push_back(TColor::GetColor("#e31a1c")); // red
+    colorsLine.push_back(TColor::GetColor("#984ea3")); // darkish purple
 
 		// from http://colorbrewer2.org with:
 		//   number of data classes: 6
@@ -718,10 +721,11 @@ void GammaComboEngine::defineColors()
 		//   second colour scheme
 
 		ColorBuilder cb;
-		for ( int i=0; i<colorsLine.size(); i++ ){
-			colorsText.push_back(cb.darklightcolor(colorsLine[i], 0.5));
-		}
-	}
+		for ( int i=4; i<colorsLine.size(); i++ ){
+      //colorsText.push_back(cb.darklightcolor(colorsLine[i], 0.5));
+		  colorsText.push_back( colorsLine[i] );
+    }
+    //}
 
 	// default for any additional scanner
 	for ( int i=colorsLine.size(); i<arg->combid.size(); i++ ){
@@ -866,6 +870,56 @@ void GammaComboEngine::make2dPluginScan(MethodPluginScan *scannerPlugin, int cId
 }
 
 ///
+/// Perform the 1D berger boos scan. Runs toys in batch mode, and
+/// reads them back in.
+///
+/// \param scannerPlugin - the scanner to run the scan with
+/// \param cId - the id of this combination on the command line
+///
+void GammaComboEngine::make1dBergerBoosScan(MethodBergerBoosScan *scannerBergerBoos, int cId)
+{
+	scannerBergerBoos->initScan();
+  scannerBergerBoos->setNBergerBoosPointsPerScanpoint( arg->nBBpoints );
+	if ( arg->isAction("bbbatch") ){
+		scannerBergerBoos->scan1d(arg->nrun);
+	}
+	else {
+		scannerBergerBoos->readScan1dTrees(arg->jmin[cId],arg->jmax[cId]);
+		scannerBergerBoos->calcCLintervals();
+	}
+	if ( !arg->isAction("bbbatch") ){
+		scannerBergerBoos->saveScanner(m_fnamebuilder->getFileNameScanner(scannerBergerBoos));
+	}
+}
+
+/// Perform the coverage scanner
+///
+/// \param scanner - the scanner to run the scan with
+/// \param cId - the id of this combination on the command line
+void GammaComboEngine::make1dCoverageScan(MethodCoverageScan *scanner, int cId)
+{
+  // load coverage point parameters (this can be done automatically)
+  ParameterCache *pCache = new ParameterCache(arg);
+  if ( arg->loadParamsFile.size() != arg->combid.size() ) {
+    cout << "\nERROR : For a Coverage scan you must pass a parameter file (--parfile) to throw the toys from. You need one parfile per combiner" << endl;
+    exit(1);
+  }
+  pCache->loadPoints( arg->loadParamsFile[cId] );
+
+  // do scan
+  scanner->initScan();
+  scanner->setParameterCache( pCache ); // this can be passed directly to scan
+  if ( arg->isAction("coveragebatch") ) {
+    scanner->scan1d(arg->nrun);
+  }
+  else {
+    scanner->readScan1dTrees( arg->jmin[cId], arg->jmax[cId] );
+    scanner->saveScanner( m_fnamebuilder->getFileNameScanner( scanner ) );
+  }
+
+}
+
+///
 /// Make a 1D plot of a Prob scanner. The scanner can either be a "fresh"
 /// one, as made in make1dProbScan(), or a loaded one.
 /// \param scanner - the scanner to plot
@@ -879,7 +933,7 @@ void GammaComboEngine::make1dProbPlot(MethodProbScan *scanner, int cId)
 		int colorId = cId;
 		if ( arg->color.size()>cId ) colorId = arg->color[cId];
 		scanner->setLineColor(colorsLine[colorId]);
-		scanner->setTextColor(colorsText[cId]);
+		scanner->setTextColor(colorsText[colorId]);
 		plot->Draw();
 	}
 }
@@ -1013,6 +1067,17 @@ void GammaComboEngine::make2dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId)
 }
 
 ///
+/// Make the 1D coverage plot
+///
+/// \param scanner - the coverage scanner
+/// \param cId - the id of this combination on the command line
+///
+void GammaComboEngine::make1dCoveragePlot(MethodCoverageScan *scanner, int cId)
+{
+  scanner->plot();
+}
+
+///
 /// Make a 2D prob scan.
 /// - load start parameters
 /// - perform scan
@@ -1080,9 +1145,38 @@ void GammaComboEngine::adjustRanges(Combiner *c, int cId)
 {
 	if ( cId<arg->physRanges.size() ){
 		for ( int j=0; j<arg->physRanges[cId].size(); j++ ){
-			c->adjustPhysRange(arg->physRanges[cId][j].name, arg->physRanges[cId][j].min, arg->physRanges[cId][j].max);
+      c->adjustPhysRange(arg->physRanges[cId][j].name, arg->physRanges[cId][j].min, arg->physRanges[cId][j].max);
 		}
 	}
+  if ( cId<arg->removeRanges.size() ){
+    for ( int j=0; j<arg->removeRanges[cId].size(); j++ ) {
+      if ( arg->removeRanges[cId][j] == "all" ) {
+        const RooArgSet *pars = (RooArgSet*)c->getParameters();
+        TIterator *it = pars->createIterator();
+        while ( RooRealVar* par = (RooRealVar*)it->Next() ) {
+          par->removeRange();
+        }
+      }
+      else {
+        c->adjustPhysRange( arg->removeRanges[cId][j], -999, -999 );
+      }
+    }
+  }
+}
+
+///
+/// Helper function for scan(): Makes named sets for any toy variations that were requested
+///
+void GammaComboEngine::setupToyVariationSets(Combiner *c, int cId)
+{
+  if ( cId < arg->randomizeToyVars.size() ) {
+    TString toyVarList = "";
+    for ( int j=0; j<arg->randomizeToyVars[cId].size(); j++ ) {
+      toyVarList += arg->randomizeToyVars[cId][j];
+      if ( j < arg->randomizeToyVars[cId].size()-1 ) toyVarList += ",";
+    }
+    c->getWorkspace()->defineSet( "toy_"+c->getPdfName(), toyVarList.Data() );
+  }
 }
 
 ///
@@ -1148,6 +1242,52 @@ void GammaComboEngine::writebatchscripts()
 }
 
 ///
+/// make latex
+///
+void GammaComboEngine::makeLatex(Combiner *c)
+{
+  for ( unsigned int p=0; p < c->getPdfs().size(); p++) {
+    PDF_Abs *pdf = c->getPdfs()[p];
+    LatexMaker m( c->getName(), pdf );
+    m.writeFile();
+  }
+}
+
+///
+/// save workspace
+///
+void GammaComboEngine::saveWorkspace( Combiner *c, int i )
+{
+  // if --pr then make the ranges
+  if ( arg->enforcePhysRange ) setLimit( c->getParameters(), "phys" );
+
+  // first write a copy THE PDF into the workspace
+  const RooAbsPdf *thePdf         = c->getPdf();
+  const RooArgSet *theParameters  = c->getParameters();
+  const RooArgSet *theObservables = c->getObservables();
+
+  RooAbsPdf *savePdf = (RooAbsPdf*)thePdf->Clone("ThePdf");
+  c->getWorkspace()->import( *savePdf, Silence() );
+  c->getWorkspace()->defineSet( "TheParameters", *theParameters );
+  c->getWorkspace()->defineSet( "TheObservables", *theObservables );
+
+  // set the name of the workspace associated with combiner id
+  int cId = arg->combid[i];
+  c->getWorkspace()->SetName( Form("w%d",cId) );
+
+  // if the first instance then write directly to file
+  if ( i==0 ) {
+    c->getWorkspace()->writeToFile( arg->save );
+  }
+  // otherwise add it to the file
+  else {
+    TFile *tf = TFile::Open( arg->save, "UPDATE" );
+    c->getWorkspace()->Write();
+    tf->Close();
+  }
+}
+
+///
 /// scan engine
 ///
 void GammaComboEngine::scan()
@@ -1182,6 +1322,9 @@ void GammaComboEngine::scan()
 		// adjust ranges according to the command line - only possible before combining
 		adjustRanges(c, i);
 
+    // set up parameter sets for the parameters to vary within the toys (if requested)
+    setupToyVariationSets(c, i);
+
 		// make graphviz dot files
 		printCombinerStructure(c);
 
@@ -1197,9 +1340,12 @@ void GammaComboEngine::scan()
 			c->getWorkspace()->extendSet(c->getParsName(), arg->var[1]);
 		}
 
-		// printout
+		// printout and latex
 		c->print();
 		if ( arg->debug ) c->getWorkspace()->Print("v");
+    if ( arg->save != "" ) saveWorkspace( c, i );
+    if ( arg->latex ) makeLatex( c );
+    if ( arg->info || arg->latex || arg->save!="" ) continue;
 
 		/////////////////////////////////////////////////////
 		//
@@ -1207,7 +1353,7 @@ void GammaComboEngine::scan()
 		//
 		/////////////////////////////////////////////////////
 
-		if ( !arg->isAction("plugin") && !arg->isAction("pluginbatch") )
+		if ( !arg->isAction("plugin") && !arg->isAction("pluginbatch") && !arg->isAction("coverage") && !arg->isAction("coveragebatch") && !arg->isAction("bb") && !arg->isAction("bbbatch") )
 		{
 			MethodProbScan *scannerProb = new MethodProbScan(c);
 			// pvalue corrector
@@ -1346,6 +1492,39 @@ void GammaComboEngine::scan()
 		}
 
 		/////////////////////////////////////////////////////
+		//
+		// COVERAGE
+		//
+		/////////////////////////////////////////////////////
+
+    if ( arg->isAction("coverage") || arg->isAction("coveragebatch") )
+    {
+			if ( arg->var.size()!=1 ) {
+        cerr << "ERROR -- you can only scan in 1D for a coverage check" << endl;
+        exit(1);
+      }
+      MethodCoverageScan *coverageScan = new MethodCoverageScan(c);
+      if ( arg->isAction("coveragebatch") ) {
+        make1dCoverageScan( coverageScan, i );
+      }
+      else if ( arg->isAction("coverage") ) {
+        if ( arg->isAction("plot") ) {
+          if ( FileExists(m_fnamebuilder->getFileNameScanner(coverageScan)) ) {
+            coverageScan->loadScanner(m_fnamebuilder->getFileNameScanner(coverageScan));
+          }
+          else {
+            cout << "\nERROR : Couldn't load the coverage scanner: " << m_fnamebuilder->getFileNameScanner(coverageScan) << endl;
+            exit(1);
+          }
+        }
+        else {
+          make1dCoverageScan( coverageScan, i );
+        }
+        make1dCoveragePlot( coverageScan, i );
+      }
+    }
+
+		/////////////////////////////////////////////////////
 
 		if ( i<arg->combid.size()-1 ) {
 			cout << "\n-- now starting -c " << arg->combid[i+1] << " ------------------------------------------------------------------\n" << endl;
@@ -1383,6 +1562,7 @@ void GammaComboEngine::printBanner()
 void GammaComboEngine::run()
 {
 	if ( arg->usage ) usage(); // print usage and exit
+	defineColors();
 	checkCombinationArg();
 	checkColorArg();
 	checkAsimovArg();
@@ -1390,11 +1570,11 @@ void GammaComboEngine::run()
 	if ( arg->nosyst ) disableSystematics();
 	makeAddDelCombinations();
   if ( arg->nbatchjobs>0 ) writebatchscripts();
-	defineColors();
 	customizeCombinerTitles();
 	setUpPlot();
-	scan();
-	if (!arg->isAction("pluginbatch")) savePlot();
+	scan(); // most thing gets done here
+  if ( arg->info || arg->latex || arg->save!="" ) return; // if only info is requested then we can go home
+	if (!arg->isAction("pluginbatch") && !arg->isAction("coveragebatch") && !arg->isAction("coverage") ) savePlot();
 	cout << endl;
 	t.Stop();
 	t.Print();
