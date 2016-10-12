@@ -1,12 +1,22 @@
 /*
  * Gamma Combination
- * Author: Maximilian Schlupp, max.schlupp@cern.ch
- * Date: November 2013
+ * Author: Maximilian Schlupp, maxschlupp@gmail.com
+ * Author: Konstantin Schubert, schubert.konstantin@gmail.com
+ * Date: October 2016
  *
- * DEBUG mode produces a lot of output, do not use with many toys!
+ * \todo come up with smarter way to fill probValue histo in readScan1dTrees()
+ *
+ * Some introductory comments:
+ * Despite its name, this class combines the Prob Scan and the Plugin Scan functionality. This was maybe a bad choice.
+ * It leads to a lot of duplication patterns, methods which exist twice, one with _plugin suffix and once with _prob suffix, or without.
+ * Most prominently, it leads to the global doProbScanOnly switch that decides if either a prob scan OR a plugin scan should be performed.
+ * Basically, this is a switch which decides if the class is a MethodPluginScan or a MethodProbScan. 
  * 
- * ToDo:
- *      - come up with smarter way to fill probValue histo in readScan1dTrees()
+ * The term "free fit do data" refers to the fit which is performed to data, where the parameter
+ * of interest is left to float freely.
+ * 
+ * The term "constrained fit to data" refers to the fit which is performed to data, where the 
+ * parameter of interest is fixed to a certain value (scanpoint)
  */
 
 #include "MethodDatasetsPluginScan.h"
@@ -14,8 +24,6 @@
 #include <algorithm>
 #include <ios>
 #include <iomanip>
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
 
 ///
 /// The default constructor for the dataset plugin scan
@@ -59,11 +67,16 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets* PDF, OptParser*
   }
 }
 
-
+///////////////////////////////////////////////
+///
+/// Gets values of certain parameters as they were at the given scanpoint-index after the constrained fit to data
+/// 
+/// \todo: rename this to getParValAtIndex. If necessary, stub out getParValAtScanpoint
+///////////////////////////////////////////////
 float MethodDatasetsPluginScan::getParValAtScanpoint(int index, TString parName){
 
   this->probScanTree->GetEntry(index);
-  TLeaf* var = this->probScanTree->GetLeaf(parName);
+  TLeaf* var = this->probScanTree->GetLeaf(parName); //<- pretty sure that this will give a segfault, we need to use parName + "_scan"
   if(!var){
     cout << "MethodDatasetsPluginScan::getParValAtScanpoint() : ERROR : variable (" << parName << ") not found!" << endl;
     exit(EXIT_FAILURE);
@@ -117,7 +130,16 @@ void MethodDatasetsPluginScan::initScan(){
   }     
 }
 
-
+//////////////////////////////////////////////
+///
+/// This checks of a TTree which originated from a previous prob scan 
+/// for compatibility with the current scan: Did it use the same number
+/// of scan points, did it use the same scan range?
+/// If everything is fine, keeps a pointer to the tree in this->probScanTree
+///
+/// \param tree    TTree from probscan, to checked for compatibility and to be assigned to class member
+///
+//////////////////////////////////////////////
 void MethodDatasetsPluginScan::setExtProfileLH(TTree* tree){
 
   //make sure that the scan points in the tree match number 
@@ -154,23 +176,34 @@ void MethodDatasetsPluginScan::setExtProfileLH(TTree* tree){
   externalProfileLH = true;
 };
 
-
+///////////////////////////////////////////////////
 ///
 /// Prepare environment depending on data or toy fit
 ///
+/// \param fitToys   boolean switch that decides whether the latest simulated toys or the data should be fitted.
+///
+/// \param pdf      the pdf that is to be fitted.
+///
+////////////////////////////////////////////////////
 RooFitResult* MethodDatasetsPluginScan::loadAndFit(bool fitToys, PDF_Datasets* pdf){
   if(fitToys){
+    // we want to fit to the latest simulated toys
+    // first, try to simulated toy values of the global observables from a snapshot
     if(!w->loadSnapshot(pdf->globalObsToySnapshotName)){
       std::cout << "FATAL in MethodDatasetsPluginScan::loadAndFit() - No snapshot globalObsToySnapshotName found!\n" << std::endl;
       exit(EXIT_FAILURE);
     };
+    // then, fit the pdf while passing it the simulated toy dataset
     return pdf->fit(pdf->getToyObservables());
   }
   else{
+    // we want to fit to data
+    // first, try to load the measured values of the global observables from a snapshot
     if(!w->loadSnapshot(pdf->globalObsDataSnapshotName)){
       std::cout << "FATAL in MethodDatasetsPluginScan::loadAndFit() - No snapshot globalObsToySnapshotName found!\n" << std::endl;
       exit(EXIT_FAILURE);
     };
+    // then, fit the pdf while passing it the dataset
     return pdf->fit(pdf->getData());
   }
 };
@@ -268,8 +301,15 @@ TChain* MethodDatasetsPluginScan::readFiles(int runMin, int runMax, int &nFilesR
 }
 
 //////////
-// This is the Plugin version of the method, there is also a version of the method for the prob scan, with _prob suffix.
-// \todo: Like for the normal gammacombo stuff, use a seperate class for the PROB scan! This is MethodDatasetsPLUGINScan.cpp, after all
+/// readScan1dTrees implements inherited method
+/// \param runMin   defines lowest run number of toy jobs to read in
+///
+/// \param runMax   defines highest run number of toy jobs to read in 
+///
+/// \param fileNameBaseIn    optional, define the directory from which the files are to be read
+///
+/// This is the Plugin version of the method, there is also a version of the method for the prob scan, with _prob suffix.
+/// \todo: Like for the normal gammacombo stuff, use a seperate class for the PROB scan! This is MethodDatasetsPLUGINScan.cpp, after all
 /////////////
 void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString fileNameBaseIn)
 {
@@ -547,8 +587,8 @@ void MethodDatasetsPluginScan::scan1d_prob()
   RooRealVar *parameterToScan = w->var(scanVar1);
   float parameterToScan_min = hCL->GetXaxis()->GetXmin();
   float parameterToScan_max = hCL->GetXaxis()->GetXmax();
-  double freeDataFitValue = parameterToScan->getVal();
-  // \todo: Can we really assume that the value of the parameter in the workspace is on its best free fit value?
+
+  double freeDataFitValue = w->var(scanVar1)->getVal();
 
   // Define outputfile   
   system("mkdir -p root");
@@ -678,8 +718,7 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
   RooRealVar *parameterToScan = w->var(scanVar1);
   float parameterToScan_min = hCL->GetXaxis()->GetXmin();
   float parameterToScan_max = hCL->GetXaxis()->GetXmax();
-  double freeDataFitValue = parameterToScan->getVal();
-  // \todo: Can we really assume that the value of the parameter in the workspace is on its best free fit value?
+  double freeDataFitValue = w->var(scanVar1)->getVal();
 
   TString probResName = Form("root/scan1dDatasetsProb_"+this->pdf->getName()+"_%ip"+"_"+scanVar1+".root", arg->npoints1d);
   TFile* probResFile = TFile::Open(probResName);
@@ -758,16 +797,16 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
       
       // 1. Generate toys
 
-      // Set all parameters (nuisance parameters and parameter of interest) to the values from the fit to data with fixed parameter of interest.
+      // For toy generation, set all parameters (nuisance parameters and parameter of interest) to the values from the constrained 
+      // fit to data with fixed parameter of interest.
       // This is called the PLUGIN method.
       this->setParevolPointByIndex(i);
-      // assert(scanpoint - w->var(scanVar1)->getVal() < stepwidth / 100.);
 
 
       this->pdf->generateToys(); // this is generating the toy dataset
       this->pdf->generateToysGlobalObservables(); // this is generating the toy global observables and saves globalObs in snapshot
 
-      // \todo: comment the following back in once I know how we do thiat
+      // \todo: comment the following back in once I know what it does ...
       //      t.storeParsGau( we need to pass a rooargset of the means of the global observables here);  
 
       //
@@ -775,88 +814,28 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
       //
       if(arg->debug)cout << "DEBUG in MethodDatasetsPluginScan::scan1d_plugin() - perform scan toy fit" << endl;
 
-      // set parameters to data scan fit again
+      // set parameters to constrained data scan fit result again
       this->setParevolPointByIndex(i);
-      // assert(scanpoint - w->var(scanVar1)->getVal() < stepwidth / 100.);
 
+      // fixed parameter of interest
       parameterToScan->setConstant(true);
       this->pdf->setFitStrategy(0);
-      // LOAD globOBs snapshot first
       RooFitResult* r   = this->loadAndFit(kTRUE,this->pdf); // kTrue makes sure the fit is to toy data and to toy global observables
-      // RooFitResult* r   = this->pdf->fit(kTRUE); // kTrue makes sure the fit is to toy data and to toy global observables
       assert(r);
       pdf->setMinNllScan(pdf->minNll);
 
-      if (! std::isfinite(pdf->getMinNllScan())) {
-        cout << "----> nan/inf flag detected " << endl;
-        cout << "----> fit status: " << pdf->getFitStatus() << endl; 
-        pdf->setFitStatus(-99);
-      }      
-  
+      this->setAndPrintFitStatusFreeToys(toyTree);
+
       if (pdf->getFitStatus()!=0) {
-          cout  << "----> problem in current fit: going to refit with strategy 1, summary: " << endl
-          << "----> NLL value: " << std::setprecision(9) << pdf->minNll << endl
-          << "----> fit status: " << pdf->getFitStatus() << endl;
-          switch(pdf->getFitStatus()){
-            case 1:
-              cout << "----> fit results in status 1" << endl;
-              cout << "----> NLL value: " << pdf->minNll << endl;
-              cout << "----> emd: " << r->edm() << endl;
-              break;
-
-            case -1:
-              cout << "----> fit results in status -1" << endl;
-              cout << "----> NLL value: " << pdf->minNll << endl;
-              cout << "----> emd: " << r->edm() << endl;
-              break;
-
-            case -99: 
-              cout << "----> fit has NLL value with flag NaN or INF" << endl;
-              cout << "----> NLL value: " << pdf->minNll << endl;
-              cout << "----> emd: " << r->edm() << endl;
-              break;
-            
-            default:
-              cout << "unknown" << endl; 
-              break;
-          }
           pdf->setFitStrategy(1);
           delete r;
           r = this->loadAndFit(kTRUE,this->pdf);
           pdf->setMinNllScan(pdf->minNll);
           assert(r);
-          if (std::isinf(pdf->getMinNllScan()) || std::isnan(pdf->getMinNllScan())) {
-            cout << "----> nan/inf flag detected " << endl;
-            cout << "----> fit status: " << pdf->getFitStatus() << endl; 
-            pdf->setFitStatus(-99);
-          }
+
+          this->setAndPrintFitStatusFreeToys(toyTree);
+
           if (pdf->getFitStatus()!=0) {
-            cout  << "----> problem in current fit: going to refit with strategy 2(!!), summary: " << endl
-            << "----> NLL value: " << std::setprecision(9) << pdf->minNll << endl
-            << "----> fit status: " << pdf->getFitStatus() << endl;
-            switch(pdf->getFitStatus()){
-              case 1:
-                cout << "----> fit results in status 1" << endl;
-                cout << "----> NLL value: " << pdf->minNll << endl;
-                cout << "----> emd: " << r->edm() << endl;
-                break;
-  
-              case -1:
-                cout << "----> fit results in status -1" << endl;
-                cout << "----> NLL value: " << pdf->minNll << endl;
-                cout << "----> emd: " << r->edm() << endl;
-                break;
-  
-              case -99: 
-                cout << "----> fit has NLL value with flag NaN or INF" << endl;
-                cout << "----> NLL value: " << pdf->minNll << endl;
-                cout << "----> emd: " << r->edm() << endl;
-                break;
-              
-              default:
-                cout << "unknown" << endl; 
-                break;
-            }
             pdf->setFitStrategy(2);
             delete r;
             r = this->loadAndFit(kTRUE,this->pdf);
@@ -894,6 +873,7 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
       
       this->setParevolPointByIndex(i);
 
+      // free parameter of interest
       parameterToScan->setConstant(false);
       
       // Fit
@@ -911,15 +891,12 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
 
       bool negTestStat = toyTree.chi2minToy-toyTree.chi2minGlobalToy<0;
       
-      this->setAndPrintFitStatusFixedToys(toyTree);
+      this->setAndPrintFitStatusConstrainedToys(toyTree);
 
 
       if(pdf->getFitStatus()!=0 || negTestStat ) {
       
-
-        
         pdf->setFitStrategy(1);
-        
         
         cout << "----> refit with strategy: 1" << endl;
         delete r1;
@@ -934,7 +911,7 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
         } 
         negTestStat = toyTree.chi2minToy-toyTree.chi2minGlobalToy<0;
 
-        this->setAndPrintFitStatusFixedToys(toyTree);
+        this->setAndPrintFitStatusConstrainedToys(toyTree);
 
         if (pdf->getFitStatus()!=0 || negTestStat ) {
 
@@ -951,7 +928,7 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
             cout << "----> fit status: " << pdf->getFitStatus() << endl; 
             pdf->setFitStatus(-99);
           }
-          this->setAndPrintFitStatusFixedToys(toyTree);
+          this->setAndPrintFitStatusConstrainedToys(toyTree);
         
           if( (toyTree.chi2minToy-toyTree.chi2minGlobalToy) < 0){
             cout << "+++++ > still negative test statistic after whole procedure!! " << endl;
@@ -1022,7 +999,6 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
         cout << "DEBUG in MethodDatasetsPluginScan::scan1d_plugin() - ToyTree 2*minNll free fit: " << toyTree.chi2minGlobalToy << endl;
       }
 
-      
       //
       // 4. store
       //
@@ -1031,9 +1007,6 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
       delete r;
       delete r1;
       pdf->deleteToys();
-      // we cannot/ don't have to delete the toy global variables 
-      //because they are saved as a a snapshot and we cannot delete snapshots.
-      
     } // End of toys loop
     
     // reset
@@ -1228,7 +1201,7 @@ void MethodDatasetsPluginScan::setParevolPointByIndex(int index){
 
 
 
-void MethodDatasetsPluginScan::setAndPrintFitStatusFixedToys(const ToyTree& toyTree){
+void MethodDatasetsPluginScan::setAndPrintFitStatusConstrainedToys(const ToyTree& toyTree){
 
   if(pdf->getMinNllScan() != 0 && (pdf->getMinNllFree() > pdf->getMinNllScan())){
     // create unique failureflag
@@ -1309,3 +1282,42 @@ void MethodDatasetsPluginScan::setAndPrintFitStatusFixedToys(const ToyTree& toyT
     }
   }
 }
+
+
+void MethodDatasetsPluginScan::setAndPrintFitStatusFreeToys(const ToyTree& toyTree){
+
+  if (! std::isfinite(pdf->getMinNllScan())) {
+        cout << "----> nan/inf flag detected " << endl;
+        cout << "----> fit status: " << pdf->getFitStatus() << endl; 
+        pdf->setFitStatus(-99);
+      }      
+
+  if (pdf->getFitStatus()!=0) {
+      cout  << "----> problem in current fit: going to refit with strategy 1, summary: " << endl
+      << "----> NLL value: " << std::setprecision(9) << pdf->minNll << endl
+      << "----> fit status: " << pdf->getFitStatus() << endl;
+      switch(pdf->getFitStatus()){
+        case 1:
+          cout << "----> fit results in status 1" << endl;
+          cout << "----> NLL value: " << pdf->minNll << endl;
+          // cout << "----> edm: " << r->edm() << endl;
+          break;
+
+        case -1:
+          cout << "----> fit results in status -1" << endl;
+          cout << "----> NLL value: " << pdf->minNll << endl;
+          // cout << "----> edm: " << r->edm() << endl;
+          break;
+
+        case -99: 
+          cout << "----> fit has NLL value with flag NaN or INF" << endl;
+          cout << "----> NLL value: " << pdf->minNll << endl;
+          // cout << "----> edm: " << r->edm() << endl;
+          break;
+        
+        default:
+          cout << "unknown" << endl; 
+          break;
+      }
+    }
+  }
