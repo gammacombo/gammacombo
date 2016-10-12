@@ -14,6 +14,8 @@ TString Utils::ConfigToTString(config s)
 	if ( s == babar2008 )            return "babar2008";
 	if ( s == babar2010 )            return "babar2010";
 	if ( s == babar2012 )            return "babar2012";
+	if ( s == babar_dpi0 )           return "babar_dpi0";
+	if ( s == babar_dg )             return "babar_dg";
 	if ( s == belle2006 )            return "belle2006";
 	if ( s == belle2007 )            return "belle2007";
 	if ( s == belle2009 )            return "belle2009";
@@ -21,6 +23,8 @@ TString Utils::ConfigToTString(config s)
 	if ( s == belle2012preliminary ) return "belle2012preliminary";
 	if ( s == belle2013 )            return "belle2013";
 	if ( s == belle2014 )            return "belle2014";
+	if ( s == belle_dpi0 )           return "belle_dpi0";
+	if ( s == belle_dg )             return "belle_dg";
 	if ( s == cdf2007 )              return "cdf2007";
 	if ( s == cdf2012 )              return "cdf2012";
 	if ( s == cdf2013 )              return "cdf2013";

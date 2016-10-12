@@ -1,0 +1,34 @@
+sudo: required
+
+language: cpp
+
+services:
+  - docker
+
+before_install:
+- docker pull schubertkonstantin/root:v5-34-32
+- docker pull schubertkonstantin/root:v6-04-00-patches
+
+script:
+# root6
+- docker run --name raw_container_6 schubertkonstantin/root:v6-04-00-patches /bin/bash -c "mkdir /code"
+- docker cp  . raw_container_6:/code 
+- docker commit raw_container_6 image_with_files_6
+# build and install gammacombo
+- docker run --name built_container_6 image_with_files_6 /bin/bash -c "mkdir /code/build; cd /code/build; cmake ..; make; make install"
+- docker commit built_container_6 built_image_6
+# run the tests 
+#- docker run built_image_6 /bin/bash -c "/code/tutorial/bin/tutorial_dataset_build_workspace; /code/tutorial/bin/tutorial_dataset -a pluginbatch --lightfiles --var branchingRatio --ntoys 20 --scanrange 5e-7:15e-7 --npoints 10; /code/tutorial/bin/tutorial_dataset -a plugin --var branchingRatio" 
+# - docker run built_image_6 /bin/bash -c  "/code/tutorial/bin/tutorial -c 1 -c 2 -c 3  --var a_gaus --ps 1"
+
+# root5
+- docker run --name raw_container schubertkonstantin/root:v5-34-32 /bin/bash -c "mkdir /code"
+- docker cp  . raw_container:/code 
+- docker commit raw_container image_with_files
+# build and install gamacombo
+- docker run --name built_container image_with_files /bin/bash -c "mkdir /code/build; cd /code/build; cmake ..; make; make install"
+- docker commit built_container built_image
+# run the tests 
+# - docker run built_image /bin/bash -c "/code/tutorial/bin/tutorial_dataset_build_workspace; /code/tutorial/bin/tutorial_dataset -a pluginbatch --lightfiles --var branchingRatio --ntoys 20 --scanrange 5e-7:15e-7 --npoints 10; /code/tutorial/bin/tutorial_dataset -a plugin --var branchingRatio" 
+# -docker run built_image /bin/bash -c  "/code/tutorial/bin/tutorial -c 1 -c 2 -c 3 -i --var a_gaus --ps 1"
+# the last line still causes a segfault in the master (!) at the moment, we will include it as soon as this is resolved.

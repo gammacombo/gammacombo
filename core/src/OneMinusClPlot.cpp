@@ -68,7 +68,7 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	}
 
 	// add solution
-	if ( s->getNSolutions()>0 ){
+	if ( s->getNSolutions()>0 && !arg->isQuickhack(21) ){
 		TGraphTools t;
 		TGraph *gNew = t.addPointToGraphAtFirstMatchingX(g, s->getScanVar1Solution(0), 1.0);
 		delete g;
@@ -121,7 +121,8 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 
 	if ( filled ){
 		g->SetLineWidth(2);
-		g->SetFillColor(color);
+    double alpha = arg->isQuickhack(12) ? 0.4 : 1.;
+		g->SetFillColorAlpha(color,alpha);
 		g->SetLineStyle(1);
 	}
 	else{
@@ -157,14 +158,23 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	bool optimizeNdiv = arg->ndiv<0 ? true : false;
 	haxes->GetXaxis()->SetNdivisions(xndiv, optimizeNdiv);
 	haxes->GetYaxis()->SetNdivisions(407, true);
-	if ( plotLegend ){
-		if ( arg->plotlog ) haxes->GetYaxis()->SetRangeUser(1e-3,10);
-		else                haxes->GetYaxis()->SetRangeUser(0.0,1.3);
-	}
-	else{
-		if ( arg->plotlog ) haxes->GetYaxis()->SetRangeUser(plotLogYMin,plotLogYMax);
-		else                haxes->GetYaxis()->SetRangeUser(0.0,1.0);
-	}
+
+  // plot y range
+  float plotYMax;
+  float plotYMin;
+  if ( plotLegend && !arg->isQuickhack(22) ) {
+    if ( arg->plotlog ) { plotYMin = 1.e-3; plotYMax = 10.; }
+    else                { plotYMin = 0.0  ; plotYMax = 1.3; }
+  }
+  else {
+    if ( arg->plotlog ) { plotYMin = 1.e-3; plotYMax = 1.0; }
+    else                { plotYMin = 0.0  ; plotYMax = 1.0; }
+  }
+  // change if passed as option
+	plotYMin = arg->plotymin > 0. ? arg->plotymin : plotYMin;
+  plotYMax = arg->plotymax > 0. ? arg->plotymax : plotYMax;
+
+  haxes->GetYaxis()->SetRangeUser( plotYMin, plotYMax );
 	haxes->Draw("axissame");
 	g->SetHistogram(haxes);
 
@@ -229,12 +239,12 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 		TGaxis *axisr = 0;
 		if ( arg->plotlog ){
 			float f3min = 1e-3;
-			float f3max = plotLegend ? 10. : 1.;
+			float f3max = (plotLegend && !arg->isQuickhack(22)) ? 10. : 1.;
 			TF1 *f3 = new TF1("f3","log10(x)",f3min,f3max);
 			axisr = new TGaxis(xmax, f3min, xmax, f3max, "f3", 510, "G+");
 		}
 		else{
-			axisr = new TGaxis(xmax, ymin, xmax, ymax, 0, plotLegend ? 1.3 : 1.0, 407, "+");
+			axisr = new TGaxis(xmax, ymin, xmax, ymax, 0, (plotLegend && !arg->isQuickhack(22)) ? 1.3 : 1.0, 407, "+");
 		}
 		axisr->SetLabelSize(0);
 		axisr->SetLineWidth(1);
@@ -292,7 +302,7 @@ void OneMinusClPlot::scan1dPlotSimple(MethodAbsScan* s, bool first)
 	s->getHCL()->GetYaxis()->SetLabelSize(labelsize);
 	s->getHCL()->GetXaxis()->SetTitleSize(titlesize);
 	s->getHCL()->GetYaxis()->SetTitleSize(titlesize);
-	if ( plotLegend ){
+	if ( plotLegend && !arg->isQuickhack(22) ){
 		if ( arg->plotlog ) s->getHCL()->GetYaxis()->SetRangeUser(1e-3,10);
 		else                s->getHCL()->GetYaxis()->SetRangeUser(0.0,1.3);
 	}
@@ -339,9 +349,13 @@ void OneMinusClPlot::drawSolutions()
 
 		// draw vertical lines at central value and
 		// upper/lower errors
-		drawVerticalLine(xCentral, color, kSolid);
-		drawVerticalLine(xCLmin, color, kDashed);
-		drawVerticalLine(xCLmax, color, kDashed);
+    if ( ! arg->isQuickhack(19) ) {
+      drawVerticalLine(xCentral, color, kSolid);
+      if ( ! arg->isQuickhack(20) ) {
+        drawVerticalLine(xCLmin, color, kDashed);
+        drawVerticalLine(xCLmax, color, kDashed);
+      }
+    }
 
 		// draw text box with numerical values after the lines,
 		// so that it doesn't get covered
@@ -355,6 +369,11 @@ void OneMinusClPlot::drawSolutions()
 			yNumberMin = yNumberMinFirst / pow(3.0, iDrawn); // move down by a constant shift on log scale
 			yNumberMax = yNumberMin*2.;
 		}
+    // if printsoly option then move a bit
+    if ( arg->printSolY > 0. ) {
+      yNumberMin += arg->printSolY;
+      yNumberMax += arg->printSolY;
+    }
 
 		// compute x position of the printed central value
 		float xNumberMin, xNumberMax;
@@ -386,6 +405,14 @@ void OneMinusClPlot::drawSolutions()
 			xNumberMin -= (xmax-xmin)*0.225;
 			xNumberMax -= (xmax-xmin)*0.225;
 		}
+
+    // if print solution argument given then over write
+    if ( arg->printSolX > 0. )
+    {
+      float diff = xNumberMax - xNumberMin;
+      xNumberMin = arg->printSolX;
+      xNumberMax = arg->printSolX + diff;
+    }
 
 		TPaveText *t1 = new TPaveText(xNumberMin, yNumberMin, xNumberMax, yNumberMax, "BR");
 		t1->SetBorderSize(0);
@@ -463,7 +490,9 @@ void OneMinusClPlot::drawCLguideLines()
 	drawCLguideLine(4.55e-2);
 	if ( arg->plotlog ){
 		drawCLguideLine(2.7e-3);
-		// drawCLguideLine(6.3e-5);
+		if ( arg->plotymin < 6.3e-5 ) {
+      drawCLguideLine(6.3e-5);
+    }
 	}
 }
 
@@ -483,7 +512,11 @@ void OneMinusClPlot::Draw()
 
 	// Legend:
 	// make the legend short, the text will extend over the boundary, but the symbol will be shorter
-	TLegend* leg = new TLegend(0.19,0.78,0.5,0.9440559);
+  float legendXmin = arg->plotlegx!=-1. ? arg->plotlegx : 0.19 ;
+  float legendYmin = arg->plotlegy!=-1. ? arg->plotlegy : 0.78 ;
+  float legendXmax = legendXmin + ( arg->plotlegsizex!=-1. ? arg->plotlegsizex : 0.31 ) ;
+  float legendYmax = legendYmin + ( arg->plotlegsizey!=-1. ? arg->plotlegsizey : 0.1640559 ) ;
+	TLegend* leg = new TLegend(legendXmin,legendYmin,legendXmax,legendYmax);
 	leg->SetFillColor(kWhite);
 	leg->SetFillStyle(0);
 	leg->SetLineColor(kWhite);
@@ -522,6 +555,7 @@ void OneMinusClPlot::Draw()
 		}
 	drawSolutions();
 	if ( plotLegend ) leg->Draw();
+  if ( arg->isQuickhack(22) ) leg->Draw();
 	m_mainCanvas->Update();
 	drawCLguideLines();
 

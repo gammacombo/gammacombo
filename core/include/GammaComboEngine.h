@@ -14,6 +14,8 @@
 #include "Graphviz.h"
 #include "MethodPluginScan.h"
 #include "MethodProbScan.h"
+#include "MethodBergerBoosScan.h"
+#include "MethodCoverageScan.h"
 #include "OneMinusClPlot.h"
 #include "OneMinusClPlot2d.h"
 #include "OneMinusClPlotAbs.h"
@@ -26,6 +28,7 @@
 #include "TDatime.h"
 #include "Utils.h"
 #include "BatchScriptWriter.h"
+#include "LatexMaker.h"
 
 using namespace std;
 using namespace Utils;
@@ -43,6 +46,7 @@ class GammaComboEngine
 		~GammaComboEngine();
 
 		void            adjustRanges(Combiner *c, int cId);
+    void            setupToyVariationSets(Combiner *c, int cId);
 		void			addPdf(int id, PDF_Abs* pdf, TString title="");
 		void			addCombiner(int id, Combiner* cmb);
 		void			cloneCombiner(int newId, int oldId, TString name, TString title);
@@ -82,6 +86,9 @@ class GammaComboEngine
 		void			make1dPluginScan(MethodPluginScan *scannerPlugin, int cId);
 		void			make1dProbPlot(MethodProbScan *scanner, int cId);
 		void			make1dProbScan(MethodProbScan *scanner, int cId);
+    void      make1dCoverageScan(MethodCoverageScan *scanner, int cId);
+    void      make1dCoveragePlot(MethodCoverageScan *scanner, int cId);
+    void      make1dBergerBoosScan(MethodBergerBoosScan *scanner, int cId);
 		void			make2dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId);
 		void			make2dPluginPlot(MethodPluginScan *sPlugin, MethodProbScan *sProb, int cId);
 		void			make2dPluginScan(MethodPluginScan *scannerPlugin, int cId);
@@ -99,6 +106,8 @@ class GammaComboEngine
 		void      tightenChi2Constraint(Combiner *c, TString scanVar);
 		void			usage();
     void      writebatchscripts();
+    void      makeLatex( Combiner *c );
+    void      saveWorkspace( Combiner *c, int i );
 
 		OptParser*			arg;
 		vector<Combiner*> 	cmb;

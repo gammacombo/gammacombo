@@ -133,8 +133,10 @@ RooDataSet* MethodPluginScan::generateToys(int nToys)
 	// Test toy generation - print out the first 10 toys to stdout.
 	// Triggered by --qh 5
 	if ( arg->isQuickhack(5) ){
-		if ( w->var("kD_k3pi") ) cout << "kD_k3pi=" << w->var("kD_k3pi")->getVal() << endl;
-		if ( w->var("dD_k3pi") ) cout << "dD_k3pi=" << w->var("dD_k3pi")->getVal() << endl;
+		if ( w->var("kD_k3pi") )  cout << "kD_k3pi=" << w->var("kD_k3pi")->getVal() << endl;
+		if ( w->var("dD_k3pi") )  cout << "dD_k3pi=" << w->var("dD_k3pi")->getVal() << endl;
+		if ( w->var("kD_kskpi") ) cout << "kD_kskpi=" << w->var("kD_kskpi")->getVal() << endl;
+		if ( w->var("dD_kskpi") ) cout << "dD_kskpi=" << w->var("dD_kskpi")->getVal() << endl;
 		for ( int j = 0; j<10 && j<nToys; j++ ){
 			const RooArgSet* toyData = dataset->get(j);
 			toyData->Print("v");
@@ -147,54 +149,69 @@ RooDataSet* MethodPluginScan::generateToys(int nToys)
 	// Sometimes there is an error from TFoam (the TH2F clearly isn't zero):
 	// Error in <TFoam::MakeActiveList>: Integrand function is zero
 	// Then it proceeds "generating" observables that are, in every toy, set to their boundaries.
-	// This happens only for kD_k3pi_obs.
+	// This happens only for kD_k3pi_obs and kD_kskpi_obs
 	// Workaround: If it happens, flucutate the parameters of the histogram
 	// ever so slightly and regenerate.
 
 	// read the generated values for one variable from the
 	// first two toys
-	bool hasK3pi = false;
-	float generatedValues[2];
-	for ( int i=0; i<2; i++ ){
-		const RooArgSet* toyData = dataset->get(i);
-		TIterator* it = toyData->createIterator();
-		while(RooRealVar* var = (RooRealVar*)it->Next()){
-			if ( TString(var->GetName()).Contains("kD_k3pi_obs") ){
-				hasK3pi = true;
-				generatedValues[i] = var->getVal();
-				continue;
-			}
-		}
-		delete it;
-	}
+  //
+  vector<TString> affected_var;
+  affected_var.push_back("kD_k3pi");
+  affected_var.push_back("kD_kskpi");
 
-	// check if they are the same, if so, fluctuate and regenerate
-	if ( hasK3pi && generatedValues[0]==generatedValues[1] ){
-		delete dataset;
-		cout << "kD_k3pi_obs GENERATION ERROR AT kD_k3pi=" << w->var("kD_k3pi")->getVal()
-			<< " dD_k3pi=" << w->var("dD_k3pi")->getVal() << endl;
-		TRandom3 r;
-		w->var("kD_k3pi")->setVal(r.Gaus(w->var("kD_k3pi")->getVal(),0.05));
-		w->var("dD_k3pi")->setVal(r.Gaus(w->var("dD_k3pi")->getVal(),0.05));
-		cout << "kD_k3pi_obs SECOND GENERATION AT kD_k3pi=" << w->var("kD_k3pi")->getVal()
-			<< " dD_k3pi=" << w->var("dD_k3pi")->getVal() << endl;
-		RooMsgService::instance().setStreamStatus(0,kFALSE);
-		RooMsgService::instance().setStreamStatus(1,kFALSE);
-		dataset = w->pdf(pdfName)->generate(*w->set(obsName), nToys, AutoBinned(false));
-		RooMsgService::instance().setStreamStatus(0,kTRUE);
-		RooMsgService::instance().setStreamStatus(1,kTRUE);		for ( int i=0; i<2; i++ ){
-			const RooArgSet* toyData = dataset->get(i);
-			TIterator* it = toyData->createIterator();
-			while(RooRealVar* var = (RooRealVar*)it->Next()){
-				if ( TString(var->GetName()).Contains("kD_k3pi_obs") ){
-					generatedValues[i] = var->getVal();
-					continue;
-				}
-			}
-			delete it;
-		}
-		cout << "kD_k3pi_obs NEW VALUES : toy 0: " << generatedValues[0] << " toy 1: " << generatedValues[1] << endl;
-	}
+  for ( vector<TString>::iterator aff_var_it = affected_var.begin(); aff_var_it != affected_var.end(); aff_var_it++) {
+
+    TString aff_obs = *aff_var_it + "_obs";
+
+    bool hasAffObs = false;
+    float generatedValues[2];
+    for ( int i=0; i<2; i++ ){
+      const RooArgSet* toyData = dataset->get(i);
+      TIterator* it = toyData->createIterator();
+      while(RooRealVar* var = (RooRealVar*)it->Next()){
+        if ( TString(var->GetName()).Contains(aff_obs) ){
+          hasAffObs = true;
+          generatedValues[i] = var->getVal();
+          continue;
+        }
+      }
+      delete it;
+    }
+
+    // check if they are the same, if so, fluctuate and regenerate
+    if ( hasAffObs && generatedValues[0]==generatedValues[1] ){
+      delete dataset;
+      TString dD_aff_var = *aff_var_it;
+      dD_aff_var.ReplaceAll("kD","dD");
+
+      cout << aff_obs << " GENERATION ERROR AT " << *aff_var_it << "=" << w->var(*aff_var_it)->getVal()
+        << " " << dD_aff_var << "=" << w->var(dD_aff_var)->getVal() << endl;
+      TRandom3 r;
+      w->var(*aff_var_it)->setVal(r.Gaus(w->var(*aff_var_it)->getVal(),0.05));
+      w->var(dD_aff_var)->setVal(r.Gaus(w->var(dD_aff_var)->getVal(),0.04));
+      cout << aff_obs << " SECOND GENERATION AT " << *aff_var_it << "=" << w->var(*aff_var_it)->getVal()
+      << " " << dD_aff_var << "=" << w->var(dD_aff_var)->getVal() << endl;
+
+      RooMsgService::instance().setStreamStatus(0,kFALSE);
+      RooMsgService::instance().setStreamStatus(1,kFALSE);
+      dataset = w->pdf(pdfName)->generate(*w->set(obsName), nToys, AutoBinned(false));
+      RooMsgService::instance().setStreamStatus(0,kTRUE);
+      RooMsgService::instance().setStreamStatus(1,kTRUE);		for ( int i=0; i<2; i++ ){
+        const RooArgSet* toyData = dataset->get(i);
+        TIterator* it = toyData->createIterator();
+        while(RooRealVar* var = (RooRealVar*)it->Next()){
+          if ( TString(var->GetName()).Contains(aff_obs) ){
+            generatedValues[i] = var->getVal();
+            continue;
+          }
+        }
+        delete it;
+      }
+      cout << aff_obs << " NEW VALUES : toy 0: " << generatedValues[0] << " toy 1: " << generatedValues[1] << endl;
+    }
+
+  }
 
 	return dataset;
 }
@@ -252,6 +269,39 @@ void MethodPluginScan::computePvalue1d(RooSlimFitResult* plhScan, double chi2min
 	// Set nuisances. This is the point in parameter space where
 	// the toys need to be generated.
 	setParameters(w, parsName, plhScan, true);
+
+  // Kenzie-Cousins-Highland (randomize nuisance parameters within a uniform range)
+  if ( arg->isAction("uniform") ) {
+    //   set parameter ranges to their bb range (should be something wide 95, 99% CL)
+    const RooArgSet* pars = w->set(toysName) ? w->set(toysName) : w->set(parsName);
+    TIterator* it = pars->createIterator();
+    while(RooRealVar* var = (RooRealVar*)it->Next()){
+      setLimit( var, "bboos" );
+    }
+    if (verbose) {
+      cout << "Uniform generating from:" << endl;
+      pars->Print("v");
+    }
+    randomizeParameters(w, parsName);
+    if (verbose) {
+      cout << "Set:" << endl;
+      w->set(parsName)->Print("v");
+    }
+  }
+
+  // Cousins-Highland (randomize nuisance parameters according to a Gaussian with their
+  // best fit value and uncertainty from the PLH scan)
+  if ( arg->isAction("gaus") ) {
+    if (verbose) {
+      cout << "Gaussian generating from:" << endl;
+      plhScan->floatParsFinal().Print("v");
+    }
+    randomizeParametersGaussian(w, toysName, plhScan);
+    if (verbose) {
+      cout << "Set:" << endl;
+      w->set(parsName)->Print("v");
+    }
+  }
 
 	// save nuisances for start parameters
 	frCache.storeParsAtGlobalMin(w->set(parsName));
@@ -453,9 +503,18 @@ int MethodPluginScan::scan1d(int nRun)
 	}
 
 	if ( arg->debug ) myFit->print();
-	TString dirname = "root/scan1dPlugin_"+name+"_"+scanVar1;
+	TString dirname = "root/scan1dPlugin";
+  if ( arg->isAction("bb") ) dirname += "BergerBoos";
+  if ( arg->isAction("uniform") ) dirname += "Uniform";
+  if ( arg->isAction("gaus") ) dirname += "Gaus";
+  dirname += "_"+name+"_"+scanVar1;
 	system("mkdir -p "+dirname);
-	t.writeToFile(Form(dirname+"/scan1dPlugin_"+name+"_"+scanVar1+"_run%i.root", nRun));
+  TString fname = "/scan1dPlugin";
+  if ( arg->isAction("bb") ) fname += "BergerBoos";
+  if ( arg->isAction("uniform") ) fname += "Uniform";
+  if ( arg->isAction("gaus") ) fname += "Gaus";
+  fname += Form("_"+name+"_"+scanVar1+"_run%i.root",nRun);
+	t.writeToFile((dirname+fname).Data());
 	delete myFit;
 	delete pb;
 	return 0;
@@ -552,7 +611,44 @@ void MethodPluginScan::scan2d(int nRun)
 								"id=[%i,%i], val=[%f,%f]\n", iCurveRes1, iCurveRes2, scanpoint1, scanpoint2);
 					}
 					extCurveResult = new RooArgList(profileLH->curveResults2d[iCurveRes1][iCurveRes2]->floatParsFinal());
-					setParameters(w, parsName, extCurveResult);
+
+          // Set nuisances. This is the point in parameter space where
+          // the toys need to be generated.
+          setParameters(w, parsName, extCurveResult);
+
+          // Kenzie-Cousins-Highland (randomize nuisance parameters within a uniform range)
+          if ( arg->isAction("uniform") ) {
+            // set parameter ranges to their bb range (should be something wide 95, 99% CL)
+            const RooArgSet* pars = w->set(toysName) ? w->set(toysName) : w->set(parsName);
+            TIterator* it = pars->createIterator();
+            while ( RooRealVar* var = (RooRealVar*)it->Next() ) {
+              setLimit( var, "bboos" );
+            }
+            if (verbose) {
+              cout << "Uniform generating from:" << endl;
+              pars->Print("v");
+            }
+            randomizeParameters(w, parsName);
+            if (verbose) {
+              cout << "Set:" << endl;
+              w->set(parsName)->Print("v");
+            }
+          }
+
+          // Cousins-Highland (randomize nuisance parameters according to a Gaussian with their
+          // best fit value and uncertainty from the PLH scan)
+          if ( arg->isAction("gaus") ) {
+            if (verbose) {
+              cout << "Gaussian generating from:" << endl;
+              profileLH->curveResults2d[iCurveRes1][iCurveRes2]->floatParsFinal().Print("v");
+            }
+            randomizeParametersGaussian(w, toysName, profileLH->curveResults2d[iCurveRes1][iCurveRes2]);
+            if (verbose) {
+              cout << "Set:" << endl;
+              w->set(parsName)->Print("v");
+            }
+          }
+
 					t.chi2min = profileLH->curveResults2d[iCurveRes1][iCurveRes2]->minNll();
 
 					// check if the scan variable here differs from that of
@@ -664,9 +760,18 @@ void MethodPluginScan::scan2d(int nRun)
 	}
 
 	// save tree
-	TString dirname = "root/scan2dPlugin_"+name+"_"+scanVar1+"_"+scanVar2;
+	TString dirname = "root/scan2dPlugin";
+  if ( arg->isAction("bb") ) dirname += "BergerBoos";
+  if ( arg->isAction("uniform") ) dirname += "Uniform";
+  if ( arg->isAction("gaus") ) dirname += "Gaus";
+  dirname += "_"+name+"_"+scanVar1+"_"+scanVar2;
 	system("mkdir -p "+dirname);
-	t.writeToFile(Form(dirname+"/scan2dPlugin_"+name+"_"+scanVar1+"_"+scanVar2+"_run%i.root", nRun));
+  TString fname = "/scan2dPlugin";
+  if ( arg->isAction("bb") ) fname += "BergerBoos";
+  if ( arg->isAction("uniform") ) fname += "Uniform";
+  if ( arg->isAction("gaus") ) fname += "Gaus";
+  fname += Form("_"+name+"_"+scanVar1+"_"+scanVar2+"_run%i.root",nRun);
+	t.writeToFile((dirname+fname).Data());
 	delete pb;
 }
 
@@ -840,8 +945,19 @@ void MethodPluginScan::readScan1dTrees(int runMin, int runMax)
 	TChain *c = new TChain("plugin");
 	int nFilesMissing = 0;
 	int nFilesRead = 0;
-	TString dirname = "root/scan1dPlugin_"+name+"_"+scanVar1;
-	TString fileNameBase = dirname+"/scan1dPlugin_"+name+"_"+scanVar1+"_run";
+  // configure file name
+  TString dirname = "root/scan1dPlugin";
+  if ( arg->isAction("bb") ) dirname += "BergerBoos";
+  if ( arg->isAction("uniform") ) dirname += "Uniform";
+  if ( arg->isAction("gaus") ) dirname += "Gaus";
+  dirname += "_"+name+"_"+scanVar1;
+	TString fileNameBase = dirname+"/scan1dPlugin";
+  if ( arg->isAction("bb") ) fileNameBase += "BergerBoos";
+  if ( arg->isAction("uniform") ) fileNameBase += "Uniform";
+  if ( arg->isAction("gaus") ) fileNameBase += "Gaus";
+  fileNameBase += "_"+name+"_"+scanVar1+"_run";
+  // read different files if requested
+  if ( arg->toyFiles != "" && arg->toyFiles != "default" ) fileNameBase = arg->toyFiles;
 	if ( arg->debug ) cout << "MethodPluginScan::readScan1dTrees() : ";
 	cout << "reading files: " << fileNameBase+"*.root" << endl;
 	for (int i=runMin; i<=runMax; i++){
@@ -895,9 +1011,21 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
 	TChain *chain = new TChain("plugin");
 	int nFilesMissing = 0;
 	int nFilesRead = 0;
-	TString dirname = "root/scan2dPlugin_"+name+"_"+scanVar1+"_"+scanVar2;
-	TString fileNameBase = dirname+"/scan2dPlugin_"+name+"_"+scanVar1+"_"+scanVar2+"_run";
-	if ( arg->debug ) cout << "MethodPluginScan::readScan2dTrees() : ";
+  // configure file name
+  TString dirname = "root/scan2dPlugin";
+  if ( arg->isAction("bb") ) dirname += "BergerBoos";
+  if ( arg->isAction("uniform") ) dirname += "Uniform";
+  if ( arg->isAction("gaus") ) dirname += "Gaus";
+  dirname += "_"+name+"_"+scanVar1+"_"+scanVar2;
+	TString fileNameBase = dirname+"/scan2dPlugin";
+  if ( arg->isAction("bb") ) fileNameBase += "BergerBoos";
+  if ( arg->isAction("uniform") ) fileNameBase += "Uniform";
+  if ( arg->isAction("gaus") ) fileNameBase += "Gaus";
+  fileNameBase += "_"+name+"_"+scanVar1+"_"+scanVar2+"_run";
+  // read different file if requested
+  if ( arg->toyFiles != "" && arg->toyFiles != "default" ) fileNameBase = arg->toyFiles;
+
+  if ( arg->debug ) cout << "MethodPluginScan::readScan2dTrees() : ";
 	cout << "reading files: " << fileNameBase+"*.root" << endl;
 	for (int i=runMin; i<=runMax; i++) {
 		TString file = Form(fileNameBase+"%i.root", i);

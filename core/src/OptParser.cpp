@@ -35,15 +35,20 @@ OptParser::OptParser():
 	debug = false;
 	digits = -99;
 	enforcePhysRange = false;
+    filenamechange = "";
 	group = "GammaCombo";
 	groupPos = "";
 	id = -99;
 	importance = false;
+  info = false;
 	interactive = false;
 	jobdir = ".";
 	largest = false;
+  latex = false;
 	lightfiles = false;
+  batchstartn = 1;
   nbatchjobs = -99;
+  batcheos = false;
 	nBBpoints = -99;
 	ndiv = 407;
 	ndivy = 407;
@@ -52,9 +57,12 @@ OptParser::OptParser():
 	npoints2dx = -99;
 	npoints2dy = -99;
 	npointstoy = -99;
+  ncoveragetoys = -99;
 	nrun = -99;
 	ntoys = -99;
+	nsmooth = 1;
 	parevol = false;
+  plotext = "";
 	plotid = -99;
 	plotlegend = true;
 	plotlegx = -99;
@@ -70,19 +78,25 @@ OptParser::OptParser():
 	plotprelim = false;
 	plotpulls = false;
 	plotunoff = false;
+  plotymin = -99.;
+  plotymax = -99.;
 	pluginPlotRangeMax = -100;
 	pluginPlotRangeMin = -100;
 	intprob = false;
 	probforce = false;
 	probimprove = false;
 	printcor = false;
+  printSolX = -999.;
+  printSolY = -999.;
   queue = "";
+  save = "";
 	scanforce = false;
 	scanrangeMax = -101;
 	scanrangeMin = -101;
 	scanrangeyMax = -102;
 	scanrangeyMin = -102;
 	smooth2d = false;
+  toyFiles = "";
 	usage = false;
 	verbose = false;
 }
@@ -96,6 +110,8 @@ void OptParser::defineOptions()
 	availableOptions.push_back("action");
 	availableOptions.push_back("asimov");
 	availableOptions.push_back("asimovfile");
+  availableOptions.push_back("batchstartn");
+  availableOptions.push_back("batcheos");
 	availableOptions.push_back("combid");
 	availableOptions.push_back("color");
 	availableOptions.push_back("controlplots");
@@ -104,14 +120,17 @@ void OptParser::defineOptions()
 	availableOptions.push_back("debug");
 	availableOptions.push_back("digits");
 	availableOptions.push_back("evol");
+    availableOptions.push_back("filename");
 	availableOptions.push_back("fix");
 	availableOptions.push_back("ext");
 	availableOptions.push_back("id");
 	availableOptions.push_back("importance");
+  availableOptions.push_back("info");
 	availableOptions.push_back("interactive");
 	//availableOptions.push_back("jobdir");
 	availableOptions.push_back("jobs");
 	availableOptions.push_back("largest");
+  availableOptions.push_back("latex");
 	availableOptions.push_back("leg");
 	availableOptions.push_back("legsize");
 	availableOptions.push_back("group");
@@ -121,33 +140,43 @@ void OptParser::defineOptions()
 	availableOptions.push_back("log");
 	availableOptions.push_back("magnetic");
   availableOptions.push_back("nbatchjobs");
-	//availableOptions.push_back("nBBpoints");
+  //availableOptions.push_back("nBBpoints");
 	availableOptions.push_back("nosyst");
 	availableOptions.push_back("npoints");
 	availableOptions.push_back("npoints2dx");
 	availableOptions.push_back("npoints2dy");
 	availableOptions.push_back("npointstoy");
+	availableOptions.push_back("ncoveragetoys");
 	availableOptions.push_back("nrun");
 	availableOptions.push_back("ntoys");
+	availableOptions.push_back("nsmooth");
 	//availableOptions.push_back("pevid");
 	availableOptions.push_back("pr");
 	availableOptions.push_back("physrange");
+  availableOptions.push_back("plotext");
 	availableOptions.push_back("plotid");
+  availableOptions.push_back("plotrangey");
 	availableOptions.push_back("intprob");
 	availableOptions.push_back("po");
 	availableOptions.push_back("prelim");
+  availableOptions.push_back("printsolx");
+  availableOptions.push_back("printsoly");
 	availableOptions.push_back("probforce");
 	//availableOptions.push_back("probimprove");
 	availableOptions.push_back("ps");
 	availableOptions.push_back("pulls");
 	availableOptions.push_back("qh");
   availableOptions.push_back("queue");
+  availableOptions.push_back("randomizeToyVars");
+  availableOptions.push_back("removeRange");
+  availableOptions.push_back("save");
 	availableOptions.push_back("sn");
 	availableOptions.push_back("sn2d");
 	availableOptions.push_back("scanforce");
 	availableOptions.push_back("scanrange");
 	availableOptions.push_back("scanrangey");
 	availableOptions.push_back("smooth2d");
+  availableOptions.push_back("toyFiles");
 	availableOptions.push_back("title");
 	availableOptions.push_back("usage");
 	availableOptions.push_back("unoff");
@@ -202,6 +231,8 @@ void OptParser::bookPlottingOptions()
 ///
 void OptParser::bookPluginOptions()
 {
+  bookedOptions.push_back("batchstartn");
+  bookedOptions.push_back("batcheos");
   bookedOptions.push_back("controlplots");
 	bookedOptions.push_back("id");
 	bookedOptions.push_back("importance");
@@ -212,6 +243,7 @@ void OptParser::bookPluginOptions()
 	bookedOptions.push_back("npointstoy");
 	bookedOptions.push_back("nrun");
 	bookedOptions.push_back("ntoys");
+	bookedOptions.push_back("nsmooth");
 	//bookedOptions.push_back("pevid");
 	bookedOptions.push_back("pr");
 	bookedOptions.push_back("physrange");
@@ -301,6 +333,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::ValueArg<string> scanrangeyArg("", "scanrangey", "For 2D plots, restrict the scan range "
 			"of the y variable to a given range. "
 			"Format: --scanrangey min:max.", false, "default", "string");
+  TCLAP::ValueArg<string> plotrangeyArg("", "plotrangey", "Plot range of the y-axis for 1D plots. Default 0:1. For log plots 1.e-3:1. "
+      "Format: --plotrangey min:max.",false, "default", "string");
 	TCLAP::ValueArg<int> ndivArg("", "ndiv", "Set the number of axis divisions (x axis in 1d and 2d plots): "
 			"ndiv=N1 + 100*N2 + 10000*N3, "
 			"N1 = number of 1st divisions (N2 = 2nd, N3 = 3rd). Default is 407. To enable bin optimization, pre-pend "
@@ -320,6 +354,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"Available IDs are 1-6. If not given, all control plots are made.", false, 0, "int");
 	TCLAP::ValueArg<int> digitsArg("s", "digits", "Set the number of printed"
 			" digits right of the decimal point. Default is automatic.", false, -1, "int");
+  TCLAP::ValueArg<string> plotextArg("", "plotext", "Add an extension to the output plot name.",false, "","string");
 	TCLAP::ValueArg<string> plotlegArg("", "leg", "Adjust the plot legend.\n"
 			"Disable the legend with --leg off .\n"
 			"2d plots: set the position of the legend. "
@@ -331,17 +366,22 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"rejcet low-statistics outliers. Format: --pluginplotrange min-max.", false, "default", "string");
 	TCLAP::ValueArg<int> plotnsigmacontArg("", "ncontours", "plot this many sigma contours in 2d plots (max 5)", false, 2, "int");
 	TCLAP::ValueArg<string> filenameadditionArg("","ext","Add this piece into the file name (in case you don't want files/plots to be overwritten", false, "", "string");
+    TCLAP::ValueArg<string> filenamechangeArg("","filename", "Change filename to this name (after the basename of the executable)", false, "", "string");
 	TCLAP::ValueArg<string> plotgroupArg("", "group", "Set the group logo. Use '--group off' to disable the logo. "
 			"See also --grouppos. Default: GammaCombo", false, "GammaCombo", "string");
 	TCLAP::ValueArg<string> plotgroupposArg("", "grouppos", "Set the position of the group logo. "
 			"Format: --grouppos xmin:ymin in normalized coordinates [0,1]. To use default values "
 			"for one coordinate, use 'def': --grouppos def:y.", false, "default", "string");
+  TCLAP::ValueArg<float> printSolXArg("","printsolx", "x coordinate to print solution at in 1D plots", false, -999., "float");
+  TCLAP::ValueArg<float> printSolYArg("","printsoly", "y coordinate to shift solution by in 1D plots", false, -999., "float");
   TCLAP::ValueArg<string> queueArg("q","queue","Batch queue to submit to. If none is given then the scripts will be written but not submitted.", false, "", "string");
+  TCLAP::ValueArg<int> batchstartnArg("","batchstartn", "number of first batch job (e.g. if you have already submitted 100 you can submit another 100 starting from 101)", false, 1, "int");
   TCLAP::ValueArg<int> nbatchjobsArg("","nbatchjobs", "number of jobs to write scripts for and submit to batch system", false, 0, "int");
 	TCLAP::ValueArg<int> nBBpointsArg("", "nBBpoints", "number of BergerBoos points per scanpoint", false, 1, "int");
 	TCLAP::ValueArg<int> idArg("", "id", "When making controlplots (--controlplots), only consider the "
 			"scan point with this ID, that is a specific value of the scan parameter. "
 			, false, -1, "int");
+  TCLAP::ValueArg<int> nsmoothArg("", "nsmooth", "number of smoothings to apply to final 1-CL plot. Default: 1", false, 1, "int");
 	TCLAP::ValueArg<int> ntoysArg("", "ntoys", "number of toy experiments per job. Default: 25", false, 25, "int");
 	TCLAP::ValueArg<int> nrunArg("", "nrun", "Number of toy run. To be used with --action pluginbatch.", false, 1, "int");
 	TCLAP::ValueArg<int> npointsArg("", "npoints", "Number of scan points used by the Prob method. \n"
@@ -351,6 +391,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::ValueArg<int> npoints2dxArg("", "npoints2dx", "Number of 2D scan points, x axis. Default: 50", false, -1, "int");
 	TCLAP::ValueArg<int> npoints2dyArg("", "npoints2dy", "Number of 2D scan points, y axis. Default: 50", false, -1, "int");
 	TCLAP::ValueArg<int> npointstoyArg("", "npointstoy", "Number of scan points used by the plugin method. Default: 100", false, 100, "int");
+	TCLAP::ValueArg<int> ncoveragetoysArg("", "ncoveragetoys", "Number of toys to throw in the coverage method. Default: 100", false, 100, "int");
 	TCLAP::MultiArg<string> jobsArg("j", "jobs", "Range of toy job ids to be considered. "
 			"To be used with --action plugin. "
 			"Can be given multiple times when plotting more than one combinations. In that case, they need to be given in same "
@@ -358,8 +399,11 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"Format (range):  -j min-max \n"
 			"Format (single): -j n", false, "string");
 	TCLAP::ValueArg<string> jobdirArg("", "jobdir", "Give absolute job-directory if working on batch systems.", false, "default", "string");
+  TCLAP::ValueArg<string> toyFilesArg("", "toyFiles", "Pass some different toy files, for example if you want 1D projection of 2D FC.", false, "default", "string" );
+  TCLAP::ValueArg<string> saveArg("","save", "Save the workspace this file name", false, "", "string");
 
 	// --------------- switch arguments
+  TCLAP::SwitchArg batcheosArg("","batcheos", "When submitting batch jobs (for plugin) write the output to eos", false);
 	TCLAP::SwitchArg plotpluginonlyArg("", "po", "Make a 1-CL plot just showing the plugin curves.", false);
 	TCLAP::SwitchArg interactiveArg("i", "interactive", "Enables interactive mode (requires X11 session). Exit with Ctrl+c.", false);
 	TCLAP::SwitchArg intprobArg("", "intprob", "Use the internal (=Prob) chi2min histogram"
@@ -377,6 +421,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::SwitchArg largestArg("", "largest", "Report largest CL interval: lowest boundary of "
 			"all intervals to highest boundary of all intervals. Useful if two intervals are very "
 			"close together.", false);
+  TCLAP::SwitchArg latexArg("", "latex", "Make latex tables of observables and correlations", false);
 	TCLAP::SwitchArg plotlogArg("", "log", "make logarithmic 1-CL plots", false);
 	TCLAP::SwitchArg plotpullsArg("", "pulls", "Make a pull plot illustrating the consistency "
 			"of the best solution with the observables.", false);
@@ -387,6 +432,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::SwitchArg prArg("", "pr", "Enforce the physical range on all parameters (needed to reproduce "
 			"the standard Feldman-Cousins with boundary example). If set, no nuisance will be allowed outside the "
 			"'phys' limit. However, toy generation of observables is not affected.", false);
+  TCLAP::SwitchArg infoArg("", "info", "Print information about the passed combiners and exit", false);
 	TCLAP::SwitchArg importanceArg("", "importance", "Enable importance sampling for plugin toys.", false);
 	TCLAP::SwitchArg nosystArg("", "nosyst", "Sets all systematic errors to zero.", false);
 	TCLAP::SwitchArg printcorArg("", "printcor", "Print the correlation matrix of each solution found.", false);
@@ -396,6 +442,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	vector<string> vAction;
 	//vAction.push_back("bb");
 	//vAction.push_back("bbbatch");
+  vAction.push_back("coverage");
+  vAction.push_back("coveragebatch");
 	vAction.push_back("plot");
 	//vAction.push_back("plot2d");
 	vAction.push_back("plugin");
@@ -404,6 +452,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	vAction.push_back("runtoys");
 	//vAction.push_back("scantree");
 	vAction.push_back("test");
+  vAction.push_back("uniform");
+  vAction.push_back("gaus");
 	ValuesConstraint<string> cAction(vAction);
 	TCLAP::MultiArg<string> actionArg("a", "action", "Perform action", false, &cAction);
 	TCLAP::MultiArg<string> varArg("", "var", "Scan variable (default: g). Can be given twice, in which case "
@@ -442,9 +492,14 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"16: In parameter evolution plots, add also the full evolution over the scan, in addition to just plotting the best evolution.\n"
       "17: In 2D plots with the PLUGIN and PROB methods, plot the PLUGIN first then the PROB.\n"
       "18: In 2D plots with PLUGIN and PROB methods, set legend titles as PLUGIN and PROB instead of (Plugin) and (Prob).\n"
+      "19: In 1D plots, no vertical lines.\n"
+      "20: In 1D plots, only central value line.\n"
+      "21: Don't add the solution to 1D 1-CL plots.\n"
+      "22: In 1D plots draw the legend without changing the y-axis (need also --leg off option).\n"
 			, false, "int");
 	TCLAP::MultiArg<string> titleArg("", "title", "Override the title of a combination. "
 			"If 'default' is given, the default title for that combination is used. "
+            "If 'noleg' is given, this entry is not shown in the legend. "
 			"Example: --title 'This is the 1. combination.' --title 'And this the second.'", false, "string");
 	TCLAP::MultiArg<string> fixArg("", "fix", "Fix one or more parameters in a combination. "
 			"If 'none' is given, all parameters are floated (default). "
@@ -464,7 +519,15 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"Example: --prange 'g=1.7:1.9,r_dk=0.09:0.2' \n"
 			"To modify only the parameters in the second combination, do\n"
 			"Example: --prange def --prange 'g=1.7:1.9,r_dk=0.09:0.2' \n"
+      "Set to -999:-999 to remove range \n"
 			, false, "string");
+  TCLAP::MultiArg<string> randomizeToyVarsArg("","randomizeToyVars", "A list of nuisance parameters to randomize in the toy generation for the plugin method when the -a uniform, -a flat or -a gaus methods are also used. Pass as comma sepearted list e.g --randomizeToyVars 'r_dk,r_dpi,d_dk' . Pass once per combiner. If nothing is given here but you pass -a uniform, flat or gaus then ALL nuisance parameter values will be varied in the toys."
+      , false, "string");
+  TCLAP::MultiArg<string> removeRangeArg("","removeRange","Remove the range entirely of one or more parameters in a combination. "
+      "The range are enforced through the --pr option."
+      "If 'all' is given, all parameter ranges are removed"
+      "Can also use regex matching"
+      , false, "string");
 	TCLAP::MultiArg<float> snArg("", "sn", "--sn x. Save nuisances to parameter cache file at certain points after a "
 			"1d scan was performed. This can be used to set these as starting points "
 			"for further scans. "
@@ -527,33 +590,43 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "usage" ) ) cmd.add( usageArg );
 	if ( isIn<TString>(bookedOptions, "unoff" ) ) cmd.add( plotunoffArg );
 	if ( isIn<TString>(bookedOptions, "title" ) ) cmd.add( titleArg );
+  if ( isIn<TString>(bookedOptions, "toyFiles" ) ) cmd.add( toyFilesArg );
 	if ( isIn<TString>(bookedOptions, "sn2d" ) ) cmd.add(sn2dArg);
 	if ( isIn<TString>(bookedOptions, "sn" ) ) cmd.add(snArg);
 	if ( isIn<TString>(bookedOptions, "smooth2d" ) ) cmd.add( smooth2dArg );
 	if ( isIn<TString>(bookedOptions, "scanrangey" ) ) cmd.add( scanrangeyArg );
 	if ( isIn<TString>(bookedOptions, "scanrange" ) ) cmd.add( scanrangeArg );
 	if ( isIn<TString>(bookedOptions, "scanforce" ) ) cmd.add( scanforceArg );
+  if ( isIn<TString>(bookedOptions, "save" ) ) cmd.add( saveArg );
 	if ( isIn<TString>(bookedOptions, "relation" ) ) cmd.add(relationArg);
+  if ( isIn<TString>(bookedOptions, "removeRange" ) ) cmd.add(removeRangeArg);
+  if ( isIn<TString>(bookedOptions, "randomizeToyVars" ) ) cmd.add(randomizeToyVarsArg);
 	if ( isIn<TString>(bookedOptions, "qh" ) ) cmd.add(qhArg);
   if ( isIn<TString>(bookedOptions, "queue") ) cmd.add(queueArg);
 	if ( isIn<TString>(bookedOptions, "pulls" ) ) cmd.add( plotpullsArg );
 	if ( isIn<TString>(bookedOptions, "ps" ) ) cmd.add( plotsolutionsArg );
 	if ( isIn<TString>(bookedOptions, "probimprove" ) ) cmd.add( probimproveArg );
 	if ( isIn<TString>(bookedOptions, "probforce" ) ) cmd.add( probforceArg );
+  if ( isIn<TString>(bookedOptions, "printsolx" ) ) cmd.add( printSolXArg );
+  if ( isIn<TString>(bookedOptions, "printsoly" ) ) cmd.add( printSolYArg );
 	if ( isIn<TString>(bookedOptions, "printcor" ) ) cmd.add( printcorArg );
 	if ( isIn<TString>(bookedOptions, "prelim" ) ) cmd.add( plotprelimArg );
 	if ( isIn<TString>(bookedOptions, "po" ) ) cmd.add( plotpluginonlyArg );
 	if ( isIn<TString>(bookedOptions, "pluginplotrange" ) ) cmd.add( pluginplotrangeArg );
 	if ( isIn<TString>(bookedOptions, "intprob" ) ) cmd.add( intprobArg );
+  if ( isIn<TString>(bookedOptions, "plotrangey" ) ) cmd.add( plotrangeyArg );
 	if ( isIn<TString>(bookedOptions, "plotnsigmacont" ) ) cmd.add(plotnsigmacontArg);
 	if ( isIn<TString>(bookedOptions, "plotid" ) ) cmd.add(plotidArg);
+  if ( isIn<TString>(bookedOptions, "plotext" ) ) cmd.add(plotextArg);
 	if ( isIn<TString>(bookedOptions, "plot2dcl" ) ) cmd.add( plot2dclArg );
 	if ( isIn<TString>(bookedOptions, "pr" ) ) cmd.add( prArg );
 	if ( isIn<TString>(bookedOptions, "physrange" ) ) cmd.add(physrangeArg);
 	if ( isIn<TString>(bookedOptions, "pevid" ) ) cmd.add( pevidArg );
+  if ( isIn<TString>(bookedOptions, "nsmooth" ) ) cmd.add(nsmoothArg);
 	if ( isIn<TString>(bookedOptions, "ntoys" ) ) cmd.add(ntoysArg);
 	if ( isIn<TString>(bookedOptions, "nrun" ) ) cmd.add(nrunArg);
 	if ( isIn<TString>(bookedOptions, "npointstoy" ) ) cmd.add(npointstoyArg);
+	if ( isIn<TString>(bookedOptions, "ncoveragetoys" ) ) cmd.add(ncoveragetoysArg);
 	if ( isIn<TString>(bookedOptions, "npoints2dy" ) ) cmd.add(npoints2dyArg);
 	if ( isIn<TString>(bookedOptions, "npoints2dx" ) ) cmd.add(npoints2dxArg);
 	if ( isIn<TString>(bookedOptions, "npoints" ) ) cmd.add(npointsArg);
@@ -569,15 +642,18 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "legsize" ) ) cmd.add( plotlegsizeArg );
 	if ( isIn<TString>(bookedOptions, "leg" ) ) cmd.add( plotlegArg );
 	if ( isIn<TString>(bookedOptions, "largest" ) ) cmd.add( largestArg );
+  if ( isIn<TString>(bookedOptions, "latex" ) ) cmd.add( latexArg );
 	if ( isIn<TString>(bookedOptions, "jobs" ) ) cmd.add(jobsArg);
 	if ( isIn<TString>(bookedOptions, "jobdir" ) ) cmd.add( jobdirArg );
 	if ( isIn<TString>(bookedOptions, "interactive" ) ) cmd.add( interactiveArg );
+  if ( isIn<TString>(bookedOptions, "info" ) ) cmd.add( infoArg );
 	if ( isIn<TString>(bookedOptions, "importance" ) ) cmd.add( importanceArg );
 	if ( isIn<TString>(bookedOptions, "id" ) ) cmd.add(idArg);
 	if ( isIn<TString>(bookedOptions, "group" ) ) cmd.add( plotgroupArg );
 	if ( isIn<TString>(bookedOptions, "grouppos" ) ) cmd.add( plotgroupposArg );
 	if ( isIn<TString>(bookedOptions, "fix" ) ) cmd.add(fixArg);
 	if ( isIn<TString>(bookedOptions, "ext" ) ) cmd.add(filenameadditionArg);
+    if ( isIn<TString>(bookedOptions, "filename" ) ) cmd.add( filenamechangeArg );
 	if ( isIn<TString>(bookedOptions, "evol" ) ) cmd.add(parevolArg);
 	if ( isIn<TString>(bookedOptions, "digits" ) ) cmd.add(digitsArg);
 	if ( isIn<TString>(bookedOptions, "debug" ) ) cmd.add(debugArg);
@@ -586,6 +662,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "controlplots" ) ) cmd.add(controlplotArg);
 	if ( isIn<TString>(bookedOptions, "combid" ) ) cmd.add(combidArg);
 	if ( isIn<TString>(bookedOptions, "color" ) ) cmd.add(colorArg);
+  if ( isIn<TString>(bookedOptions, "batchstartn" ) ) cmd.add( batchstartnArg );
+  if ( isIn<TString>(bookedOptions, "batcheos" ) ) cmd.add(batcheosArg);
 	if ( isIn<TString>(bookedOptions, "asimovfile" ) ) cmd.add( asimovFileArg );
 	if ( isIn<TString>(bookedOptions, "asimov") ) cmd.add(asimovArg);
 	if ( isIn<TString>(bookedOptions, "action") ) cmd.add(actionArg);
@@ -600,14 +678,19 @@ void OptParser::parseArguments(int argc, char* argv[])
 	digits            = digitsArg.getValue();
 	enforcePhysRange  = prArg.getValue();
 	filenameaddition  = filenameadditionArg.getValue();
+    filenamechange    = filenamechangeArg.getValue();
 	group             = plotgroupArg.getValue();
 	id                = idArg.getValue();
 	importance        = importanceArg.getValue();
+  info              = infoArg.getValue();
 	interactive       = interactiveArg.getValue();
 	intprob           = intprobArg.getValue();
 	jobdir            = TString(jobdirArg.getValue());
 	largest           = largestArg.getValue();
+  latex             = latexArg.getValue();
 	lightfiles        = lightfilesArg.getValue();
+  batchstartn       = batchstartnArg.getValue();
+  batcheos          = batcheosArg.getValue();
   nbatchjobs        = nbatchjobsArg.getValue();
 	nBBpoints         = nBBpointsArg.getValue();
 	ndiv              = ndivArg.getValue();
@@ -617,10 +700,13 @@ void OptParser::parseArguments(int argc, char* argv[])
 	npoints2dx        = npoints2dxArg.getValue()==-1 ? (npointsArg.getValue()==-1 ? 50 : npointsArg.getValue()) : npoints2dxArg.getValue();
 	npoints2dy        = npoints2dyArg.getValue()==-1 ? (npointsArg.getValue()==-1 ? 50 : npointsArg.getValue()) : npoints2dyArg.getValue();
 	npointstoy        = npointstoyArg.getValue();
-	nrun	          = nrunArg.getValue();
-	ntoys	          = ntoysArg.getValue();
+  ncoveragetoys     = ncoveragetoysArg.getValue();
+	nrun	            = nrunArg.getValue();
+	ntoys	            = ntoysArg.getValue();
+  nsmooth           = nsmoothArg.getValue();
 	parevol           = parevolArg.getValue();
 	pevid             = pevidArg.getValue();
+  plotext           = plotextArg.getValue();
 	plotid            = plotidArg.getValue();
 	plotlog           = plotlogArg.getValue();
 	plotmagnetic      = plotmagneticArg.getValue();
@@ -630,13 +716,17 @@ void OptParser::parseArguments(int argc, char* argv[])
 	plotpulls         = plotpullsArg.getValue();
 	plotunoff         = plotunoffArg.getValue();
 	printcor          = printcorArg.getValue();
+  printSolX         = printSolXArg.getValue();
+  printSolY         = printSolYArg.getValue();
 	probforce         = probforceArg.getValue();
 	probimprove       = probimproveArg.getValue();
 	qh                = qhArg.getValue();
   queue             = TString(queueArg.getValue());
+  save              = saveArg.getValue();
 	savenuisances1d   = snArg.getValue();
 	scanforce         = scanforceArg.getValue();
 	smooth2d          = smooth2dArg.getValue();
+  toyFiles          = toyFilesArg.getValue();
 	usage             = usageArg.getValue();
 	verbose           = verboseArg.getValue();
 
@@ -801,6 +891,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 	parseRange(scanrangeArg.getValue(), scanrangeMin, scanrangeMax);
 	parseRange(scanrangeyArg.getValue(), scanrangeyMin, scanrangeyMax);
 
+  // --plotrange
+  parseRange(plotrangeyArg.getValue(), plotymin, plotymax );
+
 	// --prange
 	tmp = physrangeArg.getValue();
 	for ( int i = 0; i < tmp.size(); i++ ){ // loop over instances of --prange
@@ -833,6 +926,30 @@ void OptParser::parseArguments(int argc, char* argv[])
 		//}
 	//}
 	//exit(0);
+
+  // --randomizeToyVars
+  tmp = randomizeToyVarsArg.getValue();
+  for ( int i = 0; i < tmp.size(); i++ ) { // loop over instances of --randomizeToyVars
+    TObjArray *parsArray = TString(tmp[i]).Tokenize(","); // split string at ","
+    vector<TString> pars;
+    for ( int j=0; j<parsArray->GetEntries(); j++){
+      TString par = ((TObjString*)parsArray->At(j))->GetString();
+      pars.push_back(par);
+    }
+    randomizeToyVars.push_back(pars);
+  }
+
+  // --removeRange
+  tmp = removeRangeArg.getValue();
+  for ( int i = 0; i < tmp.size(); i++) { // loop over instances of --removeRange
+    TObjArray *parsArray = TString(tmp[i]).Tokenize(","); // split string at ","
+    vector<TString> pars;
+    for ( int j=0; j<parsArray->GetEntries(); j++){
+      TString par = ((TObjString*)parsArray->At(j))->GetString();
+      pars.push_back(par);
+    }
+    removeRanges.push_back(pars);
+  }
 
 	// --fix
 	tmp = fixArg.getValue();
@@ -883,18 +1000,24 @@ void OptParser::parseArguments(int argc, char* argv[])
 		}
 	}
 
-  // --2dcl
-  // If --2dcl is only given once, apply the given setting to all
+	plot2dcl = plot2dclArg.getValue();
+  // If --2dcl is not given, apply 0 to all
+	if ( plot2dcl.size()==0){
+		for (int i=0; i<10; i++){
+			plot2dcl.push_back(0);
+		}
+	}
   // combiners
-	plot2dcl          = plot2dclArg.getValue();
-  if ( plot2dcl.size()==1 && combid.size()>1 ){
-    for (int i=1; i<combid.size(); i++ ){
+	// If --2dcl is only given once, apply the given setting to all
+  // combiners
+  if ( plot2dcl.size()==1 && combid.size()>0 ){
+    for (int i=0; i<combid.size(); i++ ){
       plot2dcl.push_back(plot2dcl[0]);
     }
   }
   // If --2dcl is given more than once, but not for every combiner,
   // fill the remaining ones up with 0=don't plot 2dcl
-  else if ( plot2dcl.size() < combid.size() ) {
+  else if ( plot2dcl.size() > 1 && plot2dcl.size() <= combid.size() ) {
     for ( int i=plot2dcl.size(); i<combid.size(); i++ ) {
       plot2dcl.push_back(0);
     }
