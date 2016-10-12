@@ -1,18 +1,9 @@
 /*
  * Gamma Combination
- * Author: Maximilian Schlupp, max.schlupp@cern.ch
- * Date: November 2013
+ * Author: Maximilian Schlupp, maxschlupp@gmail.com
+ * Author: Konstantin Schubert, schubert.konstantin@gmail.com
+ * Date: October 2016
  * 
- * Class MethodDatasetsPluginScan - implements a FC plugin scan using dataset fits
- * Instead of extracting physics parameters from experimental observables the 
- * MethodDatasetsPluginScan can be used to directly calculate FC based errors 
- * from the provided PDF. The PDF needs to be able to generate and fit toys. 
- * If you want to implement your own use-case, see the GaussianPlusExp example.
- *
- * Unusual output in the ToyTree:
- *          - nBergerBoos tracks violation of FC boundaries for the free fit
- *          - BergerBoos_id tracks violation of FC boundaries for the scan fit
- *          - id tracks if FC boundaries get violated twice 
  */
 
 #ifndef MethodDatasetsPluginScan_h
@@ -50,7 +41,7 @@ public:
     TTree*                  probScanTree;
     bool                    drawPlots;
     bool                    explicitInputFile;
-    bool                    doProbScanOnly;
+    bool                    doProbScanOnly; // for information on this switch, read the comments on top of the .cpp file.
     bool                    externalProfileLH;
     std::vector<TString>    inputFiles;
     std::vector<double>     bootstrapPVals;
@@ -67,7 +58,8 @@ private:
     void                scan1d_plugin(int nRun);
     void                scan1d_prob();
     double              getPValueTTestStatistic(double test_statistic_value);
-    void                setAndPrintFitStatusFixedToys(const ToyTree& ToyTree);
+    void                setAndPrintFitStatusConstrainedToys(const ToyTree& ToyTree);
+    void                setAndPrintFitStatusFreeToys(const ToyTree& ToyTree);
 };
 
 #endif

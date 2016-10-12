@@ -1,11 +1,9 @@
 #include "GammaComboEngine.h"
-#include "PDF_DatasetTutorial.h"
 #include "TFile.h"
 #include "RooGaussian.h"
 #include "RooExponential.h"
 #include "RooWorkspace.h"
-
-
+// #include "PDF_DatasetTutorial.h"
 
 int main(int argc, char* argv[])
 {
@@ -42,10 +40,10 @@ int main(int argc, char* argv[])
   // PDF_Datasets* pdf = new PDF_DatasetTutorial(workspace);
   pdf->initData("data"); // this is the name of the dataset in the workspace
   pdf->initPDF("mass_model"); // this the name of the pdf in the workspace (without the constraints)
-  pdf->initObservables("datasetObservables"); // \todo is this the right set here?
-  pdf->initGlobalObservables("global_observables_set"); 
-  pdf->initParameters("parameters");
-  pdf->initConstraints("constraint_set");
+  pdf->initObservables("datasetObservables"); // non-global observables whose measurements are stored in the dataset (for example the mass).
+  pdf->initGlobalObservables("global_observables_set"); // global observables
+  pdf->initParameters("parameters"); // all parameters
+  pdf->initConstraints("constraint_set"); // RooArgSet containing the "constraint" PDF's
   
   // Start the Gammacombo Engine
   GammaComboEngine gc("tutorial_dataset", argc, argv);
