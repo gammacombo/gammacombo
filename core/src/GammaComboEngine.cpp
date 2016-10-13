@@ -1,5 +1,6 @@
 #include "GammaComboEngine.h"
 #include "MethodDatasetsPluginScan.h"
+#include "MethodDatasetsProbScan.h"
 #include "PDF_Datasets.h"
 
 GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[])
@@ -1544,39 +1545,38 @@ void GammaComboEngine::scanDataSet()
    if ( arg->info || arg->latex ) return;
 
 
-	/////////////////////////////////////////////////////
-	//
-	// PLUGIN and PROB are both done by MethodDatastsPluginScan
-	//
-	/////////////////////////////////////////////////////
-
+	MethodDatasetsProbScan* probScanner = new MethodDatasetsProbScan( (PDF_Datasets*) pdf[0], arg);
+	probScanner->initScan();
 	
-	MethodDatasetsPluginScan *scanner = new MethodDatasetsPluginScan( (PDF_Datasets*) pdf[0], arg);
-	scanner->initScan(); //\todo <- can we get rid of this?
-	if ( arg->isAction("pluginbatch") ){
-		scanner->scan1d(arg->nrun);
-	} else if ( arg->isAction("plugin") ){
-		scanner->readScan1dTrees(arg->jmin[0], arg->jmax[0]);
-		MethodProbScan* sc = dynamic_cast<MethodProbScan*>(scanner->getProfileLH());
-		/////////////////////////////////////////////////////
-		// Plotting
-		/////////////////////////////////////////////////////
-		scanner->setLineColor(1);
-		plot->addScanner(sc);
-		plot->addScanner(scanner);
-		scanner->calcCLintervals();
-		sc->calcCLintervals();
-		plot->Draw();
+	if(arg->isAction("pluginbatch") || arg->isAction("plugin")){
+		probScanner->loadScanFromFile();
+		MethodDatasetsPluginScan *scanner = new MethodDatasetsPluginScan( probScanner, (PDF_Datasets*) pdf[0], arg);
+		scanner->initScan(); //\todo <- can we get rid of this?
+
+		if ( arg->isAction("pluginbatch") ){
+			/////////////////////////////////////////////////////
+			// Running a Plugin Toy Creator batch job
+			/////////////////////////////////////////////////////
+			scanner->scan1d(arg->nrun);
+		} else { // if ( arg->isAction("plugin")
+			scanner->readScan1dTrees(arg->jmin[0], arg->jmax[0]);
+			/////////////////////////////////////////////////////
+			// Plotting the plugin scan results
+			/////////////////////////////////////////////////////
+			scanner->setLineColor(1);
+			plot->addScanner(probScanner);
+			plot->addScanner(scanner);
+			scanner->calcCLintervals();
+			probScanner->calcCLintervals();
+			plot->Draw();
+		}
 	} else {
 		/////////////////////////////
 		// doing a prob scan
 		/////////////////////////////
-		scanner->performProbScanOnly(true);
-		scanner->scan1d();
-		scanner->readScan1dTrees_prob();
-		MethodProbScan* sc = dynamic_cast<MethodProbScan*>(scanner->getProfileLH());
-		plot->addScanner(sc);
-		sc->calcCLintervals();
+		probScanner->scan1d();
+		plot->addScanner(probScanner);
+		probScanner->calcCLintervals();
 		plot->Draw();
 
 	}

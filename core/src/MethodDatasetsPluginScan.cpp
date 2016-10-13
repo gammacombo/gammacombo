@@ -5,12 +5,6 @@
  * Date: October 2016
  *
  * \todo come up with smarter way to fill probValue histo in readScan1dTrees()
- *
- * Some introductory comments:
- * Despite its name, this class combines the Prob Scan and the Plugin Scan functionality. This was maybe a bad choice.
- * It leads to a lot of duplication patterns, methods which exist twice, one with _plugin suffix and once with _prob suffix, or without.
- * Most prominently, it leads to the global doProbScanOnly switch that decides if either a prob scan OR a plugin scan should be performed.
- * Basically, this is a switch which decides if the class is a MethodPluginScan or a MethodProbScan. 
  * 
  * The term "free fit do data" refers to the fit which is performed to data, where the parameter
  * of interest is left to float freely.
@@ -25,58 +19,56 @@
 #include <ios>
 #include <iomanip>
 
+
+
 ///
 /// The default constructor for the dataset plugin scan
 ///
-MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets* PDF, OptParser* opt):
-  MethodPluginScan(opt),
+MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF_Datasets* PDF, OptParser* opt):
+  MethodPluginScan(probScan, PDF, opt),
   pdf                 (PDF),
-  probPValues         (NULL),
   drawPlots           (false),
   explicitInputFile   (false),
-  doProbScanOnly      (false),
-  externalProfileLH   (false),
   dataFreeFitResult   (NULL)
   {
-  chi2minGlobalFound = true; // the free fit to data must be done and must be saved to the workspace before gammacombo is even called
-  methodName = "DatasetsPlugin";
-  w = PDF->getWorkspace();
-  title = PDF->getTitle();
-  name =  PDF->getName();
-  
-  if ( arg->var.size()>1 ) scanVar2 = arg->var[1];
-  inputFiles.clear();
+    chi2minGlobalFound = true; // the free fit to data must be done and must be saved to the workspace before gammacombo is even called
+    methodName = "DatasetsPlugin";
+    w = PDF->getWorkspace();
+    title = PDF->getTitle();
+    name =  PDF->getName();
+    
+    if ( arg->var.size()>1 ) scanVar2 = arg->var[1];
+    inputFiles.clear();
 
-  
-  if (w->obj("data_fit_result") == NULL){ //\todo: support passing the name of the fit result in the workspace.
-    cerr << "ERROR: The workspace must contain the fit result of the fit to data. The name of the fit result must be 'data_fit_result'. " <<endl;
-    exit(EXIT_FAILURE);
-  }
-  dataFreeFitResult = (RooFitResult*) w->obj("data_fit_result");
-  chi2minGlobal = 2*dataFreeFitResult->minNll();
-  std::cout << "=============== Global Minimum (2*-Log(Likelihood)) is: 2*" << dataFreeFitResult->minNll() << " = " << chi2minGlobal << endl;
+    
+    if (w->obj("data_fit_result") == NULL){ //\todo: support passing the name of the fit result in the workspace.
+      cerr << "ERROR: The workspace must contain the fit result of the fit to data. The name of the fit result must be 'data_fit_result'. " <<endl;
+      exit(EXIT_FAILURE);
+    }
+    dataFreeFitResult = (RooFitResult*) w->obj("data_fit_result");
+    chi2minGlobal = 2*dataFreeFitResult->minNll();
+    std::cout << "=============== Global Minimum (2*-Log(Likelihood)) is: 2*" << dataFreeFitResult->minNll() << " = " << chi2minGlobal << endl;
 
-  if ( !w->set(pdf->getObsName()) ) { 
-    cerr << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no '" + pdf->getObsName() + "' set found in workspace" << endl; 
-    cerr << " You can specify the name of the set in the workspace using the pdf->initObservables(..) method.";
-    exit(EXIT_FAILURE); 
-  }
-  if ( !w->set(pdf->getParName()) ) { 
-    cerr << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no '" + pdf->getParName() + "' set found in workspace" << endl; 
-    exit(EXIT_FAILURE); 
-  }
+    if ( !w->set(pdf->getObsName()) ) { 
+      cerr << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no '" + pdf->getObsName() + "' set found in workspace" << endl; 
+      cerr << " You can specify the name of the set in the workspace using the pdf->initObservables(..) method.";
+      exit(EXIT_FAILURE); 
+    }
+    if ( !w->set(pdf->getParName()) ) { 
+      cerr << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no '" + pdf->getParName() + "' set found in workspace" << endl; 
+      exit(EXIT_FAILURE); 
+    }
 }
 
 ///////////////////////////////////////////////
 ///
 /// Gets values of certain parameters as they were at the given scanpoint-index after the constrained fit to data
-/// 
-/// \todo: rename this to getParValAtIndex. If necessary, stub out getParValAtScanpoint
+///
 ///////////////////////////////////////////////
-float MethodDatasetsPluginScan::getParValAtScanpoint(int index, TString parName){
+float MethodDatasetsPluginScan::getParValAtIndex(int index, TString parName){
 
-  this->probScanTree->GetEntry(index);
-  TLeaf* var = this->probScanTree->GetLeaf(parName); //<- pretty sure that this will give a segfault, we need to use parName + "_scan"
+  this->getProfileLH()->probScanTree->t->GetEntry(index);
+  TLeaf* var = this->getProfileLH()->probScanTree->t->GetLeaf(parName); //<- pretty sure that this will give a segfault, we need to use parName + "_scan"
   if(!var){
     cout << "MethodDatasetsPluginScan::getParValAtScanpoint() : ERROR : variable (" << parName << ") not found!" << endl;
     exit(EXIT_FAILURE);
@@ -127,20 +119,21 @@ void MethodDatasetsPluginScan::initScan(){
   RooMsgService::instance().setStreamStatus(1,kFALSE);
   if(arg->debug){
     std::cout << "DEBUG in MethodDatasetsPluginScan::initScan() - Scan initialized successfully!\n" << std::endl;
-  }     
+  }
+  this->checkExtProfileLH();
 }
 
 //////////////////////////////////////////////
 ///
-/// This checks of a TTree which originated from a previous prob scan 
+/// This checks if the TTree which originated from a previous prob scan 
 /// for compatibility with the current scan: Did it use the same number
 /// of scan points, did it use the same scan range?
 /// If everything is fine, keeps a pointer to the tree in this->probScanTree
 ///
-/// \param tree    TTree from probscan, to checked for compatibility and to be assigned to class member
-///
 //////////////////////////////////////////////
-void MethodDatasetsPluginScan::setExtProfileLH(TTree* tree){
+void MethodDatasetsPluginScan::checkExtProfileLH(){
+
+  TTree* tree = this->getProfileLH()->probScanTree->t;
 
   //make sure that the scan points in the tree match number 
   //of scan points and the scan range that we are using now.
@@ -170,23 +163,16 @@ void MethodDatasetsPluginScan::setExtProfileLH(TTree* tree){
     std::cout<<"Alternatively, this could be a problem with the heuristics used for checking the equality of two floats"<<std::endl;
     exit(EXIT_FAILURE); 
   }
-
-  // if all is fine, assign and proceed.
-  probScanTree = tree;
-  externalProfileLH = true;
 };
 
 ///////////////////////////////////////////////////
 ///
-/// Prepare environment depending on data or toy fit
-///
-/// \param fitToys   boolean switch that decides whether the latest simulated toys or the data should be fitted.
+/// Prepare environment for toy fit
 ///
 /// \param pdf      the pdf that is to be fitted.
 ///
 ////////////////////////////////////////////////////
-RooFitResult* MethodDatasetsPluginScan::loadAndFit(bool fitToys, PDF_Datasets* pdf){
-  if(fitToys){
+RooFitResult* MethodDatasetsPluginScan::loadAndFit(PDF_Datasets* pdf){
     // we want to fit to the latest simulated toys
     // first, try to simulated toy values of the global observables from a snapshot
     if(!w->loadSnapshot(pdf->globalObsToySnapshotName)){
@@ -195,17 +181,6 @@ RooFitResult* MethodDatasetsPluginScan::loadAndFit(bool fitToys, PDF_Datasets* p
     };
     // then, fit the pdf while passing it the simulated toy dataset
     return pdf->fit(pdf->getToyObservables());
-  }
-  else{
-    // we want to fit to data
-    // first, try to load the measured values of the global observables from a snapshot
-    if(!w->loadSnapshot(pdf->globalObsDataSnapshotName)){
-      std::cout << "FATAL in MethodDatasetsPluginScan::loadAndFit() - No snapshot globalObsToySnapshotName found!\n" << std::endl;
-      exit(EXIT_FAILURE);
-    };
-    // then, fit the pdf while passing it the dataset
-    return pdf->fit(pdf->getData());
-  }
 };
 
 ///
@@ -219,8 +194,6 @@ void MethodDatasetsPluginScan::loadParameterLimits(){
   while ( RooRealVar* p = (RooRealVar*)it->Next() ) setLimit(w, p->GetName(), rangeName);
   delete it;
 }
-
-
 
 
 ///
@@ -263,31 +236,23 @@ TChain* MethodDatasetsPluginScan::readFiles(int runMin, int runMax, int &nFilesR
   TChain *c = new TChain("plugin");
   int _nFilesRead = 0;
 
-  if(doProbScanOnly){
-    TString file = Form("root/scan1dDatasetsProb_"+this->pdf->getName()+"_%ip"+"_"+scanVar1+".root", arg->npoints1d);
-    Utils::assertFileExists(file);
-    c->Add(file);
-    _nFilesRead = 1;
+  TString dirname = "root/scan1dDatasetsPlugin_"+this->pdf->getName()+"_"+scanVar1;
+  TString fileNameBase = (fileNameBaseIn.EqualTo("default")) ? dirname+"/scan1dDatasetsPlugin_"+this->pdf->getName()+"_"+scanVar1+"_run" : fileNameBaseIn;
   
-  }else{
-    TString dirname = "root/scan1dDatasetsPlugin_"+this->pdf->getName()+"_"+scanVar1;
-    TString fileNameBase = (fileNameBaseIn.EqualTo("default")) ? dirname+"/scan1dDatasetsPlugin_"+this->pdf->getName()+"_"+scanVar1+"_run" : fileNameBaseIn;
-    
-    if(explicitInputFile){
-      for(TString &file : inputFiles){
-        Utils::assertFileExists(file);
-        c->Add(file);
-        _nFilesRead += 1;
-      }
+  if(explicitInputFile){
+    for(TString &file : inputFiles){
+      Utils::assertFileExists(file);
+      c->Add(file);
+      _nFilesRead += 1;
     }
-    else{
-      for (int i=runMin; i<=runMax; i++){
-        TString file = Form(fileNameBase+"%i.root", i);
-        cout << "MethodDatasetsPluginScan::readFiles() : opening " << file << "\r";
-        Utils::assertFileExists(file);
-        c->Add(file);
-        _nFilesRead += 1;
-      }
+  }
+  else{
+    for (int i=runMin; i<=runMax; i++){
+      TString file = Form(fileNameBase+"%i.root", i);
+      cout << "MethodDatasetsPluginScan::readFiles() : opening " << file << "\r";
+      Utils::assertFileExists(file);
+      c->Add(file);
+      _nFilesRead += 1;
     }
   }
 
@@ -404,7 +369,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
       h_gof->Fill(t.scanpoint);
     }
     // all toys
-    if ( valid || doProbScanOnly){//inPhysicalRegion ){
+    if ( valid){//inPhysicalRegion ){
       // not efficient! TMath::Prob evaluated each toy, only needed once.
       // come up with smarter way
       h_all->Fill(t.scanpoint);
@@ -493,8 +458,6 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     h_background->SetYTitle("fraction of neg. test stat toys");
     h_background->Draw();
   }
-
-  this->profileLH = new MethodProbScan(pdf, this->getArg(), h_probPValues);
   // goodness-of-fit
  
   int iBinBestFit = hCL->GetMaximumBin();
@@ -507,178 +470,8 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
 }
 
 
-void MethodDatasetsPluginScan::readScan1dTrees_prob()
-{
-  int nFilesRead, nFilesMissing;
-  TChain* c = this->readFiles(1, 1, nFilesRead, nFilesMissing, TString("default"));
-  ToyTree t(this->pdf, this->arg, c);
-  t.open();
-  
-  float halfBinWidth = (t.getScanpointMax()-t.getScanpointMin())/((float)t.getScanpointN())/2;//-1.)/2;
-  /// \todo replace this such that there's always one bin per scan point, but still the range is the scan range.
-  /// \todo Also, if we use the min/max from the tree, we have the problem that they are not exactly
-  /// the scan range, so that the axis won't show the lowest and highest number.
-  /// \todo If the scan range was changed after the toys were generate, we absolutely have
-  /// to derive the range from the root files - else we'll have bining effects.
-  delete hCL;
-  hCL = new TH1F("hCL", "hCL", t.getScanpointN(), t.getScanpointMin()-halfBinWidth, t.getScanpointMax()+halfBinWidth);
-  if(arg->debug){
-    printf("DEBUG %i %f %f %f\n", t.getScanpointN(), t.getScanpointMin()-halfBinWidth, t.getScanpointMax()+halfBinWidth, halfBinWidth);
-  }
- 
-  TH1F *h_probPValues   = (TH1F*)hCL->Clone("h_probPValues");
-  Long64_t nentries     = t.GetEntries();
- 
-
-  t.activateCoreBranchesOnly();                       ///< speeds up the event loop
-  TString alternateTestStatName = scanVar1+"_free";
-  t.activateBranch(alternateTestStatName);
-  for (Long64_t i = 0; i < nentries; i++)
-  {
-    // status bar
-      cout << "MethodDatasetsPluginScan::readScan1dTrees() : reading entries " 
-           << Form("%.0f",(float)i/(float)nentries*100.) << "%   \r" << flush;
-    // load entry
-    t.GetEntry(i);
-    h_probPValues->SetBinContent(h_probPValues->FindBin(t.scanpoint), this->getPValueTTestStatistic(t.chi2min-this->chi2minGlobal)); //t.chi2minGlobal));
-  }
-  cout << "MethodDatasetsPluginScan::readScan1dTrees() : reading done.           \n" << endl;
-
-  this->profileLH = new MethodProbScan(pdf, this->getArg(), h_probPValues);
-  // goodness-of-fit
-}
 
 
-///
-/// Switch between prob and plugin scan.
-/// For the datasets stuff, we do not yet have a MethodDatasetsProbScan class, so we do it all in 
-/// MethodDatasetsPluginScan
-/// \param nRun Part of the root tree file name to facilitate parallel production.
-///
-int MethodDatasetsPluginScan::scan1d(int nRun)
-{
-  if(doProbScanOnly){
-    cout<<"CALLING MethodDatasetsPluginScan::scan1d_prob"<<std::endl;
-    this->scan1d_prob();
-  } else {
-    cout<<"CALLING MethodDatasetsPluginScan::scan1d_plugin"<<std::endl;
-    this->scan1d_plugin(nRun);
-  }
-
-}
-
-
-///
-/// Perform the 1d Prob scan.
-/// Saves chi2 values and the prob-Scan p-values in a root tree
-/// For the datasets stuff, we do not yet have a MethodDatasetsProbScan class, so we do it all in 
-/// MethodDatasetsPluginScan
-/// \param nRun Part of the root tree file name to facilitate parallel production.
-///
-void MethodDatasetsPluginScan::scan1d_prob()
-{
-  // Necessary for parallelization 
-  RooRandom::randomGenerator()->SetSeed(0);
-  // Set limit to all parameters. 
-  this->loadParameterLimits(); /// Default is "free", if not changed by cmd-line parameter
-
-
-  // Define scan parameter and scan range.
-  RooRealVar *parameterToScan = w->var(scanVar1);
-  float parameterToScan_min = hCL->GetXaxis()->GetXmin();
-  float parameterToScan_max = hCL->GetXaxis()->GetXmax();
-
-  double freeDataFitValue = w->var(scanVar1)->getVal();
-
-  // Define outputfile   
-  system("mkdir -p root");
-  TString probResName = Form("root/scan1dDatasetsProb_"+this->pdf->getName()+"_%ip"+"_"+scanVar1+".root", arg->npoints1d);
-  TFile* outputFile = new TFile(probResName, "RECREATE");  
-  
-  // Set up toy root tree
-  ToyTree probTree(this->pdf, arg);
-  probTree.init();
-  probTree.nrun = -999; //\todo: why does this branch even exist in the output tree of the prob scan?
-  
-  // Save parameter values that were active at function
-  // call. We'll reset them at the end to be transparent
-  // to the outside.
-  RooDataSet* parsFunctionCall = new RooDataSet("parsFunctionCall", "parsFunctionCall", *w->set(pdf->getParName()));
-  parsFunctionCall->add(*w->set(pdf->getParName()));
-
-
-  // start scan
-  cout << "MethodDatasetsPluginScan::scan1d_prob() : starting ... with " << nPoints1d << " scanpoints..." << endl;
-  ProgressBar progressBar(arg, nPoints1d);
-  for ( int i=0; i<nPoints1d; i++ )
-  {
-    progressBar.progress();
-    // scanpoint is calculated using min, max, which are the hCL x-Axis limits set in this->initScan()
-    // this uses the "scan" range, as expected 
-    // don't add half the bin size. try to solve this within plotting method
-
-    float scanpoint = parameterToScan_min + (parameterToScan_max-parameterToScan_min)*(double)i/((double)nPoints1d-1);
-  
-    probTree.scanpoint = scanpoint;
-    
-    if(arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d_prob() - scanpoint in step " << i << " : " << scanpoint << endl;
-
-    // don't scan in unphysical region
-    // by default this means checking against "free" range
-    if ( scanpoint < parameterToScan->getMin() || scanpoint > parameterToScan->getMax()+2e-13 ){ 
-      cout << "it seems we are scanning in an unphysical region: " << scanpoint << " < " << parameterToScan->getMin() << " or " << scanpoint << " > " << parameterToScan->getMax()+2e-13 << endl;
-      exit(EXIT_FAILURE);
-    }
-
-    // FIT TO REAL DATA WITH FIXED HYPOTHESIS(=SCANPOINT).
-    // THIS GIVES THE NUMERATOR FOR THE PROFILE LIKELIHOOD AT THE GIVEN HYPOTHESIS
-    // THE RESULTING NUISANCE PARAMETERS TOGETHER WITH THE GIVEN HYPOTHESIS ARE ALSO 
-    // USED WHEN SIMULATING THE TOY DATA FOR THE FELDMAN-COUSINS METHOD FOR THIS HYPOTHESIS(=SCANPOINT)
-    // Here the scanvar has to be fixed -> this is done once per scanpoint 
-    // and provides the scanner with the DeltaChi2 for the data as reference
-    // additionally the nuisances are set to the resulting fit values
-    
-    parameterToScan->setVal(scanpoint);
-    parameterToScan->setConstant(true);
-    
-    RooFitResult *result = this->loadAndFit(kFALSE, this->pdf); // false -> fit on data
-    assert(result);
-
-    if(arg->debug){ 
-      cout << "DEBUG in MethodDatasetsPluginScan::scan1d_prob() - minNll data scan at scan point " << scanpoint << " : " << 2*result->minNll() << endl;
-    }
-    probTree.statusScanData = result->status();
-    
-    // set chi2 of fixed fit: scan fit on data
-    probTree.chi2min           = 2*result->minNll();
-    probTree.covQualScanData   = result->covQual();
-    probTree.scanbest  = freeDataFitValue;
-
-    // After doing the fit with the parameter of interest constrained to the scanpoint,
-    // we are now saving the fit values of the nuisance parameters. These values will be
-    // used to generate toys according to the PLUGIN method.
-    probTree.storeParsScan(); // \todo : figure out which one of these is semantically the right one
-
-    this->pdf->deleteNLL();
-    
-    // also save the chi2 of the free data fit to the tree:
-    probTree.chi2minGlobal = this->getChi2minGlobal();
-    
-    probTree.genericProbPValue = this->getPValueTTestStatistic(probTree.chi2min-probTree.chi2minGlobal);
-    probTree.fill();
-  
-    // reset
-    setParameters(w, pdf->getParName(), parsFunctionCall->get(0));
-    //setParameters(w, pdf->getObsName(), obsDataset->get(0));
-    probTree.writeToFile();
-  } // End of npoints loop
-
-
-  outputFile->Write();
-  outputFile->Close();
-  std::cout<<"Wrote ToyTree to file"<<std::endl;
-  delete parsFunctionCall;
-}
 
 double MethodDatasetsPluginScan::getPValueTTestStatistic(double test_statistic_value){
     if ( test_statistic_value > 0){
@@ -701,7 +494,7 @@ double MethodDatasetsPluginScan::getPValueTTestStatistic(double test_statistic_v
 /// Perform the 1d Plugin scan.
 /// \param nRun Part of the root tree file name to facilitate parallel production.
 ///
-void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
+int MethodDatasetsPluginScan::scan1d(int nRun)
 {
 
   // //current working directory
@@ -729,7 +522,6 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
                 << "The result file of the prob scan can be specified via the --probScanResult command line argument." << std::endl;
       exit(EXIT_FAILURE);
   }
-  this->setExtProfileLH((TTree*) probResFile->Get("plugin"));
 
   // Define outputfile
   TString dirname = "root/scan1dDatasetsPlugin_"+this->pdf->getName()+"_"+scanVar1;
@@ -773,9 +565,9 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
     // Load the parameter values (nuisance parameters and parameter of interest) from the fit to data with fixed parameter of interest.
     this->setParevolPointByIndex(i);
 
-    toyTree.statusScanData  = this->getParValAtScanpoint(i, "statusScanData");
-    toyTree.chi2min         = this->getParValAtScanpoint(i, "chi2min");
-    toyTree.covQualScanData = this->getParValAtScanpoint(i, "covQualScanData");
+    toyTree.statusScanData  = this->getParValAtIndex(i, "statusScanData");
+    toyTree.chi2min         = this->getParValAtIndex(i, "chi2min");
+    toyTree.covQualScanData = this->getParValAtIndex(i, "covQualScanData");
 
     // get the chi2 of the data
     if(this->chi2minGlobalFound){
@@ -802,7 +594,6 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
       // This is called the PLUGIN method.
       this->setParevolPointByIndex(i);
 
-
       this->pdf->generateToys(); // this is generating the toy dataset
       this->pdf->generateToysGlobalObservables(); // this is generating the toy global observables and saves globalObs in snapshot
 
@@ -820,7 +611,7 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
       // fixed parameter of interest
       parameterToScan->setConstant(true);
       this->pdf->setFitStrategy(0);
-      RooFitResult* r   = this->loadAndFit(kTRUE,this->pdf); // kTrue makes sure the fit is to toy data and to toy global observables
+      RooFitResult* r   = this->loadAndFit(this->pdf);
       assert(r);
       pdf->setMinNllScan(pdf->minNll);
 
@@ -829,7 +620,7 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
       if (pdf->getFitStatus()!=0) {
           pdf->setFitStrategy(1);
           delete r;
-          r = this->loadAndFit(kTRUE,this->pdf);
+          r = this->loadAndFit(this->pdf);
           pdf->setMinNllScan(pdf->minNll);
           assert(r);
 
@@ -838,7 +629,7 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
           if (pdf->getFitStatus()!=0) {
             pdf->setFitStrategy(2);
             delete r;
-            r = this->loadAndFit(kTRUE,this->pdf);
+            r = this->loadAndFit(this->pdf);
             assert(r);
           }
       }   
@@ -878,7 +669,7 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
       
       // Fit
       pdf->setFitStrategy(0);
-      RooFitResult* r1  = this->loadAndFit(kTRUE,this->pdf); // kTrue makes sure the fit is to toy data and to toy global observables
+      RooFitResult* r1  = this->loadAndFit(this->pdf);
       assert(r1);
       pdf->setMinNllFree(pdf->minNll);
       toyTree.chi2minGlobalToy = 2*r1->minNll();
@@ -900,7 +691,7 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
         
         cout << "----> refit with strategy: 1" << endl;
         delete r1;
-        r1  = this->loadAndFit(kTRUE,this->pdf);
+        r1  = this->loadAndFit(this->pdf);
         assert(r1);
         pdf->setMinNllFree(pdf->minNll);
         toyTree.chi2minGlobalToy = 2*r1->minNll();
@@ -919,7 +710,7 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
       
           cout << "----> refit with strategy: 2" << endl;
           delete r1;
-          r1  = this->loadAndFit(kTRUE,this->pdf);
+          r1  = this->loadAndFit(this->pdf);
           assert(r1);
           pdf->setMinNllFree(pdf->minNll); 
           toyTree.chi2minGlobalToy = 2*r1->minNll();
@@ -939,7 +730,7 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
             if(parameterToScan->getVal() < 1e-13) parameterToScan->setVal(0.67e-12);
             parameterToScan->setConstant(false); 
             pdf->deleteNLL();
-            RooFitResult* r_tmp = this->loadAndFit(kTRUE,this->pdf);
+            RooFitResult* r_tmp = this->loadAndFit(this->pdf);
             assert(r_tmp);
             if(r_tmp->status()==0 && r_tmp->minNll()<r1->minNll() && r_tmp->minNll()>-1e27){
               pdf->setMinNllFree(pdf->minNll); 
@@ -1019,6 +810,7 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
   outputFile->Write();
   outputFile->Close();
   delete parsFunctionCall;
+  return 0;
 }
 
 
@@ -1048,9 +840,6 @@ void MethodDatasetsPluginScan::drawDebugPlots(int runMin, int runMax, TString fi
   c->Draw("chi2minGlobalToy",cut, "normSAME");
   //cout << "draw takes a while" << endl;
 };
-
-
-
 
 
 ///
@@ -1176,7 +965,8 @@ RooSlimFitResult* MethodDatasetsPluginScan::getParevolPoint(float scanpoint){
 void MethodDatasetsPluginScan::setParevolPointByIndex(int index){
 
 
-  this->probScanTree->GetEntry(index);
+
+  this->getProfileLH()->probScanTree->t->GetEntry(index);
   RooArgSet* pars          = (RooArgSet*)this->pdf->getWorkspace()->set(pdf->getParName());
 
   //\todo: make sure this is checked during pdf init, do not check again here
@@ -1188,7 +978,7 @@ void MethodDatasetsPluginScan::setParevolPointByIndex(int index){
   TIterator* it = pars->createIterator();
   while ( RooRealVar* p = (RooRealVar*)it->Next() ){
     TString parName     = p->GetName();
-    TLeaf* parLeaf      = (TLeaf*)this->probScanTree->GetLeaf(parName+"_scan");
+    TLeaf* parLeaf      = (TLeaf*) this->getProfileLH()->probScanTree->t->GetLeaf(parName+"_scan");
     if(!parLeaf){
       cout << "MethodDatasetsPluginScan::setParevolPointByIndex(int index) : ERROR : no var (" << parName
       << ") found in PLH scan file!" << endl;

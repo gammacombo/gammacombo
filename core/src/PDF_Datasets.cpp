@@ -253,7 +253,6 @@ RooFitResult* PDF_Datasets::fit(RooDataSet* dataToFit){
   
   RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() ,RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
 
-
   RooMsgService::instance().setSilentMode(kFALSE);
   RooMsgService::instance().setGlobalKillBelow(INFO);
   this->fitStatus = result->status();
@@ -269,7 +268,7 @@ void   PDF_Datasets::generateToys(int SeedShift) {
   // related to Root's internal memory management. Therefore we do not delete,
   // which might or might not cause a memory leak.
   // if(this->toyObservables) delete this->toyObservables;
-  this->toyObservables  = toys; 
+  this->toyObservables  = toys;
   this->isToyDataSet    = kTRUE;
 }
 

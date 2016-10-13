@@ -37,7 +37,7 @@
 	}
 	
 	
-	// constructor without combiner, this is atm still needed for the MethodDataSetPluginScan
+	// constructor without combiner, this is atm still needed for the datasets stuff
 	MethodAbsScan::MethodAbsScan(OptParser* opt):
 		rndm(),
 		methodName("Abs"),
