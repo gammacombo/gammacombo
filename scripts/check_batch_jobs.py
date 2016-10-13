@@ -49,6 +49,13 @@ for root, dirs, files in os.walk(opts.dir):
     if include:
       job_dirs.append(root) 
 
+# totals
+total_done = []
+total_fail = []
+total_run  = []
+total_waiting = []
+total_scripts = []
+
 for job_dir in job_dirs:
   done = []
   fail = []
@@ -74,6 +81,12 @@ for job_dir in job_dirs:
     if len(run)>0:     print '\tRunning: ', len(run), '/', len(scripts)
     if len(done)>0:    print '\tComplete:', len(done), '/', len(scripts)
 
+    total_done.extend(done)
+    total_fail.extend(fail)
+    total_run.extend(run)
+    total_waiting.extend(waiting)
+    total_scripts.extend(scripts)
+
     resubmits = []
     if opts.resubmit:
       if opts.resubmit=='Queued' or opts.resubmit=='All':
@@ -88,10 +101,22 @@ for job_dir in job_dirs:
       for job in resubmits:
         full_path = '%s/%s/%s'%(os.getcwd(),job_dir,job.split('.sh')[0]+'.sh')
         if opts.queue:
+          # should clean up old files if we resubmit
+          os.system('rm -f %s.fail'%full_path)
+          os.system('rm -f %s.done'%full_path)
+          os.system('rm -f %s.run'%full_path)
           line = 'bsub -q %s -o %s.log %s'%(opts.queue,full_path,full_path)
           os.system(line)
         else:
           print '\t', os.path.basename( full_path ) 
+
+# print total
+print "TOTAL"
+if len(total_waiting)>0: print '\tQueued:  ', len(total_waiting), '/', len(total_scripts)
+if len(total_fail)>0:    print '\tFailed:  ', len(total_fail), '/', len(total_scripts)
+if len(total_run)>0:     print '\tRunning: ', len(total_run), '/', len(total_scripts)
+if len(total_done)>0:    print '\tComplete:', len(total_done), '/', len(total_scripts)
+
 
 import time
 
