@@ -33,11 +33,13 @@ MethodPluginScan::MethodPluginScan(MethodProbScan* s)
 ///
 /// Constructor, mainly to ensure compatibility with MethodDatasetsPluginScan
 ///
-MethodPluginScan::MethodPluginScan(MethodProbScan* s, OptParser* opt)
+MethodPluginScan::MethodPluginScan(MethodProbScan* s, PDF_Datasets* pdf, OptParser* opt)
 	: MethodAbsScan(opt),
 	nToys(opt->ntoys)
 	{
 		methodName = "Plugin";
+		obsName = pdf->getObsName();
+		w = pdf->getWorkspace();
 		title = s->getTitle();
 		scanVar1 = s->getScanVar1Name();
 		scanVar2 = s->getScanVar2Name();
@@ -47,10 +49,7 @@ MethodPluginScan::MethodPluginScan(MethodProbScan* s, OptParser* opt)
 		setChi2minGlobal(s->getChi2minGlobal());
 		obsDataset = new RooDataSet("obsDataset", "obsDataset", *w->set(obsName));
 		obsDataset->add(*w->set(obsName));
-		nToys = arg->ntoys;
-		nPoints1d  = arg->npointstoy;
-		nPoints2dx = arg->npointstoy;
-		nPoints2dy = arg->npointstoy;
+		nToys = opt->ntoys;
 	};
 
 ///

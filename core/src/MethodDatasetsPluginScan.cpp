@@ -25,7 +25,7 @@
 /// The default constructor for the dataset plugin scan
 ///
 MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF_Datasets* PDF, OptParser* opt):
-  MethodPluginScan(probScan, opt),
+  MethodPluginScan(probScan, PDF, opt),
   pdf                 (PDF),
   drawPlots           (false),
   explicitInputFile   (false),
@@ -167,15 +167,12 @@ void MethodDatasetsPluginScan::checkExtProfileLH(){
 
 ///////////////////////////////////////////////////
 ///
-/// Prepare environment depending on data or toy fit
-///
-/// \param fitToys   boolean switch that decides whether the latest simulated toys or the data should be fitted.
+/// Prepare environment for toy fit
 ///
 /// \param pdf      the pdf that is to be fitted.
 ///
 ////////////////////////////////////////////////////
-RooFitResult* MethodDatasetsPluginScan::loadAndFit(bool fitToys, PDF_Datasets* pdf){
-  if(fitToys){
+RooFitResult* MethodDatasetsPluginScan::loadAndFit(PDF_Datasets* pdf){
     // we want to fit to the latest simulated toys
     // first, try to simulated toy values of the global observables from a snapshot
     if(!w->loadSnapshot(pdf->globalObsToySnapshotName)){
@@ -184,17 +181,6 @@ RooFitResult* MethodDatasetsPluginScan::loadAndFit(bool fitToys, PDF_Datasets* p
     };
     // then, fit the pdf while passing it the simulated toy dataset
     return pdf->fit(pdf->getToyObservables());
-  }
-  else{
-    // we want to fit to data
-    // first, try to load the measured values of the global observables from a snapshot
-    if(!w->loadSnapshot(pdf->globalObsDataSnapshotName)){
-      std::cout << "FATAL in MethodDatasetsPluginScan::loadAndFit() - No snapshot globalObsToySnapshotName found!\n" << std::endl;
-      exit(EXIT_FAILURE);
-    };
-    // then, fit the pdf while passing it the dataset
-    return pdf->fit(pdf->getData());
-  }
 };
 
 ///
@@ -608,7 +594,6 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       // This is called the PLUGIN method.
       this->setParevolPointByIndex(i);
 
-
       this->pdf->generateToys(); // this is generating the toy dataset
       this->pdf->generateToysGlobalObservables(); // this is generating the toy global observables and saves globalObs in snapshot
 
@@ -626,7 +611,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       // fixed parameter of interest
       parameterToScan->setConstant(true);
       this->pdf->setFitStrategy(0);
-      RooFitResult* r   = this->loadAndFit(kTRUE,this->pdf); // kTrue makes sure the fit is to toy data and to toy global observables
+      RooFitResult* r   = this->loadAndFit(this->pdf);
       assert(r);
       pdf->setMinNllScan(pdf->minNll);
 
@@ -635,7 +620,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       if (pdf->getFitStatus()!=0) {
           pdf->setFitStrategy(1);
           delete r;
-          r = this->loadAndFit(kTRUE,this->pdf);
+          r = this->loadAndFit(this->pdf);
           pdf->setMinNllScan(pdf->minNll);
           assert(r);
 
@@ -644,7 +629,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
           if (pdf->getFitStatus()!=0) {
             pdf->setFitStrategy(2);
             delete r;
-            r = this->loadAndFit(kTRUE,this->pdf);
+            r = this->loadAndFit(this->pdf);
             assert(r);
           }
       }   
@@ -684,7 +669,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       
       // Fit
       pdf->setFitStrategy(0);
-      RooFitResult* r1  = this->loadAndFit(kTRUE,this->pdf); // kTrue makes sure the fit is to toy data and to toy global observables
+      RooFitResult* r1  = this->loadAndFit(this->pdf);
       assert(r1);
       pdf->setMinNllFree(pdf->minNll);
       toyTree.chi2minGlobalToy = 2*r1->minNll();
@@ -706,7 +691,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         
         cout << "----> refit with strategy: 1" << endl;
         delete r1;
-        r1  = this->loadAndFit(kTRUE,this->pdf);
+        r1  = this->loadAndFit(this->pdf);
         assert(r1);
         pdf->setMinNllFree(pdf->minNll);
         toyTree.chi2minGlobalToy = 2*r1->minNll();
@@ -725,7 +710,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       
           cout << "----> refit with strategy: 2" << endl;
           delete r1;
-          r1  = this->loadAndFit(kTRUE,this->pdf);
+          r1  = this->loadAndFit(this->pdf);
           assert(r1);
           pdf->setMinNllFree(pdf->minNll); 
           toyTree.chi2minGlobalToy = 2*r1->minNll();
@@ -745,7 +730,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             if(parameterToScan->getVal() < 1e-13) parameterToScan->setVal(0.67e-12);
             parameterToScan->setConstant(false); 
             pdf->deleteNLL();
-            RooFitResult* r_tmp = this->loadAndFit(kTRUE,this->pdf);
+            RooFitResult* r_tmp = this->loadAndFit(this->pdf);
             assert(r_tmp);
             if(r_tmp->status()==0 && r_tmp->minNll()<r1->minNll() && r_tmp->minNll()>-1e27){
               pdf->setMinNllFree(pdf->minNll); 

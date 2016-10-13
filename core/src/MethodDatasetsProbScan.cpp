@@ -107,6 +107,7 @@ void MethodDatasetsProbScan::loadScanFromFile(TString fileNameBaseIn){
 
     this->probScanTree = new ToyTree(this->pdf, this->arg, c);
     this->sethCLFromProbScanTree();
+
 }
 
 
@@ -123,13 +124,14 @@ void MethodDatasetsProbScan::sethCLFromProbScanTree(){
     this->hCL = new TH1F("hCL", "hCL", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin()-halfBinWidth, this->probScanTree->getScanpointMax()+halfBinWidth);
     if(arg->debug) printf("DEBUG %i %f %f %f\n", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin()-halfBinWidth, this->probScanTree->getScanpointMax()+halfBinWidth, halfBinWidth);
     Long64_t nentries     = this->probScanTree->GetEntries();
-    this->probScanTree->activateCoreBranchesOnly();                       ///< speeds up the event loop
+    // this->probScanTree->activateCoreBranchesOnly(); //< speeds up the event loop
     for (Long64_t i = 0; i < nentries; i++)
     {
         // load entry
         this->probScanTree->GetEntry(i);
         this->hCL->SetBinContent(this->hCL->FindBin(this->probScanTree->scanpoint), this->probScanTree->genericProbPValue);
     }
+    // this->probScanTree->activateAllBranches(); //< Very important!
 
 }
 

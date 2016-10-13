@@ -48,7 +48,7 @@ protected:
     void                setParevolPointByIndex(int index);
 
 private:
-    RooFitResult*       loadAndFit(bool fitToys, PDF_Datasets* pdf);
+    RooFitResult*       loadAndFit(PDF_Datasets* pdf); // in this Plugin class, this fits to toy!!
     double              getPValueTTestStatistic(double test_statistic_value);
     void                setAndPrintFitStatusConstrainedToys(const ToyTree& ToyTree);
     void                setAndPrintFitStatusFreeToys(const ToyTree& ToyTree);
