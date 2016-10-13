@@ -38,7 +38,7 @@ int main()
 
   // The number of signal events is related to the branching ratio via the formula <branching ratio> = <n_sig> * <normalization factor>
   // The normalization factor is not exactly known. Instead, it has to be estimated. The estimator for the normalization factor is a global observable
-  // that constraints its value via a Gaussian Constraint. 
+  // that constrains its value via a Gaussian Constraint. 
   RooRealVar  norm_constant_obs( "norm_constant_glob_obs", "global observable of normalization constant", 
                               1e-8, 0., 1e-6);     // this is the observed value, the global observable
   RooRealVar  norm_constant("norm_constant","norm_constant", 1e-8, 0,  1e-6);                   // the normalization constant is a nuisance parameter.

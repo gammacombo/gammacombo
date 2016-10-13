@@ -70,10 +70,9 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(PDF_Datasets* PDF, OptParser*
 ///////////////////////////////////////////////
 ///
 /// Gets values of certain parameters as they were at the given scanpoint-index after the constrained fit to data
-/// 
-/// \todo: rename this to getParValAtIndex. If necessary, stub out getParValAtScanpoint
+///
 ///////////////////////////////////////////////
-float MethodDatasetsPluginScan::getParValAtScanpoint(int index, TString parName){
+float MethodDatasetsPluginScan::getParValAtIndex(int index, TString parName){
 
   this->probScanTree->GetEntry(index);
   TLeaf* var = this->probScanTree->GetLeaf(parName); //<- pretty sure that this will give a segfault, we need to use parName + "_scan"
@@ -219,8 +218,6 @@ void MethodDatasetsPluginScan::loadParameterLimits(){
   while ( RooRealVar* p = (RooRealVar*)it->Next() ) setLimit(w, p->GetName(), rangeName);
   delete it;
 }
-
-
 
 
 ///
@@ -506,7 +503,11 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     << Form("(%.1f+/-%.1f)%%", fitprobabilityVal*100., fitprobabilityErr*100.) << endl;
 }
 
-
+////////////////////////////////////////////////////
+/// Read the results from the prob scan from the ttree and create a dummy MethodProbScan object
+/// As far as I can see, this function is called in order to be able to plot the results from the
+/// prob scan.
+////////////////////////////////////////////////////
 void MethodDatasetsPluginScan::readScan1dTrees_prob()
 {
   int nFilesRead, nFilesMissing;
@@ -729,6 +730,8 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
                 << "The result file of the prob scan can be specified via the --probScanResult command line argument." << std::endl;
       exit(EXIT_FAILURE);
   }
+  // Here, we are loading the results from the plugin scan,
+  // including the fit values of the nuisance parametrs at certain scan points.
   this->setExtProfileLH((TTree*) probResFile->Get("plugin"));
 
   // Define outputfile
