@@ -11,7 +11,7 @@
 /// Initialize from a previous Prob scan, setting the profile
 /// likelihood. This should be the default.
 ///
-	MethodPluginScan::MethodPluginScan(MethodProbScan* s)
+MethodPluginScan::MethodPluginScan(MethodProbScan* s)
 : MethodAbsScan(s->getCombiner())
 {
 	methodName = "Plugin";
@@ -33,10 +33,25 @@
 ///
 /// Constructor, mainly to ensure compatibility with MethodDatasetsPluginScan
 ///
-MethodPluginScan::MethodPluginScan(OptParser* opt):
-		MethodAbsScan(opt),
-		nToys(opt->ntoys)
-	{};
+MethodPluginScan::MethodPluginScan(MethodProbScan* s, OptParser* opt)
+	: MethodAbsScan(opt),
+	nToys(opt->ntoys)
+	{
+		methodName = "Plugin";
+		title = s->getTitle();
+		scanVar1 = s->getScanVar1Name();
+		scanVar2 = s->getScanVar2Name();
+		profileLH = s;
+		parevolPLH = profileLH;
+		setSolutions(s->getSolutions());
+		setChi2minGlobal(s->getChi2minGlobal());
+		obsDataset = new RooDataSet("obsDataset", "obsDataset", *w->set(obsName));
+		obsDataset->add(*w->set(obsName));
+		nToys = arg->ntoys;
+		nPoints1d  = arg->npointstoy;
+		nPoints2dx = arg->npointstoy;
+		nPoints2dy = arg->npointstoy;
+	};
 
 ///
 /// Initialize from a Combiner object. This is more difficult,
@@ -65,6 +80,7 @@ MethodPluginScan::MethodPluginScan(OptParser* opt):
 /// that was previously computed by a MethodProbScan scanner. Usually, the PLH is used that
 /// is provided to the constructor. Use this method to use a different evolution for toy
 /// generation (Hybrid Plugin).
+/// \todo This setting is currently being ignored by the DatasetsPluginScan
 ///
 void MethodPluginScan::setParevolPLH(MethodProbScan* s)
 {

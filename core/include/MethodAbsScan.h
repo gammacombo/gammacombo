@@ -44,9 +44,9 @@ class OneMinusClPlotAbs;
 class MethodAbsScan
 {
 	public:
-                MethodAbsScan();
+				MethodAbsScan();
 		MethodAbsScan(Combiner* c);
-                MethodAbsScan(OptParser* opt);
+		MethodAbsScan(OptParser* opt);
 		~MethodAbsScan();
 
 		virtual void                    calcCLintervals();
@@ -118,8 +118,8 @@ class MethodAbsScan
 		void                            setChi2minGlobal(double x);
 		void                            setSolutions(vector<RooSlimFitResult*> s);
 		inline void                     setVerbose(bool yesNo=true){verbose = yesNo;};
-    inline void                     setHCL( TH1F *h ) { hCL = h; };
-    inline void                     setHchisq( TH1F *h ) { hChi2min = h; };
+	inline void                     setHCL( TH1F *h ) { hCL = h; };
+	inline void                     setHchisq( TH1F *h ) { hChi2min = h; };
 		void 							setXscanRange(float min, float max);
 		void 							setYscanRange(float min, float max);
 		void							calcCLintervalsSimple();
@@ -146,7 +146,7 @@ class MethodAbsScan
 		TString obsName;    ///< dataset name of observables, derived from name
 		TString parsName;   ///< set name of physics parameters, derived from name
 		TString thName;     ///< set name of theory parameters, derived from name
-    TString toysName;   ///< set name of parameters to vary in toys
+	TString toysName;   ///< set name of parameters to vary in toys
 		TString scanVar1;   ///< scan parameter
 		TString scanVar2;   ///< second scan parameter if we're scanning 2d
 		int nPoints1d;      ///< number of scan points used by 1d scan

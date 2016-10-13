@@ -60,8 +60,8 @@ class MethodPluginScan : public MethodAbsScan
 {
 	public:
 		MethodPluginScan(MethodProbScan* s);
+		MethodPluginScan(MethodProbScan* s, OptParser* opt);
 		MethodPluginScan(Combiner* comb);
-                MethodPluginScan(OptParser* opt);
 
 		inline void     setNtoysPerPoint(int n){nToys=n;};
 		void            setParevolPLH(MethodProbScan* s);
