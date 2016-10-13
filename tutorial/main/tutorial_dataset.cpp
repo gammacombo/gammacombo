@@ -20,9 +20,9 @@ int main(int argc, char* argv[])
   // How to run the tutorial:
   // bin/tutorial_dataset_build_workspace
 
-  // bin/tutorial_dataset --var branchingRatio --npoints 10 --scanrange 1e-7:2e-6
-  // bin/tutorial_dataset -a pluginbatch --var branchingRatio --ntoys 50  --npoints 10 --scanrange 1e-7:2e-6
-  // bin/tutorial_dataset -a plugin --var branchingRatio -i
+  // bin/tutorial_dataset --var branchingRatio --npoints 20 --scanrange 1e-7:2e-6
+  // bin/tutorial_dataset -a pluginbatch --var branchingRatio --ntoys 50  --npoints 20 --scanrange 1e-7:2e-6
+  // bin/tutorial_dataset -a plugin --var branchingRatio --npoints 20 --scanrange 1e-7:2e-6 -i
 	
 
   // Load the workspace from its file
