@@ -776,9 +776,9 @@ void MethodDatasetsPluginScan::scan1d_plugin(int nRun)
     // Load the parameter values (nuisance parameters and parameter of interest) from the fit to data with fixed parameter of interest.
     this->setParevolPointByIndex(i);
 
-    toyTree.statusScanData  = this->getParValAtScanpoint(i, "statusScanData");
-    toyTree.chi2min         = this->getParValAtScanpoint(i, "chi2min");
-    toyTree.covQualScanData = this->getParValAtScanpoint(i, "covQualScanData");
+    toyTree.statusScanData  = this->getParValAtIndex(i, "statusScanData");
+    toyTree.chi2min         = this->getParValAtIndex(i, "chi2min");
+    toyTree.covQualScanData = this->getParValAtIndex(i, "covQualScanData");
 
     // get the chi2 of the data
     if(this->chi2minGlobalFound){
