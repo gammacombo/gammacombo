@@ -3,7 +3,7 @@
  * Author: Maximilian Schlupp, maxschlupp@gmail.com
  * Author: Konstantin Schubert, schubert.konstantin@gmail.com
  * Date: October 2016
- * 
+ *
  */
 
 #ifndef MethodDatasetsPluginScan_h
@@ -23,17 +23,17 @@ public:
     MethodDatasetsPluginScan(MethodProbScan* probScan, PDF_Datasets* PDF, OptParser* opt);
     void                drawDebugPlots(int runMin, int runMax, TString fileNameBaseIn = "default");
     float               getParValAtIndex(int index, TString parName);
-    MethodDatasetsProbScan*     getProfileLH(){return dynamic_cast<MethodDatasetsProbScan*>(this->profileLH);};
+    MethodDatasetsProbScan*     getProfileLH() {return dynamic_cast<MethodDatasetsProbScan*>(this->profileLH);};
     virtual void        initScan();
     void                loadParameterLimits();
-    void                performBootstrapTest(int nSamples=1000, const TString& ext ="");
+    void                performBootstrapTest(int nSamples = 1000, const TString& ext = "");
     virtual void        print();
     void                printDebug(const RooFitResult& r);
     TChain*             readFiles(int runMin, int runMax, int &nFilesRead, int &nFilesMissing, TString fileNameBaseIn = "default");
     void                readScan1dTrees(int runMin, int runMax, TString fileNameBaseIn = "default");
-    virtual int         scan1d(int nRun=1);
-    inline  void        setInputFile(TString name){inputFiles.push_back(name); explicitInputFile=true;};
-    inline  void        addFile(TString name){inputFiles.push_back(name);};
+    virtual int         scan1d(int nRun = 1);
+    inline  void        setInputFile(TString name) {inputFiles.push_back(name); explicitInputFile = true;};
+    inline  void        addFile(TString name) {inputFiles.push_back(name);};
 
     PDF_Datasets*           pdf;
     bool                    drawPlots;

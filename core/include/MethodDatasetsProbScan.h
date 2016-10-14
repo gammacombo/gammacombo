@@ -1,5 +1,7 @@
 /*
  * Gamma Combination
+ * Author: Maximilian Schlupp, maxschlupp@gmail.com
+ * Author: Konstantin Schubert, schubert.konstantin@gmail.com
  * Date: October 2016
  */
 
@@ -24,8 +26,8 @@ public:
     void                loadParameterLimits();
     virtual void        print();
     virtual int         scan1d();
-    inline  void        setInputFile(TString name){inputFiles.push_back(name); explicitInputFile=true;};
-    inline  void        addFile(TString name){inputFiles.push_back(name);};
+    inline  void        setInputFile(TString name) {inputFiles.push_back(name); explicitInputFile = true;};
+    inline  void        addFile(TString name) {inputFiles.push_back(name);};
 
     PDF_Datasets*           pdf;
     TH1F*                   probPValues;
