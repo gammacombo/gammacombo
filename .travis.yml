@@ -18,8 +18,8 @@ script:
 - docker run --name built_container_6 image_with_files_6 /bin/bash -c "mkdir /code/build; cd /code/build; cmake ..; make; make install"
 - docker commit built_container_6 built_image_6
 # run the tests 
-- > - 
-    docker run built_image_6 /bin/bash -c "
+- >- 
+  docker run built_image_6 /bin/bash -c "
       mkdir /code/tutorial/plots/;
       /code/tutorial/bin/tutorial_dataset_build_workspace;
       /code/tutorial/bin/tutorial_dataset --var branchingRatio --scanrange 5e-7:15e-7 --npoints 5;
