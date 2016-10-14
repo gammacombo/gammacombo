@@ -21,6 +21,9 @@ script:
 - >- 
   docker run built_image_6 /bin/bash -c "
       mkdir /code/tutorial/plots/;
+      mkdir /code/tutorial/plots/eps/;
+      mkdir /code/tutorial/plots/pdf/;
+      mkdir /code/tutorial/plots/root/;
       /code/tutorial/bin/tutorial_dataset_build_workspace;
       /code/tutorial/bin/tutorial_dataset --var branchingRatio --scanrange 5e-7:15e-7 --npoints 5;
       /code/tutorial/bin/tutorial_dataset -a pluginbatch --var branchingRatio --ntoys 5 --scanrange 5e-7:15e-7 --npoints 5;
