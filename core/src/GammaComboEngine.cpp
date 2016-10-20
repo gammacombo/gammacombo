@@ -678,6 +678,7 @@ void GammaComboEngine::setUpPlot()
 ///
 void GammaComboEngine::savePlot()
 {
+  if ( arg->hfagLabel!="" ) HFAGLabel( arg->hfagLabel, arg->plotHFAGLabelPosX, arg->plotHFAGLabelPosY, arg->plotHFAGLabelScale );
 	plot->save();
 }
 
@@ -714,6 +715,7 @@ void GammaComboEngine::defineColors()
     colorsLine.push_back(TColor::GetColor("#a6761d")); // chocolate
     colorsLine.push_back(TColor::GetColor("#e31a1c")); // red
     colorsLine.push_back(TColor::GetColor("#984ea3")); // darkish purple
+    colorsLine.push_back(kBlack); // black
 
 		// from http://colorbrewer2.org with:
 		//   number of data classes: 6
@@ -732,6 +734,11 @@ void GammaComboEngine::defineColors()
 		colorsLine.push_back(kBlue-8 + i);
 		colorsText.push_back(kBlue-2 + i);
 	}
+
+  for ( int i=0; i<arg->combid.size(); i++ ) {
+    if ( i>= arg->fillstyle.size() ) fillStyles.push_back( 1001 );
+    else fillStyles.push_back( arg->fillstyle[i] );
+  }
 }
 
 ///
@@ -934,6 +941,7 @@ void GammaComboEngine::make1dProbPlot(MethodProbScan *scanner, int cId)
 		if ( arg->color.size()>cId ) colorId = arg->color[cId];
 		scanner->setLineColor(colorsLine[colorId]);
 		scanner->setTextColor(colorsText[colorId]);
+    scanner->setFillStyle(fillStyles[cId]);
 		plot->Draw();
 	}
 }
@@ -1048,6 +1056,7 @@ void GammaComboEngine::make1dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId)
 	if ( arg->color.size()>cId ) colorId = arg->color[cId];
 	sPlugin->setLineColor(colorsLine[colorId]);
 	sPlugin->setTextColor(colorsText[colorId]);
+  sPlugin->setFillStyle(fillStyles[cId]);
 	sPlugin->setDrawSolution(arg->plotsolutions[cId]);
 	sPlugin->plotOn(plot);
 	plot->Draw();

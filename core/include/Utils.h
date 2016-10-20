@@ -15,6 +15,8 @@
 #include "RooAbsPdf.h"
 #include "RooWorkspace.h"
 #include "TCanvas.h"
+#include "TPad.h"
+#include "TPaveText.h"
 #include "rdtsc.h"
 #include "TMatrixDSym.h"
 #include "RooRealVar.h"
@@ -53,6 +55,9 @@ namespace Utils
 		float min;
 		float max;
 	};
+
+  // drawing HFAG label
+  void HFAGLabel(const TString& label="please set label", Double_t xpos=0, Double_t ypos=0, Double_t scale=1);
 
 	enum          histogramType { kChi2, kPvalue };
 	inline double sq(double x){return x*x;}

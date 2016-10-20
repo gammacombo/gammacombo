@@ -57,7 +57,7 @@ void Contour::DrawFilled()
 		g->SetFillStyle(1001); // solid
 		//g->SetFillColor(m_fillcolor);
 		g->SetFillColorAlpha(m_fillcolor,m_alpha); // transparency!
-		g->Draw("F");
+		if (!m_arg->isQuickhack(27)) g->Draw("F");
 		if ( m_fillstyle!=1001 ){ // if not solid, add the pattern in the line color
 			g = (TGraph*)m_contoursHoles[i]->Clone();
 			g->SetFillStyle(m_fillstyle); // hatched on top
