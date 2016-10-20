@@ -169,7 +169,7 @@
 	fillcolor[4].push_back(cb.lightcolor(fillcolor[3][4]));
 	fillstyle[4].push_back(1001);
 
-	// scanners 6-13
+	// scanners 6-15
 	// colors based on http://colorbrewer2.org/, six classes, qualitative, second scheme
 	makeNewPlotStyle("#1b9e77"); // sea green
 	makeNewPlotStyle("#d95f02"); // dark orange
@@ -183,14 +183,16 @@
 	makeNewPlotStyle("",kBlue-5); // same as 1D scan 1
 	makeNewPlotStyle("",kGreen-8); // same as 1D scan 2
 
-	// if requested, remove any fill pattern to make cleaner plots
-	if ( arg->isQuickhack(10) ){
-		for ( int iScanners=0; iScanners<fillstyle.size(); iScanners++ ){
-			for ( int iContours=0; iContours<fillstyle[iScanners].size(); iContours++ ){
-				fillstyle[iScanners][iContours] = 1001;
-			}
-		}
-	}
+	// if requested, add or remove any fill pattern to make cleaner plots
+  for ( int iContour=0; iContour<fillstyle.size(); iContour++ ) {
+    for ( int iScanner=0; iScanner<fillstyle[iContour].size(); iScanner++ ) {
+      // remove any fill style at all
+      if ( arg->isQuickhack(10) ) fillstyle[iContour][iScanner] = 1001;
+      if ( iScanner < arg->fillstyle.size() ) fillstyle[iContour][iScanner] = arg->fillstyle[iScanner];
+      //cout << iContour << " " << iScanner << " " << linecolor[iContour][iScanner] << " " << linestyle[iContour][iScanner] << " " << fillcolor[iContour][iScanner] << " " << fillstyle[iContour][iScanner] << endl;
+    }
+  }
+
 }
 
 ///
@@ -412,6 +414,7 @@ void OneMinusClPlot2d::drawLegend()
 	m_legend->SetBorderSize(0);
 	m_legend->SetTextFont(font);
 	m_legend->SetTextSize(legendsize);
+  if ( arg->isQuickhack(26) ) m_legend->SetTextSize(0.9*legendsize);
 
 	// build legend
 	for ( int i = 0; i < histos.size(); i++ ){
@@ -424,7 +427,7 @@ void OneMinusClPlot2d::drawLegend()
 			int styleId = i;
 			if ( arg->color.size()>i ) styleId = arg->color[i];
 			TGraph *g = new TGraph(1);
-			g->SetFillStyle(1001); // solid
+			g->SetFillStyle(fillstyle[0][i]); // solid
 			g->SetFillColor(fillcolor[0][styleId]);
 			g->SetLineWidth(2);
 			g->SetLineColor(linecolor[0][styleId]);
@@ -509,7 +512,7 @@ void OneMinusClPlot2d::Draw()
 		cont->computeContours(histos[i], histosType[i], i);
 		int styleId = i;
 		if ( arg->color.size()>i ) styleId = arg->color[i];
-		cont->setStyle(transpose(linecolor)[styleId], transpose(linestyle)[styleId], transpose(fillcolor)[styleId], transpose(fillstyle)[styleId]);
+		cont->setStyle(transpose(linecolor)[styleId], transpose(linestyle)[styleId], transpose(fillcolor)[styleId], transpose(fillstyle)[i]);
 		m_contours[i] = cont;
 		m_contours_computed[i] = true;
 	}

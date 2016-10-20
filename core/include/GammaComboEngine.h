@@ -113,6 +113,7 @@ class GammaComboEngine
 		vector<Combiner*> 	cmb;
 		vector<int> 		colorsLine;
 		vector<int> 		colorsText;
+    vector<int>     fillStyles;
 		TString 			execname;
 		FileNameBuilder*	m_fnamebuilder;
     BatchScriptWriter* m_batchscriptwriter;

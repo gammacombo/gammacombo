@@ -122,12 +122,15 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	if ( filled ){
 		g->SetLineWidth(2);
     double alpha = arg->isQuickhack(12) ? 0.4 : 1.;
+    if ( arg->isQuickhack(24) ) alpha = 0.;
 		g->SetFillColorAlpha(color,alpha);
 		g->SetLineStyle(1);
+    g->SetFillStyle( s->getFillStyle() );
 	}
 	else{
 		g->SetLineWidth(2);
 		g->SetLineStyle(s->getLineStyle());
+    if ( last && arg->isQuickhack(25) ) g->SetLineWidth(3);
 	}
 
 	if ( plotPoints ){
@@ -184,7 +187,7 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	else                drawOption += " L";
 	if ( first )        drawOption += " A";
 	g->Draw(drawOption);
-	if ( drawOption.Contains("F") ) ((TGraph*)g->Clone())->Draw("L");
+  //if ( drawOption.Contains("F") ) ((TGraph*)g->Clone())->Draw("L");
 
 	gPad->Update();
 	float ymin = gPad->GetUymin();
@@ -453,6 +456,7 @@ void OneMinusClPlot::drawCLguideLine(float pvalue)
 
 	float labelPos = xmin+(xmax-xmin)*0.10;
 	if ( arg->isQuickhack(2) ) labelPos = xmin+(xmax-xmin)*0.55;
+  if ( arg->isQuickhack(23) ) labelPos = xmin+(xmax-xmin)*0.8;
 	float labelPosYmin = 0;
 	float labelPosYmax = 0;
 
@@ -533,6 +537,7 @@ void OneMinusClPlot::Draw()
 		{
 			legDrawOption = "p";
 		}
+    if ( arg->plotlegstyle != "default" ) legDrawOption = arg->plotlegstyle;
 
 		if ( plotSimple )
 		{

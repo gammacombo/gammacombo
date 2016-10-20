@@ -47,6 +47,7 @@
 	lineStyle = 0;
 	lineColor = kBlue-8;
 	textColor = kBlack;
+  fillStyle = 1001;
 	hCL = 0;
 	hCL2d = 0;
 	hChi2min = 0;
