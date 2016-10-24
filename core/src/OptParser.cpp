@@ -517,6 +517,7 @@ void OptParser::parseArguments(int argc, char* argv[])
       "25: Last scan in 1D has thicker line.\n"
       "26: In 2D plots, slightly smaller text size for legend.\n"
       "27: In 2D plots, do not draw any fill color (only the fill style).\n"
+      "28: In 2D plots, make fill styles even more transparent.\n"
 			, false, "int");
 	TCLAP::MultiArg<string> titleArg("", "title", "Override the title of a combination. "
 			"If 'default' is given, the default title for that combination is used. "

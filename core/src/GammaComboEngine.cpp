@@ -69,7 +69,7 @@ void GammaComboEngine::addPdf(int id, PDF_Abs* pdf, TString title)
 	}
 	// check if requested id exists already
 	if ( pdfExists(id) ){
-		cout << "GammaComboEngine::addPdf() : ERROR : Requested PDF id exists already in GammaComboEngine. Exit." << endl;
+		cout << "GammaComboEngine::addPdf() : ERROR : Requested PDF id " << id << " exists already in GammaComboEngine. Exit." << endl;
 		exit(1);
 	}
 	// check if storage is large enough, enlarge if necessary
