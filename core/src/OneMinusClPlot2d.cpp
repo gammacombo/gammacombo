@@ -183,16 +183,40 @@
 	makeNewPlotStyle("",kBlue-5); // same as 1D scan 1
 	makeNewPlotStyle("",kGreen-8); // same as 1D scan 2
 
+  // new colors from Alison
+  makeNewPlotStyle("#6a51a3"); // shades of purple
+  makeNewPlotStyle("#54278f");
+  makeNewPlotStyle("#3f007d");
+
+  makeNewPlotStyle("#fb6a4a"); // shades of red
+  makeNewPlotStyle("#ef3b2c");
+  makeNewPlotStyle("#cb181d");
+
+  makeNewPlotStyle("#a1d99b"); // shades of green
+  makeNewPlotStyle("#41ab5d");
+  makeNewPlotStyle("#238b45");
+
+  makeNewPlotStyle("#ffeda0"); // shades of orange
+  makeNewPlotStyle("#fed976");
+  makeNewPlotStyle("#feb24c");
+
+  makeNewPlotStyle("#6baed6"); // shades of blue
+  makeNewPlotStyle("#4292c6");
+  makeNewPlotStyle("#2171b5");
+
+  // any additional scanners
+  for ( int i=fillcolor[0].size(); i<arg->combid.size(); i++ ) {
+    makeNewPlotStyle("",kBlue-7);
+  }
+
 	// if requested, add or remove any fill pattern to make cleaner plots
   for ( int iContour=0; iContour<fillstyle.size(); iContour++ ) {
     for ( int iScanner=0; iScanner<fillstyle[iContour].size(); iScanner++ ) {
       // remove any fill style at all
       if ( arg->isQuickhack(10) ) fillstyle[iContour][iScanner] = 1001;
       if ( iScanner < arg->fillstyle.size() ) fillstyle[iContour][iScanner] = arg->fillstyle[iScanner];
-      //cout << iContour << " " << iScanner << " " << linecolor[iContour][iScanner] << " " << linestyle[iContour][iScanner] << " " << fillcolor[iContour][iScanner] << " " << fillstyle[iContour][iScanner] << endl;
     }
   }
-
 }
 
 ///
@@ -522,6 +546,7 @@ void OneMinusClPlot2d::Draw()
 	if ( arg->isQuickhack(12) ){
 		for ( int i=0; i < histos.size(); i++ ){
 			m_contours[i]->setTransparency(0.2);
+      if ( arg->isQuickhack(28)  ) m_contours[i]->setTransparency(0.5);
 			// don't use transparency for the last scanner
 			if ( arg->isQuickhack(13) && i==histos.size()-1 ) m_contours[i]->setTransparency(0.);
 		}

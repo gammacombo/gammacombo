@@ -547,7 +547,7 @@ void OneMinusClPlot::Draw()
 		else
 		{
 			TGraph* g = scan1dPlot(scanners[i], i==0, false, scanners[i]->getFilled());
-			leg->AddEntry(g, scanners[i]->getTitle(), legDrawOption);
+			if ( scanners[i]->getTitle() != "noleg" ) leg->AddEntry(g, scanners[i]->getTitle(), legDrawOption);
 		}
 	}
 
