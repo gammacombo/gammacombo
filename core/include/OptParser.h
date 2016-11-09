@@ -123,6 +123,7 @@ class OptParser
     float           printSolY;
 		vector<int>   	qh;
     TString         queue;
+    vector<TString> readfromfile;
 		vector<TString> relation;
     TString         save;
 		vector<float>   savenuisances1d;

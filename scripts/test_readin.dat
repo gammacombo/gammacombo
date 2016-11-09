@@ -1,0 +1,37 @@
+# file to read values from
+
+# pdf name goes first (must match the pdf name in the combination)
+pdf: dsk
+
+# then observables (must match the order in the PDF)
+obs: c_dsk_obs    0.8065
+obs: d_dsk_obs    0.28519
+obs: db_dsk_obs  -0.11041
+obs: s_dsk_obs   -0.54821
+obs: sb_dsk_obs   0.6167
+obs: phis_obs     0.01
+
+# then uncerts (must match the order in the PDF)
+err: c_dsk_obs    0.0984 0.0
+err: d_dsk_obs    0.236  0.0
+err: db_dsk_obs   0.243  0.0
+err: s_dsk_obs    0.148  0.0
+err: sb_dsk_obs   0.125  0.0
+err: phis_obs     0.039  0.0
+
+# then corr (must match the order in the PDF) i j statCor systCorr
+cor: 0 0 1 1
+cor: 1 1 1 1
+cor: 2 2 1 1
+cor: 3 3 1 1
+cor: 4 4 1 1
+cor: 1 0 -0.07599 0
+cor: 2 0 -0.102   0
+cor: 2 1  0.4532  0
+cor: 3 0 -0.02258 0
+cor: 3 1  0.06471 0
+cor: 3 2  0.03033 0
+cor: 4 0 -0.04643 0
+cor: 4 1 -0.03103 0
+cor: 4 2 -0.07275 0
+cor: 4 3 -0.0007  0

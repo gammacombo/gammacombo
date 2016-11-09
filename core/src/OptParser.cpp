@@ -178,6 +178,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("qh");
   availableOptions.push_back("queue");
   availableOptions.push_back("randomizeToyVars");
+  availableOptions.push_back("readfromfile");
   availableOptions.push_back("removeRange");
   availableOptions.push_back("save");
 	availableOptions.push_back("sn");
@@ -519,6 +520,10 @@ void OptParser::parseArguments(int argc, char* argv[])
       "27: In 2D plots, do not draw any fill color (only the fill style).\n"
       "28: In 2D plots, make fill styles even more transparent.\n"
 			, false, "int");
+  TCLAP::MultiArg<string> readfromfileArg("", "readfromfile", "Read the observables, uncertainties and correlations from a file - e.g. for reading in toys."
+      "If 'default' is given, the default values are used."
+      "This is not very 'safe'. It does not protect against doing stupid things so please be careful when using it!"
+      "An example file is given in ../scripts/test_readin.dat", false, "string");
 	TCLAP::MultiArg<string> titleArg("", "title", "Override the title of a combination. "
 			"If 'default' is given, the default title for that combination is used. "
             "If 'noleg' is given, this entry is not shown in the legend. "
@@ -622,6 +627,7 @@ void OptParser::parseArguments(int argc, char* argv[])
   if ( isIn<TString>(bookedOptions, "save" ) ) cmd.add( saveArg );
 	if ( isIn<TString>(bookedOptions, "relation" ) ) cmd.add(relationArg);
   if ( isIn<TString>(bookedOptions, "removeRange" ) ) cmd.add(removeRangeArg);
+  if ( isIn<TString>(bookedOptions, "readfromfile" ) ) cmd.add(readfromfileArg);
   if ( isIn<TString>(bookedOptions, "randomizeToyVars" ) ) cmd.add(randomizeToyVarsArg);
 	if ( isIn<TString>(bookedOptions, "qh" ) ) cmd.add(qhArg);
   if ( isIn<TString>(bookedOptions, "queue") ) cmd.add(queueArg);
@@ -802,6 +808,11 @@ void OptParser::parseArguments(int argc, char* argv[])
 	tmp = relationArg.getValue();
 	for ( int i = 0; i < tmp.size(); i++ ) relation.push_back(tmp[i]);
 	if ( tmp.size()==0 ) relation.push_back("NoDefaultEquation");
+
+  // --readfromfile
+  tmp = readfromfileArg.getValue();
+  for ( int i=0; i < tmp.size(); i++ ) readfromfile.push_back(tmp[i]);
+  for ( int i=tmp.size(); i<combid.size(); i++ ) readfromfile.push_back("default");
 
 	// --title
 	tmp = titleArg.getValue();
