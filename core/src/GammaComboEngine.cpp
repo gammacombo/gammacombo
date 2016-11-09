@@ -1241,6 +1241,84 @@ void GammaComboEngine::tightenChi2Constraint(Combiner *c, TString scanVar)
 	pdf->buildPdf();
 }
 
+// FIXME
+// WARNING - THIS FUNCTION ALLOWS YOU DO SOME INCREDIBLY STUPID THINGS
+//         - SO PLEASE BE CAREFUL WITH IT!
+/// Helper function for scan(). Set observables to values from file
+/// (only possible before combining).
+///
+void GammaComboEngine::setObservablesFromFile(Combiner *c, int cId)
+{
+
+  if ( cId<arg->readfromfile.size() ) return;
+  if ( arg->readfromfile[cId]==TString("default") ) return;
+  if ( arg->readfromfile[cId]=="" ) return;
+
+  vector<PDF_Abs*> pdfs = c->getPdfs();
+
+  for ( int i=0; i<pdfs.size(); i++ ) {
+
+    // read from the file for this pdf
+    ifstream infile( arg->readfromfile[cId].Data() );
+    if ( ! infile.is_open() ) {
+      cerr << "No such read file found: " << arg->readfromfile[cId] << endl;
+      exit(1);
+    }
+    string line;
+    bool pdfExists = false;
+    bool pdfFound = false;
+    while ( getline(infile,line) ) {
+      if ( line.empty() ) continue; // blank line
+      if ( boost::starts_with(line,"#") ) continue; // these are comments
+      if ( boost::starts_with(line, Form("pdf: %s",pdfs[i]->getBaseName().Data()) ) ) {
+        pdfFound = true; // this is the pdf we are looking for
+        pdfExists = true; // keep track of whether it's even there or not
+      }
+      else if ( boost::starts_with(line, "pdf:") ) pdfFound = false; // this is some other pdf after the pdf we are looking for
+
+      if ( pdfFound ) {
+        vector<string> els;
+        boost::split(els,line,boost::is_any_of(" "),boost::token_compress_on);
+        TString typ = els[0];
+        if ( typ=="obs:" ) {
+          TString name = els[1];
+          double val = boost::lexical_cast<double>(els[2]);
+          pdfs[i]->setObservable( name, val );
+          pdfs[i]->obsValSource = "Read from file " + arg->readfromfile[i];
+        }
+        else if ( typ=="err:" ) {
+          TString name = els[1];
+          double stat = boost::lexical_cast<double>(els[2]);
+          double syst = boost::lexical_cast<double>(els[3]);
+          pdfs[i]->setUncertainty( name, stat, syst );
+          pdfs[i]->obsErrSource = "Read from file " + arg->readfromfile[i];
+        }
+        else if ( typ=="cor:" ) {
+          int mi = boost::lexical_cast<int>(els[1]);
+          int mj = boost::lexical_cast<int>(els[2]);
+          double corStat = boost::lexical_cast<double>(els[3]);
+          double corSyst = boost::lexical_cast<double>(els[4]);
+          pdfs[i]->corStatMatrix[mi][mj] = corStat;
+          pdfs[i]->corSystMatrix[mi][mj] = corSyst;
+          pdfs[i]->corStatMatrix[mj][mi] = corStat;
+          pdfs[i]->corSystMatrix[mj][mi] = corSyst;
+          pdfs[i]->corSource = "Read from file " + arg->readfromfile[i];
+        }
+      }
+    }
+    infile.close();
+    if ( pdfExists ) {
+      pdfs[i]->storeErrorsInObs();
+      pdfs[i]->buildCov();
+      pdfs[i]->buildPdf();
+    }
+    else {
+      cout << "WARNING - did not find any pdf named: " << pdfs[i]->getBaseName() << " in file: " << arg->readfromfile[i] << endl;
+    }
+  }
+
+}
+
 ///
 /// write batch scripts
 ///
@@ -1305,6 +1383,9 @@ void GammaComboEngine::scan()
 	{
 		int combinerId = arg->combid[i];
 		Combiner *c = cmb[combinerId];
+
+    // read observable values, uncertainties and correlations from a file
+    setObservablesFromFile(c, i);
 
 		// work with a clone - this way we can easily make plots with the
 		// same combination in twice (once with asimov, for example)
