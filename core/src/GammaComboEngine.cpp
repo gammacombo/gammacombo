@@ -1250,7 +1250,7 @@ void GammaComboEngine::tightenChi2Constraint(Combiner *c, TString scanVar)
 void GammaComboEngine::setObservablesFromFile(Combiner *c, int cId)
 {
 
-  if ( cId<arg->readfromfile.size() ) return;
+  if ( cId>=arg->readfromfile.size() ) return;
   if ( arg->readfromfile[cId]==TString("default") ) return;
   if ( arg->readfromfile[cId]=="" ) return;
 
