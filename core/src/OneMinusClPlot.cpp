@@ -345,9 +345,9 @@ void OneMinusClPlot::drawSolutions()
 	{
 		if ( scanners[i]->getDrawSolution()==0 ) continue;
 		if ( arg->debug ) cout << "OneMinusClPlot::drawSolutions() : adding solution for scanner " << i << " ..." << endl;
-		float xCentral = scanners[i]->getScanVar1Solution();
-		float xCLmin = scanners[i]->getCLintervalCentral().min;
-		float xCLmax = scanners[i]->getCLintervalCentral().max;
+		float xCentral = scanners[i]->getScanVar1Solution(arg->plotsoln[i]);
+		float xCLmin = scanners[i]->getCLinterval(arg->plotsoln[i]).min;
+		float xCLmax = scanners[i]->getCLinterval(arg->plotsoln[i]).max;
 		int color = scanners[i]->getTextColor();
     cout << xCentral << " " << xCLmin << " " << xCLmax << endl;
     scanners[i]->printCLintervals();

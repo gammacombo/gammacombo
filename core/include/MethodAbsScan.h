@@ -56,6 +56,7 @@ class MethodAbsScan
 		inline float                    getChi2minGlobal(){return chi2minGlobal;}
 		float                           getCL(double val);
 		CLInterval                      getCLintervalCentral(int sigma=1);
+		CLInterval                      getCLinterval(int iSol=0, int sigma=1);
 		inline Combiner* 				getCombiner() const {return combiner;};
 		int                             getDrawSolution();
 		inline bool                     getFilled(){return drawFilled;};

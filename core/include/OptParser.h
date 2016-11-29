@@ -110,6 +110,7 @@ class OptParser
 		bool            plotpulls;
 		bool            plotprelim;
 		vector<int>     plotsolutions;
+    vector<int>     plotsoln;
 		bool            plotunoff;
     float           plotymin;
     float           plotymax;

@@ -733,12 +733,20 @@ void MethodAbsScan::printCLintervals()
 		cout << endl;
 	}
 }
-
 ///
 /// Get the CL interval that includes the best-fit value.
 /// \param sigma 1,2
 ///
 CLInterval MethodAbsScan::getCLintervalCentral(int sigma)
+{
+  return getCLinterval(0,sigma);
+}
+
+///
+/// Get the CL interval that includes the best-fit value.
+/// \param sigma 1,2
+///
+CLInterval MethodAbsScan::getCLinterval(int iSol, int sigma)
 {
 	if ( clintervals1sigma.size()==0 ) calcCLintervals();
 	if ( clintervals1sigma.size()==0 ){
@@ -761,19 +769,23 @@ CLInterval MethodAbsScan::getCLintervalCentral(int sigma)
 		exit(1);
 	}
 
+	if ( iSol >= intervals.size() ) {
+    cout << "MethodAbsScan::getCLinterval() : ERROR : no solution with id " << iSol << endl;
+    exit(1);
+  }
+
 	// compute largest interval
 	if ( arg->largest ){
 		CLInterval i;
-		i.pvalue = intervals[0].pvalue;
-		i.min = intervals[0].min;
+		i.pvalue = intervals[iSol].pvalue;
+		i.min = intervals[iSol].min;
 		for ( int j=0; j<intervals.size(); j++ ) i.min = TMath::Min(i.min, intervals[j].min);
-		i.max = intervals[0].max;
+		i.max = intervals[iSol].max;
 		for ( int j=0; j<intervals.size(); j++ ) i.max = TMath::Max(i.max, intervals[j].max);
 		return i;
 	}
 
-	// the first entry corresponds to the central value!
-	return intervals[0];
+  return intervals[iSol];
 }
 
 

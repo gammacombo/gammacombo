@@ -173,6 +173,7 @@ void OptParser::defineOptions()
   availableOptions.push_back("printsoly");
 	availableOptions.push_back("probforce");
 	//availableOptions.push_back("probimprove");
+  availableOptions.push_back("plotsoln");
 	availableOptions.push_back("ps");
 	availableOptions.push_back("pulls");
 	availableOptions.push_back("qh");
@@ -227,6 +228,7 @@ void OptParser::bookPlottingOptions()
 	bookedOptions.push_back("magnetic");
 	bookedOptions.push_back("prelim");
 	bookedOptions.push_back("ps");
+  bookedOptions.push_back("plotsoln");
 	bookedOptions.push_back("plotnsigmacont");
 	bookedOptions.push_back("plot2dcl");
 	bookedOptions.push_back("ndiv");
@@ -598,6 +600,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"combiners. If given less than the number of combinations (-c), the "
 			"remaining ones will not plot any solution.",
 			false, "int");
+  TCLAP::MultiArg<int> plotsolnArg("","plotsoln", "The corresponding solution you would like to put on the plots.\n"
+      "Sometimes when there are multiple equivalent solutions you prefer to draw one specifically - use this option for that.", false, "int");
   TCLAP::MultiArg<int> plot2dclArg("","2dcl","Plot '2d' confidence level contours in 2d plots.\n"
       "2D plots only:\n"
       " 0: don't plot 2dcl\n"
@@ -633,6 +637,7 @@ void OptParser::parseArguments(int argc, char* argv[])
   if ( isIn<TString>(bookedOptions, "queue") ) cmd.add(queueArg);
 	if ( isIn<TString>(bookedOptions, "pulls" ) ) cmd.add( plotpullsArg );
 	if ( isIn<TString>(bookedOptions, "ps" ) ) cmd.add( plotsolutionsArg );
+  if ( isIn<TString>(bookedOptions, "plotsoln" ) ) cmd.add( plotsolnArg );
 	if ( isIn<TString>(bookedOptions, "probimprove" ) ) cmd.add( probimproveArg );
 	if ( isIn<TString>(bookedOptions, "probforce" ) ) cmd.add( probforceArg );
   if ( isIn<TString>(bookedOptions, "printsolx" ) ) cmd.add( printSolXArg );
@@ -1049,6 +1054,32 @@ void OptParser::parseArguments(int argc, char* argv[])
 		}
 	}
 
+  // --plotsoln
+  // If --plotsoln is only given once, apply the given setting to all
+  // combiners
+  plotsoln = plotsolnArg.getValue();
+  if ( plotsoln.size()==1 && combid.size()>1 ) {
+		for ( int i=1; i<combid.size(); i++ ){
+			plotsoln.push_back(plotsoln[0]);
+      // if there will be two scanners (i.e. Prob and Plugin) then add another one
+      if ( isAction("plugin") && !plotpluginonly ) {
+        plotsoln.push_back(plotsoln[0]);
+      }
+		}
+  }
+	// If --plotsoln is given more than once (or not at all), but not for every combiner,
+	// fill the remaining ones up with 0=don't plot solution
+	else if ( plotsoln.size() < combid.size() ){
+		for ( int i=plotsoln.size(); i<combid.size(); i++ ){
+			plotsoln.push_back(0);
+      // if there will be two scanners (i.e. Prob and Plugin) then add another one
+      if ( isAction("plugin") && !plotpluginonly ) {
+        plotsoln.push_back(0);
+      }
+		}
+	}
+
+  // --2dcl
 	plot2dcl = plot2dclArg.getValue();
   // If --2dcl is not given, apply 0 to all
 	if ( plot2dcl.size()==0){
