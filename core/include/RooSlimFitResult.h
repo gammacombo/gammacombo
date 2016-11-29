@@ -12,6 +12,8 @@
 #ifndef RooSlimFitResult_h
 #define RooSlimFitResult_h
 
+#include <fstream>
+
 #include "RooFitResult.h"
 #include "RooArgList.h"
 #include "RooRealVar.h"
@@ -49,6 +51,7 @@ class RooSlimFitResult : public TObject
     	inline bool               isConfirmed(){return _isConfirmed;};
     	inline Double_t	          minNll() const {return _minNLL;};
     	void                      Print(bool verbose=false, bool printcor=false);
+    	void                      SaveLatex(ofstream &outfile, bool verbose=false, bool printcor=false);
     	inline void               setConfirmed(bool c){_isConfirmed = c;};
     	inline Int_t	          status() const {return _status;};
 

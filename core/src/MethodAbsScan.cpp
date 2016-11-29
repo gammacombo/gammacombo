@@ -949,6 +949,30 @@ void MethodAbsScan::printLocalMinima()
 }
 
 ///
+/// Save local minima solutions.
+///
+void MethodAbsScan::saveLocalMinima(TString fName)
+{
+	TDatime date; // lets also print the current date
+	if ( arg->debug ){
+		cout << "MethodAbsScan::saveLocalMinima() : LOCAL MINIMA for " << title << endl;
+		cout << endl;
+	}
+  ofstream outfile;
+  outfile.open(fName.Data());
+
+	for ( int i=0; i<solutions.size(); i++ ){
+		outfile << "\%SOLUTION " << i << ":\n" << endl;
+		outfile << "\%  combination: " << name << endl;
+		outfile << "\%  title:       " << title << endl;
+		outfile << "\%  date:        " << date.AsString() << endl;
+		solutions[i]->SaveLatex(outfile, arg->verbose, arg->printcor);
+	}
+  outfile.close();
+
+}
+
+///
 /// Get value of scan parameter at a certain solution.
 /// \param iVar - Index of scan variable, 1 or 2.
 /// \param iSol - Index of solution. 0 corresponds to the best one,

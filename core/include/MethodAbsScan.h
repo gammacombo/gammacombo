@@ -101,6 +101,7 @@ class MethodAbsScan
 		virtual void                    print();
 		void                            printCLintervals();
 		void                            printLocalMinima();
+    void                            saveLocalMinima(TString fName="");
 		void                            saveScanner(TString fName="");
 		virtual int                     scan1d();
 		virtual int                     scan2d();

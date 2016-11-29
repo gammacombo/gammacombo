@@ -811,6 +811,7 @@ void GammaComboEngine::make1dProbScan(MethodProbScan *scanner, int cId)
 	cout << "\nResults:" << endl;
 	cout <<   "========\n" << endl;
 	scanner->printLocalMinima();
+  scanner->saveLocalMinima(m_fnamebuilder->getFileNameSolution(scanner));
 	scanner->calcCLintervals();
 	if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
 		if ( arg->plotpulls ) scanner->plotPulls();
