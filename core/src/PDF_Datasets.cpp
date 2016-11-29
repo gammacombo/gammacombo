@@ -263,7 +263,7 @@ RooFitResult* PDF_Datasets::fit(RooDataSet* dataToFit) {
 void   PDF_Datasets::generateToys(int SeedShift) {
 
     initializeRandomGenerator(SeedShift);
-    RooDataSet* toys = this->pdf->generate(*observables, RooFit::Extended(kTRUE));
+    RooDataSet* toys = this->pdf->generate(*observables, RooFit::NumEvents(wspc->data(dataName)->numEntries()), RooFit::Extended(kTRUE));
 
     // Having the delete in here causes a segmentation fault, likely due to a double free
     // related to Root's internal memory management. Therefore we do not delete,
