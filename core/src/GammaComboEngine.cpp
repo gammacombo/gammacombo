@@ -127,7 +127,7 @@ void GammaComboEngine::cloneCombiner(int newId, int oldId, TString name, TString
 Combiner* GammaComboEngine::getCombiner(int id) const
 {
 	if ( !combinerExists(id) ){
-		cout << "GammaComboEngine::getCombiner() : ERROR : Requested Combiner id doesn't exist in GammaComboEngine. Exit." << endl;
+		cout << "GammaComboEngine::getCombiner() : ERROR : Requested Combiner id " << id << " doesn't exist in GammaComboEngine. Exit." << endl;
 		exit(1);
 	}
 	return cmb[id];

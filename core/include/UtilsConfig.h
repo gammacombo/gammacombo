@@ -94,6 +94,7 @@ namespace Utils
 		hfagFP2014,
 		hfagLP2011,
 		hfagCHARM2015,
+    hfagCKM2016,
 		highrb,
 		highstattoy,
 		lhcb,
