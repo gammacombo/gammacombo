@@ -349,8 +349,6 @@ void OneMinusClPlot::drawSolutions()
 		float xCLmin = scanners[i]->getCLinterval(arg->plotsoln[i]).min;
 		float xCLmax = scanners[i]->getCLinterval(arg->plotsoln[i]).max;
 		int color = scanners[i]->getTextColor();
-    cout << xCentral << " " << xCLmin << " " << xCLmax << endl;
-    scanners[i]->printCLintervals();
 
 		// draw vertical lines at central value and
 		// upper/lower errors
