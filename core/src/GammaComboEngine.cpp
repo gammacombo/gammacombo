@@ -1574,13 +1574,41 @@ void GammaComboEngine::scanDataSet()
 		/////////////////////////////
 		// doing a prob scan
 		/////////////////////////////
-		probScanner->scan1d();
-		plot->addScanner(probScanner);
-		probScanner->calcCLintervals();
-		plot->Draw();
 
+		if ( arg->var.size()==1 )
+		{
+			probScanner->scan1d();
+			plot->addScanner(probScanner);
+			probScanner->calcCLintervals();
+			plot->Draw();
+		}
+
+		/////////////////////////////
+		// doing a 2D prob scan
+		/////////////////////////////
+		else if ( arg->var.size()==2 )
+			{
+			if ( arg->isAction("plot") ){
+				probScanner->loadScanner(m_fnamebuilder->getFileNameScanner(probScanner));
+			}
+			else{
+				cout << "let's do the scan" << endl;
+				probScanner->scan2d();
+			}
+			//Titus: plot configurations \todo: should be configurable, right?
+
+			cout << "start with the plotting" << endl;
+			if (!arg->plotsolutions.empty()) probScanner->setDrawSolution(arg->plotsolutions[0]); 
+			cout << "set line color" << endl;
+			probScanner->setLineColor(colorsLine[0]);
+			cout << "plot 2D" << endl;
+			probScanner->plotOn(plot);
+			cout << "draw 2D" << endl;			
+			plot->Draw();
+			cout << "show 2D" << endl;
+			plot->Show();
+		}
 	}
-	
 }
 
 
