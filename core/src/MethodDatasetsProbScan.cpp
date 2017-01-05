@@ -387,7 +387,7 @@ int MethodDatasetsProbScan::scan2d()
     if ( arg->debug ) cout << "MethodDatasetsProbScan::scan2d() : starting ..." << endl;
     nScansDone++;
     sanityChecks();
-    // if ( startPars ) delete startPars;
+    if ( startPars ) delete startPars;
 
     // Define whether the 2d contours in hCL are "1D sigma" (ndof=1) or "2D sigma" (ndof=2).
     // Leave this at 1 for now, as the "2D sigma" contours are computed from hChi2min2d, not hCL.
@@ -418,11 +418,9 @@ int MethodDatasetsProbScan::scan2d()
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // store start parameters so we can reset them later
-    // startPars = new RooDataSet("startPars", "startPars", *w->set(parsName));
-    // startPars->add(*w->set(parsName));
     if ( arg->debug ) cout << "store start parameters so we can reset them later" << endl;
-    RooDataSet* parsFunctionCall = new RooDataSet("parsFunctionCall", "parsFunctionCall", *w->set(pdf->getParName()));
-    parsFunctionCall->add(*w->set(pdf->getParName()));
+    startPars = new RooDataSet("startPars", "startPars", *w->set(parsName));
+    startPars->add(*w->set(parsName));
 
     // // start scan from global minimum (not always a good idea as we need to set from other places as well)
     // setParameters(w, parsName, globalMin);
@@ -525,8 +523,7 @@ int MethodDatasetsProbScan::scan2d()
                 int xStartPars, yStartPars;
                 computeInnerTurnCoords(iStart, jStart, i, j, xStartPars, yStartPars, 1);
                 RooSlimFitResult *rStartPars = mycurveResults2d[xStartPars-1][yStartPars-1];
-                // if ( rStartPars ) setParameters(w, parsName, rStartPars);
-                if ( rStartPars ) setParameters(w, pdf->getParName(), rStartPars);
+                if ( rStartPars ) setParameters(w, parsName, rStartPars);
 
                 // memory management:
                 tMemory.Start(false);
@@ -630,8 +627,7 @@ int MethodDatasetsProbScan::scan2d()
         cout << "MethodDatasetsProbScan::scan2d() : - create RooSlimFitResults: "; tSlimResult.Print();
         cout << "MethodDatasetsProbScan::scan2d() : - memory management:        "; tMemory.Print();
     }
-    // setParameters(w, parsName, startPars->get(0));
-    setParameters(w, pdf->getParName(), parsFunctionCall->get(0));
+    setParameters(w, parsName, startPars->get(0));
 
     saveSolutions2d();
     if ( arg->debug ) printLocalMinima();
