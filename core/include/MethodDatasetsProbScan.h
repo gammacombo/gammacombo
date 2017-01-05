@@ -26,6 +26,7 @@ public:
     void                loadParameterLimits();
     virtual void        print();
     virtual int         scan1d();
+    virtual int         scan2d();
     inline  void        setInputFile(TString name) {inputFiles.push_back(name); explicitInputFile = true;};
     inline  void        addFile(TString name) {inputFiles.push_back(name);};
 
@@ -46,6 +47,7 @@ private:
     void                readScan1dTrees(TString fileNameBaseIn = "default");
     RooFitResult*       loadAndFit(PDF_Datasets* pdf);
     double              getPValueTTestStatistic(double test_statistic_value);
+    void                sanityChecks();
     void                setAndPrintFitStatusConstrainedToys(const ToyTree& toyTree);
     void                setAndPrintFitStatusFreeToys(const ToyTree& toyTree);
     void                sethCLFromProbScanTree();

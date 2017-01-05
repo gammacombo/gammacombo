@@ -62,7 +62,7 @@ public:
   int             scan2d();
   inline void     setScanDisableDragMode(bool f=true){scanDisableDragMode = f;};
 
-private:
+protected:
   bool            computeInnerTurnCoords(const int iStart, const int jStart, const int i, const int j, 
                     int &iResult, int &jResult, int nTurn);
   bool            deleteIfNotInCurveResults2d(RooSlimFitResult *r);
