@@ -1004,6 +1004,11 @@ void OptParser::parseArguments(int argc, char* argv[])
 			plotsolutions.push_back(0);
 		}
 	}
+	// Titus: If no combiner is given (as in the datasets case), make sure no solutions are plotted 
+	// without seing the program crash
+	else if ( plotsolutions.empty() ){
+		plotsolutions.push_back(0);
+	}
 
 	plot2dcl = plot2dclArg.getValue();
   // If --2dcl is not given, apply 0 to all
