@@ -1592,20 +1592,14 @@ void GammaComboEngine::scanDataSet()
 				probScanner->loadScanner(m_fnamebuilder->getFileNameScanner(probScanner));
 			}
 			else{
-				cout << "let's do the scan" << endl;
 				probScanner->scan2d();
 			}
-			//Titus: plot configurations \todo: should be configurable, right?
-
-			cout << "start with the plotting" << endl;
+			//Titus: plot, essentially GammaComboEngine::make2DProbPlot() without the p-value histogram
+			// \todo: replace this with the make2DProbPlot() function (Problem is the dealing with missing combiners)
 			if (!arg->plotsolutions.empty()) probScanner->setDrawSolution(arg->plotsolutions[0]); 
-			cout << "set line color" << endl;
 			probScanner->setLineColor(colorsLine[0]);
-			cout << "plot 2D" << endl;
 			probScanner->plotOn(plot);
-			cout << "draw 2D" << endl;			
 			plot->Draw();
-			cout << "show 2D" << endl;
 			plot->Show();
 		}
 	}

@@ -29,16 +29,17 @@ MethodDatasetsProbScan::MethodDatasetsProbScan(PDF_Datasets* PDF, OptParser* opt
     chi2minGlobalFound = true; // the free fit to data must be done and must be saved to the workspace before gammacombo is even called
     methodName = "DatasetsProb";
 
+    /////////////////////////////
     //Titus: add these variable initializations for compatibility
-    //scanDisableDragMode = false;
+    //scanDisableDragMode = false; //Titus: Not needed at the moment
     nScansDone              = 0;
     parsName = pdf->getParName();
+    ////////////////////////////
 
     w = PDF->getWorkspace();
     title = PDF->getTitle();
     name =  PDF->getName();
 
-    if ( arg->var.size() > 1 ) scanVar2 = arg->var[1];      //Titus QUESTION: Do I really need this part of code here? It is already implemented in the constructor of MethodAbsScan
     inputFiles.clear();
 
     if (w->obj("data_fit_result") == NULL) { //\todo: support passing the name of the fit result in the workspace.
@@ -89,13 +90,16 @@ void MethodDatasetsProbScan::initScan() {
     // that inside scan1d() the if clauses work correctly
     for ( int i = 1; i <= nPoints1d; i++ ) hChi2min->SetBinContent(i, 1e6);
 
-    // Titus: 2D scan does not work at the moment
+    ////////////////////////////////////////////////////////    
+    // Titus: 2D scan does work, so I have this commented out
     // if ( scanVar2 != "" ) {
     //     cout << "MethodDatasetsProbScan::initScan(): EROR: Scanning in more than one dimension is not supported." << std::endl;
     //     exit(EXIT_FAILURE);
     // }
+    ////////////////////////////////////////////////////////
 
-    // Titus: need to setup everything for 2D scan
+    ///////////////////////////////////////////////////////////////////////////
+    // Titus: setup everything for 2D scan
     if ( scanVar2!="" )
     {
         RooRealVar *par2 = w->var(scanVar2);
@@ -117,11 +121,10 @@ void MethodDatasetsProbScan::initScan() {
         hCL2d      = new TH2F("hCL2d"+getUniqueRootName(),      "hCL2d"+pdfName, nPoints2dx, min1, max1, nPoints2dy, min2, max2);
         hChi2min2d = new TH2F("hChi2min2d"+getUniqueRootName(), "hChi2min",      nPoints2dx, min1, max1, nPoints2dy, min2, max2);
 
-        if ( arg->debug ) cout << "Will do " << nPoints2dx << " x " << nPoints2dy << " scanpoints." << endl;
         for ( int i=1; i<=nPoints2dx; i++ )
             for ( int j=1; j<=nPoints2dy; j++ ) hChi2min2d->SetBinContent(i,j,1e6);
     }
-
+    /////////////////////////////////////////////////////////////////////////////////
 
 
     // set start parameters
@@ -133,6 +136,7 @@ void MethodDatasetsProbScan::initScan() {
     curveResults.clear();
     for ( int i = 0; i < nPoints1d; i++ ) curveResults.push_back(0);
 
+    //////////////////////////////////////////////////////////
     // Titus: 2d:
     curveResults2d.clear();
     for ( int i=0; i<nPoints2dx; i++ )
@@ -141,7 +145,7 @@ void MethodDatasetsProbScan::initScan() {
         for ( int j=0; j<nPoints2dy; j++ ) tmp.push_back(0);
         curveResults2d.push_back(tmp);
     }
-
+    //////////////////////////////////////////////////////////
 
     // turn off some messages
     RooMsgService::instance().setStreamStatus(0, kFALSE);
@@ -418,7 +422,6 @@ int MethodDatasetsProbScan::scan2d()
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // store start parameters so we can reset them later
-    if ( arg->debug ) cout << "store start parameters so we can reset them later" << endl;
     startPars = new RooDataSet("startPars", "startPars", *w->set(parsName));
     startPars->add(*w->set(parsName));
 
@@ -430,7 +433,6 @@ int MethodDatasetsProbScan::scan2d()
     RooRealVar *par2 = w->var(scanVar2);
 
     // Set limit to all parameters.
-    if ( arg->debug ) cout << "Set limit to all parameters" << endl;
     this->loadParameterLimits();
 
     // fix scan parameters
@@ -449,23 +451,13 @@ int MethodDatasetsProbScan::scan2d()
     float printFreq = nTotalSteps>100 && !arg->probforce ? 100 : nTotalSteps; ///< number of messages
 
     // initialize some control plots
-    if ( arg->debug ) cout << "initialize some control plots" << endl;    
     gStyle->SetOptTitle(1);
     TCanvas *cDbg = newNoWarnTCanvas(getUniqueRootName(), Form("DeltaChi2 for 2D scan %i",nScansDone));
     cDbg->SetMargin(0.1,0.15,0.1,0.1);
-    
-    if ( arg->debug ) cout << "NoWarnTCanvas initialized" << endl;    
-    
     float hChi2min2dMin = hChi2min2d->GetMinimum();    
     bool firstScanDone = hChi2min2dMin<1e5;
-    
-    if ( arg->debug ) cout << "first scan done? " << firstScanDone << endl;    
-    
     TH2F *hDbgChi2min2d = histHardCopy(hChi2min2d, firstScanDone);
-    hDbgChi2min2d->SetTitle(Form("#Delta#chi^{2} for scan %i, %s",nScansDone,title.Data()));
-
-    if ( arg->debug ) cout << "initialize debug minchi2 histogram" << endl;        
-    
+    hDbgChi2min2d->SetTitle(Form("#Delta#chi^{2} for scan %i, %s",nScansDone,title.Data())); 
     if ( firstScanDone ) hDbgChi2min2d->GetZaxis()->SetRangeUser(hChi2min2dMin,hChi2min2dMin+25);
     hDbgChi2min2d->GetXaxis()->SetTitle(par1->GetTitle());
     hDbgChi2min2d->GetYaxis()->SetTitle(par2->GetTitle());
@@ -475,7 +467,6 @@ int MethodDatasetsProbScan::scan2d()
 
     // start coordinates //Titus: start at the global minimum
     // don't allow the under/overflow bins
-    if ( arg->debug ) cout << "start coordinates" << endl;
     int iStart = min(hCL2d->GetXaxis()->FindBin(par1->getVal()), hCL2d->GetNbinsX());
     int jStart = min(hCL2d->GetYaxis()->FindBin(par2->getVal()), hCL2d->GetNbinsY());
     iStart = max(iStart, 1);
@@ -498,7 +489,6 @@ int MethodDatasetsProbScan::scan2d()
     int t = std::max(X,Y);
     int maxI = t*t;
 
-    if ( arg->debug ) cout << "going into the scan spiral" << endl;
     for ( int spiralstep=0; spiralstep<maxI; spiralstep++ )
     {
         if ((-X/2 <= x) && (x <= X/2) && (-Y/2 <= y) && (y <= Y/2))
