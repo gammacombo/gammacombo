@@ -102,6 +102,7 @@ class GammaComboEngine
 		void			scan();
 		void			scanDataSet();
 		void			setAsimovObservables(Combiner* c);
+    void      setObservablesFromFile(Combiner *c, int cId);
 		void			loadAsimovPoint(Combiner* c, int cId);
 		void			setUpPlot();
 		void      tightenChi2Constraint(Combiner *c, TString scanVar);
@@ -114,6 +115,7 @@ class GammaComboEngine
 		vector<Combiner*> 	cmb;
 		vector<int> 		colorsLine;
 		vector<int> 		colorsText;
+    vector<int>     fillStyles;
 		TString 			execname;
 		FileNameBuilder*	m_fnamebuilder;
     BatchScriptWriter* m_batchscriptwriter;

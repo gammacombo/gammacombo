@@ -72,7 +72,6 @@
 		if ( opt->var.size()>1 ) scanVar2 = opt->var[1];
 	}
 
-
 MethodAbsScan::~MethodAbsScan()
 {
 	for ( int i=0; i<allResults.size(); i++ ){
@@ -743,12 +742,20 @@ void MethodAbsScan::printCLintervals()
 		cout << endl;
 	}
 }
-
 ///
 /// Get the CL interval that includes the best-fit value.
 /// \param sigma 1,2
 ///
 CLInterval MethodAbsScan::getCLintervalCentral(int sigma)
+{
+  return getCLinterval(0,sigma);
+}
+
+///
+/// Get the CL interval that includes the best-fit value.
+/// \param sigma 1,2
+///
+CLInterval MethodAbsScan::getCLinterval(int iSol, int sigma)
 {
 	if ( clintervals1sigma.size()==0 ) calcCLintervals();
 	if ( clintervals1sigma.size()==0 ){
@@ -771,19 +778,23 @@ CLInterval MethodAbsScan::getCLintervalCentral(int sigma)
 		exit(1);
 	}
 
+	if ( iSol >= intervals.size() ) {
+    cout << "MethodAbsScan::getCLinterval() : ERROR : no solution with id " << iSol << endl;
+    exit(1);
+  }
+
 	// compute largest interval
 	if ( arg->largest ){
 		CLInterval i;
-		i.pvalue = intervals[0].pvalue;
-		i.min = intervals[0].min;
+		i.pvalue = intervals[iSol].pvalue;
+		i.min = intervals[iSol].min;
 		for ( int j=0; j<intervals.size(); j++ ) i.min = TMath::Min(i.min, intervals[j].min);
-		i.max = intervals[0].max;
+		i.max = intervals[iSol].max;
 		for ( int j=0; j<intervals.size(); j++ ) i.max = TMath::Max(i.max, intervals[j].max);
 		return i;
 	}
 
-	// the first entry corresponds to the central value!
-	return intervals[0];
+  return intervals[iSol];
 }
 
 
@@ -944,6 +955,30 @@ void MethodAbsScan::printLocalMinima()
 		cout << "  date:        " << date.AsString() << endl;
 		solutions[i]->Print(arg->verbose, arg->printcor);
 	}
+}
+
+///
+/// Save local minima solutions.
+///
+void MethodAbsScan::saveLocalMinima(TString fName)
+{
+	TDatime date; // lets also print the current date
+	if ( arg->debug ){
+		cout << "MethodAbsScan::saveLocalMinima() : LOCAL MINIMA for " << title << endl;
+		cout << endl;
+	}
+  ofstream outfile;
+  outfile.open(fName.Data());
+
+	for ( int i=0; i<solutions.size(); i++ ){
+		outfile << "\%SOLUTION " << i << ":\n" << endl;
+		outfile << "\%  combination: " << name << endl;
+		outfile << "\%  title:       " << title << endl;
+		outfile << "\%  date:        " << date.AsString() << endl;
+		solutions[i]->SaveLatex(outfile, arg->verbose, arg->printcor);
+	}
+  outfile.close();
+
 }
 
 ///

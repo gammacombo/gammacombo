@@ -58,6 +58,7 @@ class MethodAbsScan
 		inline float                    getChi2minGlobal(){return chi2minGlobal;}
 		float                           getCL(double val);
 		CLInterval                      getCLintervalCentral(int sigma=1);
+		CLInterval                      getCLinterval(int iSol=0, int sigma=1);
 		inline Combiner* 				getCombiner() const {return combiner;};
 		int                             getDrawSolution();
 		inline bool                     getFilled(){return drawFilled;};
@@ -67,6 +68,7 @@ class MethodAbsScan
 		inline TH2F*                    getHchisq2d(){return hChi2min2d;};
 		inline int                      getLineColor(){return lineColor;};
 		inline int                      getLineStyle(){return lineStyle;};
+		inline int                      getFillStyle(){return fillStyle;};
 		inline TString                  getMethodName() const {return methodName;};
 		inline TString                  getName() const {return name;};
 		inline int                      getNObservables(){return w->set(obsName)->getSize();}
@@ -100,6 +102,7 @@ class MethodAbsScan
 		virtual void                    print();
 		void                            printCLintervals();
 		void                            printLocalMinima();
+    void                            saveLocalMinima(TString fName="");
 		void                            saveScanner(TString fName="");
 		virtual int                     scan1d();
 		virtual int                     scan2d();
@@ -114,6 +117,7 @@ class MethodAbsScan
 		inline void                     setLineColor(int c){lineColor = c;};
 		inline void                     setLineStyle(int c){lineStyle = c;};
 		inline void                     setTextColor(int c){textColor = c;};
+		inline void                     setFillStyle(int c){fillStyle = c;};
 		inline void                     setTitle(TString s){title = s;};
 		void                            setChi2minGlobal(double x);
 		void                            setSolutions(vector<RooSlimFitResult*> s);
@@ -170,6 +174,7 @@ class MethodAbsScan
 		int lineColor;
 		int textColor;              ///< color used for plotted central values
 		int lineStyle;
+    int fillStyle;
 		bool drawFilled;            ///< choose if Histogram is drawn filled or not
 		int drawSolution;           ///< Configure how to draw solutions on the plots.
 		///< 0=don't plot, 1=plot at central value (1d) or markers (2d)

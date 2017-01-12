@@ -113,10 +113,10 @@ class PDF_Abs
 		vector<double> StatErr;
 		vector<double> SystErr;
 		TString corSource;
-
-	protected:
 		TString obsValSource;
 		TString obsErrSource;
+
+  protected:
 
 		void                    addToTrash(TObject*);
 		void 					getSubMatrix(TMatrixDSym& target, TMatrixDSym& source, vector<int>& indices);
