@@ -161,7 +161,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("po");
 	availableOptions.push_back("prelim");
   availableOptions.push_back("printsolx");
-	availableOptions.push_back("probforce");  
+	availableOptions.push_back("probforce");
 	availableOptions.push_back("probScanResult");
   availableOptions.push_back("printsoly");
 	//availableOptions.push_back("probimprove");

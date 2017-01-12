@@ -3,7 +3,8 @@
 #include "MethodDatasetsProbScan.h"
 #include "PDF_Datasets.h"
 
-GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[])
+GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[]):
+  runOnDataSet(false)
 {
 	// time the program
 	t.Start();
@@ -30,6 +31,12 @@ GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[])
 
 	// initialize members
 	plot = 0;
+}
+
+GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[], bool _runOnDataSet)
+{
+  GammaComboEngine(name,argc,argv);
+  runOnDataSet = _runOnDataSet;
 }
 
 GammaComboEngine::~GammaComboEngine()
@@ -62,6 +69,30 @@ bool GammaComboEngine::combinerExists(int id) const
 }
 
 ///
+/// Set the PDF (for datasets method) for the GammaComboEngine
+///
+void GammaComboEngine::setPdf( PDF_Abs* pdf )
+{
+  if ( !runOnDataSet ) {
+    cout << "It looks like you're trying to set a pdf but you haven't set runOnDataSet=true. I assume this is what you want so I'm doing it for you" << endl;
+    runOnDataSet = true;
+  }
+  if ( ! dynamic_cast<PDF_Datasets*>(pdf) ) {
+    cout << "GammaComboEngine::setPdf() : ERROR : The pdf you are trying to set " << pdf->getName() << " cannot be cast to a PDF_Datasets object" << endl;
+    exit(1);
+  }
+	if ( pdf==0 ){
+		cout << "GammaComboEngine::setPdf() : ERROR : Trying to add zero pointer as the PDF. Exit." << endl;
+		exit(1);
+	}
+	if ( pdfExists(0) ){
+		cout << "GammaComboEngine::setPdf() : ERROR : You have already set the pdf in GammaComboEngine. Exit." << endl;
+		exit(1);
+	}
+  addPdf(0, pdf);
+}
+
+///
 /// Add a PDF to the GammaComboEngine object.
 ///
 void GammaComboEngine::addPdf(int id, PDF_Abs* pdf, TString title)
@@ -89,7 +120,12 @@ void GammaComboEngine::addPdf(int id, PDF_Abs* pdf, TString title)
 ///
 void GammaComboEngine::addCombiner(int id, Combiner* cmb)
 {
-	if ( cmb==0 ){
+	if (runOnDataSet) {
+    cout << "GammaComboEngine::addCombiner() : ERROR : You're trying to make a combiner but the runOnDataSet flag is true. You cannot make a combination with this option" << endl;
+    exit(1);
+  }
+
+  if ( cmb==0 ){
 		cout << "GammaComboEngine::addCombiner() : ERROR : Trying to add zero pointer as the Combiner. Exit." << endl;
 		exit(1);
 	}
@@ -112,7 +148,12 @@ void GammaComboEngine::addCombiner(int id, Combiner* cmb)
 ///
 void GammaComboEngine::cloneCombiner(int newId, int oldId, TString name, TString title)
 {
-	if ( combinerExists(newId) ){
+	if ( runOnDataSet ) {
+    cout << "GammaComboEngine::cloneCombiner() : ERROR : You're trying to clone a combiner but the runOnDataSet flag is true. You can't have combiners when using the dataset option." << endl;
+    exit(1);
+  }
+
+  if ( combinerExists(newId) ){
 		cout << "GammaComboEngine::cloneCombiner() : ERROR : Requested new Combiner id " << newId << " exists already in GammaComboEngine. Exit." << endl;
 		exit(1);
 	}
@@ -441,6 +482,14 @@ void GammaComboEngine::loadAsimovPoint(Combiner* c, int cId)
 ///
 void GammaComboEngine::usage()
 {
+  if ( runOnDataSet ) {
+    cout << "USAGE\n\n"
+      "  # Compute limit on parameter a:\n"
+      "  " << execname << " --var a --ps 1\n\n"
+      "  # Compute limits on two parameters a and b:\n"
+      "  " << execname << " --var a --var b --ps 1\n\n" << endl;
+    exit(0);
+  }
 	cout << "USAGE\n\n"
 		"  # Compute combination 1, make a 1D Prob scan for variable a_gaus:\n"
 		"  " << execname << " -c 1 -i --var a_gaus --ps 1\n\n"
@@ -513,7 +562,11 @@ void GammaComboEngine::print()
 ///
 void GammaComboEngine::checkCombinationArg()
 {
-	if ( arg->combid.size()==0 ){
+	if ( runOnDataSet && arg->combid.size()>0 ) {
+    cout << "When running on a dataset do not pass a combination argument (it makes no sense for this use case)" << endl;
+    exit(1);
+  }
+  if ( arg->combid.size()==0 && !runOnDataSet){
 		cout << "Please chose a combination ID (-c).\n" << endl;
 		printCombinations();
 		exit(1);
@@ -581,7 +634,9 @@ void GammaComboEngine::checkColorArg()
 ///
 void GammaComboEngine::makeAddDelCombinations()
 {
-	// sanity check: the combid and combmodifications vectors should
+	if (runOnDataSet) return;
+
+  // sanity check: the combid and combmodifications vectors should
 	// be the same size
 	if ( arg->combmodifications.size() != arg->combid.size() ){
 		cout << "GammaComboEngine::makeAddDelCombinations() : ERROR : internal inconsistency. \n"
@@ -674,6 +729,16 @@ void GammaComboEngine::setUpPlot()
 		plot = new OneMinusClPlot2d(arg, m_fnamebuilder->getFileNamePlot(cmb), "p-value contours");
 	}
 	plot->disableLegend(arg->plotlegend);
+}
+
+///
+/// Setup for datasets
+///   This is a little hacky but when running on datasets we don't want to pass any combination id (as there isn't one) but we do
+///   still need access to our options (the default ones) which usually depend on the combination id passed so we add a fake one here
+///
+void GammaComboEngine::setUpForDatasets()
+{
+  cout << "Set" << endl;
 }
 
 ///
@@ -1296,6 +1361,14 @@ void GammaComboEngine::saveWorkspace( Combiner *c, int i )
 ///
 void GammaComboEngine::scan()
 {
+  // if we're running with the dataset option then we go off and do that somewhere else
+  if ( runOnDataSet )
+  {
+    scanDataSet();
+    return;
+  }
+
+  // combination scanning action happens here
 	for ( int i=0; i<arg->combid.size(); i++ )
 	{
 		int combinerId = arg->combid[i];
@@ -1544,43 +1617,75 @@ void GammaComboEngine::scanDataSet()
 {
    if ( arg->info || arg->latex ) return;
 
+   //MethodDatasetsProbScan* probScanner = new MethodDatasetsProbScan( (PDF_Datasets*) pdf[0], arg);
+	//probScanner->initScan();
 
-	MethodDatasetsProbScan* probScanner = new MethodDatasetsProbScan( (PDF_Datasets*) pdf[0], arg);
-	probScanner->initScan();
-	
-	if(arg->isAction("pluginbatch") || arg->isAction("plugin")){
-		probScanner->loadScanFromFile();
-		MethodDatasetsPluginScan *scanner = new MethodDatasetsPluginScan( probScanner, (PDF_Datasets*) pdf[0], arg);
-		scanner->initScan(); //\todo <- can we get rid of this?
+  /////////////////////////////////////////////////////
+  //
+  // PROB
+  //
+  /////////////////////////////////////////////////////
 
-		if ( arg->isAction("pluginbatch") ){
-			/////////////////////////////////////////////////////
-			// Running a Plugin Toy Creator batch job
-			/////////////////////////////////////////////////////
-			scanner->scan1d(arg->nrun);
-		} else { // if ( arg->isAction("plugin")
-			scanner->readScan1dTrees(arg->jmin[0], arg->jmax[0]);
-			/////////////////////////////////////////////////////
-			// Plotting the plugin scan results
-			/////////////////////////////////////////////////////
-			scanner->setLineColor(1);
-			plot->addScanner(probScanner);
-			plot->addScanner(scanner);
-			scanner->calcCLintervals();
-			probScanner->calcCLintervals();
-			plot->Draw();
-		}
-	} else {
-		/////////////////////////////
-		// doing a prob scan
-		/////////////////////////////
-		probScanner->scan1d();
-		plot->addScanner(probScanner);
-		probScanner->calcCLintervals();
-		plot->Draw();
+  if ( !arg->isAction("plugin") && !arg->isAction("pluginbatch") && !arg->isAction("coverage") && !arg->isAction("coveragebatch") && !arg->isAction("bb") && !arg->isAction("bbbatch") )
+  {
+    MethodDatasetsProbScan* probScanner = new MethodDatasetsProbScan( (PDF_Datasets*) pdf[0], arg);
+    if ( arg->var.size()==1 )
+    {
+      if ( arg->isAction("plot") ) {
+        probScanner->loadScanner( m_fnamebuilder->getFileNameScanner(probScanner) );
+      }
+      else {
+        //probScanner->initScan();
+        //probScanner->scan1d();
+        make1dProbScan(probScanner,0);
+      }
+      cout << "scan done" << endl;
+      make1dProbPlot(probScanner,0);
+      cout << "plot done" << endl;
+    }
+  }
+  cout << "Done" << endl;
+    //probScanner->initScan();
+		//probScanner->scan1d();
+		//plot->addScanner(probScanner);
+		//probScanner->calcCLintervals();
+		//plot->Draw();
 
-	}
-	
+
+	//if(arg->isAction("pluginbatch") || arg->isAction("plugin")){
+		//probScanner->loadScanFromFile();
+		//MethodDatasetsPluginScan *scanner = new MethodDatasetsPluginScan( probScanner, (PDF_Datasets*) pdf[0], arg);
+		//scanner->initScan(); //\todo <- can we get rid of this?
+
+		//if ( arg->isAction("pluginbatch") ){
+			///////////////////////////////////////////////////////
+			//// Running a Plugin Toy Creator batch job
+			///////////////////////////////////////////////////////
+			//scanner->scan1d(arg->nrun);
+		//} else { // if ( arg->isAction("plugin")
+			//scanner->readScan1dTrees(arg->jmin[0], arg->jmax[0]);
+			///////////////////////////////////////////////////////
+			//// Plotting the plugin scan results
+			///////////////////////////////////////////////////////
+			//scanner->setLineColor(1);
+			//plot->addScanner(probScanner);
+			//plot->addScanner(scanner);
+			//scanner->calcCLintervals();
+			//probScanner->calcCLintervals();
+			//plot->Draw();
+		//}
+	//}
+  //else {
+		///////////////////////////////
+		//// doing a prob scan
+		///////////////////////////////
+		//probScanner->scan1d();
+		//plot->addScanner(probScanner);
+		//probScanner->calcCLintervals();
+		//plot->Draw();
+
+	//}
+
 }
 
 
@@ -1612,29 +1717,21 @@ void GammaComboEngine::printBanner()
 ///
 /// run GammaComboEngine, main steering function
 ///
-void GammaComboEngine::run(bool runOnDatSet)
+void GammaComboEngine::run()
 {
 	if ( arg->usage ) usage(); // print usage and exit
 	defineColors();
-	if (!runOnDatSet) checkCombinationArg();
+	checkCombinationArg();
 	checkColorArg();
 	checkAsimovArg();
-	if(runOnDatSet){
-		if ( !cmb.empty() ){
-			cout << "ERROR : Please do not define any combiners when running on a dataset" << endl;
-			exit(EXIT_FAILURE);
-		}
-		setUpPlot();
-		scanDataSet();  // most thing gets done here
-	} else {
-		//scaleDownErrors();
-		if ( arg->nosyst ) disableSystematics();
-		makeAddDelCombinations();
-		if ( arg->nbatchjobs>0 ) writebatchscripts();
-		customizeCombinerTitles();
-		setUpPlot();
-		scan(); // most thing gets done here
-	}
+  if ( arg->nosyst ) disableSystematics();
+  makeAddDelCombinations();
+  if ( arg->nbatchjobs>0 ) writebatchscripts();
+  setUpForDatasets();
+  customizeCombinerTitles();
+  setUpPlot();
+  // most things get done here
+  scan();
 	if ( arg->info || arg->latex || arg->save!=""  ) return; // if only info is requested then we can go home
 	if (!arg->isAction("pluginbatch") && !arg->isAction("coveragebatch") && !arg->isAction("coverage") ) savePlot();
 	cout << endl;

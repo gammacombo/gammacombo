@@ -52,6 +52,8 @@ MethodDatasetsProbScan::MethodDatasetsProbScan(PDF_Datasets* PDF, OptParser* opt
         cerr << "MethodDatasetsProbScan::MethodDatasetsProbScan() : ERROR : no '" + pdf->getParName() + "' set found in workspace" << endl;
         exit(EXIT_FAILURE);
     }
+    // setup a dummy empty combiner to help with file naming and global option later
+    combiner = new Combiner( opt, name, title);
 }
 
 void MethodDatasetsProbScan::initScan() {
@@ -203,8 +205,10 @@ void MethodDatasetsProbScan::print() {
 /// MethodDatasetsProbScan
 /// \param nRun Part of the root tree file name to facilitate parallel production.
 ///
-int MethodDatasetsProbScan::scan1d()
+int MethodDatasetsProbScan::scan1d(bool fast, bool reverse)
 {
+	if ( arg->debug ) cout << "MethodDatasetsProbScan::scan1d() : starting ... " << endl;
+
     // Set limit to all parameters.
     this->loadParameterLimits(); /// Default is "free", if not changed by cmd-line parameter
 
@@ -309,6 +313,8 @@ int MethodDatasetsProbScan::scan1d()
     // this->sethCLFromProbScanTree(); here, but the latter gives a segfault somehow....
     // \todo: use this->sethCLFromProbScanTree() directly after figuring out the cause of the segfault.
     this->loadScanFromFile();
+
+    return 0;
 }
 
 double MethodDatasetsProbScan::getPValueTTestStatistic(double test_statistic_value) {

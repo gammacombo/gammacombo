@@ -25,7 +25,7 @@ public:
     void                loadScanFromFile(TString fileNameBaseIn = "default");
     void                loadParameterLimits();
     virtual void        print();
-    virtual int         scan1d();
+    virtual int         scan1d(bool fast=false, bool reverse=false);
     inline  void        setInputFile(TString name) {inputFiles.push_back(name); explicitInputFile = true;};
     inline  void        addFile(TString name) {inputFiles.push_back(name);};
 

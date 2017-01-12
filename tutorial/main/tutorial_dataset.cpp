@@ -9,7 +9,7 @@ int main(int argc, char* argv[])
 {
   //////////////////////////////////////////////////////////////
   //
-  // When working with datasets, the gammacombo framework relies on a workspace 
+  // When working with datasets, the gammacombo framework relies on a workspace
   // as the main reference for data and the statistical model.
   // Therefore, we first must construct the workspace that contains all necessary information.
   // In this tutorial, this is done by calling the command tutorial_dataset_build_workspace
@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
   // bin/tutorial_dataset --var branchingRatio --npoints 20 --scanrange 1e-7:2e-6
   // bin/tutorial_dataset -a pluginbatch --var branchingRatio --ntoys 50  --npoints 20 --scanrange 1e-7:2e-6
   // bin/tutorial_dataset -a plugin --var branchingRatio --npoints 20 --scanrange 1e-7:2e-6 -i
-	
+
 
   // Load the workspace from its file
   TFile f("workspace.root");
@@ -44,15 +44,17 @@ int main(int argc, char* argv[])
   pdf->initGlobalObservables("global_observables_set"); // global observables
   pdf->initParameters("parameters"); // all parameters
   pdf->initConstraints("constraint_set"); // RooArgSet containing the "constraint" PDF's
-  
+
   // Start the Gammacombo Engine
   GammaComboEngine gc("tutorial_dataset", argc, argv);
-  
-  // add the PDF
-  gc.addPdf(0, pdf); 
-  // there is just a single pdf, and its id is 0
 
-  // Combiners are not supported when working with datsets. 
+  // set run on dataset option
+  gc.setRunOnDataSet(true);
+
+  // set the PDF
+  gc.setPdf(pdf);
+
+  // Combiners are not supported when working with datsets.
   // The statistical model is fully defined with the PDF
-  gc.run(true); // The boolean parameter is a flag that tells Gammacombo that we are analysing a dataset
+  gc.run();
 }

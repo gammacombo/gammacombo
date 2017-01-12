@@ -43,11 +43,13 @@ class GammaComboEngine
 	public:
 
 		GammaComboEngine(TString name, int argc, char* argv[]);
+		GammaComboEngine(TString name, int argc, char* argv[], bool _runOnDataSet);
 		~GammaComboEngine();
 
 		void            adjustRanges(Combiner *c, int cId);
     void            setupToyVariationSets(Combiner *c, int cId);
 		void			addPdf(int id, PDF_Abs* pdf, TString title="");
+    void      setPdf( PDF_Abs* pdf);
 		void			addCombiner(int id, Combiner* cmb);
 		void			cloneCombiner(int newId, int oldId, TString name, TString title);
 		Combiner* 		getCombiner(int id) const;
@@ -60,10 +62,11 @@ class GammaComboEngine
 		void			print();
 		void			printPdfs();
 		void			printCombinations();
-		void			run(bool runOnData=false);
+		void			run();
 		void			runApplication();
 		void            scanStrategy1d(MethodProbScan *scanner, ParameterCache *pCache);
 		void			scanStrategy2d(MethodProbScan *scanner, ParameterCache *pCache);
+    inline void      setRunOnDataSet(bool opt) { runOnDataSet = opt; };
 		PDF_Abs* 		operator[](int idx);
 
 	private:
@@ -72,7 +75,7 @@ class GammaComboEngine
 		void			checkAsimovArg();
 		void			checkColorArg();
 		void			checkCombinationArg();
-		void            configureAsimovCombinerNames(Combiner* c, int i);
+		void      configureAsimovCombinerNames(Combiner* c, int i);
 		bool			combinerExists(int id) const;
 		void			customizeCombinerTitles();
 		void			defineColors();
@@ -104,6 +107,7 @@ class GammaComboEngine
 		void			setAsimovObservables(Combiner* c);
 		void			loadAsimovPoint(Combiner* c, int cId);
 		void			setUpPlot();
+    void      setUpForDatasets();
 		void      tightenChi2Constraint(Combiner *c, TString scanVar);
 		void			usage();
     void      writebatchscripts();
@@ -121,6 +125,7 @@ class GammaComboEngine
 		OneMinusClPlotAbs*	plot;
 		TStopwatch 			t;
 		TApplication* 		theApp;
+    bool        runOnDataSet;
 };
 
 #endif
