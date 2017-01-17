@@ -394,8 +394,8 @@ int MethodDatasetsProbScan::scan2d()
     if ( startPars ) delete startPars;
 
     // Define whether the 2d contours in hCL are "1D sigma" (ndof=1) or "2D sigma" (ndof=2).
-    // Leave this at 1 for now, as the "2D sigma" contours are computed from hChi2min2d, not hCL.
-    int ndof = 1;
+    // Titus: Change this to 2, since there is no reason to do wrong hCL contours.
+    int ndof = 2;
 
     // Set up storage for fit results of this particular
     // scan. This is used for the drag start parameters.
@@ -556,7 +556,8 @@ int MethodDatasetsProbScan::scan2d()
                 // If we find a new global minumum, this means that all
                 // previous 1-CL values are too high. We'll save the new possible solution, adjust the global
                 // minimum, return a status code, and stop.
-                if ( chi2minScan > -500 && chi2minScan<chi2minGlobal ){
+                // if ( chi2minScan > -500 && chi2minScan<chi2minGlobal ){      //Titus: the hard coded minimum chi2 to avoid ridiculous minima (e.g. at boundaries) only sensible when using the Utils::fitToMin, since the chi2 of the best fit with that fitting method is nominally 0.
+                if ( chi2minScan<chi2minGlobal ){
                     // warn only if there was a significant improvement
                     if ( arg->debug || chi2minScan<chi2minGlobal-1e-2 ){
                         if ( arg->verbose ) cout << "MethodDatasetsProbScan::scan2d() : WARNING : '" << title << "' new global minimum found! chi2minGlobal="
