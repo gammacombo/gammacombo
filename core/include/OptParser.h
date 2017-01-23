@@ -40,6 +40,7 @@ class OptParser
 		vector<int>		asimov;
 		vector<TString> asimovfile;
 		bool			cacheStartingValues;
+		bool			cls;
 		vector<int>		color;
 		vector<int>		combid;
 		vector<vector<int> >	combmodifications; // encodes requested modifications to the combiner ID through the -c 26:+12 syntax,format is [cmbid:[+pdf1,-pdf2,...]]
