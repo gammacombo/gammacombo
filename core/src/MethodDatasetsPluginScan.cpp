@@ -580,7 +580,15 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         toyTree.storeParsPll();
         toyTree.genericProbPValue = this->getPValueTTestStatistic(toyTree.chi2min - toyTree.chi2minGlobal);
 
-        for ( int j = 0; j < nToys; j++ )
+        // Titus: Try importance sampling from the combination part -> works, but definitely needs improvement in precision
+        int nActualToys = nToys;
+        if ( arg->importance ){
+            float plhPvalue = TMath::Prob(toyTree.chi2min - toyTree.chi2minGlobal,1);
+            nActualToys = nToys*importance(plhPvalue);
+        }
+        //Titus: Debug histogram to see the different deltachisq distributions
+        TH1F histdeltachi2("histdeltachi2", "histdeltachi2", 200,0,5);
+        for ( int j = 0; j < nActualToys; j++ )
         {
             if (arg->debug) cout << ">> new toy\n" << endl;
             this->pdf->setMinNllFree(0);
@@ -792,6 +800,10 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             //
             // 4. store
             //
+
+            //Titus:Debug fill deltachisq hist
+            if (arg->debug) histdeltachi2.Fill(toyTree.chi2minToy-toyTree.chi2minGlobalToy);
+
             toyTree.fill();
             //remove dataset and pointers
             delete r;
@@ -805,6 +817,16 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 
         //setParameters(w, pdf->getObsName(), obsDataset->get(0));
         toyTree.writeToFile();
+
+        //Titus Draw debug histdeltachisq
+        if (arg->debug)
+        {
+            TCanvas histplot("histplot", "Delta chi2 toys", 1024, 786);
+            histdeltachi2.Draw();
+            string plotstring = "plots/pdf/deltachi2_"+to_string(i)+".pdf";
+            histplot.SaveAs(plotstring.c_str());
+        }
+
     } // End of npoints loop
     outputFile->Write();
     outputFile->Close();
