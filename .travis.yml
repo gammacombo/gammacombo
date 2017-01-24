@@ -24,6 +24,10 @@ script:
       /code/tutorial/bin/tutorial_dataset --var branchingRatio --scanrange 5e-7:15e-7 --npoints 5;
       /code/tutorial/bin/tutorial_dataset -a pluginbatch --var branchingRatio --ntoys 5 --scanrange 5e-7:15e-7 --npoints 5;
       /code/tutorial/bin/tutorial_dataset -a plugin --var branchingRatio --scanrange 5e-7:15e-7 --npoints 5
+      "
+  docker run built_image_6 /bin/bash -c "
+      /code/tutorial/bin/tutorial_dataset_build_workspace;
+      /code/tutorial/bin/tutorial_dataset --var branchingRatio --var exponent --npoints2dx 5 --npoints2dy 5 --scanrange 5e-7:2e-6 --scanrangey -1.1e-3:-8e-4;
       " 
 # - docker run built_image_6 /bin/bash -c  "/code/tutorial/bin/tutorial -c 1 -c 2 -c 3  --var a_gaus --ps 1"
 

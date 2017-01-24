@@ -270,7 +270,7 @@ void OneMinusClPlot2d::addScanner(MethodAbsScan* s)
 {
 	if ( arg->debug ) cout << "OneMinusClPlot2d::addScanner() : adding " << s->getName() << endl;
 	scanners.push_back(s);
-	if ( s->getMethodName().EqualTo("Prob") ){
+	if ( s->getMethodName().EqualTo("Prob") || s->getMethodName().EqualTo("DatasetsProb")){
 		histosType.push_back(kChi2);
 		histos.push_back(s->getHchisq2d());
 	}

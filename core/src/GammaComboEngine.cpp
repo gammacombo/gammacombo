@@ -1121,7 +1121,10 @@ void GammaComboEngine::make2dProbScan(MethodProbScan *scanner, int cId)
 void GammaComboEngine::make2dProbPlot(MethodProbScan *scanner, int cId)
 {
 	// plot full
-	OneMinusClPlot2d* plotf = new OneMinusClPlot2d(arg, m_fnamebuilder->getFileNamePlotSingle(cmb, cId)+"_full", "p-value histogram: "+scanner->getTitle());
+	OneMinusClPlot2d* plotf;
+	if (scanner->getMethodName()=="Prob") plotf = new OneMinusClPlot2d(arg, m_fnamebuilder->getFileNamePlotSingle(cmb, cId)+"_full", "p-value histogram: "+scanner->getTitle());
+	else if (scanner->getMethodName()=="DatasetsProb") plotf = new OneMinusClPlot2d(arg, m_fnamebuilder->getFileNamePlot(cmb)+"_full", "p-value histogram: "+scanner->getTitle());	//Titus: change to make datasets plot possible
+	else cout << "The name of the scanner mathes neither Prob nor DatasetsProb!" << endl;
 	scanner->plotOn(plotf);
 	plotf->DrawFull();
 	plotf->save();
@@ -1132,7 +1135,8 @@ void GammaComboEngine::make2dProbPlot(MethodProbScan *scanner, int cId)
 	// only draw the plot once when multiple scanners are plotted,
 	// else we end up with too many graphs, and the transparency setting
 	// gets screwed up
-	if ( cId==arg->combid.size()-1 ){
+	// Titus: also draw the plot, if no combiner is set (datasets case)
+	if ( cId==arg->combid.size()-1 || arg->combid.empty()){
 		plot->Draw();
 		plot->Show();
 	}
@@ -1665,13 +1669,29 @@ void GammaComboEngine::scanDataSet()
 		/////////////////////////////
 		// doing a prob scan
 		/////////////////////////////
-		probScanner->scan1d();
-		plot->addScanner(probScanner);
-		probScanner->calcCLintervals();
-		plot->Draw();
 
+		if ( arg->var.size()==1 )
+		{
+			probScanner->scan1d();
+			plot->addScanner(probScanner);
+			probScanner->calcCLintervals();
+			plot->Draw();
+		}
+
+		/////////////////////////////
+		// Titus: doing a 2D prob scan
+		/////////////////////////////
+		else if ( arg->var.size()==2 )
+			{
+			if ( arg->isAction("plot") ){
+				probScanner->loadScanner(m_fnamebuilder->getFileNameScanner(probScanner));
+			}
+			else{
+				probScanner->scan2d();
+			}
+			make2dProbPlot(probScanner, 0);
+		}
 	}
-	
 }
 
 

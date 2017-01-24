@@ -1,4 +1,5 @@
 #include "RooGaussian.h"
+#include "RooLognormal.h"
 #include "RooRealVar.h"
 #include "RooDataSet.h"
 #include "RooFormulaVar.h"
@@ -40,8 +41,8 @@ int main()
   // The normalization factor is not exactly known. Instead, it has to be estimated. The estimator for the normalization factor is a global observable
   // that constrains its value via a Gaussian Constraint. 
   RooRealVar  norm_constant_obs( "norm_constant_glob_obs", "global observable of normalization constant", 
-                              1e-8, 0., 1e-6);     // this is the observed value, the global observable
-  RooRealVar  norm_constant("norm_constant","norm_constant", 1e-8, 0,  1e-6);                   // the normalization constant is a nuisance parameter.
+                              1e-8, 1e-20, 1e-6);     // this is the observed value, the global observable
+  RooRealVar  norm_constant("norm_constant","norm_constant", 1e-8, 1e-20,  1e-6);                   // the normalization constant is a nuisance parameter.
   RooRealVar  norm_constant_sigma("norm_constant_sigma","norm_constant_sigma", 5e-10);
   RooGaussian norm_constant_constraint("norm_constant_constraint","norm_constant_constraint", norm_constant_obs, norm_constant, norm_constant_sigma);
 
