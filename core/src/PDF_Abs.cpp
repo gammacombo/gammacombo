@@ -18,6 +18,7 @@
 	theory      = NULL;
 	observables = NULL;
 	pdf         = NULL;
+	pdfBkg      = NULL;
 	toyObservables = NULL;
 	nToyObs = 1000;
 	iToyObs = 0;

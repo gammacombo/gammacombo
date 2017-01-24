@@ -74,6 +74,7 @@ class PDF_Abs
 		float 				getObservableValue(TString obsname);
 		inline RooArgList*  getParameters(){return parameters;};
 		inline RooAbsPdf*   getPdf(){return pdf;};
+		inline RooAbsPdf*   getBkgPdf(){return pdfBkg;};
 		void 				getSubCorrelationStat(TMatrixDSym& target, vector<int>& indices);
 		void 		 		getSubCorrelationSyst(TMatrixDSym& target, vector<int>& indices);
 		inline RooArgList*  getTheory(){return theory;};
@@ -128,6 +129,7 @@ class PDF_Abs
 		TString                 name;
 		TString                 title;        // to be printed in human readable summaries
 		RooAbsPdf*              pdf;          // the PDF
+		RooAbsPdf*      		pdfBkg;		  // Bkg PDF for building CLs teststatistic
 		int                     nObs;         // number of observables
 		map<string,TObject*>    trash;        // trash bin, gets emptied in destructor
 		bool					m_isCrossCorPdf;	// Cross correlation PDFs need some extra treatment in places, e.g. in uniquify()
