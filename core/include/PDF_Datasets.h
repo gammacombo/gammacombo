@@ -50,7 +50,9 @@ public:
     inline int            getFitStatus() {return fitStatus;};
     inline int            getFitStrategy() {return fitStrategy;};
     TString               getGlobalObsName() {return globalObsName;};
+    float                 getMinNll() {return minNll;};
     float                 getMinNllFree() {return minNllFree;};
+    float                 getMinNllBkg() {return minNllBkg;};
     float                 getMinNllScan() {return minNllScan;};
     TString               getObsName() {return obsName;};
     TString               getParName() {return parName;};
@@ -61,6 +63,7 @@ public:
     // setters
     inline void           setFitStatus(int stat = 0) {fitStatus = stat;};
     inline void           setFitStrategy(int strat = 0) {fitStrategy = strat;};
+    inline void           setMinNll(float mnll) {minNll = mnll;};
     inline void           setMinNllFree(float mnll) {minNllFree = mnll;};
     inline void           setMinNllScan(float mnll) {minNllScan = mnll;};
     void                  setNCPU(int n) {NCPU = n;};
@@ -103,6 +106,8 @@ protected:
     int             fitStrategy;
     int             fitStatus;
     float           minNllFree;
+    // float           minNll;
+    float           minNllBkg;
     float           minNllScan;
     bool areObsSet;       //> Forces user to set observables
     bool areParsSet;      //> Forces user to set parameters

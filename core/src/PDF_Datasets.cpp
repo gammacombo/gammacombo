@@ -67,6 +67,7 @@ void PDF_Datasets::initData(const TString& name) {
         std::cout << "FATAL in PDF_Datasets::initData -- Data: " << dataName << " not found in workspace" << std::endl;
         exit(EXIT_FAILURE);
     }
+    if(pdf) this->minNll = pdf->createNLL(*data)->getVal();
     std::cout << "INFO in PDF_Datasets::initData -- Data initialized" << std::endl;
     return;
 };
@@ -154,6 +155,7 @@ void PDF_Datasets::initPDF(const TString& name) {
     }
 
     std::cout << "INFO in PDF_Datasets::initPDF -- PDF initialized" << std::endl;
+    if(data) this->minNll = pdf->createNLL(*data)->getVal();
     return;
 };
 
@@ -275,6 +277,8 @@ RooFitResult* PDF_Datasets::fit(RooDataSet* dataToFit) {
     RooMsgService::instance().setSilentMode(kFALSE);
     RooMsgService::instance().setGlobalKillBelow(INFO);
     this->fitStatus = result->status();
+    this->minNll = pdf->createNLL(*dataToFit)->getVal();
+
     return result;
 };
 
@@ -308,6 +312,7 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit) {
     RooMsgService::instance().setSilentMode(kFALSE);
     RooMsgService::instance().setGlobalKillBelow(INFO);
     this->fitStatus = result->status();
+    this->minNllBkg = pdfBkg->createNLL(*dataToFit)->getVal();
     return result;
 };
 
