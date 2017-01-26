@@ -56,6 +56,7 @@ class MethodAbsScan
 		inline const vector<RooSlimFitResult*>& getAllResults(){return allResults;};
 		inline const vector<RooSlimFitResult*>& getCurveResults(){return curveResults;};
 		inline float                    getChi2minGlobal(){return chi2minGlobal;}
+		inline float                    getChi2minBkg(){return chi2minBkg;}
 		float                           getCL(double val);
 		CLInterval                      getCLintervalCentral(int sigma=1);
 		inline Combiner* 				getCombiner() const {return combiner;};
@@ -167,6 +168,7 @@ class MethodAbsScan
 		TH1F* hChi2min;             ///< histogram for the chi2min values before Prob()
 		TH2F* hChi2min2d;           ///< histogram for the chi2min values before Prob()
 		double chi2minGlobal;       ///< chi2 value at global minimum
+		double chi2minBkg;       ///< chi2 value at global minimum
 		bool chi2minGlobalFound;    ///< flag to avoid finding minimum twice
 		int lineColor;
 		int textColor;              ///< color used for plotted central values

@@ -52,6 +52,7 @@
 		nPoints2dy(opt->npoints2dy),
 		pvalueCorrectorSet(false),
 		chi2minGlobal(0.0),
+		chi2minBkg(0.0),
 		chi2minGlobalFound(false),
 		lineStyle(0),
 		lineColor(kBlue-8),

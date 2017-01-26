@@ -47,8 +47,27 @@ MethodDatasetsProbScan::MethodDatasetsProbScan(PDF_Datasets* PDF, OptParser* opt
         exit(EXIT_FAILURE);
     }
     dataFreeFitResult = (RooFitResult*) w->obj("data_fit_result");
-    chi2minGlobal = 2 * dataFreeFitResult->minNll();
-    std::cout << "=============== Global Minimum (2*-Log(Likelihood)) is: 2*" << dataFreeFitResult->minNll() << " = " << chi2minGlobal << endl;
+    // chi2minGlobal = 2 * dataFreeFitResult->minNll();
+    chi2minGlobal = 2*pdf->getMinNll();
+    std::cout << "=============== Global minimum (2*-Log(Likelihood)) is: 2*" << dataFreeFitResult->minNll() << " = " << chi2minGlobal << endl;
+
+
+    // if bkg pdf is given, compute bkg chi2
+    if(pdf->getBkgPdf())
+    {
+        RooFitResult * bkgfitresult = pdf->fitBkg(pdf->getData());
+        // chi2minBkg = 2 * bkgfitresult->minNll();
+        chi2minBkg = 2*pdf->getMinNllBkg();
+        std::cout << "=============== Bkg minimum (2*-Log(Likelihood)) is: 2*" << bkgfitresult->minNll() << " = " << chi2minBkg << endl;
+        if (chi2minBkg<chi2minGlobal)
+        {
+            std::cout << "WARNING: BKG MINIMUM IS LOWER THAN GLOBAL MINIMUM! The likelihoods are screwed up! Set bkg minimum to global minimum for consistency." << std::endl;
+            chi2minBkg = chi2minGlobal;
+            std::cout << "=============== New bkg minimum (2*-Log(Likelihood)) is: " << chi2minBkg << endl;            
+        }
+
+    }
+
 
     if ( !w->set(pdf->getObsName()) ) {
         cerr << "MethodDatasetsProbScan::MethodDatasetsProbScan() : ERROR : no '" + pdf->getObsName() + "' set found in workspace" << endl;
@@ -327,12 +346,13 @@ int MethodDatasetsProbScan::scan1d()
         assert(result);
 
         if (arg->debug) {
-            cout << "DEBUG in MethodDatasetsProbScan::scan1d_prob() - minNll data scan at scan point " << scanpoint << " : " << 2 * result->minNll() << endl;
+            cout << "DEBUG in MethodDatasetsProbScan::scan1d_prob() - minNll data scan at scan point " << scanpoint << " : " << 2 * result->minNll() << ": "<< 2 * pdf->getMinNll() << endl;
         }
         this->probScanTree->statusScanData = result->status();
 
         // set chi2 of fixed fit: scan fit on data
-        this->probScanTree->chi2min           = 2 * result->minNll();
+        // this->probScanTree->chi2min           = 2 * result->minNll();
+        this->probScanTree->chi2min           = 2 * pdf->getMinNll();        
         this->probScanTree->covQualScanData   = result->covQual();
         this->probScanTree->scanbest  = freeDataFitValue;
 
@@ -345,9 +365,17 @@ int MethodDatasetsProbScan::scan1d()
 
         // also save the chi2 of the free data fit to the tree:
         this->probScanTree->chi2minGlobal = this->getChi2minGlobal();
+        this->probScanTree->chi2minBkg = this->getChi2minBkg();
 
         this->probScanTree->genericProbPValue = this->getPValueTTestStatistic(this->probScanTree->chi2min - this->probScanTree->chi2minGlobal);
         this->probScanTree->fill();
+
+        if(arg->debug && pdf->getBkgPdf())
+        {
+            float pval_cls = this->getPValueTTestStatistic(this->probScanTree->chi2min - this->probScanTree->chi2minBkg, arg->cls);
+            cout << "DEBUG in MethodDatasetsProbScan::scan1d() - p value CLs: " << pval_cls << endl;
+        }
+
 
         // reset
         setParameters(w, pdf->getParName(), parsFunctionCall->get(0));
@@ -640,11 +668,11 @@ int MethodDatasetsProbScan::scan2d()
 }
 
 
-double MethodDatasetsProbScan::getPValueTTestStatistic(double test_statistic_value) {
+double MethodDatasetsProbScan::getPValueTTestStatistic(double test_statistic_value, bool isCLs) {
     if ( test_statistic_value > 0) {
         // this is the normal case
         return TMath::Prob(test_statistic_value, 1);
-    } else {
+    } else if(!isCLs){
         cout << "MethodDatasetsProbScan::scan1d_prob() : WARNING : Test statistic is negative, forcing it to zero" << std::endl
              << "Fit at current scan point has higher likelihood than free fit." << std::endl
              << "This should not happen except for very small underflows when the scan point is at the best fit value. " << std::endl
@@ -652,6 +680,10 @@ double MethodDatasetsProbScan::getPValueTTestStatistic(double test_statistic_val
              << "An equal upwards fluctuaion corresponds to a p value of " << TMath::Prob(abs(test_statistic_value), 1) << std::endl;
         // TMath::Prob will return 0 if the Argument is slightly below zero. As we are working with a float-zero we can not rely on it here:
         // TMath::Prob( 0 ) returns 1
+        return 1.;
+    }
+    else {
+        cout << "MethodDatasetsProbScan::scan1d_prob() : WARNING : CLs test statistic is negative, forcing it to zero" << std::endl;
         return 1.;
     }
 }
