@@ -1639,6 +1639,16 @@ void GammaComboEngine::run(bool runOnDatSet)
 	if (!runOnDatSet) checkCombinationArg();
 	checkColorArg();
 	checkAsimovArg();
+	if( arg->cls)
+	{
+		cout << "===========================================" << endl;
+		cout << "Will additionally compute CLs method" << endl;
+		for (auto meas : pdf)
+		{
+			if (!meas->getBkgPdf()) cout << "WARNING: CLs -- No background PDF has been set! The p value at the lower edge of the scan range will be assumed for the background estimate." << endl;
+		}
+		cout << "===========================================" << endl << endl;
+	}	
 	if(runOnDatSet){
 		if ( !cmb.empty() ){
 			cout << "ERROR : Please do not define any combiners when running on a dataset" << endl;

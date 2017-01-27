@@ -277,7 +277,9 @@ RooFitResult* PDF_Datasets::fit(RooDataSet* dataToFit) {
     RooMsgService::instance().setSilentMode(kFALSE);
     RooMsgService::instance().setGlobalKillBelow(INFO);
     this->fitStatus = result->status();
-    this->minNll = pdf->createNLL(*dataToFit)->getVal();
+    RooAbsReal* nll = pdf->createNLL(*dataToFit);
+    this->minNll = nll->getVal();
+    delete nll;
 
     return result;
 };
@@ -312,7 +314,10 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit) {
     RooMsgService::instance().setSilentMode(kFALSE);
     RooMsgService::instance().setGlobalKillBelow(INFO);
     this->fitStatus = result->status();
-    this->minNllBkg = pdfBkg->createNLL(*dataToFit)->getVal();
+    RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit);
+    this->minNll = nll_bkg->getVal();
+    delete nll_bkg;
+
     return result;
 };
 

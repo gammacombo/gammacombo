@@ -46,6 +46,7 @@ MethodDatasetsProbScan::MethodDatasetsProbScan(PDF_Datasets* PDF, OptParser* opt
         cerr << "ERROR: The workspace must contain the fit result of the fit to data. The name of the fit result must be 'data_fit_result'. " << endl;
         exit(EXIT_FAILURE);
     }
+
     dataFreeFitResult = (RooFitResult*) w->obj("data_fit_result");
     // chi2minGlobal = 2 * dataFreeFitResult->minNll();
     chi2minGlobal = 2*pdf->getMinNll();
@@ -372,7 +373,7 @@ int MethodDatasetsProbScan::scan1d()
 
         if(arg->debug && pdf->getBkgPdf())
         {
-            float pval_cls = this->getPValueTTestStatistic(this->probScanTree->chi2min - this->probScanTree->chi2minBkg, arg->cls);
+            float pval_cls = this->getPValueTTestStatistic(this->probScanTree->chi2min - this->probScanTree->chi2minBkg, true);
             cout << "DEBUG in MethodDatasetsProbScan::scan1d() - p value CLs: " << pval_cls << endl;
         }
 
