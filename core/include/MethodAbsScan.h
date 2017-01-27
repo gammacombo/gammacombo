@@ -49,7 +49,7 @@ class MethodAbsScan
 		MethodAbsScan(OptParser* opt);
 		~MethodAbsScan();
 
-		virtual void                    calcCLintervals();
+		virtual void                    calcCLintervals(bool isCLs = false);
 		void                            confirmSolutions();
 		void                            doInitialFit(bool force=false);
 		inline OptParser*               getArg(){return arg;};
@@ -63,7 +63,9 @@ class MethodAbsScan
 		int                             getDrawSolution();
 		inline bool                     getFilled(){return drawFilled;};
 		inline TH1F*                    getHCL(){return hCL;};
+		inline TH1F*                    getHCLs(){return hCLs;};
 		inline TH2F*                    getHCL2d(){return hCL2d;};
+		inline TH2F*                    getHCLs2d(){return hCLs2d;};
 		inline TH1F*                    getHchisq(){return hChi2min;};
 		inline TH2F*                    getHchisq2d(){return hChi2min2d;};
 		inline int                      getLineColor(){return lineColor;};

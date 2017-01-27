@@ -530,13 +530,20 @@ bool MethodAbsScan::interpolate(TH1F* h, int i, float y, float central, bool upp
 /// Use a fit-based interpolation (interpolate()) if we have more than 25 bins,
 /// else revert to a straight line interpolation (interpolateSimple()).
 ///
-void MethodAbsScan::calcCLintervals()
+void MethodAbsScan::calcCLintervals(bool isCLs)
 {
+	TH1F *histogramCL = this->getHCL();
+	// calc CL intervals with CLs method
+	if (isCLs)
+	{
+		histogramCL =this->getHCLs();
+	}
+
 	if ( arg->isQuickhack(8) ){
 		// \todo Switch to the new CLIntervalMaker mechanism. It can be activated
 		// already using --qh 8, but it really is in beta stage still
 		cout << "\nMethodAbsScan::calcCLintervals() : USING NEW CLIntervalMaker for " << name << endl << endl;
-		CLIntervalMaker clm(arg, *hCL);
+		CLIntervalMaker clm(arg, *histogramCL);
 		clm.findMaxima(0.04); // ignore maxima under pvalue=0.04
 		for ( int iSol=0; iSol<solutions.size(); iSol++ ){
 			float sol = getScanVar1Solution(iSol);
@@ -568,7 +575,7 @@ void MethodAbsScan::calcCLintervals()
 	clintervals1sigma.clear(); // clear, else calling this function twice doesn't work
 	clintervals2sigma.clear();
   clintervals3sigma.clear();
-	int n = hCL->GetNbinsX();
+	int n = histogramCL->GetNbinsX();
 	RooRealVar* par = w->var(scanVar1);
 
 	for ( int iSol=0; iSol<solutions.size(); iSol++ )
@@ -581,21 +588,21 @@ void MethodAbsScan::calcCLintervals()
 
 		for ( int c=0; c<3; c++ )
 		{
-			CLlo[c] = hCL->GetXaxis()->GetXmin();
-			CLhi[c] = hCL->GetXaxis()->GetXmax();
+			CLlo[c] = histogramCL->GetXaxis()->GetXmin();
+			CLhi[c] = histogramCL->GetXaxis()->GetXmax();
 			float y = 1.-CL[c];
 			float sol = getScanVar1Solution(iSol);
-			int sBin = hCL->FindBin(sol);
+			int sBin = histogramCL->FindBin(sol);
 
 			// find lower interval bound
 			for ( int i=sBin; i>0; i-- ){
-				if ( hCL->GetBinContent(i) < y ){
+				if ( histogramCL->GetBinContent(i) < y ){
 					if ( n>25 ){
-						bool check = interpolate(hCL, i, y, sol, false, CLlo[c], CLloErr[c]);
-						if ( !check || CLlo[c]!=CLlo[c] ) interpolateSimple(hCL, i, y, CLlo[c]);
+						bool check = interpolate(histogramCL, i, y, sol, false, CLlo[c], CLloErr[c]);
+						if ( !check || CLlo[c]!=CLlo[c] ) interpolateSimple(histogramCL, i, y, CLlo[c]);
 					}
 					else{
-						interpolateSimple(hCL, i, y, CLlo[c]);
+						interpolateSimple(histogramCL, i, y, CLlo[c]);
 					}
 					break;
 				}
@@ -603,20 +610,20 @@ void MethodAbsScan::calcCLintervals()
 
 			// find upper interval bound
 			for ( int i=sBin; i<n; i++ ){
-				if ( hCL->GetBinContent(i) < y ){
+				if ( histogramCL->GetBinContent(i) < y ){
 					if ( n>25 ){
-						bool check = interpolate(hCL, i-1, y, sol, true, CLhi[c], CLhiErr[c]);
-						if ( CLhi[c]!=CLhi[c] ) interpolateSimple(hCL, i-1, y, CLhi[c]);
+						bool check = interpolate(histogramCL, i-1, y, sol, true, CLhi[c], CLhiErr[c]);
+						if ( CLhi[c]!=CLhi[c] ) interpolateSimple(histogramCL, i-1, y, CLhi[c]);
 					}
 					else{
-						interpolateSimple(hCL, i-1, y, CLhi[c]);
+						interpolateSimple(histogramCL, i-1, y, CLhi[c]);
 					}
 					break;
 				}
 			}
 
 			// save interval if solution is contained in it
-			if ( hCL->GetBinContent(sBin)>y )
+			if ( histogramCL->GetBinContent(sBin)>y )
 			{
 				CLInterval cli;
 				cli.pvalue = 1.-CL[c];
@@ -665,20 +672,20 @@ void MethodAbsScan::calcCLintervals()
 
 		for ( int c=0; c<2; c++ )
 		{
-			CLlo[c] = hCL->GetXaxis()->GetXmin();
-			CLhi[c] = hCL->GetXaxis()->GetXmax();
+			CLlo[c] = histogramCL->GetXaxis()->GetXmin();
+			CLhi[c] = histogramCL->GetXaxis()->GetXmax();
 			float y = 1.-CL[c];
 
 			if ( iBoundary==1 )
 			{
 				// find lower interval bound
-				if ( hCL->GetBinContent(n)<y ) continue;  ///< skip if p-value is too low at boundary
+				if ( histogramCL->GetBinContent(n)<y ) continue;  ///< skip if p-value is too low at boundary
 				for ( int i=n; i>0; i-- )
 				{
-					if ( hCL->GetBinContent(i) > y )
+					if ( histogramCL->GetBinContent(i) > y )
 					{
-						if ( n>25 ) interpolate(hCL, i, y, hCL->GetXaxis()->GetXmax(), false, CLlo[c], CLloErr[c]);
-						else        interpolateSimple(hCL, i, y, CLlo[c]);
+						if ( n>25 ) interpolate(histogramCL, i, y, histogramCL->GetXaxis()->GetXmax(), false, CLlo[c], CLloErr[c]);
+						else        interpolateSimple(histogramCL, i, y, CLlo[c]);
 						break;
 					}
 				}
@@ -686,13 +693,13 @@ void MethodAbsScan::calcCLintervals()
 			else
 			{
 				// find upper interval bound
-				if ( hCL->GetBinContent(1)<y ) continue;  ///< skip if p-value is too low at boundary
+				if ( histogramCL->GetBinContent(1)<y ) continue;  ///< skip if p-value is too low at boundary
 				for ( int i=1; i<n; i++ )
 				{
-					if ( hCL->GetBinContent(i) > y )
+					if ( histogramCL->GetBinContent(i) > y )
 					{
-						if ( n>25 ) interpolate(hCL, i-1, y, hCL->GetXaxis()->GetXmin(), true, CLhi[c], CLhiErr[c]);
-						else        interpolateSimple(hCL, i-1, y, CLhi[c]);
+						if ( n>25 ) interpolate(histogramCL, i-1, y, histogramCL->GetXaxis()->GetXmin(), true, CLhi[c], CLhiErr[c]);
+						else        interpolateSimple(histogramCL, i-1, y, CLhi[c]);
 						break;
 					}
 				}
