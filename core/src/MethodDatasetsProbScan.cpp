@@ -106,6 +106,10 @@ void MethodDatasetsProbScan::initScan() {
     if ( hChi2min ) delete hChi2min;
     hChi2min = new TH1F("hChi2min" + getUniqueRootName(), "hChi2min" + pdf->getPdfName(), nPoints1d, min1, max1);
 
+    if (hCLs) delete hCLs;
+    hCLs = new TH1F("hCLs" + getUniqueRootName(), "hCLs" + pdf->getPdfName(), nPoints1d, min1, max1);
+
+
     // fill the chi2 histogram with very unlikely values such
     // that inside scan1d() the if clauses work correctly
     for ( int i = 1; i <= nPoints1d; i++ ) hChi2min->SetBinContent(i, 1e6);
@@ -201,6 +205,9 @@ void MethodDatasetsProbScan::sethCLFromProbScanTree() {
     delete hCL;
     this->hCL = new TH1F("hCL", "hCL", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth);
     if (arg->debug) printf("DEBUG %i %f %f %f\n", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth, halfBinWidth);
+    delete hCLs;
+    this->hCLs = new TH1F("hCLs", "hCLs", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth);
+    if (arg->debug) printf("DEBUG %i %f %f %f\n", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth, halfBinWidth);
     Long64_t nentries     = this->probScanTree->GetEntries();
     // this->probScanTree->activateCoreBranchesOnly(); //< speeds up the event loop
     for (Long64_t i = 0; i < nentries; i++)
@@ -208,6 +215,7 @@ void MethodDatasetsProbScan::sethCLFromProbScanTree() {
         // load entry
         this->probScanTree->GetEntry(i);
         this->hCL->SetBinContent(this->hCL->FindBin(this->probScanTree->scanpoint), this->probScanTree->genericProbPValue);
+        this->hCLs->SetBinContent(this->hCLs->FindBin(this->probScanTree->scanpoint), genericProbPValue(this->probScanTree->chi2min - this->probScanTree->chi2minBkg, true));
     }
     // this->probScanTree->activateAllBranches(); //< Very important!
 
