@@ -164,7 +164,9 @@ class MethodAbsScan
 		RooDataSet* startPars;      ///< save the start parameter values before any scan
 		RooFitResult* globalMin;    ///< parameter values at a global minimum
 		TH1F* hCL;                  ///< 1-CL curve
+		TH1F* hCLs;                  ///< 1-CL curve
 		TH2F* hCL2d;                ///< 1-CL curve
+		TH2F* hCLs2d;                ///< 1-CL curve
 		TH1F* hChi2min;             ///< histogram for the chi2min values before Prob()
 		TH2F* hChi2min2d;           ///< histogram for the chi2min values before Prob()
 		double chi2minGlobal;       ///< chi2 value at global minimum
