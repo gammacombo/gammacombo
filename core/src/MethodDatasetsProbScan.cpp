@@ -215,7 +215,7 @@ void MethodDatasetsProbScan::sethCLFromProbScanTree() {
         // load entry
         this->probScanTree->GetEntry(i);
         this->hCL->SetBinContent(this->hCL->FindBin(this->probScanTree->scanpoint), this->probScanTree->genericProbPValue);
-        this->hCLs->SetBinContent(this->hCLs->FindBin(this->probScanTree->scanpoint), genericProbPValue(this->probScanTree->chi2min - this->probScanTree->chi2minBkg, true));
+        this->hCLs->SetBinContent(this->hCLs->FindBin(this->probScanTree->scanpoint), getPValueTTestStatistic(this->probScanTree->chi2min - this->probScanTree->chi2minBkg, true));
     }
     // this->probScanTree->activateAllBranches(); //< Very important!
 

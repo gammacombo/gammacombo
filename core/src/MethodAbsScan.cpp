@@ -58,7 +58,9 @@
 		lineColor(kBlue-8),
 		textColor(kBlack),
 		hCL(0),
+		hCLs(0),
 		hCL2d(0),
+		hCLs2d(0),
 		hChi2min(0),
 		hChi2min2d(0),
 		obsDataset(NULL),
@@ -80,6 +82,8 @@ MethodAbsScan::~MethodAbsScan()
 		if ( allResults[i] ) delete allResults[i];
 	}
 	if ( hCL ) delete hCL;
+	if ( hCLs ) delete hCLs;
+	if ( hCLs2d ) delete hCLs2d;
 	if ( hCL2d ) delete hCL2d;
 	if ( hChi2min ) delete hChi2min;
 	if ( hChi2min2d ) delete hChi2min2d;
