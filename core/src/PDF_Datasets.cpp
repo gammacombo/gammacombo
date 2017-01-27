@@ -315,7 +315,7 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit) {
     RooMsgService::instance().setGlobalKillBelow(INFO);
     this->fitStatus = result->status();
     RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit);
-    this->minNll = nll_bkg->getVal();
+    this->minNllBkg = nll_bkg->getVal();
     delete nll_bkg;
 
     return result;
