@@ -534,7 +534,7 @@ void MethodAbsScan::calcCLintervals(bool isCLs)
 {
 	TH1F *histogramCL = this->getHCL();
 	// calc CL intervals with CLs method
-	if (isCLs)
+	if (isCLs && this->getHCLs())
 	{
 		histogramCL =this->getHCLs();
 	}
@@ -563,12 +563,12 @@ void MethodAbsScan::calcCLintervals(bool isCLs)
 	if(solutions.empty()){
 		cout 	<< "MethodAbsScan::calcCLintervals() : Solutions vector empty. "
 								<<"Using simple method with  linear splines."<<endl;
-		this->calcCLintervalsSimple();
+		this->calcCLintervalsSimple(isCLs);
 		return;
 	}
 	else {		//Since I want to have the CL_s method also, I do the simple method anyway.
 		cout<<"Using simple method with  linear splines."<<endl;
-		this->calcCLintervalsSimple();		
+		this->calcCLintervalsSimple(isCLs);		
 	}
 
 
@@ -717,6 +717,7 @@ void MethodAbsScan::calcCLintervals(bool isCLs)
 
 			int pErr = 2;
 			if ( arg && arg->digits>0 ) pErr = arg->digits;
+			if (isCLs && this->getHCLs()) cout << "CL_s: ";
 			printf("\n%s = [%7.*f, %7.*f] @%3.2fCL",
 					par->GetName(),
 					pErr, CLlo[c], pErr, CLhi[c],
@@ -812,9 +813,9 @@ float MethodAbsScan::getCL(double val)
 }
 
 
-void MethodAbsScan::plotOn(OneMinusClPlotAbs *plot)
+void MethodAbsScan::plotOn(OneMinusClPlotAbs *plot, bool doCLs)
 {
-	plot->addScanner(this);
+	plot->addScanner(this, doCLs);
 }
 
 
@@ -1307,45 +1308,60 @@ void MethodAbsScan::setYscanRange(float min, float max)
 
 
 
-void MethodAbsScan::calcCLintervalsSimple()
+void MethodAbsScan::calcCLintervalsSimple(bool isCLs)
 {
- 
   clintervals1sigma.clear(); 
   clintervals2sigma.clear();
-  
   double levels[2] = {0.6827, 0.9545};
-  for (int c=0;c<2;c++){
-    const std::pair<double, double> borders = getBorders(TGraph(this->hCL), levels[c]);
-    CLInterval cli;
-    cli.pvalue = 1. - levels[c];
-    cli.min = borders.first;
-    cli.max = borders.second;
-    cli.central = -1;
-    if ( c==0 ) clintervals1sigma.push_back(cli);
-    if ( c==1 ) clintervals2sigma.push_back(cli);
-    std::cout<<"borders at "<<levels[c]<<"  [ "<<borders.first<<" : "<<borders.second<<"]";
-	cout << ", " << methodName << " (simple boundary scan)" << endl;
+
+  TH1F *histogramCL = this->hCL;
+  if (this->hCLs && isCLs)
+  {
+  	histogramCL = this->hCLs;
   }
+  if(!isCLs || (this->hCLs && isCLs))
+  {  
+	  for (int c=0;c<2;c++){
+	    const std::pair<double, double> borders = getBorders(TGraph(histogramCL), levels[c]);
+	    CLInterval cli;
+	    cli.pvalue = 1. - levels[c];
+	    cli.min = borders.first;
+	    cli.max = borders.second;
+	    cli.central = -1;
+	    if ( c==0 ) clintervals1sigma.push_back(cli);
+	    if ( c==1 ) clintervals2sigma.push_back(cli);
+	    if (isCLs) std::cout << "CL_s ";
+	    std::cout<<"borders at "<<levels[c]<<"  [ "<<borders.first<<" : "<<borders.second<<"]";
+		cout << ", " << methodName << " (simple boundary scan)" << endl;
+	  }
+	}
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////
 	//// Add a hacky calculation of the CL_s intervals
 	//// \todo: Do it properly from the very start by introducing a bkg model and propagate it to the entire framework.  
 
-  clintervals1sigma.clear(); 
-  clintervals2sigma.clear();
+  if(!this->hCLs && isCLs)
+  {
+  	std::cout << "**************************************************************************************************************************************" << std::endl;
+  	std::cout << "WARNING: hCLs is empty! Will calculate CLs intervals by noramlizing the p values to the p value of the first bin." << std::endl;
+  	std::cout << "WARNING: This is only an approximate solution and MIGHT EVEN BE WRONG, if the first bin does not represent the background expectation!" << std::endl;
+  	std::cout << "**************************************************************************************************************************************" << std::endl;
+  	clintervals1sigma.clear(); 
+  	clintervals2sigma.clear();
   
-  for (int c=0;c<2;c++){
-    const std::pair<double, double> borders_CLs = getBorders_CLs(TGraph(this->hCL), levels[c]);
-    CLInterval cli;
-    cli.pvalue = 1. - levels[c];
-    cli.min = borders_CLs.first;
-    cli.max = borders_CLs.second;
-    cli.central = -1;
-    if ( c==0 ) clintervals1sigma.push_back(cli);
-    if ( c==1 ) clintervals2sigma.push_back(cli);
-    std::cout<<"CL_s borders at "<<levels[c]<<"  [ "<<borders_CLs.first<<" : "<<borders_CLs.second<<"]";
-	cout << ", " << methodName << " (simple boundary scan)" << endl;
+  	for (int c=0;c<2;c++){
+    	const std::pair<double, double> borders_CLs = getBorders_CLs(TGraph(histogramCL), levels[c]);
+    	CLInterval cli;
+    	cli.pvalue = 1. - levels[c];
+    	cli.min = borders_CLs.first;
+    	cli.max = borders_CLs.second;
+    	cli.central = -1;
+    	if ( c==0 ) clintervals1sigma.push_back(cli);
+    	if ( c==1 ) clintervals2sigma.push_back(cli);
+    	std::cout<<"CL_s borders at "<<levels[c]<<"  [ "<<borders_CLs.first<<" : "<<borders_CLs.second<<"]";
+		cout << ", " << methodName << " (simple boundary scan)" << endl;
+  	}
   }
 
 }

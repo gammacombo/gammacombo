@@ -809,6 +809,7 @@ void GammaComboEngine::make1dProbScan(MethodProbScan *scanner, int cId)
 	cout <<   "========\n" << endl;
 	scanner->printLocalMinima();
 	scanner->calcCLintervals();
+	if(arg->cls) scanner->calcCLintervals(true);
 	if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
 		if ( arg->plotpulls ) scanner->plotPulls();
 		if ( arg->parevol ){
@@ -842,6 +843,7 @@ void GammaComboEngine::make1dPluginScan(MethodPluginScan *scannerPlugin, int cId
 	else {
 		scannerPlugin->readScan1dTrees(arg->jmin[cId],arg->jmax[cId]);
 		scannerPlugin->calcCLintervals();
+		if(arg->cls) scannerPlugin->calcCLintervals(true);
 	}
 	if ( !arg->isAction("pluginbatch") ){
 		scannerPlugin->saveScanner(m_fnamebuilder->getFileNameScanner(scannerPlugin));
@@ -939,6 +941,14 @@ void GammaComboEngine::make1dProbPlot(MethodProbScan *scanner, int cId)
 		scanner->setLineColor(colorsLine[colorId]);
 		scanner->setTextColor(colorsText[colorId]);
 		plot->Draw();
+		if (arg->cls)
+		{
+			scanner->setDrawSolution(arg->plotsolutions[cId]);
+			scanner->plotOn(plot);
+			scanner->setLineColor(colorsLine[colorId]);
+			scanner->setTextColor(colorsText[colorId]);
+			plot->Draw();
+		}
 	}
 }
 
@@ -995,12 +1005,24 @@ void GammaComboEngine::make1dPluginPlot(MethodPluginScan *sPlugin, MethodProbSca
 		sProb->setLineColor(kBlack);
 		sProb->setDrawSolution(arg->plotsolutions[cId]);
 		sProb->plotOn(plot);
+		if(arg->cls)
+		{
+			sProb->setLineColor(kGreen-8);
+			sProb->setDrawSolution(arg->plotsolutions[cId]);
+			sProb->plotOn(plot, arg->cls);
+		}
 	}
 	else {
 		make1dProbPlot(sProb, cId);
 		sPlugin->setLineColor(kBlack);
 		sPlugin->setDrawSolution(arg->plotsolutions[cId]);
 		sPlugin->plotOn(plot);
+		if(arg->cls)
+		{
+			sPlugin->setLineColor(kGreen-8);
+			sPlugin->setDrawSolution(arg->plotsolutions[cId]);
+			sPlugin->plotOn(plot, arg->cls);
+		}		
 	}
 	plot->Draw();
 }
@@ -1122,6 +1144,7 @@ void GammaComboEngine::make2dProbPlot(MethodProbScan *scanner, int cId)
 	scanner->setDrawSolution(arg->plotsolutions[cId]);
 	scanner->setLineColor(colorsLine[cId]);
 	scanner->plotOn(plot);
+	if(arg->cls) scanner->plotOn(plot, true);
 	// only draw the plot once when multiple scanners are plotted,
 	// else we end up with too many graphs, and the transparency setting
 	// gets screwed up
@@ -1572,6 +1595,13 @@ void GammaComboEngine::scanDataSet()
 			plot->addScanner(scanner);
 			scanner->calcCLintervals();
 			probScanner->calcCLintervals();
+
+			//// compute CLs Intervals 
+			if (arg->cls)
+			{
+				scanner->calcCLintervals(arg->cls);
+				probScanner->calcCLintervals(arg->cls);
+			}
 			plot->Draw();
 		}
 	} else {
@@ -1643,10 +1673,26 @@ void GammaComboEngine::run(bool runOnDatSet)
 	{
 		cout << "===========================================" << endl;
 		cout << "Will additionally compute CLs method" << endl;
-		for (auto meas : pdf)
-		{
-			if (!meas->getBkgPdf()) cout << "WARNING: CLs -- No background PDF has been set! The p value at the lower edge of the scan range will be assumed for the background estimate." << endl;
+		if (!pdf[0]->bkgpdfset() && runOnDatSet){
+			cout << "WARNING: CLs -- No background PDF has been set!";
+			if (arg->var.size()>1) {
+				cout << endl << "ERROR : 2D CLs method without background PDF is not supported." << endl;
+				exit(1);
+			}
+			cout << " The p value at the lower edge of the scan range will be assumed for the background estimate." << endl;
 		}
+		for (int pdfid=1; pdfid<pdf.size(); pdfid++)
+		{
+			if (!pdf[pdfid]->bkgpdfset()) {
+				cout << "WARNING: CLs -- No background PDF has been set!";
+				if (arg->var.size()>1) {
+					cout << endl << "ERROR : 2D CLs method without background PDF is not supported." << endl;
+					exit(1);
+				}
+				cout << " The p value at the lower edge of the scan range will be assumed for the background estimate." << endl;
+			}
+		}
+		if (!pdf[0]->bkgpdfset() && runOnDatSet) cout << "WARNING: CLs -- No background PDF has been set! The p value at the lower edge of the scan range will be assumed for the background estimate." << endl;	
 		cout << "===========================================" << endl << endl;
 	}	
 	if(runOnDatSet){

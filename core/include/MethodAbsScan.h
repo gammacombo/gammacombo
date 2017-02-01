@@ -98,7 +98,7 @@ class MethodAbsScan
 		bool                            loadScanner(TString fName="");
 		void                            plot2d(TString varx, TString vary);
 		void                            plot1d(TString var);
-		void                            plotOn(OneMinusClPlotAbs *plot);
+		void                            plotOn(OneMinusClPlotAbs *plot, bool doCLs=false);
 		void                            plotPulls(int nSolution=0);
 		virtual void                    print();
 		void                            printCLintervals();
@@ -125,7 +125,7 @@ class MethodAbsScan
 	inline void                     setHchisq( TH1F *h ) { hChi2min = h; };
 		void 							setXscanRange(float min, float max);
 		void 							setYscanRange(float min, float max);
-		void							calcCLintervalsSimple();
+		void							calcCLintervalsSimple(bool isCLs=false);
 		const std::pair<double, double> getBorders(const TGraph& graph, const double confidence_level, bool qubic=false);
 		const std::pair<double, double> getBorders_CLs(const TGraph& graph, const double confidence_level, bool qubic=false);
 

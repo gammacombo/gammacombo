@@ -32,8 +32,8 @@ class OneMinusClPlot : public OneMinusClPlotAbs
 	private:
 		void            drawCLguideLine(float pvalue);
 		void            drawVerticalLine(float x, int color, int style);
-		TGraph*         scan1dPlot(MethodAbsScan* s, bool first, bool last, bool filled);
-		void            scan1dPlotSimple(MethodAbsScan* s, bool first);
+		TGraph*         scan1dPlot(MethodAbsScan* s, bool first, bool last, bool filled, bool isCLs);
+		void            scan1dPlotSimple(MethodAbsScan* s, bool first, bool isCLs);
 
 		bool            plotPluginMarkers;
 };

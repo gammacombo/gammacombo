@@ -240,17 +240,22 @@ void OneMinusClPlot2d::makeNewPlotStyle(TString htmlColor, int ROOTColor)
 ///
 /// Add a scanner to the list of things to be plotted.
 ///
-void OneMinusClPlot2d::addScanner(MethodAbsScan* s)
+void OneMinusClPlot2d::addScanner(MethodAbsScan* s, bool do_cls)
 {
 	if ( arg->debug ) cout << "OneMinusClPlot2d::addScanner() : adding " << s->getName() << endl;
+	if (do_cls && !s->getHCLs2d()){ 
+		cout << "OneMinusClPlot2d::addScanner() : ERROR : No hCLs available. Will not plot." << endl;
+		return;
+	}
 	scanners.push_back(s);
-	if ( s->getMethodName().EqualTo("Prob") || s->getMethodName().EqualTo("DatasetsProb")){
+	if ( (s->getMethodName().EqualTo("Prob") || s->getMethodName().EqualTo("DatasetsProb")) && !do_cls){
 		histosType.push_back(kChi2);
 		histos.push_back(s->getHchisq2d());
 	}
 	else {
 		histosType.push_back(kPvalue);
-		histos.push_back(s->getHCL2d());
+		if(do_cls) 	histos.push_back(s->getHCLs2d());
+		else 		histos.push_back(s->getHCL2d());
 	}
 	if ( arg->smooth2d ) for ( int i=0; i<arg->nsmooth; i++ ) { histos[histos.size()-1]->Smooth(); }
 	title = s->getTitle();

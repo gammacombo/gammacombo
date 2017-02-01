@@ -27,7 +27,7 @@ class OneMinusClPlot2d : public OneMinusClPlotAbs
 
 		OneMinusClPlot2d(OptParser *arg, TString name="c1", TString title="c1");
 
-		void            addScanner(MethodAbsScan* s);
+		void            addScanner(MethodAbsScan* s, bool do_cls=false);
 		void            addFile(TString fName);
 		void            Draw();
 		void            DrawFull();
