@@ -1004,25 +1004,21 @@ void GammaComboEngine::make1dPluginPlot(MethodPluginScan *sPlugin, MethodProbSca
 		make1dPluginOnlyPlot(sPlugin, cId);
 		sProb->setLineColor(kBlack);
 		sProb->setDrawSolution(arg->plotsolutions[cId]);
-		sProb->plotOn(plot);
 		if(arg->cls)
 		{
-			sProb->setLineColor(kGreen-8);
-			sProb->setDrawSolution(arg->plotsolutions[cId]);
 			sProb->plotOn(plot, arg->cls);
 		}
+		sProb->plotOn(plot);
 	}
 	else {
 		make1dProbPlot(sProb, cId);
 		sPlugin->setLineColor(kBlack);
 		sPlugin->setDrawSolution(arg->plotsolutions[cId]);
-		sPlugin->plotOn(plot);
 		if(arg->cls)
 		{
-			sPlugin->setLineColor(kGreen-8);
-			sPlugin->setDrawSolution(arg->plotsolutions[cId]);
 			sPlugin->plotOn(plot, arg->cls);
 		}		
+		sPlugin->plotOn(plot);
 	}
 	plot->Draw();
 }
@@ -1143,8 +1139,8 @@ void GammaComboEngine::make2dProbPlot(MethodProbScan *scanner, int cId)
 	// contour plot
 	scanner->setDrawSolution(arg->plotsolutions[cId]);
 	scanner->setLineColor(colorsLine[cId]);
-	scanner->plotOn(plot);
 	if(arg->cls) scanner->plotOn(plot, true);
+	scanner->plotOn(plot);
 	// only draw the plot once when multiple scanners are plotted,
 	// else we end up with too many graphs, and the transparency setting
 	// gets screwed up
@@ -1591,17 +1587,19 @@ void GammaComboEngine::scanDataSet()
 			// Plotting the plugin scan results
 			/////////////////////////////////////////////////////
 			scanner->setLineColor(1);
+			//// compute CLs Intervals 
+			if (arg->cls)
+			{
+				plot->addScanner(probScanner, arg->cls);
+				plot->addScanner(scanner, arg->cls);
+				scanner->calcCLintervals(arg->cls);
+				probScanner->calcCLintervals(arg->cls);
+			}
 			plot->addScanner(probScanner);
 			plot->addScanner(scanner);
 			scanner->calcCLintervals();
 			probScanner->calcCLintervals();
 
-			//// compute CLs Intervals 
-			if (arg->cls)
-			{
-				scanner->calcCLintervals(arg->cls);
-				probScanner->calcCLintervals(arg->cls);
-			}
 			plot->Draw();
 		}
 	} else {
@@ -1612,6 +1610,10 @@ void GammaComboEngine::scanDataSet()
 		if ( arg->var.size()==1 )
 		{
 			probScanner->scan1d();
+			if(arg->cls){
+				plot->addScanner(probScanner, arg->cls);
+				probScanner->calcCLintervals(arg->cls);				
+			}
 			plot->addScanner(probScanner);
 			probScanner->calcCLintervals();
 			plot->Draw();
@@ -1673,14 +1675,14 @@ void GammaComboEngine::run(bool runOnDatSet)
 	{
 		cout << "===========================================" << endl;
 		cout << "Will additionally compute CLs method" << endl;
-		if (!pdf[0]->bkgpdfset() && runOnDatSet){
-			cout << "WARNING: CLs -- No background PDF has been set!";
-			if (arg->var.size()>1) {
-				cout << endl << "ERROR : 2D CLs method without background PDF is not supported." << endl;
-				exit(1);
-			}
-			cout << " The p value at the lower edge of the scan range will be assumed for the background estimate." << endl;
-		}
+		// if (!pdf[0]->bkgpdfset() && runOnDatSet){
+		// 	cout << "WARNING: CLs -- No background PDF has been set!";
+		// 	if (arg->var.size()>1) {
+		// 		cout << endl << "ERROR : 2D CLs method without background PDF is not supported." << endl;
+		// 		exit(1);
+		// 	}
+		// 	cout << " The p value at the lower edge of the scan range will be assumed for the background estimate." << endl;
+		// }
 		for (int pdfid=1; pdfid<pdf.size(); pdfid++)
 		{
 			if (!pdf[pdfid]->bkgpdfset()) {
@@ -1692,7 +1694,6 @@ void GammaComboEngine::run(bool runOnDatSet)
 				cout << " The p value at the lower edge of the scan range will be assumed for the background estimate." << endl;
 			}
 		}
-		if (!pdf[0]->bkgpdfset() && runOnDatSet) cout << "WARNING: CLs -- No background PDF has been set! The p value at the lower edge of the scan range will be assumed for the background estimate." << endl;	
 		cout << "===========================================" << endl << endl;
 	}	
 	if(runOnDatSet){

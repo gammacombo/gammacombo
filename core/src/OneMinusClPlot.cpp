@@ -121,6 +121,9 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	}
 
 	int color = s->getLineColor();
+	// if(isCLs) color = color+2;
+	if(isCLs && s->getMethodName().Contains("Plugin")) color = kGray + 2;
+	else if(isCLs) color = s->getLineColor() + 2;
 	g->SetLineColor(color);
 
 	if ( filled ){
@@ -289,6 +292,7 @@ void OneMinusClPlot::scan1dPlotSimple(MethodAbsScan* s, bool first, bool isCLs)
 	}
 
 	int color = s->getLineColor();
+	if(isCLs) color = color + 2 ;
 	hCL->SetStats(0);
 	hCL->SetLineColor(color);
 	hCL->SetMarkerColor(color);
@@ -545,12 +549,15 @@ void OneMinusClPlot::Draw()
 		if ( plotSimple )
 		{
 			scan1dPlotSimple(scanners[i], i==0, do_CLs[i]);
-			leg->AddEntry(scanners[i]->getHCL(), scanners[i]->getTitle() + " (" + scanners[i]->getMethodName() + ")", legDrawOption);
+			if(do_CLs[i]) 	leg->AddEntry(scanners[i]->getHCL(), scanners[i]->getTitle() + " (" + scanners[i]->getMethodName() + " CLs)", legDrawOption);
+			else 			leg->AddEntry(scanners[i]->getHCL(), scanners[i]->getTitle() + " (" + scanners[i]->getMethodName() + ")", legDrawOption);
 		}
 		else
 		{
 			TGraph* g = scan1dPlot(scanners[i], i==0, false, scanners[i]->getFilled(), do_CLs[i]);
-			leg->AddEntry(g, scanners[i]->getTitle(), legDrawOption);
+			if(do_CLs[i]) 	leg->AddEntry(g, scanners[i]->getTitle() + " CLs", legDrawOption);
+			else 			leg->AddEntry(g, scanners[i]->getTitle(), legDrawOption);
+			
 		}
 	}
 
