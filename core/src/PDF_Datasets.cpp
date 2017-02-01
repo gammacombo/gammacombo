@@ -171,7 +171,6 @@ void PDF_Datasets::initBkgPDF(const TString& name) {
         std::cout << "FATAL in PDF_Datasets::initBkgPDF -- PDF: " << pdfName << " not found in workspace" << std::endl;
         exit(EXIT_FAILURE);
     }
-
     std::cout << "INFO in PDF_Datasets::initBkgPDF -- PDF initialized. CLs method ready." << std::endl;
     return;
 };

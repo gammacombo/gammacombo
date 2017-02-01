@@ -19,6 +19,7 @@
 	observables = NULL;
 	pdf         = NULL;
 	pdfBkg      = NULL;
+	isBkgPdfSet = false;
 	toyObservables = NULL;
 	nToyObs = 1000;
 	iToyObs = 0;
@@ -35,6 +36,7 @@
 	uniqueGlobalID = counter;
 	m_isCrossCorPdf = false;
 	gcId = -1;
+
 }
 
 unsigned long long PDF_Abs::counter = 0;
