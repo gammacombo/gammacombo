@@ -143,6 +143,7 @@ void MethodDatasetsProbScan::initScan() {
         float min2 = par2->getMin();
         float max2 = par2->getMax();
         hCL2d      = new TH2F("hCL2d"+getUniqueRootName(),      "hCL2d"+pdfName, nPoints2dx, min1, max1, nPoints2dy, min2, max2);
+        hCLs2d      = new TH2F("hCL2d"+getUniqueRootName(),      "hCL2d"+pdfName, nPoints2dx, min1, max1, nPoints2dy, min2, max2);
         hChi2min2d = new TH2F("hChi2min2d"+getUniqueRootName(), "hChi2min",      nPoints2dx, min1, max1, nPoints2dy, min2, max2);
 
         for ( int i=1; i<=nPoints2dx; i++ )
@@ -605,6 +606,7 @@ int MethodDatasetsProbScan::scan2d()
                     for ( int k=1; k<=hCL2d->GetNbinsX(); k++ )
                         for ( int l=1; l<=hCL2d->GetNbinsY(); l++ ){
                             hCL2d->SetBinContent(k, l, TMath::Prob(hChi2min2d->GetBinContent(k,l)-chi2minGlobal, ndof));
+                            hCLs2d->SetBinContent(k, l, TMath::Prob(hChi2min2d->GetBinContent(k,l)-chi2minBkg, ndof));
                         }
                 }
 
@@ -622,6 +624,7 @@ int MethodDatasetsProbScan::scan2d()
                 // Save the 1-CL value. But only if better than before!
                 if ( hCL2d->GetBinContent(i, j) < oneMinusCL ){
                     hCL2d->SetBinContent(i, j, oneMinusCL);
+                    hCLs2d->SetBinContent(i, j, TMath::Prob(chi2minScan - chi2minBkg, ndof););
                     hChi2min2d->SetBinContent(i, j, chi2minScan);
                     hDbgChi2min2d->SetBinContent(i, j, chi2minScan);
                     curveResults2d[i-1][j-1] = r;
