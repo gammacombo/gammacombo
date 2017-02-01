@@ -24,7 +24,7 @@ class OneMinusClPlot : public OneMinusClPlotAbs
 
 		void            drawSolutions();
 		void            drawCLguideLines();
-		TGraph*         getGraph(MethodAbsScan* s, bool first=true, bool last=false, bool filled=true, bool isCLs){return scan1dPlot(s,first,last,filled, isCLs);};
+		TGraph*         getGraph(MethodAbsScan* s, bool first=true, bool last=false, bool filled=true, bool isCLs=false){return scan1dPlot(s,first,last,filled, isCLs);};
 		inline TString  getName(){return name;};
 		inline void     setPluginMarkers(bool yesNo=true){plotPluginMarkers = yesNo;};
 		void            Draw();
