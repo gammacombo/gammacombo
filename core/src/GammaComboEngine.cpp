@@ -1139,7 +1139,9 @@ void GammaComboEngine::make2dProbPlot(MethodProbScan *scanner, int cId)
 	// contour plot
 	scanner->setDrawSolution(arg->plotsolutions[cId]);
 	scanner->setLineColor(colorsLine[cId]);
-	if(arg->cls) scanner->plotOn(plot, true);
+	if(arg->cls){
+		scanner->plotOn(plot, true);
+	}
 	scanner->plotOn(plot);
 	// only draw the plot once when multiple scanners are plotted,
 	// else we end up with too many graphs, and the transparency setting
