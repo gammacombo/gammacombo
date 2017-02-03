@@ -122,7 +122,7 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 
 	int color = s->getLineColor();
 	// if(isCLs) color = color+2;
-	if(isCLs && s->getMethodName().Contains("Plugin")) color = kGray + 2;
+	if(isCLs && s->getMethodName().Contains("Plugin")) color = kRed - 6;
 	else if(isCLs) color = s->getLineColor() + 2;
 	g->SetLineColor(color);
 
@@ -142,6 +142,10 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 		g->SetMarkerColor(color);
 		g->SetMarkerStyle(8);
 		g->SetMarkerSize(0.6);
+		if(isCLs) {
+			g->SetMarkerStyle(33);
+			g->SetMarkerSize(1);
+		}
 	}
 
 	// build a histogram which holds the axes
