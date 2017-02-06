@@ -28,6 +28,7 @@ public:
     void                  deleteNLL() {if (_NLL) {delete _NLL; _NLL = NULL;}};
 
     virtual RooFitResult* fit(RooDataSet* dataToFit);
+    virtual RooFitResult* fitBkg(RooDataSet* dataToFit);
     virtual void          generateToys(int SeedShift = 0);
     virtual void          generateToysGlobalObservables(int SeedShift = 0);
 
@@ -40,6 +41,7 @@ public:
     void                  initParameters(const vector<TString>& parNames);
     virtual void          initParameters(); //overriding the inherited virtual method
     void                  initPDF(const TString& name);
+    void                  initBkgPDF(const TString& name);
 
     OptParser*            getArg();
     TString               getConstraintName() {return constraintName;};
@@ -48,16 +50,20 @@ public:
     inline int            getFitStatus() {return fitStatus;};
     inline int            getFitStrategy() {return fitStrategy;};
     TString               getGlobalObsName() {return globalObsName;};
+    float                 getMinNll() {return minNll;};
     float                 getMinNllFree() {return minNllFree;};
+    float                 getMinNllBkg() {return minNllBkg;};
     float                 getMinNllScan() {return minNllScan;};
     TString               getObsName() {return obsName;};
     TString               getParName() {return parName;};
     TString               getPdfName() {return pdfName;};
+    TString               getBkgPdfName() {return pdfBkgName;};
     RooDataSet*           getToyObservables() {return this->toyObservables;};
     RooWorkspace*         getWorkspace() {return wspc;};
     // setters
     inline void           setFitStatus(int stat = 0) {fitStatus = stat;};
     inline void           setFitStrategy(int strat = 0) {fitStrategy = strat;};
+    inline void           setMinNll(float mnll) {minNll = mnll;};
     inline void           setMinNllFree(float mnll) {minNllFree = mnll;};
     inline void           setMinNllScan(float mnll) {minNllScan = mnll;};
     void                  setNCPU(int n) {NCPU = n;};
@@ -89,6 +95,7 @@ protected:
     RooAbsReal*     _NLL; // possible pointer to minimization function
     RooAbsPdf*      _constraintPdf;
     TString         pdfName; //> name of the pdf in the workspace
+    TString         pdfBkgName; //> name of the bkg pdf in the workspace
     TString         obsName;
     TString         parName;
     TString         dataName;       //> name of the data set in the workspace
@@ -99,11 +106,14 @@ protected:
     int             fitStrategy;
     int             fitStatus;
     float           minNllFree;
+    // float           minNll;
+    float           minNllBkg;
     float           minNllScan;
     bool areObsSet;       //> Forces user to set observables
     bool areParsSet;      //> Forces user to set parameters
     bool areRangesSet;    //> Flag deciding if necessary ranges are set
     bool isPdfSet;        //> Flag deciding if PDF is set
+    bool isBkgPdfSet;     //> Flag deciding if Bkg PDF is set
     bool isDataSet;       //> Flag deciding if Data is set
     bool isToyDataSet;    //> Flag deciding if ToyData is set
 };

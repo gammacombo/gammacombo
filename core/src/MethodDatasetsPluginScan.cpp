@@ -45,8 +45,23 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
         exit(EXIT_FAILURE);
     }
     dataFreeFitResult = (RooFitResult*) w->obj("data_fit_result");
-    chi2minGlobal = 2 * dataFreeFitResult->minNll();
+    // chi2minGlobal = 2 * dataFreeFitResult->minNll();
+    chi2minGlobal = probScan->getChi2minGlobal();
     std::cout << "=============== Global Minimum (2*-Log(Likelihood)) is: 2*" << dataFreeFitResult->minNll() << " = " << chi2minGlobal << endl;
+
+    // if bkg pdf is given, print bkg chi2
+    if(pdf->getBkgPdf())
+    {
+        chi2minBkg = probScan->getChi2minBkg();
+        std::cout << "=============== Bkg minimum (2*-Log(Likelihood)) is: " << chi2minBkg << endl;
+        if (chi2minBkg<chi2minGlobal)
+        {
+            std::cout << "WARNING: BKG MINIMUM IS LOWER THAN GLOBAL MINIMUM! The likelihoods are screwed up! Set bkg minimum to global minimum for consistency." << std::endl;
+            chi2minBkg = chi2minGlobal;
+            std::cout << "=============== New bkg minimum (2*-Log(Likelihood)) is: " << chi2minBkg << endl;            
+        }
+
+    }
 
     if ( !w->set(pdf->getObsName()) ) {
         cerr << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no '" + pdf->getObsName() + "' set found in workspace" << endl;
@@ -94,6 +109,8 @@ void MethodDatasetsPluginScan::initScan() {
 
     if (hCL) delete hCL;
     hCL = new TH1F("hCL" + getUniqueRootName(), "hCL" + pdf->getPdfName(), nPoints1d, par1->getMin(), par1->getMax());
+    if (hCLs) delete hCLs;
+    hCLs = new TH1F("hCLs" + getUniqueRootName(), "hCLs" + pdf->getPdfName(), nPoints1d, par1->getMin(), par1->getMax());
     if ( hChi2min ) delete hChi2min;
     hChi2min = new TH1F("hChi2min" + getUniqueRootName(), "hChi2min" + pdf->getPdfName(), nPoints1d, par1->getMin(), par1->getMax());
 
@@ -293,8 +310,17 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     if (arg->debug) {
         printf("DEBUG %i %f %f %f\n", t.getScanpointN(), t.getScanpointMin() - halfBinWidth, t.getScanpointMax() + halfBinWidth, halfBinWidth);
     }
+    delete hCLs;
+    hCLs = new TH1F("hCLs", "hCLs", t.getScanpointN(), t.getScanpointMin() - halfBinWidth, t.getScanpointMax() + halfBinWidth);
+    if (arg->debug) {
+        printf("DEBUG %i %f %f %f\n", t.getScanpointN(), t.getScanpointMin() - halfBinWidth, t.getScanpointMax() + halfBinWidth, halfBinWidth);
+    }
+
+
     // histogram to store number of toys which enter p Value calculation
     TH1F *h_better        = (TH1F*)hCL->Clone("h_better");
+    // histogram to store number of toys which enter CLs p Value calculation
+    TH1F *h_better_cls        = (TH1F*)hCL->Clone("h_better_cls");
     // numbers for all toys
     TH1F *h_all           = (TH1F*)hCL->Clone("h_all");
     // numbers of toys failing the selection criteria
@@ -361,6 +387,9 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         if ( valid && (t.chi2minToy - t.chi2minGlobalToy) >= (t.chi2min - this->chi2minGlobal) ) { //t.chi2minGlobal ){
             h_better->Fill(t.scanpoint);
         }
+        if ( valid && (t.chi2minToy - t.chi2minGlobalToy) >= (t.chi2min - this->chi2minBkg) ) { //t.chi2minGlobal ){
+            h_better_cls->Fill(t.scanpoint);
+        }
         if (t.scanpoint == 0.0) n0better++;
 
         // goodness-of-fit
@@ -402,6 +431,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
 
     for (int i = 1; i <= h_better->GetNbinsX(); i++) {
         float nbetter = h_better->GetBinContent(i);
+        float nbetter_cls = h_better_cls->GetBinContent(i);
         float nall = h_all->GetBinContent(i);
         // get number of background and failed toys
         float nbackground     = h_background->GetBinContent(i);
@@ -420,10 +450,15 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
 
         // don't subtract background
         float p = nbetter / nall;
+        float p_cls = nbetter_cls / nall;
         hCL->SetBinContent(i, p);
         hCL->SetBinError(i, sqrt(p * (1. - p) / nall));
+        hCLs->SetBinContent(i, p_cls);
+        hCLs->SetBinError(i, sqrt(p_cls * (1. - p_cls) / nall));
+
         cout << "At scanpoint " << std::scientific << hCL->GetBinCenter(i) << ": ===== number of toys for pValue calculation: " << nbetter << endl;
         cout << "At scanpoint " << hCL->GetBinCenter(i) << ": ===== pValue: " << p << endl;
+        cout << "At scanpoint " << hCL->GetBinCenter(i) << ": ===== pValue CLs: " << p_cls << endl;
     }
 
     if (arg->debug || drawPlots) {
@@ -577,10 +612,20 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             exit(EXIT_FAILURE);
         }
 
+         toyTree.chi2minBkg     = this->getChi2minBkg();       
+
         toyTree.storeParsPll();
         toyTree.genericProbPValue = this->getPValueTTestStatistic(toyTree.chi2min - toyTree.chi2minGlobal);
 
-        for ( int j = 0; j < nToys; j++ )
+        // Titus: Try importance sampling from the combination part -> works, but definitely needs improvement in precision
+        int nActualToys = nToys;
+        if ( arg->importance ){
+            float plhPvalue = TMath::Prob(toyTree.chi2min - toyTree.chi2minGlobal,1);
+            nActualToys = nToys*importance(plhPvalue);
+        }
+        //Titus: Debug histogram to see the different deltachisq distributions
+        TH1F histdeltachi2("histdeltachi2", "histdeltachi2", 200,0,5);
+        for ( int j = 0; j < nActualToys; j++ )
         {
             if (arg->debug) cout << ">> new toy\n" << endl;
             this->pdf->setMinNllFree(0);
@@ -792,6 +837,10 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             //
             // 4. store
             //
+
+            //Titus:Debug fill deltachisq hist
+            if (arg->debug) histdeltachi2.Fill(toyTree.chi2minToy-toyTree.chi2minGlobalToy);
+
             toyTree.fill();
             //remove dataset and pointers
             delete r;
@@ -805,6 +854,16 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 
         //setParameters(w, pdf->getObsName(), obsDataset->get(0));
         toyTree.writeToFile();
+
+        //Titus Draw debug histdeltachisq
+        if (arg->debug)
+        {
+            TCanvas histplot("histplot", "Delta chi2 toys", 1024, 786);
+            histdeltachi2.Draw();
+            string plotstring = "plots/pdf/deltachi2_"+to_string(i)+".pdf";
+            histplot.SaveAs(plotstring.c_str());
+        }
+
     } // End of npoints loop
     outputFile->Write();
     outputFile->Close();

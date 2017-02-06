@@ -35,7 +35,7 @@
 /// \param last
 /// \param filled
 ///
-TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool filled)
+TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool filled, bool isCLs)
 {
 	if ( arg->debug ){
 		cout << "OneMinusClPlot::scan1dPlot() : plotting ";
@@ -47,6 +47,7 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	m_mainCanvas->cd();
 	bool plotPoints = ( s->getMethodName()=="Plugin" || s->getMethodName()=="BergerBoos" || s->getMethodName()=="DatasetsPlugin" ) && plotPluginMarkers;
 	TH1F *hCL = (TH1F*)s->getHCL()->Clone(getUniqueRootName());
+	if (isCLs) hCL = (TH1F*)s->getHCLs()->Clone(getUniqueRootName());
 	// fix inf and nan entries
 	for ( int i=1; i<=s->getHCL()->GetNbinsX(); i++ ){
 		if ( s->getHCL()->GetBinContent(i)!=s->getHCL()->GetBinContent(i)
@@ -120,6 +121,9 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	}
 
 	int color = s->getLineColor();
+	// if(isCLs) color = color+2;
+	if(isCLs && s->getMethodName().Contains("Plugin")) color = kRed - 6;
+	else if(isCLs) color = s->getLineColor() + 2;
 	g->SetLineColor(color);
 
 	if ( filled ){
@@ -141,6 +145,10 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 		g->SetMarkerColor(color);
 		g->SetMarkerStyle(8);
 		g->SetMarkerSize(0.6);
+		if(isCLs) {
+			g->SetMarkerStyle(33);
+			g->SetMarkerSize(1);
+		}
 	}
 
 	// build a histogram which holds the axes
@@ -273,50 +281,55 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 /// \param s The scanner to plot.
 /// \param first Set this to true for the first plotted scanner.
 ///
-void OneMinusClPlot::scan1dPlotSimple(MethodAbsScan* s, bool first)
+void OneMinusClPlot::scan1dPlotSimple(MethodAbsScan* s, bool first, bool isCLs)
 {
 	if ( arg->debug ){
 		cout << "OneMinusClPlot::scan1dPlotSimple() : plotting ";
 		cout << s->getName() << " (" << s->getMethodName() << ")" << endl;
 	}
 	m_mainCanvas->cd();
-	// get rit of nan and inf
-	for ( int i=1; i<=s->getHCL()->GetNbinsX(); i++ ){
-		if ( s->getHCL()->GetBinContent(i)!=s->getHCL()->GetBinContent(i)
-				|| std::isinf(s->getHCL()->GetBinContent(i)) ) s->getHCL()->SetBinContent(i, 0.0);
+
+	TH1F *hCL = (TH1F*)s->getHCL()->Clone(getUniqueRootName());
+	if (isCLs) hCL = (TH1F*)s->getHCLs()->Clone(getUniqueRootName());
+
+	// get rid of nan and inf
+	for ( int i=1; i<=hCL->GetNbinsX(); i++ ){
+	if ( hCL->GetBinContent(i)!=hCL->GetBinContent(i)
+				|| std::isinf(hCL->GetBinContent(i)) ) hCL->SetBinContent(i, 0.0);
 	}
 
 	int color = s->getLineColor();
-	s->getHCL()->SetStats(0);
-	s->getHCL()->SetLineColor(color);
-	s->getHCL()->SetMarkerColor(color);
-	s->getHCL()->SetLineWidth(2);
-	s->getHCL()->SetLineStyle(s->getLineStyle());
-	s->getHCL()->SetMarkerColor(color);
-	s->getHCL()->SetMarkerStyle(8);
-	s->getHCL()->SetMarkerSize(0.6);
-	s->getHCL()->GetYaxis()->SetNdivisions(407, true);
-	s->getHCL()->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
-	s->getHCL()->GetYaxis()->SetTitle("1-CL");
-	s->getHCL()->GetXaxis()->SetLabelFont(font);
-	s->getHCL()->GetYaxis()->SetLabelFont(font);
-	s->getHCL()->GetXaxis()->SetTitleFont(font);
-	s->getHCL()->GetYaxis()->SetTitleFont(font);
-	s->getHCL()->GetXaxis()->SetTitleOffset(0.9);
-	s->getHCL()->GetYaxis()->SetTitleOffset(0.85);
-	s->getHCL()->GetXaxis()->SetLabelSize(labelsize);
-	s->getHCL()->GetYaxis()->SetLabelSize(labelsize);
-	s->getHCL()->GetXaxis()->SetTitleSize(titlesize);
-	s->getHCL()->GetYaxis()->SetTitleSize(titlesize);
+	if(isCLs) color = color + 2 ;
+	hCL->SetStats(0);
+	hCL->SetLineColor(color);
+	hCL->SetMarkerColor(color);
+	hCL->SetLineWidth(2);
+	hCL->SetLineStyle(s->getLineStyle());
+	hCL->SetMarkerColor(color);
+	hCL->SetMarkerStyle(8);
+	hCL->SetMarkerSize(0.6);
+	hCL->GetYaxis()->SetNdivisions(407, true);
+	hCL->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
+	hCL->GetYaxis()->SetTitle("1-CL");
+	hCL->GetXaxis()->SetLabelFont(font);
+	hCL->GetYaxis()->SetLabelFont(font);
+	hCL->GetXaxis()->SetTitleFont(font);
+	hCL->GetYaxis()->SetTitleFont(font);
+	hCL->GetXaxis()->SetTitleOffset(0.9);
+	hCL->GetYaxis()->SetTitleOffset(0.85);
+	hCL->GetXaxis()->SetLabelSize(labelsize);
+	hCL->GetYaxis()->SetLabelSize(labelsize);
+	hCL->GetXaxis()->SetTitleSize(titlesize);
+	hCL->GetYaxis()->SetTitleSize(titlesize);
 	if ( plotLegend && !arg->isQuickhack(22) ){
-		if ( arg->plotlog ) s->getHCL()->GetYaxis()->SetRangeUser(1e-3,10);
-		else                s->getHCL()->GetYaxis()->SetRangeUser(0.0,1.3);
+		if ( arg->plotlog ) hCL->GetYaxis()->SetRangeUser(1e-3,10);
+		else                hCL->GetYaxis()->SetRangeUser(0.0,1.3);
 	}
 	else{
-		if ( arg->plotlog ) s->getHCL()->GetYaxis()->SetRangeUser(1e-3,1);
-		else                s->getHCL()->GetYaxis()->SetRangeUser(0.0,1.0);
+		if ( arg->plotlog ) hCL->GetYaxis()->SetRangeUser(1e-3,1);
+		else                hCL->GetYaxis()->SetRangeUser(0.0,1.0);
 	}
-	s->getHCL()->Draw(first?"":"same");
+	hCL->Draw(first?"":"same");
 }
 
 void OneMinusClPlot::drawVerticalLine(float x, int color, int style)
@@ -544,13 +557,15 @@ void OneMinusClPlot::Draw()
 
 		if ( plotSimple )
 		{
-			scan1dPlotSimple(scanners[i], i==0);
-			leg->AddEntry(scanners[i]->getHCL(), scanners[i]->getTitle() + " (" + scanners[i]->getMethodName() + ")", legDrawOption);
+			scan1dPlotSimple(scanners[i], i==0, do_CLs[i]);
+			if(do_CLs[i]) 	leg->AddEntry(scanners[i]->getHCL(), scanners[i]->getTitle() + " (" + scanners[i]->getMethodName() + " CLs)", legDrawOption);
+			else 			leg->AddEntry(scanners[i]->getHCL(), scanners[i]->getTitle() + " (" + scanners[i]->getMethodName() + ")", legDrawOption);
 		}
 		else
 		{
-			TGraph* g = scan1dPlot(scanners[i], i==0, false, scanners[i]->getFilled());
-			if ( scanners[i]->getTitle() != "noleg" ) leg->AddEntry(g, scanners[i]->getTitle(), legDrawOption);
+			TGraph* g = scan1dPlot(scanners[i], i==0, false, scanners[i]->getFilled(), do_CLs[i]);
+			if(do_CLs[i] &&  scanners[i]->getTitle() != "noleg") 	leg->AddEntry(g, scanners[i]->getTitle() + " CLs", legDrawOption);
+			else if ( scanners[i]->getTitle() != "noleg" )			leg->AddEntry(g, scanners[i]->getTitle(), legDrawOption);
 		}
 	}
 
@@ -559,7 +574,7 @@ void OneMinusClPlot::Draw()
 		for ( int i = 0; i < scanners.size(); i++ )
 		{
 			bool last = i==scanners.size()-1;
-			scan1dPlot(scanners[i], false, last, false);
+			scan1dPlot(scanners[i], false, last, false, do_CLs[i]);
 		}
 	drawSolutions();
 	if ( plotLegend ) leg->Draw();

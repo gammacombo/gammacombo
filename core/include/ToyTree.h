@@ -74,8 +74,10 @@ class ToyTree
 		float scanpointy;       ///< the y scanpoint for 2D scans
 		float chi2min;
 		float chi2minGlobal;
+		float chi2minBkg;		///< the chi2 of the fit of the bkg hypothesis (for CLs method)
 		float chi2minToy;
 		float chi2minGlobalToy;
+		float chi2minBkgToy;	///< the chi2 of the fit of the bkg hypothesis to the toy distribution (for CLs method)
 		float scanbest;         ///< an alias to the free fit value of the scan variable
 		float scanbesty;        ///< an alias to the free fit value of the scan y variable in 2D scans
 		float nrun;             ///< an ID to distinguish different runs, i.e. batch jobs 
@@ -93,6 +95,8 @@ class ToyTree
 		float statusScanPDF;
 		float chi2minToyPDF;
 		float chi2minGlobalToyPDF;
+		float chi2minBkgToyPDF;
+
 		TTree *t;               ///< the tree
 
 	private:

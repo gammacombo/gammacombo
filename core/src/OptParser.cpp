@@ -29,6 +29,7 @@ OptParser::OptParser():
 
 	// Initialize the variables.
 	// For more complex arguments these are also the default values.
+	cls = false;
 	controlplot = false;
 	coverageCorrectionID = 0;
 	coverageCorrectionPoint = 0;
@@ -119,6 +120,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("asimovfile");
   availableOptions.push_back("batchstartn");
   availableOptions.push_back("batcheos");
+	availableOptions.push_back("cls");
 	availableOptions.push_back("combid");
 	availableOptions.push_back("color");
 	availableOptions.push_back("controlplots");
@@ -458,6 +460,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::SwitchArg nosystArg("", "nosyst", "Sets all systematic errors to zero.", false);
 	TCLAP::SwitchArg printcorArg("", "printcor", "Print the correlation matrix of each solution found.", false);
 	TCLAP::SwitchArg smooth2dArg("", "smooth2d", "Smooth 2D p-value or cl histograms for nicer contour (particularly useful for 2D plugin)", false);
+	TCLAP::SwitchArg clsArg("", "cls", "Use the test statistic of the CLs method for determining upper limits. For the datasets part you need to define the bkg hypothesis (named bkg_pdf) you want to test your model against.", false);
 
 	// --------------- aruments that can be given multiple times
 	vector<string> vAction;
@@ -703,6 +706,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "controlplots" ) ) cmd.add(controlplotArg);
 	if ( isIn<TString>(bookedOptions, "combid" ) ) cmd.add(combidArg);
 	if ( isIn<TString>(bookedOptions, "color" ) ) cmd.add(colorArg);
+	if ( isIn<TString>(bookedOptions, "cls" ) ) cmd.add(clsArg);
   if ( isIn<TString>(bookedOptions, "batchstartn" ) ) cmd.add( batchstartnArg );
   if ( isIn<TString>(bookedOptions, "batcheos" ) ) cmd.add(batcheosArg);
 	if ( isIn<TString>(bookedOptions, "asimovfile" ) ) cmd.add( asimovFileArg );
@@ -714,6 +718,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	// copy over parsed values into data members
 	//
 	asimov            = asimovArg.getValue();
+	cls 			  = clsArg.getValue();
 	color             = colorArg.getValue();
 	controlplot       = controlplotArg.getValue();
 	digits            = digitsArg.getValue();

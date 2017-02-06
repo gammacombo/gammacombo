@@ -52,12 +52,15 @@
 		nPoints2dy(opt->npoints2dy),
 		pvalueCorrectorSet(false),
 		chi2minGlobal(0.0),
+		chi2minBkg(0.0),
 		chi2minGlobalFound(false),
 		lineStyle(0),
 		lineColor(kBlue-8),
 		textColor(kBlack),
 		hCL(0),
+		hCLs(0),
 		hCL2d(0),
+		hCLs2d(0),
 		hChi2min(0),
 		hChi2min2d(0),
 		obsDataset(NULL),
@@ -78,6 +81,8 @@ MethodAbsScan::~MethodAbsScan()
 		if ( allResults[i] ) delete allResults[i];
 	}
 	if ( hCL ) delete hCL;
+	if ( hCLs ) delete hCLs;
+	if ( hCLs2d ) delete hCLs2d;
 	if ( hCL2d ) delete hCL2d;
 	if ( hChi2min ) delete hChi2min;
 	if ( hChi2min2d ) delete hChi2min2d;
@@ -524,13 +529,20 @@ bool MethodAbsScan::interpolate(TH1F* h, int i, float y, float central, bool upp
 /// Use a fit-based interpolation (interpolate()) if we have more than 25 bins,
 /// else revert to a straight line interpolation (interpolateSimple()).
 ///
-void MethodAbsScan::calcCLintervals()
+void MethodAbsScan::calcCLintervals(bool isCLs)
 {
+	TH1F *histogramCL = this->getHCL();
+	// calc CL intervals with CLs method
+	if (isCLs && this->getHCLs())
+	{
+		histogramCL =this->getHCLs();
+	}
+
 	if ( arg->isQuickhack(8) ){
 		// \todo Switch to the new CLIntervalMaker mechanism. It can be activated
 		// already using --qh 8, but it really is in beta stage still
 		cout << "\nMethodAbsScan::calcCLintervals() : USING NEW CLIntervalMaker for " << name << endl << endl;
-		CLIntervalMaker clm(arg, *hCL);
+		CLIntervalMaker clm(arg, *histogramCL);
 		clm.findMaxima(0.04); // ignore maxima under pvalue=0.04
 		for ( int iSol=0; iSol<solutions.size(); iSol++ ){
 			float sol = getScanVar1Solution(iSol);
@@ -550,19 +562,19 @@ void MethodAbsScan::calcCLintervals()
 	if(solutions.empty()){
 		cout 	<< "MethodAbsScan::calcCLintervals() : Solutions vector empty. "
 								<<"Using simple method with  linear splines."<<endl;
-		this->calcCLintervalsSimple();
+		this->calcCLintervalsSimple(isCLs);
 		return;
 	}
 	else {		//Since I want to have the CL_s method also, I do the simple method anyway.
 		cout<<"Using simple method with  linear splines."<<endl;
-		this->calcCLintervalsSimple();		
+		this->calcCLintervalsSimple(isCLs);		
 	}
 
 
 	clintervals1sigma.clear(); // clear, else calling this function twice doesn't work
 	clintervals2sigma.clear();
   clintervals3sigma.clear();
-	int n = hCL->GetNbinsX();
+	int n = histogramCL->GetNbinsX();
 	RooRealVar* par = w->var(scanVar1);
 
 	for ( int iSol=0; iSol<solutions.size(); iSol++ )
@@ -575,21 +587,21 @@ void MethodAbsScan::calcCLintervals()
 
 		for ( int c=0; c<3; c++ )
 		{
-			CLlo[c] = hCL->GetXaxis()->GetXmin();
-			CLhi[c] = hCL->GetXaxis()->GetXmax();
+			CLlo[c] = histogramCL->GetXaxis()->GetXmin();
+			CLhi[c] = histogramCL->GetXaxis()->GetXmax();
 			float y = 1.-CL[c];
 			float sol = getScanVar1Solution(iSol);
-			int sBin = hCL->FindBin(sol);
+			int sBin = histogramCL->FindBin(sol);
 
 			// find lower interval bound
 			for ( int i=sBin; i>0; i-- ){
-				if ( hCL->GetBinContent(i) < y ){
+				if ( histogramCL->GetBinContent(i) < y ){
 					if ( n>25 ){
-						bool check = interpolate(hCL, i, y, sol, false, CLlo[c], CLloErr[c]);
-						if ( !check || CLlo[c]!=CLlo[c] ) interpolateSimple(hCL, i, y, CLlo[c]);
+						bool check = interpolate(histogramCL, i, y, sol, false, CLlo[c], CLloErr[c]);
+						if ( !check || CLlo[c]!=CLlo[c] ) interpolateSimple(histogramCL, i, y, CLlo[c]);
 					}
 					else{
-						interpolateSimple(hCL, i, y, CLlo[c]);
+						interpolateSimple(histogramCL, i, y, CLlo[c]);
 					}
 					break;
 				}
@@ -597,20 +609,20 @@ void MethodAbsScan::calcCLintervals()
 
 			// find upper interval bound
 			for ( int i=sBin; i<n; i++ ){
-				if ( hCL->GetBinContent(i) < y ){
+				if ( histogramCL->GetBinContent(i) < y ){
 					if ( n>25 ){
-						bool check = interpolate(hCL, i-1, y, sol, true, CLhi[c], CLhiErr[c]);
-						if ( CLhi[c]!=CLhi[c] ) interpolateSimple(hCL, i-1, y, CLhi[c]);
+						bool check = interpolate(histogramCL, i-1, y, sol, true, CLhi[c], CLhiErr[c]);
+						if ( CLhi[c]!=CLhi[c] ) interpolateSimple(histogramCL, i-1, y, CLhi[c]);
 					}
 					else{
-						interpolateSimple(hCL, i-1, y, CLhi[c]);
+						interpolateSimple(histogramCL, i-1, y, CLhi[c]);
 					}
 					break;
 				}
 			}
 
 			// save interval if solution is contained in it
-			if ( hCL->GetBinContent(sBin)>y )
+			if ( histogramCL->GetBinContent(sBin)>y )
 			{
 				CLInterval cli;
 				cli.pvalue = 1.-CL[c];
@@ -659,20 +671,20 @@ void MethodAbsScan::calcCLintervals()
 
 		for ( int c=0; c<2; c++ )
 		{
-			CLlo[c] = hCL->GetXaxis()->GetXmin();
-			CLhi[c] = hCL->GetXaxis()->GetXmax();
+			CLlo[c] = histogramCL->GetXaxis()->GetXmin();
+			CLhi[c] = histogramCL->GetXaxis()->GetXmax();
 			float y = 1.-CL[c];
 
 			if ( iBoundary==1 )
 			{
 				// find lower interval bound
-				if ( hCL->GetBinContent(n)<y ) continue;  ///< skip if p-value is too low at boundary
+				if ( histogramCL->GetBinContent(n)<y ) continue;  ///< skip if p-value is too low at boundary
 				for ( int i=n; i>0; i-- )
 				{
-					if ( hCL->GetBinContent(i) > y )
+					if ( histogramCL->GetBinContent(i) > y )
 					{
-						if ( n>25 ) interpolate(hCL, i, y, hCL->GetXaxis()->GetXmax(), false, CLlo[c], CLloErr[c]);
-						else        interpolateSimple(hCL, i, y, CLlo[c]);
+						if ( n>25 ) interpolate(histogramCL, i, y, histogramCL->GetXaxis()->GetXmax(), false, CLlo[c], CLloErr[c]);
+						else        interpolateSimple(histogramCL, i, y, CLlo[c]);
 						break;
 					}
 				}
@@ -680,13 +692,13 @@ void MethodAbsScan::calcCLintervals()
 			else
 			{
 				// find upper interval bound
-				if ( hCL->GetBinContent(1)<y ) continue;  ///< skip if p-value is too low at boundary
+				if ( histogramCL->GetBinContent(1)<y ) continue;  ///< skip if p-value is too low at boundary
 				for ( int i=1; i<n; i++ )
 				{
-					if ( hCL->GetBinContent(i) > y )
+					if ( histogramCL->GetBinContent(i) > y )
 					{
-						if ( n>25 ) interpolate(hCL, i-1, y, hCL->GetXaxis()->GetXmin(), true, CLhi[c], CLhiErr[c]);
-						else        interpolateSimple(hCL, i-1, y, CLhi[c]);
+						if ( n>25 ) interpolate(histogramCL, i-1, y, histogramCL->GetXaxis()->GetXmin(), true, CLhi[c], CLhiErr[c]);
+						else        interpolateSimple(histogramCL, i-1, y, CLhi[c]);
 						break;
 					}
 				}
@@ -704,6 +716,7 @@ void MethodAbsScan::calcCLintervals()
 
 			int pErr = 2;
 			if ( arg && arg->digits>0 ) pErr = arg->digits;
+			if (isCLs && this->getHCLs()) cout << "CL_s: ";
 			printf("\n%s = [%7.*f, %7.*f] @%3.2fCL",
 					par->GetName(),
 					pErr, CLlo[c], pErr, CLhi[c],
@@ -811,9 +824,9 @@ float MethodAbsScan::getCL(double val)
 }
 
 
-void MethodAbsScan::plotOn(OneMinusClPlotAbs *plot)
+void MethodAbsScan::plotOn(OneMinusClPlotAbs *plot, bool doCLs)
 {
-	plot->addScanner(this);
+	plot->addScanner(this, doCLs);
 }
 
 
@@ -1330,45 +1343,60 @@ void MethodAbsScan::setYscanRange(float min, float max)
 
 
 
-void MethodAbsScan::calcCLintervalsSimple()
+void MethodAbsScan::calcCLintervalsSimple(bool isCLs)
 {
- 
   clintervals1sigma.clear(); 
   clintervals2sigma.clear();
-  
   double levels[2] = {0.6827, 0.9545};
-  for (int c=0;c<2;c++){
-    const std::pair<double, double> borders = getBorders(TGraph(this->hCL), levels[c]);
-    CLInterval cli;
-    cli.pvalue = 1. - levels[c];
-    cli.min = borders.first;
-    cli.max = borders.second;
-    cli.central = -1;
-    if ( c==0 ) clintervals1sigma.push_back(cli);
-    if ( c==1 ) clintervals2sigma.push_back(cli);
-    std::cout<<"borders at "<<levels[c]<<"  [ "<<borders.first<<" : "<<borders.second<<"]";
-	cout << ", " << methodName << " (simple boundary scan)" << endl;
+
+  TH1F *histogramCL = this->hCL;
+  if (this->hCLs && isCLs)
+  {
+  	histogramCL = this->hCLs;
   }
+  if(!isCLs || (this->hCLs && isCLs))
+  {  
+	  for (int c=0;c<2;c++){
+	    const std::pair<double, double> borders = getBorders(TGraph(histogramCL), levels[c]);
+	    CLInterval cli;
+	    cli.pvalue = 1. - levels[c];
+	    cli.min = borders.first;
+	    cli.max = borders.second;
+	    cli.central = -1;
+	    if ( c==0 ) clintervals1sigma.push_back(cli);
+	    if ( c==1 ) clintervals2sigma.push_back(cli);
+	    if (isCLs) std::cout << "CL_s ";
+	    std::cout<<"borders at "<<levels[c]<<"  [ "<<borders.first<<" : "<<borders.second<<"]";
+		cout << ", " << methodName << " (simple boundary scan)" << endl;
+	  }
+	}
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////
 	//// Add a hacky calculation of the CL_s intervals
 	//// \todo: Do it properly from the very start by introducing a bkg model and propagate it to the entire framework.  
 
-  clintervals1sigma.clear(); 
-  clintervals2sigma.clear();
+  if(!this->hCLs && isCLs)
+  {
+  	std::cout << "**************************************************************************************************************************************" << std::endl;
+  	std::cout << "WARNING: hCLs is empty! Will calculate CLs intervals by noramlizing the p values to the p value of the first bin." << std::endl;
+  	std::cout << "WARNING: This is only an approximate solution and MIGHT EVEN BE WRONG, if the first bin does not represent the background expectation!" << std::endl;
+  	std::cout << "**************************************************************************************************************************************" << std::endl;
+  	clintervals1sigma.clear(); 
+  	clintervals2sigma.clear();
   
-  for (int c=0;c<2;c++){
-    const std::pair<double, double> borders_CLs = getBorders_CLs(TGraph(this->hCL), levels[c]);
-    CLInterval cli;
-    cli.pvalue = 1. - levels[c];
-    cli.min = borders_CLs.first;
-    cli.max = borders_CLs.second;
-    cli.central = -1;
-    if ( c==0 ) clintervals1sigma.push_back(cli);
-    if ( c==1 ) clintervals2sigma.push_back(cli);
-    std::cout<<"CL_s borders at "<<levels[c]<<"  [ "<<borders_CLs.first<<" : "<<borders_CLs.second<<"]";
-	cout << ", " << methodName << " (simple boundary scan)" << endl;
+  	for (int c=0;c<2;c++){
+    	const std::pair<double, double> borders_CLs = getBorders_CLs(TGraph(histogramCL), levels[c]);
+    	CLInterval cli;
+    	cli.pvalue = 1. - levels[c];
+    	cli.min = borders_CLs.first;
+    	cli.max = borders_CLs.second;
+    	cli.central = -1;
+    	if ( c==0 ) clintervals1sigma.push_back(cli);
+    	if ( c==1 ) clintervals2sigma.push_back(cli);
+    	std::cout<<"CL_s borders at "<<levels[c]<<"  [ "<<borders_CLs.first<<" : "<<borders_CLs.second<<"]";
+		cout << ", " << methodName << " (simple boundary scan)" << endl;
+  	}
   }
 
 }

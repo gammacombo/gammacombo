@@ -20,8 +20,9 @@ PDF_Datasets::PDF_Datasets(RooWorkspace* w, int nObs, OptParser* opt)
     constraintName  = "default_internal_constraint_set_name";
     dataName        = "default_internal_dataset_name";
     pdfName         = "default_pdf_workspace_name";
+    pdfBkgName      = "default_pdf_bkg_workspace_name";
     parName         = "default_internal_parameter_set";
-    areObsSet       = areParsSet = areRangesSet = isPdfSet = isDataSet = isToyDataSet = kFALSE;
+    areObsSet       = areParsSet = areRangesSet = isPdfSet = isBkgPdfSet = isDataSet = isToyDataSet = kFALSE;
     arg             = opt;
     fitStatus       = -10;
     _NLL            = NULL;
@@ -66,6 +67,7 @@ void PDF_Datasets::initData(const TString& name) {
         std::cout << "FATAL in PDF_Datasets::initData -- Data: " << dataName << " not found in workspace" << std::endl;
         exit(EXIT_FAILURE);
     }
+    if(pdf) this->minNll = pdf->createNLL(*data)->getVal();
     std::cout << "INFO in PDF_Datasets::initData -- Data initialized" << std::endl;
     return;
 };
@@ -153,6 +155,23 @@ void PDF_Datasets::initPDF(const TString& name) {
     }
 
     std::cout << "INFO in PDF_Datasets::initPDF -- PDF initialized" << std::endl;
+    if(data) this->minNll = pdf->createNLL(*data)->getVal();
+    return;
+};
+
+void PDF_Datasets::initBkgPDF(const TString& name) {
+    if (isBkgPdfSet) {
+        std::cout << "ERROR in PDF_Datasets::initBkgPDF -- Bkg PDF already set" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    pdfBkgName  = name;
+    pdfBkg      = wspc->pdf(pdfBkgName);
+    if (pdfBkg) isBkgPdfSet  = true;
+    else {
+        std::cout << "FATAL in PDF_Datasets::initBkgPDF -- PDF: " << pdfName << " not found in workspace" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    std::cout << "INFO in PDF_Datasets::initBkgPDF -- PDF initialized. CLs method ready." << std::endl;
     return;
 };
 
@@ -257,6 +276,47 @@ RooFitResult* PDF_Datasets::fit(RooDataSet* dataToFit) {
     RooMsgService::instance().setSilentMode(kFALSE);
     RooMsgService::instance().setGlobalKillBelow(INFO);
     this->fitStatus = result->status();
+    RooAbsReal* nll = pdf->createNLL(*dataToFit);
+    this->minNll = nll->getVal();
+    delete nll;
+
+    return result;
+};
+
+RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit) {
+
+    if (this->getWorkspace()->set(constraintName) == NULL) {
+        std::cout << std::endl;
+        std::cout << std::endl;
+        std::cout << "ERROR: No RooArgSet with constraints found." << std::endl;
+        std::cout << "The Workspace must contain a RooArgSet with constraint PDFs." << std::endl;
+        std::cout << "These are usually Gaussians that constrain parameters via global observables." << std::endl;
+        std::cout << "This set can be empty." << std::endl;
+        std::cout << "By default its name should be 'default_internal_constraint_set_name'." << std::endl;
+        std::cout << "Other names can be passed via PDF_Datasets::initConstraints" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    if (!pdfBkg)
+    {
+        std::cout << "ERROR in PDF_Datasets::fitBkg -- No background PDF given!" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    // Turn off RooMsg
+    RooMsgService::instance().setGlobalKillBelow(ERROR);
+    RooMsgService::instance().setSilentMode(kTRUE);
+    // Choose Dataset to fit to
+
+    RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Minimizer("Minuit2", "Migrad"));
+
+    RooMsgService::instance().setSilentMode(kFALSE);
+    RooMsgService::instance().setGlobalKillBelow(INFO);
+    this->fitStatus = result->status();
+    RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit);
+    this->minNllBkg = nll_bkg->getVal();
+    delete nll_bkg;
+
     return result;
 };
 

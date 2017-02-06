@@ -817,6 +817,7 @@ void GammaComboEngine::make1dProbScan(MethodProbScan *scanner, int cId)
 	scanner->printLocalMinima();
   scanner->saveLocalMinima(m_fnamebuilder->getFileNameSolution(scanner));
 	scanner->calcCLintervals();
+	if(arg->cls) scanner->calcCLintervals(true);
 	if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
 		if ( arg->plotpulls ) scanner->plotPulls();
 		if ( arg->parevol ){
@@ -850,6 +851,7 @@ void GammaComboEngine::make1dPluginScan(MethodPluginScan *scannerPlugin, int cId
 	else {
 		scannerPlugin->readScan1dTrees(arg->jmin[cId],arg->jmax[cId]);
 		scannerPlugin->calcCLintervals();
+		if(arg->cls) scannerPlugin->calcCLintervals(true);
 	}
 	if ( !arg->isAction("pluginbatch") ){
 		scannerPlugin->saveScanner(m_fnamebuilder->getFileNameScanner(scannerPlugin));
@@ -948,6 +950,14 @@ void GammaComboEngine::make1dProbPlot(MethodProbScan *scanner, int cId)
 		scanner->setTextColor(colorsText[colorId]);
     scanner->setFillStyle(fillStyles[cId]);
 		plot->Draw();
+		if (arg->cls)
+		{
+			scanner->setDrawSolution(arg->plotsolutions[cId]);
+			scanner->plotOn(plot);
+			scanner->setLineColor(colorsLine[colorId]);
+			scanner->setTextColor(colorsText[colorId]);
+			plot->Draw();
+		}
 	}
 }
 
@@ -1003,12 +1013,20 @@ void GammaComboEngine::make1dPluginPlot(MethodPluginScan *sPlugin, MethodProbSca
 		make1dPluginOnlyPlot(sPlugin, cId);
 		sProb->setLineColor(kBlack);
 		sProb->setDrawSolution(arg->plotsolutions[cId]);
+		if(arg->cls)
+		{
+			sProb->plotOn(plot, arg->cls);
+		}
 		sProb->plotOn(plot);
 	}
 	else {
 		make1dProbPlot(sProb, cId);
 		sPlugin->setLineColor(kBlack);
 		sPlugin->setDrawSolution(arg->plotsolutions[cId]);
+		if(arg->cls)
+		{
+			sPlugin->plotOn(plot, arg->cls);
+		}		
 		sPlugin->plotOn(plot);
 	}
 	plot->Draw();
@@ -1131,6 +1149,9 @@ void GammaComboEngine::make2dProbPlot(MethodProbScan *scanner, int cId)
 	// contour plot
 	scanner->setDrawSolution(arg->plotsolutions[cId]);
 	scanner->setLineColor(colorsLine[cId]);
+	if(arg->cls){
+		scanner->plotOn(plot, true);
+	}
 	scanner->plotOn(plot);
 	// only draw the plot once when multiple scanners are plotted,
 	// else we end up with too many graphs, and the transparency setting
@@ -1659,10 +1680,19 @@ void GammaComboEngine::scanDataSet()
 			// Plotting the plugin scan results
 			/////////////////////////////////////////////////////
 			scanner->setLineColor(1);
+			//// compute CLs Intervals 
+			if (arg->cls)
+			{
+				plot->addScanner(probScanner, arg->cls);
+				plot->addScanner(scanner, arg->cls);
+				scanner->calcCLintervals(arg->cls);
+				probScanner->calcCLintervals(arg->cls);
+			}
 			plot->addScanner(probScanner);
 			plot->addScanner(scanner);
 			scanner->calcCLintervals();
 			probScanner->calcCLintervals();
+
 			plot->Draw();
 		}
 	} else {
@@ -1673,6 +1703,10 @@ void GammaComboEngine::scanDataSet()
 		if ( arg->var.size()==1 )
 		{
 			probScanner->scan1d();
+			if(arg->cls){
+				plot->addScanner(probScanner, arg->cls);
+				probScanner->calcCLintervals(arg->cls);				
+			}
 			plot->addScanner(probScanner);
 			probScanner->calcCLintervals();
 			plot->Draw();
@@ -1730,6 +1764,31 @@ void GammaComboEngine::run(bool runOnDatSet)
 	if (!runOnDatSet) checkCombinationArg();
 	checkColorArg();
 	checkAsimovArg();
+	if( arg->cls)
+	{
+		cout << "===========================================" << endl;
+		cout << "Will additionally compute CLs method" << endl;
+		// if (!pdf[0]->bkgpdfset() && runOnDatSet){
+		// 	cout << "WARNING: CLs -- No background PDF has been set!";
+		// 	if (arg->var.size()>1) {
+		// 		cout << endl << "ERROR : 2D CLs method without background PDF is not supported." << endl;
+		// 		exit(1);
+		// 	}
+		// 	cout << " The p value at the lower edge of the scan range will be assumed for the background estimate." << endl;
+		// }
+		for (int pdfid=1; pdfid<pdf.size(); pdfid++)
+		{
+			if (!pdf[pdfid]->bkgpdfset()) {
+				cout << "WARNING: CLs -- No background PDF has been set!";
+				if (arg->var.size()>1) {
+					cout << endl << "ERROR : 2D CLs method without background PDF is not supported." << endl;
+					exit(1);
+				}
+				cout << " The p value at the lower edge of the scan range will be assumed for the background estimate." << endl;
+			}
+		}
+		cout << "===========================================" << endl << endl;
+	}	
 	if(runOnDatSet){
 		if ( !cmb.empty() ){
 			cout << "ERROR : Please do not define any combiners when running on a dataset" << endl;

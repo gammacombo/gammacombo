@@ -46,9 +46,29 @@ MethodDatasetsProbScan::MethodDatasetsProbScan(PDF_Datasets* PDF, OptParser* opt
         cerr << "ERROR: The workspace must contain the fit result of the fit to data. The name of the fit result must be 'data_fit_result'. " << endl;
         exit(EXIT_FAILURE);
     }
+
     dataFreeFitResult = (RooFitResult*) w->obj("data_fit_result");
-    chi2minGlobal = 2 * dataFreeFitResult->minNll();
-    std::cout << "=============== Global Minimum (2*-Log(Likelihood)) is: 2*" << dataFreeFitResult->minNll() << " = " << chi2minGlobal << endl;
+    // chi2minGlobal = 2 * dataFreeFitResult->minNll();
+    chi2minGlobal = 2*pdf->getMinNll();
+    std::cout << "=============== Global minimum (2*-Log(Likelihood)) is: 2*" << dataFreeFitResult->minNll() << " = " << chi2minGlobal << endl;
+
+
+    // if bkg pdf is given, compute bkg chi2
+    if(pdf->getBkgPdf())
+    {
+        RooFitResult * bkgfitresult = pdf->fitBkg(pdf->getData());
+        // chi2minBkg = 2 * bkgfitresult->minNll();
+        chi2minBkg = 2*pdf->getMinNllBkg();
+        std::cout << "=============== Bkg minimum (2*-Log(Likelihood)) is: 2*" << bkgfitresult->minNll() << " = " << chi2minBkg << endl;
+        if (chi2minBkg<chi2minGlobal)
+        {
+            std::cout << "WARNING: BKG MINIMUM IS LOWER THAN GLOBAL MINIMUM! The likelihoods are screwed up! Set bkg minimum to global minimum for consistency." << std::endl;
+            chi2minBkg = chi2minGlobal;
+            std::cout << "=============== New bkg minimum (2*-Log(Likelihood)) is: " << chi2minBkg << endl;            
+        }
+
+    }
+
 
     if ( !w->set(pdf->getObsName()) ) {
         cerr << "MethodDatasetsProbScan::MethodDatasetsProbScan() : ERROR : no '" + pdf->getObsName() + "' set found in workspace" << endl;
@@ -86,6 +106,10 @@ void MethodDatasetsProbScan::initScan() {
     if ( hChi2min ) delete hChi2min;
     hChi2min = new TH1F("hChi2min" + getUniqueRootName(), "hChi2min" + pdf->getPdfName(), nPoints1d, min1, max1);
 
+    if (hCLs) delete hCLs;
+    hCLs = new TH1F("hCLs" + getUniqueRootName(), "hCLs" + pdf->getPdfName(), nPoints1d, min1, max1);
+
+
     // fill the chi2 histogram with very unlikely values such
     // that inside scan1d() the if clauses work correctly
     for ( int i = 1; i <= nPoints1d; i++ ) hChi2min->SetBinContent(i, 1e6);
@@ -119,6 +143,7 @@ void MethodDatasetsProbScan::initScan() {
         float min2 = par2->getMin();
         float max2 = par2->getMax();
         hCL2d      = new TH2F("hCL2d"+getUniqueRootName(),      "hCL2d"+pdfName, nPoints2dx, min1, max1, nPoints2dy, min2, max2);
+        hCLs2d      = new TH2F("hCL2d"+getUniqueRootName(),      "hCL2d"+pdfName, nPoints2dx, min1, max1, nPoints2dy, min2, max2);
         hChi2min2d = new TH2F("hChi2min2d"+getUniqueRootName(), "hChi2min",      nPoints2dx, min1, max1, nPoints2dy, min2, max2);
 
         for ( int i=1; i<=nPoints2dx; i++ )
@@ -181,6 +206,9 @@ void MethodDatasetsProbScan::sethCLFromProbScanTree() {
     delete hCL;
     this->hCL = new TH1F("hCL", "hCL", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth);
     if (arg->debug) printf("DEBUG %i %f %f %f\n", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth, halfBinWidth);
+    delete hCLs;
+    this->hCLs = new TH1F("hCLs", "hCLs", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth);
+    if (arg->debug) printf("DEBUG %i %f %f %f\n", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth, halfBinWidth);
     Long64_t nentries     = this->probScanTree->GetEntries();
     // this->probScanTree->activateCoreBranchesOnly(); //< speeds up the event loop
     for (Long64_t i = 0; i < nentries; i++)
@@ -188,6 +216,7 @@ void MethodDatasetsProbScan::sethCLFromProbScanTree() {
         // load entry
         this->probScanTree->GetEntry(i);
         this->hCL->SetBinContent(this->hCL->FindBin(this->probScanTree->scanpoint), this->probScanTree->genericProbPValue);
+        this->hCLs->SetBinContent(this->hCLs->FindBin(this->probScanTree->scanpoint), getPValueTTestStatistic(this->probScanTree->chi2min - this->probScanTree->chi2minBkg, true));
     }
     // this->probScanTree->activateAllBranches(); //< Very important!
 
@@ -327,12 +356,13 @@ int MethodDatasetsProbScan::scan1d()
         assert(result);
 
         if (arg->debug) {
-            cout << "DEBUG in MethodDatasetsProbScan::scan1d_prob() - minNll data scan at scan point " << scanpoint << " : " << 2 * result->minNll() << endl;
+            cout << "DEBUG in MethodDatasetsProbScan::scan1d_prob() - minNll data scan at scan point " << scanpoint << " : " << 2 * result->minNll() << ": "<< 2 * pdf->getMinNll() << endl;
         }
         this->probScanTree->statusScanData = result->status();
 
         // set chi2 of fixed fit: scan fit on data
-        this->probScanTree->chi2min           = 2 * result->minNll();
+        // this->probScanTree->chi2min           = 2 * result->minNll();
+        this->probScanTree->chi2min           = 2 * pdf->getMinNll();        
         this->probScanTree->covQualScanData   = result->covQual();
         this->probScanTree->scanbest  = freeDataFitValue;
 
@@ -345,9 +375,17 @@ int MethodDatasetsProbScan::scan1d()
 
         // also save the chi2 of the free data fit to the tree:
         this->probScanTree->chi2minGlobal = this->getChi2minGlobal();
+        this->probScanTree->chi2minBkg = this->getChi2minBkg();
 
         this->probScanTree->genericProbPValue = this->getPValueTTestStatistic(this->probScanTree->chi2min - this->probScanTree->chi2minGlobal);
         this->probScanTree->fill();
+
+        if(arg->debug && pdf->getBkgPdf())
+        {
+            float pval_cls = this->getPValueTTestStatistic(this->probScanTree->chi2min - this->probScanTree->chi2minBkg, true);
+            cout << "DEBUG in MethodDatasetsProbScan::scan1d() - p value CLs: " << pval_cls << endl;
+        }
+
 
         // reset
         setParameters(w, pdf->getParName(), parsFunctionCall->get(0));
@@ -568,6 +606,7 @@ int MethodDatasetsProbScan::scan2d()
                     for ( int k=1; k<=hCL2d->GetNbinsX(); k++ )
                         for ( int l=1; l<=hCL2d->GetNbinsY(); l++ ){
                             hCL2d->SetBinContent(k, l, TMath::Prob(hChi2min2d->GetBinContent(k,l)-chi2minGlobal, ndof));
+                            hCLs2d->SetBinContent(k, l, TMath::Prob(hChi2min2d->GetBinContent(k,l)-chi2minBkg, ndof));
                         }
                 }
 
@@ -585,6 +624,7 @@ int MethodDatasetsProbScan::scan2d()
                 // Save the 1-CL value. But only if better than before!
                 if ( hCL2d->GetBinContent(i, j) < oneMinusCL ){
                     hCL2d->SetBinContent(i, j, oneMinusCL);
+                    hCLs2d->SetBinContent(i, j, TMath::Prob(chi2minScan - chi2minBkg, ndof));
                     hChi2min2d->SetBinContent(i, j, chi2minScan);
                     hDbgChi2min2d->SetBinContent(i, j, chi2minScan);
                     curveResults2d[i-1][j-1] = r;
@@ -640,11 +680,11 @@ int MethodDatasetsProbScan::scan2d()
 }
 
 
-double MethodDatasetsProbScan::getPValueTTestStatistic(double test_statistic_value) {
+double MethodDatasetsProbScan::getPValueTTestStatistic(double test_statistic_value, bool isCLs) {
     if ( test_statistic_value > 0) {
         // this is the normal case
         return TMath::Prob(test_statistic_value, 1);
-    } else {
+    } else if(!isCLs){
         cout << "MethodDatasetsProbScan::scan1d_prob() : WARNING : Test statistic is negative, forcing it to zero" << std::endl
              << "Fit at current scan point has higher likelihood than free fit." << std::endl
              << "This should not happen except for very small underflows when the scan point is at the best fit value. " << std::endl
@@ -652,6 +692,10 @@ double MethodDatasetsProbScan::getPValueTTestStatistic(double test_statistic_val
              << "An equal upwards fluctuaion corresponds to a p value of " << TMath::Prob(abs(test_statistic_value), 1) << std::endl;
         // TMath::Prob will return 0 if the Argument is slightly below zero. As we are working with a float-zero we can not rely on it here:
         // TMath::Prob( 0 ) returns 1
+        return 1.;
+    }
+    else {
+        cout << "MethodDatasetsProbScan::scan1d_prob() : WARNING : CLs test statistic is negative, forcing it to zero" << std::endl;
         return 1.;
     }
 }
