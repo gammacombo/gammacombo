@@ -690,7 +690,7 @@ void OneMinusClPlot2d::drawSolutions()
 	{
 		if ( scanners[i]->getDrawSolution()==0 ) continue;
 		if ( arg->debug ) cout << "OneMinusClPlot2d::drawSolutions() : adding solutions for scanner " << i << " ..." << endl;
-		if ( scanners[i]->getNSolutions()==0 ){
+		if ( scanners[i]->getSolutions().size()==0 ){
 			cout << "OneMinusClPlot2d::drawSolutions() : WARNING : \n"
 														 "        Plot solutions requested but no solutions found!\n"
 																						  "        Perform a 1d scan first or use MethodAbsScan::setSolutions()." << endl;
@@ -707,7 +707,7 @@ void OneMinusClPlot2d::drawSolutions()
 		if ( i<markersize.size() ) markerSize = markersize[styleId];
 		else cout << "OneMinusClPlot2d::drawSolutions() : ERROR : not enough marker sizes" << endl;
 
-		for ( int iSol=0; iSol<scanners[i]->getNSolutions(); iSol++ )
+		for ( int iSol=0; iSol<scanners[i]->getSolutions().size(); iSol++ )
 		{
 			/// if option 2 is given, only plot best fit points and equivalent ones
 			if ( scanners[i]->getDrawSolution()==2

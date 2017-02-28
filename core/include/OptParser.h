@@ -119,6 +119,7 @@ class OptParser
 		float           pluginPlotRangeMax;
 		bool		probforce;
 		bool		probimprove;
+		TString 				probScanResult;
 		bool		printcor;
     float           printSolX;
     float           printSolY;

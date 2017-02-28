@@ -7,66 +7,70 @@
 
 #include "MethodAbsScan.h"
 
-///
-/// 'Default Constructor'
-/// Introduced so that inherited classes do not have to call an
-/// explicit constructor
-///
-	MethodAbsScan::MethodAbsScan()
-: rndm()
-{
-	exit(1);
-	methodName = "Abs";
-	drawFilled = true;
-};
+    MethodAbsScan::MethodAbsScan()
+	: rndm()
+	{
+       methodName = "Abs";
+       drawFilled = true;
+	};
 
-	MethodAbsScan::MethodAbsScan(Combiner *c)
-: rndm()
-{
-	combiner = c;
-	methodName = "Abs";
-	w = combiner->getWorkspace();
-	name = combiner->getName();
-	title = combiner->getTitle();
-	arg = combiner->getArg();
-	scanVar1 = arg->var[0];
-	if ( arg->var.size()>1 ) scanVar2 = arg->var[1];
-	verbose = arg->verbose;
-	drawSolution = 0;
-	nPoints1d  = arg->npoints1d;
-	nPoints2dx = arg->npoints2dx;
-	nPoints2dy = arg->npoints2dy;
-	pvalueCorrectorSet = false;
-	pdfName  = "pdf_"+combiner->getPdfName();
-	obsName  = "obs_"+combiner->getPdfName();
-	parsName = "par_"+combiner->getPdfName();
-	thName   = "th_"+combiner->getPdfName();
-  toysName = "toy_"+combiner->getPdfName();
-	chi2minGlobal = 0.0;
-	chi2minGlobalFound = false;
-	lineStyle = 0;
-	lineColor = kBlue-8;
-	textColor = kBlack;
-  fillStyle = 1001;
-	hCL = 0;
-	hCL2d = 0;
-	hChi2min = 0;
-	hChi2min2d = 0;
-	obsDataset = 0;
-	startPars = 0;
-	globalMin = 0;
-	nWarnings = 0;
-	drawFilled = true;
-	m_xrangeset = false;
-	m_yrangeset = false;
-	m_initialized = false;
 
-	// check workspace content
-	if ( !w->pdf(pdfName) ) { cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << pdfName  << endl; exit(1); }
-	if ( !w->set(obsName) ) { cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << obsName << endl; exit(1); }
-	if ( !w->set(parsName) ){ cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << parsName << endl; exit(1); }
-	if ( !w->set(thName) )  { cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << thName << endl; exit(1); }
-}
+	MethodAbsScan::MethodAbsScan(Combiner *c): 
+		MethodAbsScan(c->getArg())  
+		// C++11 onwards, one can delegate constructors, 
+		// but then, there can be no other initializers
+	{
+		combiner = c;
+		w = c->getWorkspace();
+		name = c->getName();
+		title = c->getTitle();
+		pdfName = "pdf_"+combiner->getPdfName();
+		obsName = "obs_"+combiner->getPdfName();
+		parsName = "par_"+combiner->getPdfName();
+		thName = "th_"+combiner->getPdfName();
+	
+		// check workspace content
+		if ( !w->pdf(pdfName) ) { cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << pdfName  << endl; exit(1); }
+		if ( !w->set(obsName) ) { cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << obsName << endl; exit(1); }
+		if ( !w->set(parsName) ){ cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << parsName << endl; exit(1); }
+		if ( !w->set(thName) )  { cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << thName << endl; exit(1); }
+	}
+	
+	
+	// constructor without combiner, this is atm still needed for the datasets stuff
+	MethodAbsScan::MethodAbsScan(OptParser* opt):
+		rndm(),
+		methodName("Abs"),
+		combiner(NULL),
+		w(NULL),
+		arg(opt),
+		scanVar1(opt->var[0]),
+		verbose(opt->verbose),
+		drawSolution(0),
+		nPoints1d(opt->npoints1d),
+		nPoints2dx(opt->npoints2dx),
+		nPoints2dy(opt->npoints2dy),
+		pvalueCorrectorSet(false),
+		chi2minGlobal(0.0),
+		chi2minGlobalFound(false),
+		lineStyle(0),
+		lineColor(kBlue-8),
+		textColor(kBlack),
+		hCL(0),
+		hCL2d(0),
+		hChi2min(0),
+		hChi2min2d(0),
+		obsDataset(NULL),
+		startPars(0),
+		globalMin(0),
+		nWarnings(0),
+		drawFilled(true),
+		m_xrangeset(false),
+		m_yrangeset(false),
+		m_initialized(false)
+	{
+		if ( opt->var.size()>1 ) scanVar2 = opt->var[1];
+	}
 
 MethodAbsScan::~MethodAbsScan()
 {
@@ -543,9 +547,14 @@ void MethodAbsScan::calcCLintervals()
 		cout << endl;
 	}
 
-	cout << endl;
-	if ( arg->debug ) cout << "MethodAbsScan::calcCLintervals() : ";
-	cout << "CONFIDENCE INTERVALS for combination " << name << endl << endl;
+	if(solutions.empty()){
+		cout 	<< "MethodAbsScan::calcCLintervals() : Solutions vector empty. "
+								<<"Using simple method with  linear splines."<<endl;;
+		this->calcCLintervalsSimple();
+		return;
+	}
+
+
 	clintervals1sigma.clear(); // clear, else calling this function twice doesn't work
 	clintervals2sigma.clear();
   clintervals3sigma.clear();
@@ -717,7 +726,7 @@ void MethodAbsScan::printCLintervals()
 	cout << endl;
 
 	// print solutions not contained in the 1sigma and 2sigma intervals
-	for ( int i=0; i<getNSolutions(); i++ )
+	for ( int i=0; i<solutions.size(); i++ )
 	{
 		float sol = getScanVar1Solution(i);
 		bool cont=false;
@@ -1312,3 +1321,61 @@ void MethodAbsScan::setYscanRange(float min, float max)
 	m_yrangeset = true;
 }
 
+void MethodAbsScan::calcCLintervalsSimple()
+{
+ 
+  clintervals1sigma.clear(); 
+  clintervals2sigma.clear();
+  
+  double levels[2] = {0.6827, 0.9545};
+  for (int c=0;c<2;c++){
+    const std::pair<double, double> borders = getBorders(TGraph(this->hCL), levels[c]);
+    CLInterval cli;
+    cli.pvalue = 1. - levels[c];
+    cli.min = borders.first;
+    cli.max = borders.second;
+    cli.central = -1;
+    if ( c==0 ) clintervals1sigma.push_back(cli);
+    if ( c==1 ) clintervals2sigma.push_back(cli);
+    std::cout<<"borders at "<<levels[c]<<"  [ "<<borders.first<<" : "<<borders.second<<"]";
+	cout << ", " << methodName << " (simple boundary scan)" << endl;
+  }
+
+}
+
+/*!
+\brief determines the borders of the confidence interval by linear or qubic interpolation.
+\param graph The graph holding the p-values.
+\param confidence_level The confidence level at which the interval is to be determined.
+\param qubic Optional parameter. False by default. If true, qubic interpolation is used. 
+*/
+const std::pair<double, double> MethodAbsScan::getBorders(const TGraph& graph, const double confidence_level, bool qubic){
+
+  const double p_val = 1 - confidence_level;
+  TSpline* splines = NULL;
+  if(qubic) splines = new TSpline3();
+
+
+  double min_edge = graph.GetX()[0];
+  // will never return smaller edge than min_edge
+  double max_edge = graph.GetX()[graph.GetN()-1];
+  // will never return higher edge than max_edge
+  int scan_steps = 1000;
+  double lower_edge = min_edge;
+  double upper_edge = max_edge;
+
+  for(double point = min_edge; point < max_edge; point+= (max_edge-min_edge)/scan_steps){
+ 	
+   if(graph.Eval(point, splines)>p_val){
+      lower_edge = point;
+      break;
+    }
+  }
+  for(double point = max_edge; point > min_edge; point-= (max_edge-min_edge)/scan_steps){
+    if(graph.Eval(point, splines)>p_val){
+      upper_edge = point;
+      break;
+    }
+  }
+  return std::pair<double, double>(lower_edge,upper_edge);
+}

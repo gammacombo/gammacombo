@@ -24,7 +24,7 @@
 /// The function draws the TGraphs, and returns a pointer to the
 /// TGraph object that can be used in the TLegend.
 ///
-/// Markers are plotted if the method name of the scanner is "Plugin" or "BergerBoos" or "GenericPlugin".
+/// Markers are plotted if the method name of the scanner is "Plugin" or "BergerBoos" or "DatasetsPlugin".
 /// One can plot a line instead of points even for the Plugin method by
 /// using setPluginMarkers().
 ///
@@ -41,8 +41,11 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 		cout << "OneMinusClPlot::scan1dPlot() : plotting ";
 		cout << s->getName() << " (" << s->getMethodName() << ")" << endl;
 	}
+	if ( m_mainCanvas==0 ){
+		m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, 600);
+	}
 	m_mainCanvas->cd();
-	bool plotPoints = ( s->getMethodName()=="Plugin" || s->getMethodName()=="BergerBoos" || s->getMethodName()=="GenericPlugin" ) && plotPluginMarkers;
+	bool plotPoints = ( s->getMethodName()=="Plugin" || s->getMethodName()=="BergerBoos" || s->getMethodName()=="DatasetsPlugin" ) && plotPluginMarkers;
 	TH1F *hCL = (TH1F*)s->getHCL()->Clone(getUniqueRootName());
 	// fix inf and nan entries
 	for ( int i=1; i<=s->getHCL()->GetNbinsX(); i++ ){
@@ -68,7 +71,7 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	}
 
 	// add solution
-	if ( s->getNSolutions()>0 && !arg->isQuickhack(21) ){
+	if ( ! s->getSolutions().empty() ){
 		TGraphTools t;
 		TGraph *gNew = t.addPointToGraphAtFirstMatchingX(g, s->getScanVar1Solution(0), 1.0);
 		delete g;
@@ -533,7 +536,7 @@ void OneMinusClPlot::Draw()
 		if ( plotPluginMarkers
 				&& ( scanners[i]->getMethodName()=="Plugin"
 					|| scanners[i]->getMethodName()=="BergerBoos"
-					|| scanners[i]->getMethodName()=="GenericPlugin" ) )
+					|| scanners[i]->getMethodName()=="DatasetsPlugin" ) )
 		{
 			legDrawOption = "p";
 		}

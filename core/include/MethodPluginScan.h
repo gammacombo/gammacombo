@@ -51,6 +51,7 @@
 #include "ProgressBar.h"
 #include "ToyTree.h"
 #include "Utils.h"
+#include "PDF_Datasets.h"
 
 using namespace RooFit;
 using namespace std;
@@ -60,8 +61,8 @@ class MethodPluginScan : public MethodAbsScan
 {
 	public:
 		MethodPluginScan(MethodProbScan* s);
+		MethodPluginScan(MethodProbScan* s, PDF_Datasets* pdf, OptParser* opt);
 		MethodPluginScan(Combiner* comb);
-		MethodPluginScan();
 
 		inline void     setNtoysPerPoint(int n){nToys=n;};
 		void            setParevolPLH(MethodProbScan* s);

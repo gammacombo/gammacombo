@@ -41,7 +41,7 @@ if(ROOT_CONFIG_EXECUTABLE)
     OUTPUT_VARIABLE ROOT_GUI_LIBRARIES
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-  # add libraries that are not spit out by rootconfig:
+  # add libraries that are not spat out by rootconfig:
   set(ROOT_LIBRARIES ${ROOT_LIBRARIES} -lRooFit -lRooFitCore -lHtml -lMinuit -lThread -lRooStats -lGui -lTreePlayer -lGenVector)
   set(ROOT_LIBRARY_DIR ${ROOTSYS}/lib)
 endif()

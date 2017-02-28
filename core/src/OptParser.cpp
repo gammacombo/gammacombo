@@ -91,6 +91,7 @@ OptParser::OptParser():
 	intprob = false;
 	probforce = false;
 	probimprove = false;
+	probScanResult = "notSet";
 	printcor = false;
   printSolX = -999.;
   printSolY = -999.;
@@ -170,8 +171,9 @@ void OptParser::defineOptions()
 	availableOptions.push_back("po");
 	availableOptions.push_back("prelim");
   availableOptions.push_back("printsolx");
-  availableOptions.push_back("printsoly");
 	availableOptions.push_back("probforce");
+	availableOptions.push_back("probScanResult");
+  availableOptions.push_back("printsoly");
 	//availableOptions.push_back("probimprove");
   availableOptions.push_back("plotsoln");
 	availableOptions.push_back("ps");
@@ -436,6 +438,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::SwitchArg scanforceArg("f", "scanforce", "Use a stronger minimum finding method for the Plugin method.", false);
 	TCLAP::SwitchArg probforceArg("", "probforce", "Use a stronger minimum finding method for the Prob method.", false);
 	TCLAP::SwitchArg probimproveArg("", "probimprove", "Use IMPROVE minimum finding for the Prob method.", false);
+	TCLAP::ValueArg<string> probScanResultArg("", "probScanResult", "Result of a probScan used as input for a Datasets Plugin Scan",false, "notSet","string");
 	TCLAP::SwitchArg largestArg("", "largest", "Report largest CL interval: lowest boundary of "
 			"all intervals to highest boundary of all intervals. Useful if two intervals are very "
 			"close together.", false);
@@ -640,7 +643,8 @@ void OptParser::parseArguments(int argc, char* argv[])
   if ( isIn<TString>(bookedOptions, "plotsoln" ) ) cmd.add( plotsolnArg );
 	if ( isIn<TString>(bookedOptions, "probimprove" ) ) cmd.add( probimproveArg );
 	if ( isIn<TString>(bookedOptions, "probforce" ) ) cmd.add( probforceArg );
-  if ( isIn<TString>(bookedOptions, "printsolx" ) ) cmd.add( printSolXArg );
+  if ( isIn<TString>(bookedOptions, "probScanResult" ) ) cmd.add(probScanResultArg);
+	if ( isIn<TString>(bookedOptions, "printsolx" ) ) cmd.add( printSolXArg );
   if ( isIn<TString>(bookedOptions, "printsoly" ) ) cmd.add( printSolYArg );
 	if ( isIn<TString>(bookedOptions, "printcor" ) ) cmd.add( printcorArg );
 	if ( isIn<TString>(bookedOptions, "prelim" ) ) cmd.add( plotprelimArg );
@@ -760,6 +764,7 @@ void OptParser::parseArguments(int argc, char* argv[])
   printSolY         = printSolYArg.getValue();
 	probforce         = probforceArg.getValue();
 	probimprove       = probimproveArg.getValue();
+  probScanResult    = probScanResultArg.getValue();
 	qh                = qhArg.getValue();
   queue             = TString(queueArg.getValue());
   save              = saveArg.getValue();
@@ -1046,12 +1051,16 @@ void OptParser::parseArguments(int argc, char* argv[])
 			plotsolutions.push_back(plotsolutions[0]);
 		}
 	}
-	// If --ps is given more than once, but not for every combiner,
+	// If --ps is given more than once and not for every combiner,
 	// fill the remaining ones up with 0=don't plot solution
 	else if ( plotsolutions.size() < combid.size() ){
 		for ( int i=plotsolutions.size(); i<combid.size(); i++ ){
 			plotsolutions.push_back(0);
 		}
+	}
+	// If none of these we need a catch for the datasets
+	if ( combid.size()==0 && plotsolutions.size()==0 ) {
+		plotsolutions.push_back(0);
 	}
 
   // --plotsoln
@@ -1077,6 +1086,10 @@ void OptParser::parseArguments(int argc, char* argv[])
         plotsoln.push_back(0);
       }
 		}
+	}
+	// If none of these we need a catch for the datasets
+	if ( combid.size()==0 && plotsoln.size()==0 ) {
+		plotsoln.push_back(0);
 	}
 
   // --2dcl

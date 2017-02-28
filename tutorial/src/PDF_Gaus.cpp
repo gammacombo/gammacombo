@@ -57,7 +57,7 @@ void PDF_Gaus::setObservables(TString c)
 	}
 	else if ( c.EqualTo("year2013") ){
 		obsValSource = c;
-		setObservable("a_gaus_obs",-1.5);
+		setObservable("a_gaus_obs",-0.5);
 	}
 	else if ( c.EqualTo("year2014") ){
 		obsValSource = c;

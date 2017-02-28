@@ -11,7 +11,7 @@
 /// Initialize from a previous Prob scan, setting the profile
 /// likelihood. This should be the default.
 ///
-	MethodPluginScan::MethodPluginScan(MethodProbScan* s)
+MethodPluginScan::MethodPluginScan(MethodProbScan* s)
 : MethodAbsScan(s->getCombiner())
 {
 	methodName = "Plugin";
@@ -31,12 +31,26 @@
 }
 
 ///
-/// 'Default constructor', mainly to ensure compatibility with MethodGenericPluginScan
-/// this way one is not forced to use an explicit constructor
+/// Constructor, mainly to ensure compatibility with MethodDatasetsPluginScan
 ///
-MethodPluginScan::MethodPluginScan(){
-	methodName = "Plugin";
-};
+MethodPluginScan::MethodPluginScan(MethodProbScan* s, PDF_Datasets* pdf, OptParser* opt)
+	: MethodAbsScan(opt),
+	nToys(opt->ntoys)
+	{
+		methodName = "Plugin";
+		obsName = pdf->getObsName();
+		w = pdf->getWorkspace();
+		title = s->getTitle();
+		scanVar1 = s->getScanVar1Name();
+		scanVar2 = s->getScanVar2Name();
+		profileLH = s;
+		parevolPLH = profileLH;
+		setSolutions(s->getSolutions());
+		setChi2minGlobal(s->getChi2minGlobal());
+		obsDataset = new RooDataSet("obsDataset", "obsDataset", *w->set(obsName));
+		obsDataset->add(*w->set(obsName));
+		nToys = opt->ntoys;
+	};
 
 ///
 /// Initialize from a Combiner object. This is more difficult,
@@ -65,6 +79,7 @@ MethodPluginScan::MethodPluginScan(){
 /// that was previously computed by a MethodProbScan scanner. Usually, the PLH is used that
 /// is provided to the constructor. Use this method to use a different evolution for toy
 /// generation (Hybrid Plugin).
+/// \todo This setting is currently being ignored by the DatasetsPluginScan
 ///
 void MethodPluginScan::setParevolPLH(MethodProbScan* s)
 {
@@ -942,6 +957,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
 ///
 void MethodPluginScan::readScan1dTrees(int runMin, int runMax)
 {
+
 	TChain *c = new TChain("plugin");
 	int nFilesMissing = 0;
 	int nFilesRead = 0;
@@ -963,21 +979,20 @@ void MethodPluginScan::readScan1dTrees(int runMin, int runMax)
 	for (int i=runMin; i<=runMax; i++){
 		TString file = Form(fileNameBase+"%i.root", i);
 		if ( !FileExists(file) ){
-			if ( arg->verbose ) cout << "ERROR : File not found: " + file + " ..." << endl;
+			cout << "WARNING : File not found: " + file + " ..." << endl;
 			nFilesMissing += 1;
 			continue;
 		}
-		if ( arg->verbose ) cout << "reading " + file + " ..." << endl;
+		if ( arg->verbose ) cout << "reading " + file << endl;
 		c->Add(file);
 		nFilesRead += 1;
 	}
 	if ( arg->debug ) cout << "MethodPluginScan::readScan1dTrees() : ";
 	cout << "read toy files: " << nFilesRead;
-	cout << ", missing files: " << nFilesMissing << endl;
 	if ( nFilesRead==0 ){
 		if ( arg->debug ) cout << "MethodPluginScan::readScan1dTrees() : ";
-		cout << "ERROR : no files read!" << endl;
-		exit(1);
+		cerr << "ERROR : no files read!" << endl;
+		exit(EXIT_FAILURE);
 	}
 
 	ToyTree t(combiner, c);

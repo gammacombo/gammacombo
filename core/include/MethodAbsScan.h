@@ -18,6 +18,7 @@
 #include "TPaveText.h"
 #include "TF1.h"
 #include "TDatime.h"
+#include "TSpline.h"
 
 #include "Utils.h"
 #include "OneMinusClPlotAbs.h"
@@ -43,11 +44,12 @@ class OneMinusClPlotAbs;
 class MethodAbsScan
 {
 	public:
+				MethodAbsScan();
 		MethodAbsScan(Combiner* c);
-		MethodAbsScan();
+		MethodAbsScan(OptParser* opt);
 		~MethodAbsScan();
 
-		void                            calcCLintervals();
+		virtual void                    calcCLintervals();
 		void                            confirmSolutions();
 		void                            doInitialFit(bool force=false);
 		inline OptParser*               getArg(){return arg;};
@@ -73,13 +75,12 @@ class MethodAbsScan
 		inline int                      getNPoints1d(){return nPoints1d;}
 		inline int                      getNPoints2dx(){return nPoints2dx;}
 		inline int                      getNPoints2dy(){return nPoints2dy;}
-		inline int                      getNSolutions(){return solutions.size();};
 		inline const RooArgSet*         getObservables(){return w->set(obsName);}
-		inline TString			getObsName(){return obsName;};
-		inline TString			getParsName(){return parsName;};
+		inline TString			        getObsName(){return obsName;};
+		inline TString			        getParsName(){return parsName;};
 		float                           getScanVarSolution(int iVar, int iSol);
 		RooRealVar*                     getScanVar1();
-		TString													getScanVar1Name();
+		TString                         getScanVar1Name();
 		float                           getScanVar1Solution(int i=0);
 		RooRealVar*                     getScanVar2();
 		TString							getScanVar2Name();
@@ -121,10 +122,12 @@ class MethodAbsScan
 		void                            setChi2minGlobal(double x);
 		void                            setSolutions(vector<RooSlimFitResult*> s);
 		inline void                     setVerbose(bool yesNo=true){verbose = yesNo;};
-    inline void                     setHCL( TH1F *h ) { hCL = h; };
-    inline void                     setHchisq( TH1F *h ) { hChi2min = h; };
+	inline void                     setHCL( TH1F *h ) { hCL = h; };
+	inline void                     setHchisq( TH1F *h ) { hChi2min = h; };
 		void 							setXscanRange(float min, float max);
 		void 							setYscanRange(float min, float max);
+		void							calcCLintervalsSimple();
+		const std::pair<double, double> getBorders(const TGraph& graph, const double confidence_level, bool qubic=false);
 
 		vector<RooSlimFitResult*> allResults;           ///< All fit results we encounter along the scan.
 		vector<RooSlimFitResult*> curveResults;         ///< All fit results of the the points that make it into the 1-CL curve.
@@ -147,7 +150,7 @@ class MethodAbsScan
 		TString obsName;    ///< dataset name of observables, derived from name
 		TString parsName;   ///< set name of physics parameters, derived from name
 		TString thName;     ///< set name of theory parameters, derived from name
-    TString toysName;   ///< set name of parameters to vary in toys
+	TString toysName;   ///< set name of parameters to vary in toys
 		TString scanVar1;   ///< scan parameter
 		TString scanVar2;   ///< second scan parameter if we're scanning 2d
 		int nPoints1d;      ///< number of scan points used by 1d scan

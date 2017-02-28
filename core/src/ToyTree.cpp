@@ -6,21 +6,24 @@ ToyTree::ToyTree(Combiner *c, TChain* t)
 	this->initMembers(t);
 	this->storeObs  = true;
 	this->storeTh   = true;
+	this->storeGlob = false;
 }
 
-ToyTree::ToyTree(PDF_Generic_Abs *p, TChain* t){
+ToyTree::ToyTree(PDF_Datasets *p, OptParser* opt, TChain* t){
 	assert(p);
 	this->comb = NULL;
 	this->w = p->getWorkspace();
 	this->name = p->getName();
-	this->arg = p->getArg();
+	this->arg = opt;
 	this->pdfName  = "pdf_"+p->getPdfName();
-	this->obsName  = "obs_"+p->getPdfName();
-	this->parsName = "par_"+p->getPdfName();
+	this->obsName  = p->getObsName();
+	this->parsName = p->getParName();
+  this->globName = p->getGlobalObsName();
 	this->thName   = "";
 	this->initMembers(t);
 	this->storeObs  = false;
 	this->storeTh   = false;
+	this->storeGlob = true;
 };
 
 
@@ -111,8 +114,10 @@ void ToyTree::writeToFile(TString fName)
 void ToyTree::writeToFile()
 {
 	assert(t);
-	if ( arg->debug ) cout << "ToyTree::writeToFile() : ";
-	cout << "saving toys to ... " << endl;
+	if ( arg->debug ){ 
+		cout << "ToyTree::writeToFile() : ";
+		cout << "saving toys to ... " << endl;
+	}
 	t->GetCurrentFile()->cd();
 	t->Write();
 }
@@ -143,7 +148,6 @@ void ToyTree::init()
 	t->Branch("statusFree",       &statusFree,        "statusFree/F");
 	t->Branch("statusScan",       &statusScan,        "statusScan/F");
 	t->Branch("statusScanData",   &statusScanData,    "statusScanData/F");
-
 	if ( !arg->lightfiles )
 	{
 		TIterator* it = w->set(parsName)->createIterator();
@@ -174,18 +178,23 @@ void ToyTree::init()
 				t->Branch(TString(p->GetName()), &theory[p->GetName()], TString(p->GetName())+"/F");
 			}
 		}
-		// gau constraints for B2MuMu Combinations
-		if(!this->storeTh){
-			delete it; it = w->set("combconstraints")->createIterator();
-			while ( RooAbsPdf* gau = (RooAbsPdf*)it->Next() )
-			{
-				std::vector<TString> pars = Utils::getParsWithName("ean", *gau->getVariables());
-
-				constraintMeans.insert(pair<TString,float>(pars[0],w->var(pars[0])->getVal()));
-				t->Branch(TString(pars[0]), &constraintMeans[w->var(pars[0])->GetName()], TString(pars[0])+"/F");
-			}
-		}
-		delete it;
+		// global observables
+	    if(this->storeGlob){
+	      delete it; 
+	      if(w->set(globName)==NULL){
+	      	cerr<<"Unable to store parameters of global constraints because no set called "+globName
+	      		<<" is defined in the workspace. "<<endl;
+	      		//\todo Implement init function in PDF_Datasets to enabe the user to set the name of this set in the workspace. 
+	      		exit(EXIT_FAILURE);
+	      }
+	      it = w->set(globName)->createIterator();
+	      while ( RooRealVar* p = (RooRealVar*)it->Next() )
+	      {
+	        constraintMeans.insert(pair<TString,float>(p->GetName(),p->getVal()));
+	        t->Branch(TString(p->GetName()), &constraintMeans[p->GetName()], TString(p->GetName())+"/F");
+	      }
+	    }
+	    delete it;
 	}
 }
 
@@ -303,23 +312,13 @@ void ToyTree::storeParsFree()
 /// Store the current workspace fit parameters as the
 /// free fit result.
 ///
-void ToyTree::storeParsGau()
+void ToyTree::storeParsGau( RooArgSet globalConstraintMeans)
 {
-	TIterator* i = w->set("combconstraints")->createIterator();
-	while( RooAbsPdf* gau = (RooAbsPdf*)i->Next() ){
-		std::vector<TString> pars = Utils::getParsWithName("ean", *gau->getVariables());
-		if(pars.size() == 0){
-			std::cout << "ERROR in PDF_B_MuMu_CombCMSLHCb_WS140401::initConstraintMeans - No var with sub-string 'ean' found in set" << std::endl;
-			return;
-		}
-		if(pars.size() > 1){
-			std::cout << "ERROR in PDF_B_MuMu_CombCMSLHCb_WS140401::initConstraintMeans - More than one var with sub-string 'ean' found in set" << std::endl;
-			return;
-		}
-		constraintMeans[w->var(pars[0])->GetName()] = w->var(pars[0])->getVal();
+	TIterator* it = globalConstraintMeans.createIterator();
+	while( RooRealVar* mean = (RooRealVar*) it->Next() ){
+		constraintMeans[mean->GetName()] = mean->getVal();
 	}
-
-	delete i;
+	delete it;
 }
 
 ///
