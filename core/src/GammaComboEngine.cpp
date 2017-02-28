@@ -1010,7 +1010,6 @@ void GammaComboEngine::make1dCoverageScan(MethodCoverageScan *scanner, int cId)
 void GammaComboEngine::make1dProbPlot(MethodProbScan *scanner, int cId)
 {
 	if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
-		cout << cId << " " << arg->plotsolutions[cId] << endl;
 		scanner->setDrawSolution(arg->plotsolutions[cId]);
 		scanner->plotOn(plot);
 		int colorId = cId;
@@ -1719,7 +1718,7 @@ void GammaComboEngine::scanDataSet()
 
   /////////////////////////////////////////////////////
   //
-  // PROB
+  // PROB - DATASETS
   //
   /////////////////////////////////////////////////////
 
@@ -1736,9 +1735,7 @@ void GammaComboEngine::scanDataSet()
         //probScanner->scan1d();
         make1dProbScan(probScanner,0);
       }
-      cout << "scan done" << endl;
       make1dProbPlot(probScanner,0);
-      cout << "plot done" << endl;
     }
   }
   cout << "Done" << endl;

@@ -31,6 +31,8 @@ MethodDatasetsProbScan::MethodDatasetsProbScan(PDF_Datasets* PDF, OptParser* opt
     w = PDF->getWorkspace();
     title = PDF->getTitle();
     name =  PDF->getName();
+		pdfName = name;
+		parsName = "parameters";
 
     if ( arg->var.size() > 1 ) scanVar2 = arg->var[1];
     inputFiles.clear();
@@ -128,13 +130,30 @@ void MethodDatasetsProbScan::sethCLFromProbScanTree() {
     this->hCL = new TH1F("hCL", "hCL", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth);
     if (arg->debug) printf("DEBUG %i %f %f %f\n", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth, halfBinWidth);
     Long64_t nentries     = this->probScanTree->GetEntries();
-    // this->probScanTree->activateCoreBranchesOnly(); //< speeds up the event loop
+    // this->probScanTree->a - DATASETSctivateCoreBranchesOnly(); //< speeds up the event loop
     for (Long64_t i = 0; i < nentries; i++)
     {
         // load entry
         this->probScanTree->GetEntry(i);
-        this->hCL->SetBinContent(this->hCL->FindBin(this->probScanTree->scanpoint), this->probScanTree->genericProbPValue);
+        //this->hCL->SetBinContent(this->hCL->FindBin(this->probScanTree->scanpoint), this->probScanTree->genericProbPValue);
+				double deltaChi2 = probScanTree->chi2min - probScanTree->chi2minGlobal;
+				double oneMinusCL = TMath::Prob( deltaChi2, 1);
+				// save the value and corresponding fit result
+				// but only if an improvement
+				if ( hCL->GetBinContent(hCL->FindBin( probScanTree->scanpoint ) ) <= oneMinusCL ) {
+					hCL->SetBinContent( hCL->FindBin( probScanTree->scanpoint ) , oneMinusCL );
+					hChi2min->SetBinContent( hCL->FindBin( probScanTree->scanpoint ), probScanTree->chi2min );
+				}
     }
+		// put in best fit value
+		hCL->SetBinContent(hCL->FindBin( probScanTree->scanbest ),1.);
+		hChi2min->SetBinContent(hCL->FindBin( probScanTree->scanbest),chi2minGlobal);
+
+
+		cout << "Best fit at: scanVar  = " << probScanTree->scanbest << " with Chi2Min: " << chi2minGlobal << endl;
+		
+		sortSolutions();
+		//saveSolutions();
     // this->probScanTree->activateAllBranches(); //< Very important!
 
 }
@@ -205,6 +224,8 @@ void MethodDatasetsProbScan::print() {
 ///
 int MethodDatasetsProbScan::scan1d(bool fast, bool reverse)
 {
+	if (fast) return 0; // tmp
+
 	if ( arg->debug ) cout << "MethodDatasetsProbScan::scan1d() : starting ... " << endl;
 
     // Set limit to all parameters.
@@ -216,7 +237,13 @@ int MethodDatasetsProbScan::scan1d(bool fast, bool reverse)
     float parameterToScan_min = hCL->GetXaxis()->GetXmin();
     float parameterToScan_max = hCL->GetXaxis()->GetXmax();
 
-    double freeDataFitValue = w->var(scanVar1)->getVal();
+		// do a free fit
+		RooFitResult *result = this->loadAndFit(this->pdf); // fit on data
+		assert(result);
+    RooSlimFitResult *slimresult = new RooSlimFitResult(result,true);
+		slimresult->setConfirmed(true);
+		solutions.push_back(slimresult);
+		double freeDataFitValue = w->var(scanVar1)->getVal();
 
     // Define outputfile
     system("mkdir -p root");
@@ -233,7 +260,6 @@ int MethodDatasetsProbScan::scan1d(bool fast, bool reverse)
     // to the outside.
     RooDataSet* parsFunctionCall = new RooDataSet("parsFunctionCall", "parsFunctionCall", *w->set(pdf->getParName()));
     parsFunctionCall->add(*w->set(pdf->getParName()));
-
 
     // start scan
     cout << "MethodDatasetsProbScan::scan1d_prob() : starting ... with " << nPoints1d << " scanpoints..." << endl;
