@@ -1725,18 +1725,28 @@ void GammaComboEngine::scanDataSet()
   if ( !arg->isAction("plugin") && !arg->isAction("pluginbatch") && !arg->isAction("coverage") && !arg->isAction("coveragebatch") && !arg->isAction("bb") && !arg->isAction("bbbatch") )
   {
     MethodDatasetsProbScan* probScanner = new MethodDatasetsProbScan( (PDF_Datasets*) pdf[0], arg);
+
+		// 1D SCANS
     if ( arg->var.size()==1 )
     {
       if ( arg->isAction("plot") ) {
         probScanner->loadScanner( m_fnamebuilder->getFileNameScanner(probScanner) );
       }
       else {
-        //probScanner->initScan();
-        //probScanner->scan1d();
         make1dProbScan(probScanner,0);
       }
       make1dProbPlot(probScanner,0);
     }
+		else if ( arg->var.size()==2 )
+		{
+			if ( arg->isAction("plot") ){
+				scannerProb->loadScanner(m_fnamebuilder->getFileNameScanner(scannerProb));
+			}
+			else{
+				make2dProbScan(scannerProb, i);
+			}
+			make2dProbPlot(scannerProb, i);
+		}
   }
   cout << "Done" << endl;
     //probScanner->initScan();
