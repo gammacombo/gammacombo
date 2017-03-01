@@ -277,7 +277,7 @@ TChain* MethodDatasetsPluginScan::readFiles(int runMin, int runMax, int &nFilesR
 /////////////
 void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString fileNameBaseIn)
 {
-    int nFilesRead, nFilesMissing;
+		int nFilesRead, nFilesMissing;
     TChain* c = this->readFiles(runMin, runMax, nFilesRead, nFilesMissing, fileNameBaseIn);
     ToyTree t(this->pdf, this->arg, c);
     t.open();

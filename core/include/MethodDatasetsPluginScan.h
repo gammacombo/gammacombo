@@ -30,7 +30,7 @@ public:
     virtual void        print();
     void                printDebug(const RooFitResult& r);
     TChain*             readFiles(int runMin, int runMax, int &nFilesRead, int &nFilesMissing, TString fileNameBaseIn = "default");
-    void                readScan1dTrees(int runMin, int runMax, TString fileNameBaseIn = "default");
+    virtual void        readScan1dTrees(int runMin, int runMax, TString fileNameBaseIn = "default");
     virtual int         scan1d(int nRun = 1);
     inline  void        setInputFile(TString name) {inputFiles.push_back(name); explicitInputFile = true;};
     inline  void        addFile(TString name) {inputFiles.push_back(name);};

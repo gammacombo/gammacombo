@@ -78,8 +78,10 @@ void MethodDatasetsProbScan::initScan() {
         pdf->printParameters();
         exit(EXIT_FAILURE);
     }
-    if ( arg->scanrangeMin != arg->scanrangeMax ) par1->setRange("scan", arg->scanrangeMin, arg->scanrangeMax);
-    Utils::setLimit(w, scanVar1, "scan");
+    if ( !m_xrangeset && arg->scanrangeMin != arg->scanrangeMax ) {
+			setXscanRange(arg->scanrangeMin,arg->scanrangeMax);
+		}
+    setLimit(w, scanVar1, "scan");
 
     if (hCL) delete hCL;
     // Titus: small change for consistency
@@ -93,14 +95,6 @@ void MethodDatasetsProbScan::initScan() {
     // fill the chi2 histogram with very unlikely values such
     // that inside scan1d() the if clauses work correctly
     for ( int i = 1; i <= nPoints1d; i++ ) hChi2min->SetBinContent(i, 1e6);
-
-    ////////////////////////////////////////////////////////    
-    // Titus: 2D scan does work, so I have this commented out
-    // if ( scanVar2 != "" ) {
-    //     cout << "MethodDatasetsProbScan::initScan(): EROR: Scanning in more than one dimension is not supported." << std::endl;
-    //     exit(EXIT_FAILURE);
-    // }
-    ////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////////////////////
     // Titus: setup everything for 2D scan
@@ -174,7 +168,6 @@ void MethodDatasetsProbScan::loadScanFromFile(TString fileNameBaseIn) {
 
 
 void MethodDatasetsProbScan::sethCLFromProbScanTree() {
-    std::cout << probScanTree->t << std::endl;
     this->probScanTree->open();
     float halfBinWidth = (this->probScanTree->getScanpointMax() - this->probScanTree->getScanpointMin()) / ((float)this->probScanTree->getScanpointN()) / 2; //-1.)/2;
     /// \todo replace this such that there's always one bin per scan point, but still the range is the scan range.
@@ -328,6 +321,7 @@ int MethodDatasetsProbScan::scan1d(bool fast, bool reverse)
         // don't add half the bin size. try to solve this within plotting method
 
         float scanpoint = parameterToScan_min + (parameterToScan_max - parameterToScan_min) * (double)i / ((double)nPoints1d - 1);
+				if (arg->debug) cout << "DEBUG in MethodDatasetsProbScan::scan1d_prob() " << scanpoint << " " << parameterToScan_min << " " << parameterToScan_max << endl;
 
         this->probScanTree->scanpoint = scanpoint;
 
@@ -684,4 +678,14 @@ double MethodDatasetsProbScan::getPValueTTestStatistic(double test_statistic_val
         // TMath::Prob( 0 ) returns 1
         return 1.;
     }
+}
+//////////////////////////////////////////////
+// Have to overload the loadScanner function
+// as we need to pick up the tree as well
+// when loading
+//////////////////////////////////////////////
+bool MethodDatasetsProbScan::loadScanner(TString fName) {
+	MethodAbsScan::loadScanner(fName);
+	this->loadScanFromFile();
+	return true;
 }

@@ -39,6 +39,9 @@ int main(int argc, char* argv[])
 	workspace->var("branchingRatio")->SetTitle("#font[32]{B}( B^{0}#rightarrow X )");
 	workspace->var("branchingRatio")->setVal(1.e-7);
 	workspace->var("branchingRatio")->setRange(0.,2.5e-6);
+	workspace->var("Nbkg")->SetTitle("N_{bkg}");
+	workspace->var("Nbkg")->setVal(5000);
+	workspace->var("Nbkg")->setRange(4000,6000);
 
   // Construct the PDF and pass the workspace to it
   PDF_Datasets* pdf = new PDF_Datasets(workspace);

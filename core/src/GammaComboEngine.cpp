@@ -827,22 +827,40 @@ void GammaComboEngine::scanStrategy2d(MethodProbScan *scanner, ParameterCache *p
 			" 1. scan in first variable:  " + scanner->getScanVar1Name() + "\n"
 			" 2. scan in second variable: " + scanner->getScanVar2Name() + "\n"
 			" 3. scan starting from each solution found in 1. and 2." << endl;
+	
+		// setup a scanner for each variable individually
 		Combiner *c = scanner->getCombiner();
+		MethodProbScan *s1;
+		MethodProbScan *s2;
+
 		cout << "\n1D scan for X variable, " + scanner->getScanVar1Name() + ":\n" << endl;
-		MethodProbScan *s1 = new MethodProbScan(c);
+		if ( runOnDataSet ) {
+			const MethodDatasetsProbScan* temp = dynamic_cast<MethodDatasetsProbScan*>(scanner);
+			s1 = new MethodDatasetsProbScan( temp->pdf, arg ); 
+		}
+		else {
+			s1 = new MethodProbScan(c);
+		}
 		s1->setScanVar1(scanner->getScanVar1Name());
 		s1->initScan();
 		scanStrategy1d(s1,pCache);
 		if ( arg->verbose ) s1->printLocalMinima();
 
 		cout << "\n1D scan for Y variable, " + scanner->getScanVar2Name() + ":\n" << endl;
-		MethodProbScan *s2 = new MethodProbScan(c);
+		if ( runOnDataSet ) {
+			const MethodDatasetsProbScan* temp = dynamic_cast<MethodDatasetsProbScan*>(scanner);
+			s2 = new MethodDatasetsProbScan( temp->pdf, arg );
+		}
+		else {
+			s2 = new MethodProbScan(c);
+		}
 		s2->setScanVar1(scanner->getScanVar2Name());
 		s2->setXscanRange(arg->scanrangeyMin,arg->scanrangeyMax);
 		s2->initScan();
 		scanStrategy1d(s2,pCache);
 		if ( arg->verbose ) s2->printLocalMinima();
 
+		// now do the 2D scan from the two starting points
 		cout << "\n2D scan for " + scanner->getScanVar1Name() + " and " + scanner->getScanVar2Name() + ":\n" << endl;
 		vector<RooSlimFitResult*> solutions;
 		for ( int i=0; i<s1->getSolutions().size(); i++ ) solutions.push_back(s1->getSolution(i));
@@ -1717,9 +1735,6 @@ void GammaComboEngine::scanDataSet()
 {
    if ( arg->info || arg->latex ) return;
 
-   //MethodDatasetsProbScan* probScanner = new MethodDatasetsProbScan( (PDF_Datasets*) pdf[0], arg);
-	//probScanner->initScan();
-
   /////////////////////////////////////////////////////
   //
   // PROB - DATASETS
@@ -1741,6 +1756,7 @@ void GammaComboEngine::scanDataSet()
       }
       make1dProbPlot(probScanner,0);
     }
+		// 2D SCANS
 		else if ( arg->var.size()==2 )
 		{
 			if ( arg->isAction("plot") ){
@@ -1752,55 +1768,61 @@ void GammaComboEngine::scanDataSet()
 			make2dProbPlot(probScanner, 0);
 		}
   }
-  cout << "Done" << endl;
+  
+	/////////////////////////////////////////////////////
+  //
+  // PLUGIN - DATASETS
+  //
+  /////////////////////////////////////////////////////
 
-	//if(arg->isAction("pluginbatch") || arg->isAction("plugin")){
-		//probScanner->loadScanFromFile();
-		//MethodDatasetsPluginScan *scanner = new MethodDatasetsPluginScan( probScanner, (PDF_Datasets*) pdf[0], arg);
-		//scanner->initScan(); //\todo <- can we get rid of this?
-
-		//if ( arg->isAction("pluginbatch") ){
-			///////////////////////////////////////////////////////
-			//// Running a Plugin Toy Creator batch job
-			///////////////////////////////////////////////////////
-			//scanner->scan1d(arg->nrun);
-		//} else { // if ( arg->isAction("plugin")
-			//scanner->readScan1dTrees(arg->jmin[0], arg->jmax[0]);
-			///////////////////////////////////////////////////////
-			//// Plotting the plugin scan results
-			///////////////////////////////////////////////////////
-			//scanner->setLineColor(1);
-			//plot->addScanner(probScanner);
-			//plot->addScanner(scanner);
-			//scanner->calcCLintervals();
-			//probScanner->calcCLintervals();
-			//plot->Draw();
-		//}
-	//}
-  //else {
-		///////////////////////////////
-		//// doing a prob scan
-		///////////////////////////////
-		//probScanner->scan1d();
-		//plot->addScanner(probScanner);
-		//probScanner->calcCLintervals();
-		//plot->Draw();
-
-	//}
-
-		/////////////////////////////
-		// Titus: doing a 2D prob scan
-		/////////////////////////////
-		// else if ( arg->var.size()==2 )
-		//	{
-		//	if ( arg->isAction("plot") ){
-		//		probScanner->loadScanner(m_fnamebuilder->getFileNameScanner(probScanner));
-		//	}
-		//	else{
-		//		probScanner->scan2d();
-		//	}
-		//	make2dProbPlot(probScanner, 0);
-		//}
+	if(arg->isAction("pluginbatch") || arg->isAction("plugin"))
+	{
+		// 1D SCANS
+		if ( arg->var.size()==1 )
+		{
+				if ( arg->isAction("pluginbatch") ){
+					MethodDatasetsProbScan* scannerProb = new MethodDatasetsProbScan( (PDF_Datasets*) pdf[0], arg);
+					make1dProbScan( scannerProb, 0 );
+					MethodDatasetsPluginScan *scannerPlugin = new MethodDatasetsPluginScan( scannerProb, (PDF_Datasets*) pdf[0], arg);
+					make1dPluginScan(scannerPlugin, 0 );
+				}
+				else if ( arg->isAction("plugin") ) {
+					MethodDatasetsProbScan* scannerProb = new MethodDatasetsProbScan( (PDF_Datasets*) pdf[0], arg);
+					if ( !arg->plotpluginonly || ( arg->plotpluginonly && !arg->isAction("plot") ) ) {
+						if ( FileExists( m_fnamebuilder->getFileNameScanner(scannerProb)) ) {
+							scannerProb->loadScanner( m_fnamebuilder->getFileNameScanner(scannerProb));
+						}
+						else {
+							cout << "\nWARNING : Couldn't load the Prob scanner, will rerun the Prob" << endl;
+							cout <<   "          scan now. You should have run the Prob scan locally" << endl;
+							cout <<   "          before running the Plugin scan." << endl;
+							cout <<   "          missing file: " << m_fnamebuilder->getFileNameScanner(scannerProb) << endl;
+							cout << endl;
+							make1dProbScan(scannerProb, 0);
+						}
+					}
+					// create Plugin scanner
+					MethodDatasetsPluginScan *scannerPlugin = new MethodDatasetsPluginScan( scannerProb, (PDF_Datasets*) pdf[0], arg );
+					if ( arg->isAction("plot") ){
+						scannerPlugin->loadScanner(m_fnamebuilder->getFileNameScanner(scannerPlugin));
+					}
+					else {
+						make1dPluginScan(scannerPlugin, 0);
+					}
+					if ( arg->plotpluginonly ){
+						make1dPluginOnlyPlot(scannerPlugin, 0);
+					}
+					else {
+						make1dPluginPlot(scannerPlugin, scannerProb, 0);
+					}
+				}
+		}
+		else if ( arg->var.size()==2 ) {
+			cout << "SORRY - 2D plugin scans not yet implemented for datasets - this will probably take a while anyway" << endl;
+			exit(1);
+		}
+	}
+	cout << "Dataset Scan Done" << endl;
 }
 
 

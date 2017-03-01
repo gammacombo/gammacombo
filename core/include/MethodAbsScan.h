@@ -94,7 +94,7 @@ class MethodAbsScan
 		virtual void                    initScan();
 		void                            loadParameters(RooSlimFitResult *r);
 		bool                            loadSolution(int i=0);
-		bool                            loadScanner(TString fName="");
+		virtual bool                    loadScanner(TString fName="");
 		void                            plot2d(TString varx, TString vary);
 		void                            plot1d(TString var);
 		void                            plotOn(OneMinusClPlotAbs *plot);
