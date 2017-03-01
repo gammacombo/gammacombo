@@ -24,6 +24,7 @@
 #include "RooRandom.h"
 #include "RooDataHist.h"
 #include "RooGaussian.h"
+#include "RooLognormal.h"
 #include "RooPoisson.h"
 #include "RooProdPdf.h"
 #include "RooPlot.h"

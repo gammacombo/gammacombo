@@ -1058,8 +1058,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 			plotsolutions.push_back(0);
 		}
 	}
-	// If none of these we need a catch for the datasets
-	if ( combid.size()==0 && plotsolutions.size()==0 ) {
+	// If no combiner is given (as in the datasets case), make sure no solutions are plotted 
+	// without seing the program crash
+	else if ( combid.empty() && plotsolutions.empty() ){
 		plotsolutions.push_back(0);
 	}
 
@@ -1087,8 +1088,9 @@ void OptParser::parseArguments(int argc, char* argv[])
       }
 		}
 	}
-	// If none of these we need a catch for the datasets
-	if ( combid.size()==0 && plotsoln.size()==0 ) {
+	// If no combiner is given (as in the datasets case), make sure no solutions are plotted 
+	// without seing the program crash
+	else if ( combid.empty() && plotsolutions.empty() ){
 		plotsoln.push_back(0);
 	}
 

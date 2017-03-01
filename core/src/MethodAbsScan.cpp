@@ -549,9 +549,13 @@ void MethodAbsScan::calcCLintervals()
 
 	if(solutions.empty()){
 		cout 	<< "MethodAbsScan::calcCLintervals() : Solutions vector empty. "
-								<<"Using simple method with  linear splines."<<endl;;
+								<<"Using simple method with  linear splines."<<endl;
 		this->calcCLintervalsSimple();
 		return;
+	}
+	else {		//Since I want to have the CL_s method also, I do the simple method anyway.
+		cout<<"Using simple method with  linear splines."<<endl;
+		this->calcCLintervalsSimple();		
 	}
 
 
@@ -638,6 +642,9 @@ void MethodAbsScan::calcCLintervals()
 	}
 
 	printCLintervals();
+
+
+
 
 	//
 	// scan again from the histogram boundaries
@@ -1321,6 +1328,8 @@ void MethodAbsScan::setYscanRange(float min, float max)
 	m_yrangeset = true;
 }
 
+
+
 void MethodAbsScan::calcCLintervalsSimple()
 {
  
@@ -1338,6 +1347,27 @@ void MethodAbsScan::calcCLintervalsSimple()
     if ( c==0 ) clintervals1sigma.push_back(cli);
     if ( c==1 ) clintervals2sigma.push_back(cli);
     std::cout<<"borders at "<<levels[c]<<"  [ "<<borders.first<<" : "<<borders.second<<"]";
+	cout << ", " << methodName << " (simple boundary scan)" << endl;
+  }
+
+
+	////////////////////////////////////////////////////////////////////////////////////////////
+	//// Add a hacky calculation of the CL_s intervals
+	//// \todo: Do it properly from the very start by introducing a bkg model and propagate it to the entire framework.  
+
+  clintervals1sigma.clear(); 
+  clintervals2sigma.clear();
+  
+  for (int c=0;c<2;c++){
+    const std::pair<double, double> borders_CLs = getBorders_CLs(TGraph(this->hCL), levels[c]);
+    CLInterval cli;
+    cli.pvalue = 1. - levels[c];
+    cli.min = borders_CLs.first;
+    cli.max = borders_CLs.second;
+    cli.central = -1;
+    if ( c==0 ) clintervals1sigma.push_back(cli);
+    if ( c==1 ) clintervals2sigma.push_back(cli);
+    std::cout<<"CL_s borders at "<<levels[c]<<"  [ "<<borders_CLs.first<<" : "<<borders_CLs.second<<"]";
 	cout << ", " << methodName << " (simple boundary scan)" << endl;
   }
 
@@ -1379,3 +1409,48 @@ const std::pair<double, double> MethodAbsScan::getBorders(const TGraph& graph, c
   }
   return std::pair<double, double>(lower_edge,upper_edge);
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////
+//// Do a hacky calculation of the CL_s intervals, where essentially the pValue is normalized to the pValue with n_sig=0. 
+//// Let's first assume that the parameter of interest is ALWAYS a parameter correlated with n_sig, so that parameter=0 means n_sig=0.
+//// Therefore the pValue(CL_s) is given by the ratio of the pValue at scanpointand the pValue of the lowest bin.
+//// \todo Do it properly from the very start by introducing a bkg model and propagate it to the entire framework.
+
+const std::pair<double, double> MethodAbsScan::getBorders_CLs(const TGraph& graph, const double confidence_level, bool qubic){
+
+  const double p_val = 1 - confidence_level;
+  TSpline* splines = NULL;
+  if(qubic) splines = new TSpline3();
+
+
+  double min_edge = graph.GetX()[0];
+  // will never return smaller edge than min_edge
+  double max_edge = graph.GetX()[graph.GetN()-1];
+  // will never return higher edge than max_edge
+  int scan_steps = 1000;
+  double lower_edge = min_edge;
+  double upper_edge = max_edge;
+
+  for(double point = min_edge; point < max_edge; point+= (max_edge-min_edge)/scan_steps){
+
+	//for CL_s normalize pVal to the pVal at 0 (which has to be the background model) 	
+   if(graph.Eval(point, splines)/graph.Eval(min_edge, splines)>p_val){
+      lower_edge = point;
+      break;
+    }
+  }
+  for(double point = max_edge; point > min_edge; point-= (max_edge-min_edge)/scan_steps){
+
+  	//for CL_s normalize pVal to the pVal at 0 (which has to be the background model) 	
+    if(graph.Eval(point, splines)/graph.Eval(min_edge, splines)>p_val){
+      upper_edge = point;
+      break;
+    }
+  }
+  return std::pair<double, double>(lower_edge,upper_edge);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+//// end of CL_s part
+////////////////////////////////////////////////////////////////////////////////////////////////////
