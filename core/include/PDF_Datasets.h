@@ -67,7 +67,7 @@ public:
 
     void                  print();
     void                  printParameters();
-    inline  bool          areObservablesSet() { return areObsSet; };
+    inline  bool          areObservglobalablesSet() { return areObsSet; };
     inline  bool          areParametersSet() { return areParsSet; };
     inline  bool          isPdfInitialized() { return isPdfSet; };
     inline  bool          isDataInitialized() { return isDataSet; };

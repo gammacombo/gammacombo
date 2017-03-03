@@ -47,9 +47,12 @@ void ToyTree::initMembers(TChain* t){
 	chi2minGlobal       = 0.;
 	chi2minToy          = 0.;
 	chi2minGlobalToy    = 0.;
+	chi2minBkgToy       = 0.;
 	scanbest            = 0.;
 	scanbesty           = 0.;
 	nrun                = 0.;
+	ntoy                = 0.;
+	npoint              = 0.;
 	id                  = 0.;
 	statusFree          = -5.;
 	statusScan          = -5.;
@@ -64,6 +67,7 @@ void ToyTree::initMembers(TChain* t){
 	statusScanPDF       = -5.;
 	chi2minToyPDF       = 0.;
 	chi2minGlobalToyPDF = 0.;
+	chi2minBkgToyPDF    = 0.;
 };
 
 ///
@@ -134,6 +138,7 @@ void ToyTree::init()
 	t->Branch("chi2minGlobal",    &chi2minGlobal,     "chi2minGlobal/F");
 	t->Branch("chi2minGlobalToy", &chi2minGlobalToy,  "chi2minGlobalToy/F");
 	t->Branch("chi2minToy",       &chi2minToy,        "chi2minToy/F");
+	t->Branch("chi2minBkgToy",    &chi2minBkgToy,     "chi2minBkgToy/F");
 	t->Branch("covQualFree",      &covQualFree,       "covQualFree/F");
 	t->Branch("covQualScan",      &covQualScan,       "covQualScan/F");
 	t->Branch("covQualScanData",  &covQualScanData,   "covQualScanData/F");
@@ -141,6 +146,8 @@ void ToyTree::init()
 	t->Branch("id",               &id,                "id/F");
 	t->Branch("nBergerBoos",      &nBergerBoos,       "nBergerBoos/F");
 	t->Branch("nrun",             &nrun,              "nrun/F");
+	t->Branch("ntoy",             &ntoy,              "ntoy/F");
+	t->Branch("npoint",           &npoint,            "npoint/F");
 	t->Branch("scanbest",         &scanbest,          "scanbest/F");
 	t->Branch("scanbesty",        &scanbesty,         "scanbesty/F");
 	t->Branch("scanpoint",        &scanpoint,         "scanpoint/F");
@@ -209,6 +216,7 @@ void ToyTree::open()
 	if(branches->FindObject("chi2minGlobal"      )) t->SetBranchAddress("chi2minGlobal",      &chi2minGlobal);
 	if(branches->FindObject("chi2minGlobalToy"   )) t->SetBranchAddress("chi2minGlobalToy",   &chi2minGlobalToy);
 	if(branches->FindObject("chi2minToy"         )) t->SetBranchAddress("chi2minToy",         &chi2minToy);
+	if(branches->FindObject("chi2minBkgToy"      )) t->SetBranchAddress("chi2minBkgToy",      &chi2minBkgToy);
 	if(branches->FindObject("covQualFree"        )) t->SetBranchAddress("covQualFree",        &covQualFree);
 	if(branches->FindObject("covQualScan"        )) t->SetBranchAddress("covQualScan",        &covQualScan);
 	if(branches->FindObject("covQualScanData"    )) t->SetBranchAddress("covQualScanData",    &covQualScanData);
@@ -243,6 +251,7 @@ void ToyTree::activateCoreBranchesOnly()
 	if(branches->FindObject("chi2minGlobal"))         t->SetBranchStatus("chi2minGlobal",      1);
 	if(branches->FindObject("chi2minGlobalToy"))      t->SetBranchStatus("chi2minGlobalToy",   1);
 	if(branches->FindObject("chi2minToy"))            t->SetBranchStatus("chi2minToy",         1);
+	if(branches->FindObject("chi2minBkgToy"))         t->SetBranchStatus("chi2minBkgToy",      1);
 	if(branches->FindObject("genericProbPValue"))     t->SetBranchStatus("genericProbPValue",  1);
 	if(branches->FindObject("id"))                    t->SetBranchStatus("id",                 1);
 	if(branches->FindObject("nBergerBoos"))           t->SetBranchStatus("nBergerBoos",        1);

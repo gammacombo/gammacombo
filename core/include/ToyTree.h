@@ -76,9 +76,12 @@ class ToyTree
 		float chi2minGlobal;
 		float chi2minToy;
 		float chi2minGlobalToy;
+		float chi2minBkgToy;
 		float scanbest;         ///< an alias to the free fit value of the scan variable
 		float scanbesty;        ///< an alias to the free fit value of the scan y variable in 2D scans
-		float nrun;             ///< an ID to distinguish different runs, i.e. batch jobs 
+		float nrun;             ///< an ID to distinguish different runs, i.e. batch jobs
+		float ntoy; 						///< an ID to distinguish different toys
+		float npoint; 				  ///< an ID to distinguish different scan point
 		float id;               ///< an ID to distinguish different conditions, e.g. different toys in a coverage test
 		float statusFree;
 		float covQualFree;
@@ -93,6 +96,7 @@ class ToyTree
 		float statusScanPDF;
 		float chi2minToyPDF;
 		float chi2minGlobalToyPDF;
+		float chi2minBkgToyPDF;
 		TTree *t;               ///< the tree
 
 	private:

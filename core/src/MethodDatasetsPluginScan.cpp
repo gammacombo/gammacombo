@@ -538,19 +538,29 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
     RooDataSet* parsFunctionCall = new RooDataSet("parsFunctionCall", "parsFunctionCall", *w->set(pdf->getParName()));
     parsFunctionCall->add(*w->set(pdf->getParName()));
 
+		// if CLs toys we need to keep hold of what's going at the first point which should also be at zero
+		vector<RooDataSet*> cls_bkgOnlyToys;
 
     // start scan
     cout << "MethodDatasetsPluginScan::scan1d_plugin() : starting ... with " << nPoints1d << " scanpoints..." << endl;
     ProgressBar progressBar(arg, nPoints1d);
     for ( int i = 0; i < nPoints1d; i++ )
     {
-        progressBar.progress();
+        
+				toyTree.npoint = i;
+
+				progressBar.progress();
         // scanpoint is calculated using min, max, which are the hCL x-Axis limits set in this->initScan()
         // this uses the "scan" range, as expected
         // don't add half the bin size. try to solve this within plotting method
 
         float scanpoint = parameterToScan_min + (parameterToScan_max - parameterToScan_min) * (double)i / ((double)nPoints1d - 1);
         toyTree.scanpoint = scanpoint;
+				
+				if ( i==0 && scanpoint != 0 ) {
+					cout << "ERROR: For CLs option the first point in the scan must be zero not: " << scanpoint << endl;
+					exit(1);
+				}
 
         if (arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d_plugin() - scanpoint in step " << i << " : " << scanpoint << endl;
 
@@ -586,6 +596,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             this->pdf->setMinNllFree(0);
             this->pdf->setMinNllScan(0);
 
+						toyTree.ntoy = j;
+
             // 1. Generate toys
 
             // For toy generation, set all parameters (nuisance parameters and parameter of interest) to the values from the constrained
@@ -595,6 +607,14 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 
             this->pdf->generateToys(); // this is generating the toy dataset
             this->pdf->generateToysGlobalObservables(); // this is generating the toy global observables and saves globalObs in snapshot
+						
+						// keep hold of the background only toys
+						if ( i==0 ) {
+							cls_bkgOnlyToys.push_back( (RooDataSet*)this->pdf->getToyObservables()->Clone() ); // need to figure out why clone is needed
+						}
+						else {
+							assert( cls_bkgOnlyToys.size() == nToys );
+						}
 
             // \todo: comment the following back in once I know what it does ...
             //      t.storeParsGau( we need to pass a rooargset of the means of the global observables here);
@@ -654,6 +674,57 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             RooDataSet* parsAfterScanFit = new RooDataSet("parsAfterScanFit", "parsAfterScanFit", *w->set(pdf->getParName()));
             parsAfterScanFit->add(*w->set(pdf->getParName()));
 
+            //
+            // 2.5 Fit to bkg only toys with parameter of interest fixed to scanpoint
+            //
+            if (arg->debug)cout << "DEBUG in MethodDatasetsPluginScan::scan1d_plugin() - perform scan toy fit to background" << endl;
+
+            // set parameters to constrained data scan fit result again
+            this->setParevolPointByIndex(i);
+
+            // fixed parameter of interest
+            parameterToScan->setConstant(true);
+            this->pdf->setFitStrategy(0);
+						RooDataSet *bkgToy = (RooDataSet*)cls_bkgOnlyToys[j];
+						RooDataSet *tempData = (RooDataSet*)this->pdf->getToyObservables();
+						if (arg->debug) cout << "Setting background toy as data " << bkgToy << endl;
+						this->pdf->setToyData( bkgToy );
+            RooFitResult* rb   = this->loadAndFit(this->pdf);
+            assert(rb);
+            pdf->setMinNllScan(pdf->minNll);
+
+            this->setAndPrintFitStatusFreeToys(toyTree);
+
+            if (pdf->getFitStatus() != 0) {
+                pdf->setFitStrategy(1);
+                delete rb;
+                rb = this->loadAndFit(this->pdf);
+                pdf->setMinNllScan(pdf->minNll);
+                assert(rb);
+
+                this->setAndPrintFitStatusFreeToys(toyTree);
+
+                if (pdf->getFitStatus() != 0) {
+                    pdf->setFitStrategy(2);
+                    delete rb;
+                    rb = this->loadAndFit(this->pdf);
+                    assert(rb);
+                }
+            }
+
+            if (std::isinf(pdf->minNll) || std::isnan(pdf->minNll)) {
+                cout  << "++++ > second and a half fit gives inf/nan: "  << endl
+                      << "++++ > minNll: " << pdf->minNll << endl
+                      << "++++ > status: " << pdf->getFitStatus() << endl;
+                pdf->setFitStatus(-99);
+            }
+            pdf->setMinNllScan(pdf->minNll);
+
+
+            toyTree.chi2minBkgToy          = 2 * rb->minNll(); // 2*r->minNll(); //2*r->minNll();
+            toyTree.chi2minBkgToyPDF       = 2 * pdf->getMinNllScan();
+
+            pdf->deleteNLL();
 
             //
             // 3. Fit to toys with free parameter of interest
@@ -665,6 +736,10 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 
             // free parameter of interest
             parameterToScan->setConstant(false);
+						
+						// set dataset back
+						if (arg->debug) cout << "Setting toy back as data " << tempData << endl;
+						this->pdf->setToyData( tempData );
 
             // Fit
             pdf->setFitStrategy(0);
