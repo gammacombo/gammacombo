@@ -279,7 +279,7 @@ int MethodProbScan::scan1d(bool fast, bool reverse)
 
 	setParameters(w, parsName, startPars->get(0));
 	saveSolutions();
-	confirmSolutions();
+	if (arg->confirmsols) confirmSolutions();
 
 	if ( (bestMinFoundInScan-bestMinOld)/bestMinOld > 0.01 ) return 1;
 	return 0;
@@ -564,6 +564,7 @@ int MethodProbScan::scan2d()
 					hDbgStart->Draw("boxsame");
 					startpointmark->Draw();
 					cDbg->Update();
+          cDbg->Modified();
 				}
 				tScan.Stop();
 			}
@@ -588,7 +589,7 @@ int MethodProbScan::scan2d()
 	setParameters(w, parsName, startPars->get(0));
 	saveSolutions2d();
 	if ( arg->debug ) printLocalMinima();
-	confirmSolutions();
+	if ( arg->confirmsols ) confirmSolutions();
 
 	// clean all fit results that didn't make it into the final result
 	for ( int i=0; i<allResults.size(); i++ ){

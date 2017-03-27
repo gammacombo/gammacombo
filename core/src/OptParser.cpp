@@ -56,6 +56,7 @@ OptParser::OptParser():
 	ndiv = 407;
 	ndivy = 407;
 	nosyst = false;
+	confirmsols = true;
 	npoints1d = -99;
 	npoints2dx = -99;
 	npoints2dy = -99;
@@ -151,6 +152,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("magnetic");
   availableOptions.push_back("nbatchjobs");
   //availableOptions.push_back("nBBpoints");
+	availableOptions.push_back("noconfsols");
 	availableOptions.push_back("nosyst");
 	availableOptions.push_back("npoints");
 	availableOptions.push_back("npoints2dx");
@@ -453,6 +455,7 @@ void OptParser::parseArguments(int argc, char* argv[])
   TCLAP::SwitchArg infoArg("", "info", "Print information about the passed combiners and exit", false);
 	TCLAP::SwitchArg importanceArg("", "importance", "Enable importance sampling for plugin toys.", false);
 	TCLAP::SwitchArg nosystArg("", "nosyst", "Sets all systematic errors to zero.", false);
+	TCLAP::SwitchArg noconfsolsArg("", "noconfsols", "Do not confirm solutions.", false);
 	TCLAP::SwitchArg printcorArg("", "printcor", "Print the correlation matrix of each solution found.", false);
 	TCLAP::SwitchArg smooth2dArg("", "smooth2d", "Smooth 2D p-value or cl histograms for nicer contour (particularly useful for 2D plugin)", false);
 
@@ -664,6 +667,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "npoints2dx" ) ) cmd.add(npoints2dxArg);
 	if ( isIn<TString>(bookedOptions, "npoints" ) ) cmd.add(npointsArg);
 	if ( isIn<TString>(bookedOptions, "nosyst" ) ) cmd.add( nosystArg );
+	if ( isIn<TString>(bookedOptions, "noconfsols" ) ) cmd.add( noconfsolsArg );
 	if ( isIn<TString>(bookedOptions, "ndivy" ) ) cmd.add(ndivyArg);
 	if ( isIn<TString>(bookedOptions, "ndiv" ) ) cmd.add(ndivArg);
 	if ( isIn<TString>(bookedOptions, "nBBpoints" ) ) cmd.add(nBBpointsArg);
@@ -712,6 +716,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	asimov            = asimovArg.getValue();
 	color             = colorArg.getValue();
 	controlplot       = controlplotArg.getValue();
+  confirmsols       = ! noconfsolsArg.getValue();
 	digits            = digitsArg.getValue();
 	enforcePhysRange  = prArg.getValue();
 	filenameaddition  = filenameadditionArg.getValue();
