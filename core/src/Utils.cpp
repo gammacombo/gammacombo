@@ -1206,3 +1206,9 @@ void Utils::HFAGLabel(const TString& label, Double_t xpos, Double_t ypos, Double
 
 }
 
+void Utils::assertFileExists( TString strFilename ){
+    if ( !FileExists(strFilename) ){
+        cout << "ERROR : File not found: " + strFilename << endl;
+        exit(EXIT_FAILURE);
+    }
+}

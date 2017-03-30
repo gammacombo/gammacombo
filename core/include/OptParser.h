@@ -120,6 +120,7 @@ class OptParser
 		float           pluginPlotRangeMax;
 		bool		probforce;
 		bool		probimprove;
+		TString 				probScanResult;
 		bool		printcor;
     float           printSolX;
     float           printSolY;
@@ -127,6 +128,7 @@ class OptParser
     TString         queue;
     vector<TString> readfromfile;
 		vector<TString> relation;
+		bool 						runCLs;
     TString         save;
 		vector<float>   savenuisances1d;
 		vector<float>   savenuisances2dx;

@@ -6,21 +6,24 @@ ToyTree::ToyTree(Combiner *c, TChain* t)
 	this->initMembers(t);
 	this->storeObs  = true;
 	this->storeTh   = true;
+	this->storeGlob = false;
 }
 
-ToyTree::ToyTree(PDF_Generic_Abs *p, TChain* t){
+ToyTree::ToyTree(PDF_Datasets *p, OptParser* opt, TChain* t){
 	assert(p);
 	this->comb = NULL;
 	this->w = p->getWorkspace();
 	this->name = p->getName();
-	this->arg = p->getArg();
+	this->arg = opt;
 	this->pdfName  = "pdf_"+p->getPdfName();
-	this->obsName  = "obs_"+p->getPdfName();
-	this->parsName = "par_"+p->getPdfName();
+	this->obsName  = p->getObsName();
+	this->parsName = p->getParName();
+  this->globName = p->getGlobalObsName();
 	this->thName   = "";
 	this->initMembers(t);
 	this->storeObs  = false;
 	this->storeTh   = false;
+	this->storeGlob = true;
 };
 
 
@@ -44,9 +47,12 @@ void ToyTree::initMembers(TChain* t){
 	chi2minGlobal       = 0.;
 	chi2minToy          = 0.;
 	chi2minGlobalToy    = 0.;
+	chi2minBkgToy       = 0.;
 	scanbest            = 0.;
 	scanbesty           = 0.;
 	nrun                = 0.;
+	ntoy                = 0.;
+	npoint              = 0.;
 	id                  = 0.;
 	statusFree          = -5.;
 	statusScan          = -5.;
@@ -61,6 +67,7 @@ void ToyTree::initMembers(TChain* t){
 	statusScanPDF       = -5.;
 	chi2minToyPDF       = 0.;
 	chi2minGlobalToyPDF = 0.;
+	chi2minBkgToyPDF    = 0.;
 };
 
 ///
@@ -111,8 +118,10 @@ void ToyTree::writeToFile(TString fName)
 void ToyTree::writeToFile()
 {
 	assert(t);
-	if ( arg->debug ) cout << "ToyTree::writeToFile() : ";
-	cout << "saving toys to ... " << endl;
+	if ( arg->debug ){ 
+		cout << "ToyTree::writeToFile() : ";
+		cout << "saving toys to ... " << endl;
+	}
 	t->GetCurrentFile()->cd();
 	t->Write();
 }
@@ -129,6 +138,7 @@ void ToyTree::init()
 	t->Branch("chi2minGlobal",    &chi2minGlobal,     "chi2minGlobal/F");
 	t->Branch("chi2minGlobalToy", &chi2minGlobalToy,  "chi2minGlobalToy/F");
 	t->Branch("chi2minToy",       &chi2minToy,        "chi2minToy/F");
+	t->Branch("chi2minBkgToy",    &chi2minBkgToy,     "chi2minBkgToy/F");
 	t->Branch("covQualFree",      &covQualFree,       "covQualFree/F");
 	t->Branch("covQualScan",      &covQualScan,       "covQualScan/F");
 	t->Branch("covQualScanData",  &covQualScanData,   "covQualScanData/F");
@@ -136,6 +146,8 @@ void ToyTree::init()
 	t->Branch("id",               &id,                "id/F");
 	t->Branch("nBergerBoos",      &nBergerBoos,       "nBergerBoos/F");
 	t->Branch("nrun",             &nrun,              "nrun/F");
+	t->Branch("ntoy",             &ntoy,              "ntoy/F");
+	t->Branch("npoint",           &npoint,            "npoint/F");
 	t->Branch("scanbest",         &scanbest,          "scanbest/F");
 	t->Branch("scanbesty",        &scanbesty,         "scanbesty/F");
 	t->Branch("scanpoint",        &scanpoint,         "scanpoint/F");
@@ -143,7 +155,6 @@ void ToyTree::init()
 	t->Branch("statusFree",       &statusFree,        "statusFree/F");
 	t->Branch("statusScan",       &statusScan,        "statusScan/F");
 	t->Branch("statusScanData",   &statusScanData,    "statusScanData/F");
-
 	if ( !arg->lightfiles )
 	{
 		TIterator* it = w->set(parsName)->createIterator();
@@ -174,18 +185,23 @@ void ToyTree::init()
 				t->Branch(TString(p->GetName()), &theory[p->GetName()], TString(p->GetName())+"/F");
 			}
 		}
-		// gau constraints for B2MuMu Combinations
-		if(!this->storeTh){
-			delete it; it = w->set("combconstraints")->createIterator();
-			while ( RooAbsPdf* gau = (RooAbsPdf*)it->Next() )
-			{
-				std::vector<TString> pars = Utils::getParsWithName("ean", *gau->getVariables());
-
-				constraintMeans.insert(pair<TString,float>(pars[0],w->var(pars[0])->getVal()));
-				t->Branch(TString(pars[0]), &constraintMeans[w->var(pars[0])->GetName()], TString(pars[0])+"/F");
-			}
-		}
-		delete it;
+		// global observables
+	    if(this->storeGlob){
+	      delete it; 
+	      if(w->set(globName)==NULL){
+	      	cerr<<"Unable to store parameters of global constraints because no set called "+globName
+	      		<<" is defined in the workspace. "<<endl;
+	      		//\todo Implement init function in PDF_Datasets to enabe the user to set the name of this set in the workspace. 
+	      		exit(EXIT_FAILURE);
+	      }
+	      it = w->set(globName)->createIterator();
+	      while ( RooRealVar* p = (RooRealVar*)it->Next() )
+	      {
+	        constraintMeans.insert(pair<TString,float>(p->GetName(),p->getVal()));
+	        t->Branch(TString(p->GetName()), &constraintMeans[p->GetName()], TString(p->GetName())+"/F");
+	      }
+	    }
+	    delete it;
 	}
 }
 
@@ -200,6 +216,7 @@ void ToyTree::open()
 	if(branches->FindObject("chi2minGlobal"      )) t->SetBranchAddress("chi2minGlobal",      &chi2minGlobal);
 	if(branches->FindObject("chi2minGlobalToy"   )) t->SetBranchAddress("chi2minGlobalToy",   &chi2minGlobalToy);
 	if(branches->FindObject("chi2minToy"         )) t->SetBranchAddress("chi2minToy",         &chi2minToy);
+	if(branches->FindObject("chi2minBkgToy"      )) t->SetBranchAddress("chi2minBkgToy",      &chi2minBkgToy);
 	if(branches->FindObject("covQualFree"        )) t->SetBranchAddress("covQualFree",        &covQualFree);
 	if(branches->FindObject("covQualScan"        )) t->SetBranchAddress("covQualScan",        &covQualScan);
 	if(branches->FindObject("covQualScanData"    )) t->SetBranchAddress("covQualScanData",    &covQualScanData);
@@ -234,6 +251,7 @@ void ToyTree::activateCoreBranchesOnly()
 	if(branches->FindObject("chi2minGlobal"))         t->SetBranchStatus("chi2minGlobal",      1);
 	if(branches->FindObject("chi2minGlobalToy"))      t->SetBranchStatus("chi2minGlobalToy",   1);
 	if(branches->FindObject("chi2minToy"))            t->SetBranchStatus("chi2minToy",         1);
+	if(branches->FindObject("chi2minBkgToy"))         t->SetBranchStatus("chi2minBkgToy",      1);
 	if(branches->FindObject("genericProbPValue"))     t->SetBranchStatus("genericProbPValue",  1);
 	if(branches->FindObject("id"))                    t->SetBranchStatus("id",                 1);
 	if(branches->FindObject("nBergerBoos"))           t->SetBranchStatus("nBergerBoos",        1);
@@ -303,23 +321,13 @@ void ToyTree::storeParsFree()
 /// Store the current workspace fit parameters as the
 /// free fit result.
 ///
-void ToyTree::storeParsGau()
+void ToyTree::storeParsGau( RooArgSet globalConstraintMeans)
 {
-	TIterator* i = w->set("combconstraints")->createIterator();
-	while( RooAbsPdf* gau = (RooAbsPdf*)i->Next() ){
-		std::vector<TString> pars = Utils::getParsWithName("ean", *gau->getVariables());
-		if(pars.size() == 0){
-			std::cout << "ERROR in PDF_B_MuMu_CombCMSLHCb_WS140401::initConstraintMeans - No var with sub-string 'ean' found in set" << std::endl;
-			return;
-		}
-		if(pars.size() > 1){
-			std::cout << "ERROR in PDF_B_MuMu_CombCMSLHCb_WS140401::initConstraintMeans - More than one var with sub-string 'ean' found in set" << std::endl;
-			return;
-		}
-		constraintMeans[w->var(pars[0])->GetName()] = w->var(pars[0])->getVal();
+	TIterator* it = globalConstraintMeans.createIterator();
+	while( RooRealVar* mean = (RooRealVar*) it->Next() ){
+		constraintMeans[mean->GetName()] = mean->getVal();
 	}
-
-	delete i;
+	delete it;
 }
 
 ///

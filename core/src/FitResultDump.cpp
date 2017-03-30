@@ -16,7 +16,7 @@ void FitResultDump::dumpResult(string ofname, MethodAbsScan *scanner){
 	ofstream outf;
 	outf.open(ofname.c_str());
 	outf << "# Fit Result Summary" << endl;
-	outf << "nSolutions=" << scanner->getNSolutions() << endl;
+	outf << "nSolutions=" << scanner->getSolutions().size() << endl;
 	outf << "# pvalue central min max" << endl;
 
 	bool angle=false;
