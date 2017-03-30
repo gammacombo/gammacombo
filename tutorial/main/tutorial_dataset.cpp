@@ -53,6 +53,9 @@ int main(int argc, char* argv[])
   pdf->initGlobalObservables("global_observables_set"); // global observables
   pdf->initParameters("parameters"); // all parameters
   pdf->initConstraints("constraint_set"); // RooArgSet containing the "constraint" PDF's
+  // optional (will not effect the results but just make some plots for you)
+  pdf->addFitObs("mass");                         // this is not required but will make some sanity plots
+  pdf->unblind("mass","[4360:5260],[5460:6360]"); // have to be careful about staying blind
 
   // Start the Gammacombo Engine
   GammaComboEngine gc("tutorial_dataset", argc, argv);

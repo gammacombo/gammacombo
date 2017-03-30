@@ -1039,15 +1039,6 @@ void GammaComboEngine::make1dProbPlot(MethodProbScan *scanner, int cId)
 		scanner->setTextColor(colorsText[colorId]);
     scanner->setFillStyle(fillStyles[cId]);
 		plot->Draw();
-		//not needed I don't think
-    //if (arg->cls)
-		//{
-		//	scanner->setDrawSolution(arg->plotsolutions[cId]);
-		//	scanner->plotOn(plot);
-		//	scanner->setLineColor(colorsLine[colorId]);
-		//	scanner->setTextColor(colorsText[colorId]);
-		//	plot->Draw();
-		//}
 	}
 }
 

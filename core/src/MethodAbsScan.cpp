@@ -559,17 +559,20 @@ void MethodAbsScan::calcCLintervals(bool isCLs)
 		cout << endl;
 	}
 
-	if(solutions.empty()){
-		cout 	<< "MethodAbsScan::calcCLintervals() : Solutions vector empty. "
-								<<"Using simple method with  linear splines."<<endl;
-		this->calcCLintervalsSimple(isCLs);
-		return;
-	}
-	else {		//Since I want to have the CL_s method also, I do the simple method anyway.
-		cout<<"Using simple method with  linear splines."<<endl;
-		this->calcCLintervalsSimple(isCLs);		
-	}
-
+	//if(solutions.empty()){
+	//  cout 	<< "MethodAbsScan::calcCLintervals() : Solutions vector empty. "
+	//							<<"Using simple method with  linear splines."<<endl;
+ 	//	this->calcCLintervalsSimple(isCLs);
+	//	return;
+	//}
+	//else {		//Since I want to have the CL_s method also, I do the simple method anyway.
+	//	cout<<"Using simple method with  linear splines."<<endl;
+	//	this->calcCLintervalsSimple(isCLs);		
+	//}
+  
+  cout << endl;
+  if ( arg->debug ) cout << "MethodAbsScan::calcCLintervals() : ";
+  cout << "CONFIDENCE INTERVALS for combination " << name << endl << endl;
 
 	clintervals1sigma.clear(); // clear, else calling this function twice doesn't work
 	clintervals2sigma.clear();

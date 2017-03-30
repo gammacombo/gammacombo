@@ -1096,13 +1096,25 @@ void OptParser::parseArguments(int argc, char* argv[])
       if ( isAction("plugin") && !plotpluginonly ) {
         plotsoln.push_back(0);
       }
+      // if CLs asked then add another one or two
+      if ( cls ) {
+        plotsoln.push_back(0);
+        if ( isAction("plugin") && !plotpluginonly ) {
+          plotsoln.push_back(0);
+        }
+      } 
 		}
 	}
 	// If no combiner is given (as in the datasets case), make sure no solutions are plotted 
 	// without seing the program crash
-	else if ( combid.empty() && plotsolutions.empty() ){
+	else if ( combid.empty() ){
 		plotsoln.push_back(0);
-	}
+    if ( isAction("plugin") && !plotpluginonly ) plotsoln.push_back(0);
+    if ( cls ) {
+      plotsoln.push_back(0);
+      if ( isAction("plugin") && !plotpluginonly ) plotsoln.push_back(0);
+	  }
+  }
 
   // --2dcl
 	plot2dcl = plot2dclArg.getValue();

@@ -42,6 +42,7 @@ public:
     virtual void          initParameters(); //overriding the inherited virtual method
     void                  initPDF(const TString& name);
     void                  initBkgPDF(const TString& name);
+    inline  void          addFitObs(TString name) {fitObs.push_back(name);};
 
     OptParser*            getArg();
     TString               getConstraintName() {return constraintName;};
@@ -49,6 +50,8 @@ public:
     RooDataSet*           getData() {return this->data;};
     inline int            getFitStatus() {return fitStatus;};
     inline int            getFitStrategy() {return fitStrategy;};
+    inline std::vector<TString>  getFitObs() {return fitObs;};
+    inline std::map<TString,TString> getUnblindRegions(){ return unblindRegions;};
     TString               getGlobalObsName() {return globalObsName;};
     float                 getMinNll() {return minNll;};
     float                 getMinNllFree() {return minNllFree;};
@@ -71,6 +74,7 @@ public:
                                       const double &rangeMin, const double &rangeMax);
     void                  setToyData(RooDataSet* ds);
 
+    void                  unblind(TString var, TString unblindRegs);
     void                  print();
     void                  printParameters();
     inline  bool          areObservglobalablesSet() { return areObsSet; };
@@ -116,6 +120,8 @@ protected:
     bool isBkgPdfSet;     //> Flag deciding if Bkg PDF is set
     bool isDataSet;       //> Flag deciding if Data is set
     bool isToyDataSet;    //> Flag deciding if ToyData is set
+    std::vector<TString>    fitObs;
+    std::map<TString,TString>   unblindRegions;
 };
 
 #endif

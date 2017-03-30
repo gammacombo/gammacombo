@@ -12,11 +12,6 @@
 #include <ios>
 #include <iomanip>
 
-
-
-
-
-
 MethodDatasetsProbScan::MethodDatasetsProbScan(PDF_Datasets* PDF, OptParser* opt)
     : MethodProbScan(opt),
       pdf                 (PDF),
@@ -24,6 +19,7 @@ MethodDatasetsProbScan::MethodDatasetsProbScan(PDF_Datasets* PDF, OptParser* opt
       drawPlots           (false),
       explicitInputFile   (false),
       dataFreeFitResult   (NULL),
+      bkgOnlyFitResult    (NULL),
       probScanTree        (NULL)
 {
     chi2minGlobalFound = true; // the free fit to data must be done and must be saved to the workspace before gammacombo is even called
@@ -61,11 +57,15 @@ MethodDatasetsProbScan::MethodDatasetsProbScan(PDF_Datasets* PDF, OptParser* opt
         w->var(scanVar1)->setVal(0.);
         w->var(scanVar1)->setConstant(true);
 
-        RooFitResult *bkgfitresult = this->loadAndFit(this->pdf); // fit on data
-        assert(bkgfitresult);
-        chi2minBkg = 2 * bkgfitresult->minNll();
+        // TODO: suggest we shouldn't do a fit here
+        // e.g. when we are just loading a plot this will still perform this fit which is silly
+        // it should be passed from the workspace in the same way as for the "data_fit_result"
+
+        bkgOnlyFitResult = this->loadAndFit(this->pdf); // fit on data
+        assert(bkgOnlyFitResult);
+        chi2minBkg = 2 * bkgOnlyFitResult->minNll();
         //chi2minBkg = 2*pdf->getMinNllBkg();
-        std::cout << "=============== Bkg minimum (2*-Log(Likelihood)) is: 2*" << bkgfitresult->minNll() << " = " << chi2minBkg << endl;
+        std::cout << "=============== Bkg minimum (2*-Log(Likelihood)) is: 2*" << bkgOnlyFitResult->minNll() << " = " << chi2minBkg << endl;
         if (chi2minBkg<chi2minGlobal)
         {
             std::cout << "WARNING: BKG MINIMUM IS LOWER THAN GLOBAL MINIMUM! The likelihoods are screwed up! Set bkg minimum to global minimum for consistency." << std::endl;
@@ -76,6 +76,8 @@ MethodDatasetsProbScan::MethodDatasetsProbScan(PDF_Datasets* PDF, OptParser* opt
 
     }
 
+    // now we should make a plot of our dataset and the pdf
+    plot("test");
 
     if ( !w->set(pdf->getObsName()) ) {
         cerr << "MethodDatasetsProbScan::MethodDatasetsProbScan() : ERROR : no '" + pdf->getObsName() + "' set found in workspace" << endl;
@@ -242,7 +244,7 @@ void MethodDatasetsProbScan::sethCLFromProbScanTree() {
 		cout << "Best fit at: scanVar  = " << probScanTree->scanbest << " with Chi2Min: " << chi2minGlobal << endl;
 		
 		sortSolutions();
-		saveSolutions();
+		//saveSolutions();
     // this->probScanTree->activateAllBranches(); //< Very important!
 
 }
@@ -743,4 +745,44 @@ bool MethodDatasetsProbScan::loadScanner(TString fName) {
 	MethodAbsScan::loadScanner(fName);
 	this->loadScanFromFile();
 	return true;
+}
+
+/////////////////////////////////////////////
+// Have a nice plotting functiong
+//
+/////////////////////////////////////////////
+void MethodDatasetsProbScan::plot(TString fName) {
+ 
+  for (int i=0; i<pdf->getFitObs().size(); i++) {
+    TString fitVar = pdf->getFitObs()[i];
+    TCanvas *fitCanv = newNoWarnTCanvas( getUniqueRootName(), Form("S+B and B only fits to the dataset for %s",fitVar.Data()) );
+    TLegend *leg = new TLegend(0.6,0.7,0.92,0.92);
+    leg->SetFillColor(0);
+    leg->SetLineColor(0);
+    RooPlot *plot = w->var(fitVar)->frame();
+    // data invisible for norm
+    w->data(pdf->getDataName())->plotOn( plot, Invisible() );
+    // bkg pdf
+    setParameters(w, bkgOnlyFitResult);
+    w->pdf(pdf->getBkgPdfName())->plotOn( plot, LineColor(kRed) );
+    leg->AddEntry( plot->getObject(plot->numItems()-1), "Background Only Fit", "L");
+    // free fit
+    setParameters(w, dataFreeFitResult);
+    w->pdf(pdf->getPdfName())->plotOn(plot);
+    leg->AddEntry( plot->getObject(plot->numItems()-1), "Free Fit", "L");
+    // data unblinded if needed
+    map<TString,TString> unblindRegs = pdf->getUnblindRegions();
+    if ( unblindRegs.find( fitVar ) != unblindRegs.end() ) {
+      w->data(pdf->getDataName())->plotOn( plot, CutRange(pdf->getUnblindRegions()[fitVar]) );
+      leg->AddEntry( plot->getObject(plot->numItems()-1), "Data", "LEP");
+    }
+    plot->Draw();
+    leg->Draw("same");
+    fitCanv->Print(Form("plots/pdf/%s_%s.pdf",fName.Data(),fitVar.Data()));
+    fitCanv->Print(Form("plots/png/%s_%s.png",fName.Data(),fitVar.Data()));
+    fitCanv->Print(Form("plots/eps/%s_%s.eps",fName.Data(),fitVar.Data()));
+    fitCanv->SaveAs(Form("plots/C/%s_%s.C",fName.Data(),fitVar.Data()));
+    fitCanv->SaveAs(Form("plots/root/%s_%s.root",fName.Data(),fitVar.Data()));
+  }
+
 }

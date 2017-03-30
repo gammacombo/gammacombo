@@ -358,4 +358,23 @@ void PDF_Datasets::initializeRandomGenerator(int seedShift) {
     }
 }
 
+void PDF_Datasets::unblind(TString var, TString unblindRegs) {
 
+  TString unblindString = "";
+  TObjArray *regs = unblindRegs.Tokenize(","); // split string at ","
+  for (int i=0; i<regs->GetEntries(); i++){
+    TString range = ((TObjString*)regs->At(i))->GetString();
+    TString minStr = range;
+    TString maxStr = range;
+    minStr.ReplaceAll("[","");
+    minStr.Replace(minStr.Index(":"), minStr.Sizeof(), "");
+    maxStr.ReplaceAll("]","");
+    maxStr.Replace(0,maxStr.Index(":")+1,"");
+    float min = minStr.Atof();
+    float max = maxStr.Atof();
+    wspc->var(var)->setRange(Form("unblind%d",i),min,max);
+    unblindString += Form("unblind%d",i);
+    if (i < regs->GetEntries()-1) unblindString += ",";
+  }
+  unblindRegions[var] = unblindString;
+}
