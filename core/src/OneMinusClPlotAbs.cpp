@@ -42,10 +42,18 @@ OneMinusClPlotAbs::~OneMinusClPlotAbs()
 ///
 /// Add a scanner to this plot.
 ///
-void OneMinusClPlotAbs::addScanner(MethodAbsScan* s)
+void OneMinusClPlotAbs::addScanner(MethodAbsScan* s, bool isCLs)
 {
 	if ( arg->debug ) cout << "OneMinusClPlotAbs::addScanner() : adding " << s->getName() << endl;
-	scanners.push_back(s);
+	if (!isCLs || (isCLs && s->getHCLs()))
+	{
+		scanners.push_back(s);
+		do_CLs.push_back(isCLs);
+	}
+	else if (!s->getHCLs())
+	{
+		cout << "No CLs histogram was determined. Will not plot." << endl;
+	}
 }
 
 ///

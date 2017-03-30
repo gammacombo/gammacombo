@@ -122,6 +122,7 @@ int main()
 
   RooWorkspace workspace("dataset_workspace");
   workspace.import(mass_model);
+  workspace.import(background_model);
   workspace.import(data);
   workspace.import(rooFitResult, "data_fit_result"); // this MUST be called data_fit_result
   workspace.defineSet("constraint_set", constraint_set, true);

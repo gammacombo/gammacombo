@@ -45,6 +45,7 @@ void ToyTree::initMembers(TChain* t){
 	scanpointy          = 0.;
 	chi2min             = 0.;
 	chi2minGlobal       = 0.;
+	chi2minBkg    		  = 0.;
 	chi2minToy          = 0.;
 	chi2minGlobalToy    = 0.;
 	chi2minBkgToy       = 0.;
@@ -137,8 +138,9 @@ void ToyTree::init()
 	t->Branch("chi2min",          &chi2min,           "chi2min/F");
 	t->Branch("chi2minGlobal",    &chi2minGlobal,     "chi2minGlobal/F");
 	t->Branch("chi2minGlobalToy", &chi2minGlobalToy,  "chi2minGlobalToy/F");
+	t->Branch("chi2minBkg",    	  &chi2minBkg,		    "chi2minBkg/F");
+	t->Branch("chi2minBkgToy", 	  &chi2minBkgToy,  	  "chi2minBkgToy/F");
 	t->Branch("chi2minToy",       &chi2minToy,        "chi2minToy/F");
-	t->Branch("chi2minBkgToy",    &chi2minBkgToy,     "chi2minBkgToy/F");
 	t->Branch("covQualFree",      &covQualFree,       "covQualFree/F");
 	t->Branch("covQualScan",      &covQualScan,       "covQualScan/F");
 	t->Branch("covQualScanData",  &covQualScanData,   "covQualScanData/F");
@@ -215,8 +217,9 @@ void ToyTree::open()
 	if(branches->FindObject("chi2min"            )) t->SetBranchAddress("chi2min",            &chi2min);
 	if(branches->FindObject("chi2minGlobal"      )) t->SetBranchAddress("chi2minGlobal",      &chi2minGlobal);
 	if(branches->FindObject("chi2minGlobalToy"   )) t->SetBranchAddress("chi2minGlobalToy",   &chi2minGlobalToy);
+	if(branches->FindObject("chi2minBkg"      	 )) t->SetBranchAddress("chi2minBkg",      	  &chi2minBkg);
+	if(branches->FindObject("chi2minBkgToy"   	 )) t->SetBranchAddress("chi2minBkgToy",   	  &chi2minBkgToy);
 	if(branches->FindObject("chi2minToy"         )) t->SetBranchAddress("chi2minToy",         &chi2minToy);
-	if(branches->FindObject("chi2minBkgToy"      )) t->SetBranchAddress("chi2minBkgToy",      &chi2minBkgToy);
 	if(branches->FindObject("covQualFree"        )) t->SetBranchAddress("covQualFree",        &covQualFree);
 	if(branches->FindObject("covQualScan"        )) t->SetBranchAddress("covQualScan",        &covQualScan);
 	if(branches->FindObject("covQualScanData"    )) t->SetBranchAddress("covQualScanData",    &covQualScanData);
@@ -230,6 +233,7 @@ void ToyTree::open()
 	if(branches->FindObject("statusScan"         )) t->SetBranchAddress("statusScan",         &statusScan);
 	if(branches->FindObject("statusScanData"     )) t->SetBranchAddress("statusScanData",     &statusScanData);
 	if(branches->FindObject("chi2minGlobalToyPDF")) t->SetBranchAddress("chi2minGlobalToyPDF",&chi2minGlobalToyPDF);
+	if(branches->FindObject("chi2minBkgToyPDF"	 )) t->SetBranchAddress("chi2minBkgToyPDF",	  &chi2minBkgToyPDF);
 	if(branches->FindObject("chi2minToyPDF"      )) t->SetBranchAddress("chi2minToyPDF",      &chi2minToyPDF);
 	if(branches->FindObject("covQualFree"        )) t->SetBranchAddress("covQualFree",        &covQualFree);
 	if(branches->FindObject("covQualScan"        )) t->SetBranchAddress("covQualScan",        &covQualScan);
@@ -250,8 +254,9 @@ void ToyTree::activateCoreBranchesOnly()
 	if(branches->FindObject("chi2min"))               t->SetBranchStatus("chi2min",            1);
 	if(branches->FindObject("chi2minGlobal"))         t->SetBranchStatus("chi2minGlobal",      1);
 	if(branches->FindObject("chi2minGlobalToy"))      t->SetBranchStatus("chi2minGlobalToy",   1);
+	if(branches->FindObject("chi2minBkg"))         	  t->SetBranchStatus("chi2minBkg",         1);
+	if(branches->FindObject("chi2minBkgToy"))      	  t->SetBranchStatus("chi2minBkgToy",      1);
 	if(branches->FindObject("chi2minToy"))            t->SetBranchStatus("chi2minToy",         1);
-	if(branches->FindObject("chi2minBkgToy"))         t->SetBranchStatus("chi2minBkgToy",      1);
 	if(branches->FindObject("genericProbPValue"))     t->SetBranchStatus("genericProbPValue",  1);
 	if(branches->FindObject("id"))                    t->SetBranchStatus("id",                 1);
 	if(branches->FindObject("nBergerBoos"))           t->SetBranchStatus("nBergerBoos",        1);
@@ -261,6 +266,7 @@ void ToyTree::activateCoreBranchesOnly()
 	if(branches->FindObject("statusScan"))            t->SetBranchStatus("statusScan",         1);
 	if(branches->FindObject("statusScanData"))        t->SetBranchStatus("statusScanData",     1);
 	if(branches->FindObject("chi2minGlobalToyPDF"))   t->SetBranchStatus("chi2minGlobalToyPDF",1);
+	if(branches->FindObject("chi2minBkgToyPDF"))   	  t->SetBranchStatus("chi2minBkgToyPDF",   1);
 	if(branches->FindObject("chi2minToyPDF"))         t->SetBranchStatus("chi2minToyPDF",      1);
 	if(branches->FindObject("covQualFree"))           t->SetBranchStatus("covQualFree",        1);
 	if(branches->FindObject("covQualScan"))           t->SetBranchStatus("covQualScan",        1);

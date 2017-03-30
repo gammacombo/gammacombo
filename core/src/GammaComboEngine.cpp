@@ -905,6 +905,7 @@ void GammaComboEngine::make1dProbScan(MethodProbScan *scanner, int cId)
 	scanner->printLocalMinima();
   scanner->saveLocalMinima(m_fnamebuilder->getFileNameSolution(scanner));
 	scanner->calcCLintervals();
+	if(arg->cls) scanner->calcCLintervals(true);
 	if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
 		if ( arg->plotpulls ) scanner->plotPulls();
 		if ( arg->parevol ){
@@ -938,6 +939,7 @@ void GammaComboEngine::make1dPluginScan(MethodPluginScan *scannerPlugin, int cId
 	else {
 		scannerPlugin->readScan1dTrees(arg->jmin[cId],arg->jmax[cId]);
 		scannerPlugin->calcCLintervals();
+		if(arg->cls) scannerPlugin->calcCLintervals(true);
 	}
 	if ( !arg->isAction("pluginbatch") ){
 		scannerPlugin->saveScanner(m_fnamebuilder->getFileNameScanner(scannerPlugin));
@@ -1029,6 +1031,7 @@ void GammaComboEngine::make1dProbPlot(MethodProbScan *scanner, int cId)
 {
 	if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
 		scanner->setDrawSolution(arg->plotsolutions[cId]);
+    if ( arg->cls ) scanner->plotOn(plot, true );
 		scanner->plotOn(plot);
 		int colorId = cId;
 		if ( arg->color.size()>cId ) colorId = arg->color[cId];
@@ -1036,6 +1039,15 @@ void GammaComboEngine::make1dProbPlot(MethodProbScan *scanner, int cId)
 		scanner->setTextColor(colorsText[colorId]);
     scanner->setFillStyle(fillStyles[cId]);
 		plot->Draw();
+		//not needed I don't think
+    //if (arg->cls)
+		//{
+		//	scanner->setDrawSolution(arg->plotsolutions[cId]);
+		//	scanner->plotOn(plot);
+		//	scanner->setLineColor(colorsLine[colorId]);
+		//	scanner->setTextColor(colorsText[colorId]);
+		//	plot->Draw();
+		//}
 	}
 }
 
@@ -1091,12 +1103,14 @@ void GammaComboEngine::make1dPluginPlot(MethodPluginScan *sPlugin, MethodProbSca
 		make1dPluginOnlyPlot(sPlugin, cId);
 		sProb->setLineColor(kBlack);
 		sProb->setDrawSolution(arg->plotsolutions[cId]);
+		if(arg->cls) sProb->plotOn(plot, true);
 		sProb->plotOn(plot);
 	}
 	else {
 		make1dProbPlot(sProb, cId);
 		sPlugin->setLineColor(kBlack);
 		sPlugin->setDrawSolution(arg->plotsolutions[cId]);
+		if(arg->cls) sPlugin->plotOn(plot, true);
 		sPlugin->plotOn(plot);
 	}
 	plot->Draw();
@@ -1152,6 +1166,7 @@ void GammaComboEngine::make1dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId)
   sPlugin->setFillStyle(fillStyles[cId]);
 	sPlugin->setDrawSolution(arg->plotsolutions[cId]);
 	sPlugin->plotOn(plot);
+  if ( arg->cls ) sPlugin->plotOn(plot, arg->cls);
 	plot->Draw();
 }
 
@@ -1219,6 +1234,9 @@ void GammaComboEngine::make2dProbPlot(MethodProbScan *scanner, int cId)
 	// contour plot
 	scanner->setDrawSolution(arg->plotsolutions[cId]);
 	scanner->setLineColor(colorsLine[cId]);
+	if(arg->cls){
+		scanner->plotOn(plot, true);
+	}
 	scanner->plotOn(plot);
 	// only draw the plot once when multiple scanners are plotted,
 	// else we end up with too many graphs, and the transparency setting
@@ -1750,6 +1768,7 @@ void GammaComboEngine::scanDataSet()
     {
       if ( arg->isAction("plot") ) {
         probScanner->loadScanner( m_fnamebuilder->getFileNameScanner(probScanner) );
+        // what about CLs?
       }
       else {
         make1dProbScan(probScanner,0);

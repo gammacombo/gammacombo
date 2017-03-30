@@ -266,20 +266,27 @@ void OneMinusClPlot2d::makeNewPlotStyle(TString htmlColor, int ROOTColor)
 ///
 /// Add a scanner to the list of things to be plotted.
 ///
-void OneMinusClPlot2d::addScanner(MethodAbsScan* s)
+void OneMinusClPlot2d::addScanner(MethodAbsScan* s, bool do_cls)
 {
 	if ( arg->debug ) cout << "OneMinusClPlot2d::addScanner() : adding " << s->getName() << endl;
+	if (do_cls && !s->getHCLs2d()){ 
+		cout << "OneMinusClPlot2d::addScanner() : ERROR : No hCLs available. Will not plot." << endl;
+		return;
+	}
 	scanners.push_back(s);
-	if ( s->getMethodName().EqualTo("Prob") || s->getMethodName().EqualTo("DatasetsProb")){
+	if ( (s->getMethodName().EqualTo("Prob") || s->getMethodName().EqualTo("DatasetsProb")) && !do_cls){
 		histosType.push_back(kChi2);
 		histos.push_back(s->getHchisq2d());
 	}
 	else {
 		histosType.push_back(kPvalue);
-		histos.push_back(s->getHCL2d());
+		if(do_cls) 	histos.push_back(s->getHCLs2d());
+		else 		histos.push_back(s->getHCL2d());
 	}
+	do_CLs.push_back(do_cls);
 	if ( arg->smooth2d ) for ( int i=0; i<arg->nsmooth; i++ ) { histos[histos.size()-1]->Smooth(); }
 	title = s->getTitle();
+	if(do_cls) title = s->getTitle() + " CLs";
 	m_contours.push_back(0);
 	m_contours_computed.push_back(false);
 }
@@ -444,7 +451,8 @@ void OneMinusClPlot2d::drawLegend()
 	for ( int i = 0; i < histos.size(); i++ ){
 		if ( histos.size()==1 ){
 			// no legend symbol if only one scanner to be drawn
-			m_legend->AddEntry((TObject*)0, scanners[i]->getTitle(), "");
+			if(do_CLs[i]) m_legend->AddEntry((TObject*)0, scanners[i]->getTitle() + " CLs", "");
+			else m_legend->AddEntry((TObject*)0, scanners[i]->getTitle(), "");
 		}
 		else{
 			// construct a dummy TGraph that uses the style of the 1sigma line
@@ -461,7 +469,10 @@ void OneMinusClPlot2d::drawLegend()
 			g->SetMarkerSize(markersize[styleId]);
 			TString options = "f";
 			if ( scanners[i]->getDrawSolution() ) options += "p"; // only plot marker symbol when solutions are plotted
-			if ( scanners[i]->getTitle() != "noleg" ) m_legend->AddEntry(g, scanners[i]->getTitle(), options);
+			if ( scanners[i]->getTitle() != "noleg" ) {
+				if(do_CLs[i])	m_legend->AddEntry(g, scanners[i]->getTitle() + " CLs", options);
+				else		m_legend->AddEntry(g, scanners[i]->getTitle(), options);
+			}
 		}
 	}
 	m_legend->Draw();
