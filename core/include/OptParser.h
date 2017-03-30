@@ -128,6 +128,7 @@ class OptParser
     vector<TString> readfromfile;
 		vector<TString> relation;
     TString         save;
+    bool            saveAtMin;
 		vector<float>   savenuisances1d;
 		vector<float>   savenuisances2dx;
 		vector<float>   savenuisances2dy;
