@@ -530,6 +530,7 @@ void OptParser::parseArguments(int argc, char* argv[])
       "26: In 2D plots, slightly smaller text size for legend.\n"
       "27: In 2D plots, do not draw any fill color (only the fill style).\n"
       "28: In 2D plots, make fill styles even more transparent.\n"
+      "29: Remove method name from legend.\n"
 			, false, "int");
   TCLAP::MultiArg<string> readfromfileArg("", "readfromfile", "Read the observables, uncertainties and correlations from a file - e.g. for reading in toys."
       "If 'default' is given, the default values are used."
@@ -1068,7 +1069,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 			plotsolutions.push_back(0);
 		}
 	}
-	// If no combiner is given (as in the datasets case), make sure no solutions are plotted 
+	// If no combiner is given (as in the datasets case), make sure no solutions are plotted
 	// without seing the program crash
 	else if ( combid.empty() && plotsolutions.empty() ){
 		plotsolutions.push_back(0);
@@ -1102,10 +1103,10 @@ void OptParser::parseArguments(int argc, char* argv[])
         if ( isAction("plugin") && !plotpluginonly ) {
           plotsoln.push_back(0);
         }
-      } 
+      }
 		}
 	}
-	// If no combiner is given (as in the datasets case), make sure no solutions are plotted 
+	// If no combiner is given (as in the datasets case), make sure no solutions are plotted
 	// without seing the program crash
 	else if ( combid.empty() ){
 		plotsoln.push_back(0);

@@ -122,8 +122,8 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 
 	int color = s->getLineColor();
 	// if(isCLs) color = color+2;
-	if(isCLs && s->getMethodName().Contains("Plugin")) color = kRed - 6;
-	else if(isCLs) color = s->getLineColor() + 2;
+	if(isCLs && s->getMethodName().Contains("Plugin") && !arg->plotpluginonly) color = kBlue+1;
+	else if(isCLs) color = s->getLineColor() - 5;
 	g->SetLineColor(color);
 
 	if ( filled ){
@@ -547,27 +547,33 @@ void OneMinusClPlot::Draw()
 	leg->SetTextSize(legendsize*0.75);
 	for ( int i = 0; i < scanners.size(); i++ )
 	{
-		TString legDrawOption = "l";
+		TString legDrawOption = "lf";
 		if ( plotPluginMarkers
 				&& ( scanners[i]->getMethodName()=="Plugin"
 					|| scanners[i]->getMethodName()=="BergerBoos"
 					|| scanners[i]->getMethodName()=="DatasetsPlugin" ) )
 		{
-			legDrawOption = "p";
+			legDrawOption = "lep";
 		}
     if ( arg->plotlegstyle != "default" ) legDrawOption = arg->plotlegstyle;
+
+    TString legTitle = scanners[i]->getTitle();
+    if ( !arg->isQuickhack(29) ) {
+      if ( scanners[i]->getMethodName().Contains("Prob") ) legTitle += do_CLs[i] ? " (PROB CLs)" : " (PROB)";
+      if ( scanners[i]->getMethodName().Contains("Plugin") ) legTitle += do_CLs[i] ? " (PLUGIN CLs)" : " (PLUGIN)";
+    }
 
 		if ( plotSimple )
 		{
 			scan1dPlotSimple(scanners[i], i==0, do_CLs[i]);
-			if(do_CLs[i]) 	leg->AddEntry(scanners[i]->getHCL(), scanners[i]->getTitle() + " (" + scanners[i]->getMethodName() + " CLs)", legDrawOption);
-			else 			leg->AddEntry(scanners[i]->getHCL(), scanners[i]->getTitle() + " (" + scanners[i]->getMethodName() + ")", legDrawOption);
+			if(do_CLs[i]) 	leg->AddEntry(scanners[i]->getHCL(), legTitle, legDrawOption);
+			else 			leg->AddEntry(scanners[i]->getHCL(), legTitle, legDrawOption);
 		}
 		else
 		{
 			TGraph* g = scan1dPlot(scanners[i], i==0, false, scanners[i]->getFilled(), do_CLs[i]);
-			if(do_CLs[i] &&  scanners[i]->getTitle() != "noleg") 	leg->AddEntry(g, scanners[i]->getTitle() + " CLs", legDrawOption);
-			else if ( scanners[i]->getTitle() != "noleg" )			leg->AddEntry(g, scanners[i]->getTitle(), legDrawOption);
+			if(do_CLs[i] &&  scanners[i]->getTitle() != "noleg") 	leg->AddEntry(g, legTitle, legDrawOption);
+			else if ( scanners[i]->getTitle() != "noleg" )			leg->AddEntry(g, legTitle, legDrawOption);
 		}
 	}
 

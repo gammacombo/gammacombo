@@ -58,7 +58,7 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
         {
             std::cout << "WARNING: BKG MINIMUM IS LOWER THAN GLOBAL MINIMUM! The likelihoods are screwed up! Set bkg minimum to global minimum for consistency." << std::endl;
             chi2minBkg = chi2minGlobal;
-            std::cout << "=============== New bkg minimum (2*-Log(Likelihood)) is: " << chi2minBkg << endl;            
+            std::cout << "=============== New bkg minimum (2*-Log(Likelihood)) is: " << chi2minBkg << endl;
         }
 
     }
@@ -456,9 +456,11 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         hCLs->SetBinContent(i, p_cls);
         hCLs->SetBinError(i, sqrt(p_cls * (1. - p_cls) / nall));
 
-        cout << "At scanpoint " << std::scientific << hCL->GetBinCenter(i) << ": ===== number of toys for pValue calculation: " << nbetter << endl;
-        cout << "At scanpoint " << hCL->GetBinCenter(i) << ": ===== pValue: " << p << endl;
-        cout << "At scanpoint " << hCL->GetBinCenter(i) << ": ===== pValue CLs: " << p_cls << endl;
+        if (arg->debug) {
+          cout << "At scanpoint " << std::scientific << hCL->GetBinCenter(i) << ": ===== number of toys for pValue calculation: " << nbetter << endl;
+          cout << "At scanpoint " << hCL->GetBinCenter(i) << ": ===== pValue: " << p << endl;
+          cout << "At scanpoint " << hCL->GetBinCenter(i) << ": ===== pValue CLs: " << p_cls << endl;
+        }
     }
 
     if (arg->debug || drawPlots) {
@@ -512,11 +514,13 @@ double MethodDatasetsPluginScan::getPValueTTestStatistic(double test_statistic_v
         // this is the normal case
         return TMath::Prob(test_statistic_value, 1);
     } else {
+        if (arg->verbose) {
         cout << "MethodDatasetsPluginScan::scan1d_prob() : WARNING : Test statistic is negative, forcing it to zero" << std::endl
              << "Fit at current scan point has higher likelihood than free fit." << std::endl
              << "This should not happen except for very small underflows when the scan point is at the best fit value. " << std::endl
              << "Value of test statistic is " << test_statistic_value << std::endl
              << "An equal upwards fluctuaion corresponds to a p value of " << TMath::Prob(abs(test_statistic_value), 1) << std::endl;
+        }
         // TMath::Prob will return 0 if the Argument is slightly below zero. As we are working with a float-zero we can not rely on it here:
         // TMath::Prob( 0 ) returns 1
         return 1.;
@@ -581,7 +585,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
     ProgressBar progressBar(arg, nPoints1d);
     for ( int i = 0; i < nPoints1d; i++ )
     {
-        
+
 				toyTree.npoint = i;
 
 				progressBar.progress();
@@ -591,7 +595,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 
         float scanpoint = parameterToScan_min + (parameterToScan_max - parameterToScan_min) * (double)i / ((double)nPoints1d - 1);
         toyTree.scanpoint = scanpoint;
-				
+
 				if ( i==0 && scanpoint != 0 ) {
 					cout << "ERROR: For CLs option the first point in the scan must be zero not: " << scanpoint << endl;
 					exit(1);
@@ -622,7 +626,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             exit(EXIT_FAILURE);
         }
 
-         toyTree.chi2minBkg     = this->getChi2minBkg();       
+         toyTree.chi2minBkg     = this->getChi2minBkg();
 
         toyTree.storeParsPll();
         toyTree.genericProbPValue = this->getPValueTTestStatistic(toyTree.chi2min - toyTree.chi2minGlobal);
@@ -652,7 +656,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 
             this->pdf->generateToys(); // this is generating the toy dataset
             this->pdf->generateToysGlobalObservables(); // this is generating the toy global observables and saves globalObs in snapshot
-						
+
 						// keep hold of the background only toys
 						if ( i==0 ) {
 							cls_bkgOnlyToys.push_back( (RooDataSet*)this->pdf->getToyObservables()->Clone() ); // need to figure out why clone is needed
@@ -781,7 +785,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 
             // free parameter of interest
             parameterToScan->setConstant(false);
-						
+
 						// set dataset back
 						if (arg->debug) cout << "Setting toy back as data " << tempData << endl;
 						this->pdf->setToyData( tempData );
@@ -808,7 +812,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 
                 pdf->setFitStrategy(1);
 
-                cout << "----> refit with strategy: 1" << endl;
+                if (arg->verbose) cout << "----> refit with strategy: 1" << endl;
                 delete r1;
                 r1  = this->loadAndFit(this->pdf);
                 assert(r1);
@@ -827,7 +831,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 
                     pdf->setFitStrategy(2);
 
-                    cout << "----> refit with strategy: 2" << endl;
+                    if (arg->verbose) cout << "----> refit with strategy: 2" << endl;
                     delete r1;
                     r1  = this->loadAndFit(this->pdf);
                     assert(r1);
@@ -1151,7 +1155,7 @@ void MethodDatasetsPluginScan::setAndPrintFitStatusConstrainedToys(const ToyTree
 
     bool negTestStat = toyTree.chi2minToy - toyTree.chi2minGlobalToy < 0;
 
-    if (pdf->getFitStatus() != 0 || negTestStat ) {
+    if ( (pdf->getFitStatus() != 0 || negTestStat ) && arg->debug ) {
         cout  << "----> problem in current fit: going to refit with strategy " << pdf->getFitStrategy() << " , summary: " << endl
               << "----> NLL value: " << std::setprecision(9) << pdf->getMinNllFree() << endl
               << "----> fit status: " << pdf->getFitStatus() << endl
@@ -1210,12 +1214,14 @@ void MethodDatasetsPluginScan::setAndPrintFitStatusConstrainedToys(const ToyTree
 void MethodDatasetsPluginScan::setAndPrintFitStatusFreeToys(const ToyTree& toyTree) {
 
     if (! std::isfinite(pdf->getMinNllScan())) {
-        cout << "----> nan/inf flag detected " << endl;
-        cout << "----> fit status: " << pdf->getFitStatus() << endl;
+        if ( arg->debug) {
+          cout << "----> nan/inf flag detected " << endl;
+          cout << "----> fit status: " << pdf->getFitStatus() << endl;
+        }
         pdf->setFitStatus(-99);
     }
 
-    if (pdf->getFitStatus() != 0) {
+    if (pdf->getFitStatus() != 0 && arg->debug) {
         cout  << "----> problem in current fit: going to refit with strategy 1, summary: " << endl
               << "----> NLL value: " << std::setprecision(9) << pdf->minNll << endl
               << "----> fit status: " << pdf->getFitStatus() << endl;

@@ -15,9 +15,9 @@
 	};
 
 
-	MethodAbsScan::MethodAbsScan(Combiner *c): 
-		MethodAbsScan(c->getArg())  
-		// C++11 onwards, one can delegate constructors, 
+	MethodAbsScan::MethodAbsScan(Combiner *c):
+		MethodAbsScan(c->getArg())
+		// C++11 onwards, one can delegate constructors,
 		// but then, there can be no other initializers
 	{
 		combiner = c;
@@ -28,15 +28,15 @@
 		obsName = "obs_"+combiner->getPdfName();
 		parsName = "par_"+combiner->getPdfName();
 		thName = "th_"+combiner->getPdfName();
-	
+
 		// check workspace content
 		if ( !w->pdf(pdfName) ) { cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << pdfName  << endl; exit(1); }
 		if ( !w->set(obsName) ) { cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << obsName << endl; exit(1); }
 		if ( !w->set(parsName) ){ cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << parsName << endl; exit(1); }
 		if ( !w->set(thName) )  { cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << thName << endl; exit(1); }
 	}
-	
-	
+
+
 	// constructor without combiner, this is atm still needed for the datasets stuff
 	MethodAbsScan::MethodAbsScan(OptParser* opt):
 		rndm(),
@@ -291,7 +291,10 @@ void MethodAbsScan::saveScanner(TString fName)
 	TFile f(fName, "recreate");
 	// save 1-CL histograms
 	if ( scanVar2!="" ) hCL2d->Write("hCL");
-	else hCL->Write("hCL");
+	else {
+    hCL->Write("hCL");
+    if (hCLs) hCLs->Write("hCLs");
+  }
 	// save chi2 histograms
 	if ( scanVar2!="" ) hChi2min2d->Write("hChi2min");
 	else hChi2min->Write("hChi2min");
@@ -348,7 +351,16 @@ bool MethodAbsScan::loadScanner(TString fName)
 		hChi2min = (TH1F*)obj;
 		hChi2min->SetName("hChi2min"+getUniqueRootName());
 	}
-	// load solutions: try the first one hundred
+  // load CLs histograms
+  obj = f->Get("hCLs");
+  if ( obj==0 ){
+    cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLs' not found in root file - you can ignore this if you're not running in dataset mode" << fName << endl;
+  }
+  else if ( scanVar2=="" ){
+    hCLs = (TH1F*)obj;
+    hCLs->SetName("hCLs"+getUniqueRootName());
+  }
+  // load solutions: try the first one hundred
 	solutions.clear();
 	int nSol = 100;
 	for ( int i=0; i<nSol; i++ ){
@@ -567,9 +579,9 @@ void MethodAbsScan::calcCLintervals(bool isCLs)
 	//}
 	//else {		//Since I want to have the CL_s method also, I do the simple method anyway.
 	//	cout<<"Using simple method with  linear splines."<<endl;
-	//	this->calcCLintervalsSimple(isCLs);		
+	//	this->calcCLintervalsSimple(isCLs);
 	//}
-  
+
   cout << endl;
   if ( arg->debug ) cout << "MethodAbsScan::calcCLintervals() : ";
   cout << "CONFIDENCE INTERVALS for combination " << name << endl << endl;
@@ -1348,7 +1360,7 @@ void MethodAbsScan::setYscanRange(float min, float max)
 
 void MethodAbsScan::calcCLintervalsSimple(bool isCLs)
 {
-  clintervals1sigma.clear(); 
+  clintervals1sigma.clear();
   clintervals2sigma.clear();
   double levels[2] = {0.6827, 0.9545};
 
@@ -1358,7 +1370,7 @@ void MethodAbsScan::calcCLintervalsSimple(bool isCLs)
   	histogramCL = this->hCLs;
   }
   if(!isCLs || (this->hCLs && isCLs))
-  {  
+  {
 	  for (int c=0;c<2;c++){
 	    const std::pair<double, double> borders = getBorders(TGraph(histogramCL), levels[c]);
 	    CLInterval cli;
@@ -1377,7 +1389,7 @@ void MethodAbsScan::calcCLintervalsSimple(bool isCLs)
 
 	////////////////////////////////////////////////////////////////////////////////////////////
 	//// Add a hacky calculation of the CL_s intervals
-	//// \todo: Do it properly from the very start by introducing a bkg model and propagate it to the entire framework.  
+	//// \todo: Do it properly from the very start by introducing a bkg model and propagate it to the entire framework.
 
   if(!this->hCLs && isCLs)
   {
@@ -1385,9 +1397,9 @@ void MethodAbsScan::calcCLintervalsSimple(bool isCLs)
   	std::cout << "WARNING: hCLs is empty! Will calculate CLs intervals by noramlizing the p values to the p value of the first bin." << std::endl;
   	std::cout << "WARNING: This is only an approximate solution and MIGHT EVEN BE WRONG, if the first bin does not represent the background expectation!" << std::endl;
   	std::cout << "**************************************************************************************************************************************" << std::endl;
-  	clintervals1sigma.clear(); 
+  	clintervals1sigma.clear();
   	clintervals2sigma.clear();
-  
+
   	for (int c=0;c<2;c++){
     	const std::pair<double, double> borders_CLs = getBorders_CLs(TGraph(histogramCL), levels[c]);
     	CLInterval cli;
@@ -1408,7 +1420,7 @@ void MethodAbsScan::calcCLintervalsSimple(bool isCLs)
 \brief determines the borders of the confidence interval by linear or qubic interpolation.
 \param graph The graph holding the p-values.
 \param confidence_level The confidence level at which the interval is to be determined.
-\param qubic Optional parameter. False by default. If true, qubic interpolation is used. 
+\param qubic Optional parameter. False by default. If true, qubic interpolation is used.
 */
 const std::pair<double, double> MethodAbsScan::getBorders(const TGraph& graph, const double confidence_level, bool qubic){
 
@@ -1426,7 +1438,7 @@ const std::pair<double, double> MethodAbsScan::getBorders(const TGraph& graph, c
   double upper_edge = max_edge;
 
   for(double point = min_edge; point < max_edge; point+= (max_edge-min_edge)/scan_steps){
- 	
+
    if(graph.Eval(point, splines)>p_val){
       lower_edge = point;
       break;
@@ -1442,7 +1454,7 @@ const std::pair<double, double> MethodAbsScan::getBorders(const TGraph& graph, c
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
-//// Do a hacky calculation of the CL_s intervals, where essentially the pValue is normalized to the pValue with n_sig=0. 
+//// Do a hacky calculation of the CL_s intervals, where essentially the pValue is normalized to the pValue with n_sig=0.
 //// Let's first assume that the parameter of interest is ALWAYS a parameter correlated with n_sig, so that parameter=0 means n_sig=0.
 //// Therefore the pValue(CL_s) is given by the ratio of the pValue at scanpointand the pValue of the lowest bin.
 //// \todo Do it properly from the very start by introducing a bkg model and propagate it to the entire framework.
@@ -1464,7 +1476,7 @@ const std::pair<double, double> MethodAbsScan::getBorders_CLs(const TGraph& grap
 
   for(double point = min_edge; point < max_edge; point+= (max_edge-min_edge)/scan_steps){
 
-	//for CL_s normalize pVal to the pVal at 0 (which has to be the background model) 	
+	//for CL_s normalize pVal to the pVal at 0 (which has to be the background model)
    if(graph.Eval(point, splines)/graph.Eval(min_edge, splines)>p_val){
       lower_edge = point;
       break;
@@ -1472,7 +1484,7 @@ const std::pair<double, double> MethodAbsScan::getBorders_CLs(const TGraph& grap
   }
   for(double point = max_edge; point > min_edge; point-= (max_edge-min_edge)/scan_steps){
 
-  	//for CL_s normalize pVal to the pVal at 0 (which has to be the background model) 	
+  	//for CL_s normalize pVal to the pVal at 0 (which has to be the background model)
     if(graph.Eval(point, splines)/graph.Eval(min_edge, splines)>p_val){
       upper_edge = point;
       break;

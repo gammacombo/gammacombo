@@ -44,6 +44,22 @@ MethodDatasetsProbScan::MethodDatasetsProbScan(PDF_Datasets* PDF, OptParser* opt
         cerr << "ERROR: The workspace must contain the fit result of the fit to data. The name of the fit result must be 'data_fit_result'. " << endl;
         exit(EXIT_FAILURE);
     }
+    if ( !w->set(pdf->getObsName()) ) {
+        cerr << "MethodDatasetsProbScan::MethodDatasetsProbScan() : ERROR : no '" + pdf->getObsName() + "' set found in workspace" << endl;
+        cerr << " You can specify the name of the set in the workspace using the pdf->initObservables(..) method.";
+        exit(EXIT_FAILURE);
+    }
+    if ( !w->set(pdf->getParName()) ) {
+        cerr << "MethodDatasetsProbScan::MethodDatasetsProbScan() : ERROR : no '" + pdf->getParName() + "' set found in workspace" << endl;
+        exit(EXIT_FAILURE);
+    }
+    if ( !w->var(scanVar1) ) {
+        cout << "MethodDatasetsProbScan::initScan() : ERROR : No such scan parameter: " << scanVar1 << endl;
+        cout << "MethodDatasetsProbScan::initScan() :         Choose an existing one using: --var par" << endl << endl;
+        cout << "  Available parameters:" << endl << "  ---------------------" << endl << endl << "  ";
+        pdf->printParameters();
+        exit(EXIT_FAILURE);
+    }
 
     dataFreeFitResult = (RooFitResult*) w->obj("data_fit_result");
     chi2minGlobal = 2 * dataFreeFitResult->minNll();
@@ -70,7 +86,7 @@ MethodDatasetsProbScan::MethodDatasetsProbScan(PDF_Datasets* PDF, OptParser* opt
         {
             std::cout << "WARNING: BKG MINIMUM IS LOWER THAN GLOBAL MINIMUM! The likelihoods are screwed up! Set bkg minimum to global minimum for consistency." << std::endl;
             chi2minBkg = chi2minGlobal;
-            std::cout << "=============== New bkg minimum (2*-Log(Likelihood)) is: " << chi2minBkg << endl;            
+            std::cout << "=============== New bkg minimum (2*-Log(Likelihood)) is: " << chi2minBkg << endl;
         }
         w->var(scanVar1)->setConstant(false);
 
@@ -79,15 +95,6 @@ MethodDatasetsProbScan::MethodDatasetsProbScan(PDF_Datasets* PDF, OptParser* opt
     // now we should make a plot of our dataset and the pdf
     plot("test");
 
-    if ( !w->set(pdf->getObsName()) ) {
-        cerr << "MethodDatasetsProbScan::MethodDatasetsProbScan() : ERROR : no '" + pdf->getObsName() + "' set found in workspace" << endl;
-        cerr << " You can specify the name of the set in the workspace using the pdf->initObservables(..) method.";
-        exit(EXIT_FAILURE);
-    }
-    if ( !w->set(pdf->getParName()) ) {
-        cerr << "MethodDatasetsProbScan::MethodDatasetsProbScan() : ERROR : no '" + pdf->getParName() + "' set found in workspace" << endl;
-        exit(EXIT_FAILURE);
-    }
     // setup a dummy empty combiner to help with file naming and global option later
     combiner = new Combiner( opt, name, title);
 }
@@ -219,7 +226,7 @@ void MethodDatasetsProbScan::sethCLFromProbScanTree() {
     {
         // load entry
         this->probScanTree->GetEntry(i);
-				
+
         double deltaChi2 = probScanTree->chi2min - probScanTree->chi2minGlobal;
 				double oneMinusCL = TMath::Prob( deltaChi2, 1);
 				// save the value and corresponding fit result
@@ -242,7 +249,7 @@ void MethodDatasetsProbScan::sethCLFromProbScanTree() {
     hCLs->SetBinContent(hCLs->FindBin( probScanTree->scanbest ), 1.);
 
 		cout << "Best fit at: scanVar  = " << probScanTree->scanbest << " with Chi2Min: " << chi2minGlobal << endl;
-		
+
 		sortSolutions();
 		//saveSolutions();
     // this->probScanTree->activateAllBranches(); //< Very important!
@@ -397,7 +404,7 @@ int MethodDatasetsProbScan::scan1d(bool fast, bool reverse)
 
         // set chi2 of fixed fit: scan fit on data
         this->probScanTree->chi2min           = 2 * result->minNll();
-        //this->probScanTree->chi2min           = 2 * pdf->getMinNll();        
+        //this->probScanTree->chi2min           = 2 * pdf->getMinNll();
         this->probScanTree->covQualScanData   = result->covQual();
         this->probScanTree->scanbest  = freeDataFitValue;
 
@@ -441,8 +448,8 @@ int MethodDatasetsProbScan::scan1d(bool fast, bool reverse)
 
     return 0;
 }
-       
-// sanity Checks for 2D scan \TODO: Idea: enlargen this function to be used for all scans 
+
+// sanity Checks for 2D scan \TODO: Idea: enlargen this function to be used for all scans
 void MethodDatasetsProbScan::sanityChecks()
 {
     // if ( !w->set(parsName) ){
@@ -529,10 +536,10 @@ int MethodDatasetsProbScan::scan2d()
     gStyle->SetOptTitle(1);
     TCanvas *cDbg = newNoWarnTCanvas(getUniqueRootName(), Form("DeltaChi2 for 2D scan %i",nScansDone));
     cDbg->SetMargin(0.1,0.15,0.1,0.1);
-    float hChi2min2dMin = hChi2min2d->GetMinimum();    
+    float hChi2min2dMin = hChi2min2d->GetMinimum();
     bool firstScanDone = hChi2min2dMin<1e5;
     TH2F *hDbgChi2min2d = histHardCopy(hChi2min2d, firstScanDone);
-    hDbgChi2min2d->SetTitle(Form("#Delta#chi^{2} for scan %i, %s",nScansDone,title.Data())); 
+    hDbgChi2min2d->SetTitle(Form("#Delta#chi^{2} for scan %i, %s",nScansDone,title.Data()));
     if ( firstScanDone ) hDbgChi2min2d->GetZaxis()->SetRangeUser(hChi2min2dMin,hChi2min2dMin+25);
     hDbgChi2min2d->GetXaxis()->SetTitle(par1->GetTitle());
     hDbgChi2min2d->GetYaxis()->SetTitle(par2->GetTitle());
@@ -614,7 +621,7 @@ int MethodDatasetsProbScan::scan2d()
                 // fit!
                 tFit.Start(false);
                 RooFitResult *fr;
-                // if ( !arg->probforce ) fr = fitToMinBringBackAngles(w->pdf(pdfName), false, -1); 
+                // if ( !arg->probforce ) fr = fitToMinBringBackAngles(w->pdf(pdfName), false, -1);
                 // else                   fr = fitToMinForce(w, combiner->getPdfName());
 
                 fr = this->loadAndFit(this->pdf);   //Titus: change fitting strategy to the one from the datasets \todo: should be possible to use the fittominforce etc methods
@@ -654,7 +661,7 @@ int MethodDatasetsProbScan::scan2d()
                 //     cout << "chi2minGlobal: " << chi2minGlobal << endl;
                 //     cout << "deltaChi2: " << deltaChi2 << endl;
                 //     cout << "ndof: " << ndof << endl;
-                //     cout << "oneMinusCL: " << oneMinusCL << endl << endl;   
+                //     cout << "oneMinusCL: " << oneMinusCL << endl << endl;
                 // }
 
 
@@ -752,7 +759,7 @@ bool MethodDatasetsProbScan::loadScanner(TString fName) {
 //
 /////////////////////////////////////////////
 void MethodDatasetsProbScan::plot(TString fName) {
- 
+
   for (int i=0; i<pdf->getFitObs().size(); i++) {
     TString fitVar = pdf->getFitObs()[i];
     TCanvas *fitCanv = newNoWarnTCanvas( getUniqueRootName(), Form("S+B and B only fits to the dataset for %s",fitVar.Data()) );

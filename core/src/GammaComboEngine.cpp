@@ -715,6 +715,9 @@ void GammaComboEngine::customizeCombinerTitles()
 			if ( arg->title[i]!=TString("default") ) c->setTitle(arg->title[i]);
 		}
 	}
+  if ( runOnDataSet ) {
+    pdf[0]->setTitle(arg->title[0]);
+  }
 }
 
 ///
@@ -827,7 +830,7 @@ void GammaComboEngine::scanStrategy2d(MethodProbScan *scanner, ParameterCache *p
 			" 1. scan in first variable:  " + scanner->getScanVar1Name() + "\n"
 			" 2. scan in second variable: " + scanner->getScanVar2Name() + "\n"
 			" 3. scan starting from each solution found in 1. and 2." << endl;
-	
+
 		// setup a scanner for each variable individually
 		Combiner *c = scanner->getCombiner();
 		MethodProbScan *s1;
@@ -836,7 +839,7 @@ void GammaComboEngine::scanStrategy2d(MethodProbScan *scanner, ParameterCache *p
 		cout << "\n1D scan for X variable, " + scanner->getScanVar1Name() + ":\n" << endl;
 		if ( runOnDataSet ) {
 			const MethodDatasetsProbScan* temp = dynamic_cast<MethodDatasetsProbScan*>(scanner);
-			s1 = new MethodDatasetsProbScan( temp->pdf, arg ); 
+			s1 = new MethodDatasetsProbScan( temp->pdf, arg );
 		}
 		else {
 			s1 = new MethodProbScan(c);
@@ -1156,8 +1159,8 @@ void GammaComboEngine::make1dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId)
 	sPlugin->setTextColor(colorsText[colorId]);
   sPlugin->setFillStyle(fillStyles[cId]);
 	sPlugin->setDrawSolution(arg->plotsolutions[cId]);
-	sPlugin->plotOn(plot);
   if ( arg->cls ) sPlugin->plotOn(plot, arg->cls);
+	sPlugin->plotOn(plot);
 	plot->Draw();
 }
 
@@ -1759,7 +1762,6 @@ void GammaComboEngine::scanDataSet()
     {
       if ( arg->isAction("plot") ) {
         probScanner->loadScanner( m_fnamebuilder->getFileNameScanner(probScanner) );
-        // what about CLs?
       }
       else {
         make1dProbScan(probScanner,0);
@@ -1778,7 +1780,7 @@ void GammaComboEngine::scanDataSet()
 			make2dProbPlot(probScanner, 0);
 		}
   }
-  
+
 	/////////////////////////////////////////////////////
   //
   // PLUGIN - DATASETS
