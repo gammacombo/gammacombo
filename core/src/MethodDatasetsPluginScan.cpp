@@ -579,6 +579,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 
 		// if CLs toys we need to keep hold of what's going at the first point which should also be at zero
 		vector<RooDataSet*> cls_bkgOnlyToys;
+    vector<float> chi2minGlobalBkgToysStore;
+    vector<float> scanbestBkgToysStore;
 
     // start scan
     cout << "MethodDatasetsPluginScan::scan1d_plugin() : starting ... with " << nPoints1d << " scanpoints..." << endl;
@@ -734,8 +736,10 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             // fixed parameter of interest
             parameterToScan->setConstant(true);
             this->pdf->setFitStrategy(0);
-						RooDataSet *bkgToy = (RooDataSet*)cls_bkgOnlyToys[j];
+            // temporarily store our current toy here so we can put it back in a minute
 						RooDataSet *tempData = (RooDataSet*)this->pdf->getToyObservables();
+						// now get our background only toy (to fit under this hypothesis)
+            RooDataSet *bkgToy = (RooDataSet*)cls_bkgOnlyToys[j];
 						if (arg->debug) cout << "Setting background toy as data " << bkgToy << endl;
 						this->pdf->setToyData( bkgToy );
             RooFitResult* rb   = this->loadAndFit(this->pdf);
@@ -890,6 +894,18 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             toyTree.storeParsFree();
             pdf->deleteNLL();
 
+            // now save the global min (and best fit val) for the background only toy for later (this just makes life easier even though we are duplicating a number in the tree)
+            if ( i==0 ) {
+              chi2minGlobalBkgToysStore.push_back( toyTree.chi2minGlobalToy );
+              scanbestBkgToysStore.push_back( toyTree.scanbest );
+            }
+            else {
+              assert( chi2minGlobalBkgToysStore.size() == nToys );
+              assert( scanbestBkgToysStore.size() == nToys );
+            }
+            toyTree.chi2minGlobalBkgToy = chi2minGlobalBkgToysStore[j];
+            toyTree.scanbestBkg      = scanbestBkgToysStore[j];
+
             if (arg->debug) {
                 cout << "#### > Fit summary: " << endl;
                 cout  << "#### > free fit status: " << toyTree.statusFree << " vs pdf: " << toyTree.statusFreePDF << endl
@@ -932,7 +948,6 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         //delete result;
 
         //setParameters(w, pdf->getObsName(), obsDataset->get(0));
-        toyTree.writeToFile();
 
         //Titus Draw debug histdeltachisq
         if (arg->debug)
@@ -944,7 +959,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         }
 
     } // End of npoints loop
-    outputFile->Write();
+    toyTree.writeToFile();
     outputFile->Close();
     delete parsFunctionCall;
     return 0;

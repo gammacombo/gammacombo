@@ -49,8 +49,10 @@ void ToyTree::initMembers(TChain* t){
 	chi2minToy          = 0.;
 	chi2minGlobalToy    = 0.;
 	chi2minBkgToy       = 0.;
+	chi2minGlobalBkgToy = 0.;
 	scanbest            = 0.;
 	scanbesty           = 0.;
+	scanbestBkg         = 0.;
 	nrun                = 0.;
 	ntoy                = 0.;
 	npoint              = 0.;
@@ -119,7 +121,7 @@ void ToyTree::writeToFile(TString fName)
 void ToyTree::writeToFile()
 {
 	assert(t);
-	if ( arg->debug ){ 
+	if ( arg->debug ){
 		cout << "ToyTree::writeToFile() : ";
 		cout << "saving toys to ... " << endl;
 	}
@@ -134,29 +136,31 @@ void ToyTree::writeToFile()
 void ToyTree::init()
 {
 	t = new TTree("plugin", "plugin");
-	t->Branch("BergerBoos_id",    &BergerBoos_id,     "BergerBoos_id/F");
-	t->Branch("chi2min",          &chi2min,           "chi2min/F");
-	t->Branch("chi2minGlobal",    &chi2minGlobal,     "chi2minGlobal/F");
-	t->Branch("chi2minGlobalToy", &chi2minGlobalToy,  "chi2minGlobalToy/F");
-	t->Branch("chi2minBkg",    	  &chi2minBkg,		    "chi2minBkg/F");
-	t->Branch("chi2minBkgToy", 	  &chi2minBkgToy,  	  "chi2minBkgToy/F");
-	t->Branch("chi2minToy",       &chi2minToy,        "chi2minToy/F");
-	t->Branch("covQualFree",      &covQualFree,       "covQualFree/F");
-	t->Branch("covQualScan",      &covQualScan,       "covQualScan/F");
-	t->Branch("covQualScanData",  &covQualScanData,   "covQualScanData/F");
-	t->Branch("genericProbPValue",&genericProbPValue, "genericProbPValue/F");
-	t->Branch("id",               &id,                "id/F");
-	t->Branch("nBergerBoos",      &nBergerBoos,       "nBergerBoos/F");
-	t->Branch("nrun",             &nrun,              "nrun/F");
-	t->Branch("ntoy",             &ntoy,              "ntoy/F");
-	t->Branch("npoint",           &npoint,            "npoint/F");
-	t->Branch("scanbest",         &scanbest,          "scanbest/F");
-	t->Branch("scanbesty",        &scanbesty,         "scanbesty/F");
-	t->Branch("scanpoint",        &scanpoint,         "scanpoint/F");
-	t->Branch("scanpointy",       &scanpointy,        "scanpointy/F");
-	t->Branch("statusFree",       &statusFree,        "statusFree/F");
-	t->Branch("statusScan",       &statusScan,        "statusScan/F");
-	t->Branch("statusScanData",   &statusScanData,    "statusScanData/F");
+	t->Branch("BergerBoos_id",       &BergerBoos_id,       "BergerBoos_id/F");
+	t->Branch("chi2min",             &chi2min,             "chi2min/F");
+	t->Branch("chi2minToy",          &chi2minToy,          "chi2minToy/F");
+	t->Branch("chi2minGlobal",       &chi2minGlobal,       "chi2minGlobal/F");
+	t->Branch("chi2minGlobalToy",    &chi2minGlobalToy,    "chi2minGlobalToy/F");
+	t->Branch("chi2minGlobalBkgToy", &chi2minGlobalBkgToy, "chi2minGlobalBkgToy/F");
+	t->Branch("chi2minBkg",    	     &chi2minBkg,		       "chi2minBkg/F");
+	t->Branch("chi2minBkgToy", 	     &chi2minBkgToy,     	 "chi2minBkgToy/F");
+	t->Branch("covQualFree",         &covQualFree,         "covQualFree/F");
+	t->Branch("covQualScan",         &covQualScan,         "covQualScan/F");
+	t->Branch("covQualScanData",     &covQualScanData,     "covQualScanData/F");
+	t->Branch("genericProbPValue",   &genericProbPValue,   "genericProbPValue/F");
+	t->Branch("id",                  &id,                  "id/F");
+	t->Branch("nBergerBoos",         &nBergerBoos,         "nBergerBoos/F");
+	t->Branch("nrun",                &nrun,                "nrun/F");
+	t->Branch("ntoy",                &ntoy,                "ntoy/F");
+	t->Branch("npoint",              &npoint,              "npoint/F");
+	t->Branch("scanbest",            &scanbest,            "scanbest/F");
+	t->Branch("scanbesty",           &scanbesty,           "scanbesty/F");
+	t->Branch("scanbestBkg",         &scanbestBkg,         "scanbestBkg/F");
+	t->Branch("scanpoint",           &scanpoint,           "scanpoint/F");
+	t->Branch("scanpointy",          &scanpointy,          "scanpointy/F");
+	t->Branch("statusFree",          &statusFree,          "statusFree/F");
+	t->Branch("statusScan",          &statusScan,          "statusScan/F");
+	t->Branch("statusScanData",      &statusScanData,      "statusScanData/F");
 	if ( !arg->lightfiles )
 	{
 		TIterator* it = w->set(parsName)->createIterator();
@@ -189,11 +193,11 @@ void ToyTree::init()
 		}
 		// global observables
 	    if(this->storeGlob){
-	      delete it; 
+	      delete it;
 	      if(w->set(globName)==NULL){
 	      	cerr<<"Unable to store parameters of global constraints because no set called "+globName
 	      		<<" is defined in the workspace. "<<endl;
-	      		//\todo Implement init function in PDF_Datasets to enabe the user to set the name of this set in the workspace. 
+	      		//\todo Implement init function in PDF_Datasets to enabe the user to set the name of this set in the workspace.
 	      		exit(EXIT_FAILURE);
 	      }
 	      it = w->set(globName)->createIterator();
@@ -215,11 +219,12 @@ void ToyTree::open()
 	TObjArray* branches = t->GetListOfBranches();
 	if(branches->FindObject("BergerBoos_id"      )) t->SetBranchAddress("BergerBoos_id",      &BergerBoos_id);
 	if(branches->FindObject("chi2min"            )) t->SetBranchAddress("chi2min",            &chi2min);
+	if(branches->FindObject("chi2minToy"         )) t->SetBranchAddress("chi2minToy",         &chi2minToy);
 	if(branches->FindObject("chi2minGlobal"      )) t->SetBranchAddress("chi2minGlobal",      &chi2minGlobal);
 	if(branches->FindObject("chi2minGlobalToy"   )) t->SetBranchAddress("chi2minGlobalToy",   &chi2minGlobalToy);
+	if(branches->FindObject("chi2minGlobalBkgToy")) t->SetBranchAddress("chi2minGlobalBkgToy",&chi2minGlobalBkgToy);
 	if(branches->FindObject("chi2minBkg"      	 )) t->SetBranchAddress("chi2minBkg",      	  &chi2minBkg);
 	if(branches->FindObject("chi2minBkgToy"   	 )) t->SetBranchAddress("chi2minBkgToy",   	  &chi2minBkgToy);
-	if(branches->FindObject("chi2minToy"         )) t->SetBranchAddress("chi2minToy",         &chi2minToy);
 	if(branches->FindObject("covQualFree"        )) t->SetBranchAddress("covQualFree",        &covQualFree);
 	if(branches->FindObject("covQualScan"        )) t->SetBranchAddress("covQualScan",        &covQualScan);
 	if(branches->FindObject("covQualScanData"    )) t->SetBranchAddress("covQualScanData",    &covQualScanData);
@@ -227,6 +232,7 @@ void ToyTree::open()
 	if(branches->FindObject("nBergerBoos"        )) t->SetBranchAddress("nBergerBoos",        &nBergerBoos);
 	if(branches->FindObject("scanbest"           )) t->SetBranchAddress("scanbest",           &scanbest);
 	if(branches->FindObject("scanbesty"          )) t->SetBranchAddress("scanbesty",          &scanbesty);
+	if(branches->FindObject("scanbestBkg"        )) t->SetBranchAddress("scanbestBkg",        &scanbestBkg);
 	if(branches->FindObject("scanpoint"          )) t->SetBranchAddress("scanpoint",          &scanpoint);
 	if(branches->FindObject("scanpointy"         )) t->SetBranchAddress("scanpointy",         &scanpointy);
 	if(branches->FindObject("statusFree"         )) t->SetBranchAddress("statusFree",         &statusFree);
@@ -252,11 +258,12 @@ void ToyTree::activateCoreBranchesOnly()
 	t->SetBranchStatus("*", 0); // perhaps we need ".*" in certain root versions?
 	if(branches->FindObject("BergerBoos_id"))         t->SetBranchStatus("BergerBoos_id",      1);
 	if(branches->FindObject("chi2min"))               t->SetBranchStatus("chi2min",            1);
+	if(branches->FindObject("chi2minToy"))            t->SetBranchStatus("chi2minToy",         1);
 	if(branches->FindObject("chi2minGlobal"))         t->SetBranchStatus("chi2minGlobal",      1);
 	if(branches->FindObject("chi2minGlobalToy"))      t->SetBranchStatus("chi2minGlobalToy",   1);
+	if(branches->FindObject("chi2minGlobalBkgToy"))   t->SetBranchStatus("chi2minGlobalBkgToy",1);
 	if(branches->FindObject("chi2minBkg"))         	  t->SetBranchStatus("chi2minBkg",         1);
 	if(branches->FindObject("chi2minBkgToy"))      	  t->SetBranchStatus("chi2minBkgToy",      1);
-	if(branches->FindObject("chi2minToy"))            t->SetBranchStatus("chi2minToy",         1);
 	if(branches->FindObject("genericProbPValue"))     t->SetBranchStatus("genericProbPValue",  1);
 	if(branches->FindObject("id"))                    t->SetBranchStatus("id",                 1);
 	if(branches->FindObject("nBergerBoos"))           t->SetBranchStatus("nBergerBoos",        1);

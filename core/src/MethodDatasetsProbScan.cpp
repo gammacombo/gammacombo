@@ -433,10 +433,7 @@ int MethodDatasetsProbScan::scan1d(bool fast, bool reverse)
         setParameters(w, pdf->getParName(), parsFunctionCall->get(0));
         //setParameters(w, pdf->getObsName(), obsDataset->get(0));
     } // End of npoints loop
-    this->probScanTree->writeToFile();
-
-
-    outputFile->Write();
+    probScanTree->writeToFile();
     outputFile->Close();
     std::cout << "Wrote ToyTree to file" << std::endl;
     delete parsFunctionCall;
@@ -729,11 +726,13 @@ double MethodDatasetsProbScan::getPValueTTestStatistic(double test_statistic_val
         // this is the normal case
         return TMath::Prob(test_statistic_value, 1);
     } else if(!isCLs){
+        if (arg->verbose) {
         cout << "MethodDatasetsProbScan::scan1d_prob() : WARNING : Test statistic is negative, forcing it to zero" << std::endl
              << "Fit at current scan point has higher likelihood than free fit." << std::endl
              << "This should not happen except for very small underflows when the scan point is at the best fit value. " << std::endl
              << "Value of test statistic is " << test_statistic_value << std::endl
              << "An equal upwards fluctuaion corresponds to a p value of " << TMath::Prob(abs(test_statistic_value), 1) << std::endl;
+        }
         // TMath::Prob will return 0 if the Argument is slightly below zero. As we are working with a float-zero we can not rely on it here:
         // TMath::Prob( 0 ) returns 1
         return 1.;

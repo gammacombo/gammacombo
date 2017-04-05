@@ -72,14 +72,16 @@ class ToyTree
 
 		float scanpoint;        ///< the scanpoint for 1D scans, or the x scanpoint for 2D scans
 		float scanpointy;       ///< the y scanpoint for 2D scans
-		float chi2min;
-		float chi2minGlobal;
-		float chi2minBkg;		///< the chi2 of the fit of the bkg hypothesis (for CLs method)
-		float chi2minToy;
-		float chi2minGlobalToy;
-		float chi2minBkgToy;	///< the chi2 of the fit of the bkg hypothesis to the toy distribution (for CLs method)
+		float chi2min;          ///< the chi2 of the fit with var fixed to scan point
+		float chi2minGlobal;    ///< the chi2 of the free fit
+		float chi2minBkg;		    ///< the chi2 of the fit of the bkg hypothesis (for CLs method)
+		float chi2minToy;       ///< the chi2 of the fit to the toy with var fixed to scan point
+		float chi2minGlobalToy; ///< the chi2 of the free fit to the toy
+		float chi2minBkgToy;	  ///< the chi2 of the fit of the bkg hypothesis to the toy distribution (for CLs method)
+    float chi2minGlobalBkgToy; ///< the chi2 of the free fit to the bkg only toys
 		float scanbest;         ///< an alias to the free fit value of the scan variable
 		float scanbesty;        ///< an alias to the free fit value of the scan y variable in 2D scans
+    float scanbestBkg;      ///< an alias to the free fit value of the scan variable on the bkg only toy (for CLs method)
 		float nrun;             ///< an ID to distinguish different runs, i.e. batch jobs
 		float ntoy; 						///< an ID to distinguish different toys
 		float npoint; 				  ///< an ID to distinguish different scan point
@@ -129,8 +131,8 @@ class ToyTree
 		int   scanpointyN;      ///< number of different values of the scanpointy, computed by computeMinMaxN().
 
 		bool storeObs;                      ///< Boolean flag to control storing ToyTree observables, can't store these for DatasetsScans
-		bool storeTh;                       ///< Boolean flag to control storing ToyTree theory parameters. Not needed in DatasetsScans 
-		bool storeGlob;               		///< Boolean flag to control storing ToyTree global observables. Extremely handy in DatasetsScans 
+		bool storeTh;                       ///< Boolean flag to control storing ToyTree theory parameters. Not needed in DatasetsScans
+		bool storeGlob;               		///< Boolean flag to control storing ToyTree global observables. Extremely handy in DatasetsScans
 };
 
 #endif
