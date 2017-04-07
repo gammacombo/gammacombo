@@ -357,10 +357,6 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
     cout << "OneMinusClPlot::scan1dCLsPlot() : plotting ";
     cout << s->getName() << " (" << s->getMethodName() << ")" << endl;
   }
-  //if ( m_mainCanvas==0 ){
-    //m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, 600);
-    //m_mainCanvas->SetRightMargin(0.1);
-  //}
   m_mainCanvas->cd();
   TH1F *hObs    = (TH1F*)s->getHCLsFreq()->Clone(getUniqueRootName());
   TH1F *hExp    = (TH1F*)s->getHCLsExp()->Clone(getUniqueRootName());
@@ -387,21 +383,28 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
   TGraph *gErr2DnRaw = convertTH1ToTGraph(hErr2Dn);
 
   // smoothing if needed
-  TGraph *gExp    = gExpRaw;
-  TGraph *gErr1Up = gErr1UpRaw;
-  TGraph *gErr1Dn = gErr1DnRaw;
-  TGraph *gErr2Up = gErr2UpRaw;
-  TGraph *gErr2Dn = gErr2DnRaw;
+  TGraph *gExp;
+  TGraph *gErr1Up;
+  TGraph *gErr1Dn;
+  TGraph *gErr2Up;
+  TGraph *gErr2Dn;
 
+  TGraphSmooth *smoother = new TGraphSmooth();
   if (smooth) {
     if ( arg->debug ) cout << "OneMinusClPlot::scan1dCLsPlot() : smoothing graphs" << endl;
-    TGraphSmooth *smoother = new TGraphSmooth();
-    gExp = smoother->SmoothSuper( gExpRaw, "", 0, 0 );
-    gErr1Up = smoother->SmoothSuper( gErr1UpRaw, "", 0, 0 );
-    gErr1Dn = smoother->SmoothSuper( gErr1DnRaw, "", 0, 0 );
-    gErr2Up = smoother->SmoothSuper( gErr2UpRaw, "", 0, 0 );
-    gErr2Dn = smoother->SmoothSuper( gErr2DnRaw, "", 0, 0 );
+    gExp    = (TGraph*)smoother->SmoothSuper( gExpRaw    )->Clone("gExp");
+    gErr1Up = (TGraph*)smoother->SmoothSuper( gErr1UpRaw )->Clone("gErr1Up");
+    gErr1Dn = (TGraph*)smoother->SmoothSuper( gErr1DnRaw )->Clone("gErr1Dn");
+    gErr2Up = (TGraph*)smoother->SmoothSuper( gErr2UpRaw )->Clone("gErr2Up");
+    gErr2Dn = (TGraph*)smoother->SmoothSuper( gErr2DnRaw )->Clone("gErr2Dn");
     if ( arg->debug ) cout << "OneMinusClPlot::scan1dCLsPlot() : done smoothing graphs" << endl;
+  }
+  else {
+    gExp    = gExpRaw;
+    gErr1Up = gErr1UpRaw;
+    gErr1Dn = gErr1DnRaw;
+    gErr2Up = gErr2UpRaw;
+    gErr2Dn = gErr2DnRaw;
   }
 
   if ( !gObs ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - null graph gObs" << endl;
@@ -411,22 +414,43 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
   if ( !gErr2Up ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - null graph gErr2Up" << endl;
   if ( !gErr2Dn ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - null graph gErr2Dn" << endl;
 
+  gObs->SetName("gObs");
+  gExp->SetName("gExp");
+  gErr1Up->SetName("gErr1Up");
+  gErr1Dn->SetName("gErr1Dn");
+  gErr2Up->SetName("gErr2Up");
+  gErr2Dn->SetName("gErr2Dn");
+
   // now make the graphs for the error bands
   TGraphAsymmErrors *gErr1 = new TGraphAsymmErrors( gExp->GetN() );
+  gErr1->SetName("gErr1");
   TGraphAsymmErrors *gErr2 = new TGraphAsymmErrors( gExp->GetN() );
+  gErr2->SetName("gErr2");
 
-  double x,y;
+  double x,y,yerrUp,yerrDn;
   double xerr = (hExp->GetBinCenter(2)-hExp->GetBinCenter(1))/2.;
+
+  // protect against smoothing over 1
+  for (int i=0; i<gExp->GetN(); i++) {
+    gExp->GetPoint(i,x,y); gExp->SetPoint(i,x,TMath::Min(y,1.));
+    gErr1Up->GetPoint(i,x,y); gErr1Up->SetPoint(i,x,TMath::Min(y,1.));
+    gErr1Dn->GetPoint(i,x,y); gErr1Dn->SetPoint(i,x,TMath::Min(y,1.));
+    gErr2Up->GetPoint(i,x,y); gErr2Up->SetPoint(i,x,TMath::Min(y,1.));
+    gErr2Dn->GetPoint(i,x,y); gErr2Dn->SetPoint(i,x,TMath::Min(y,1.));
+  }
 
   for (int i=0; i<gExp->GetN(); i++) {
     gExp->GetPoint(i,x,y);
     gErr1->SetPoint(i,x,y);
     gErr2->SetPoint(i,x,y);
 
-    gErr1->SetPointError(i, xerr, xerr, y-gErr1Dn->Eval(x), gErr1Up->Eval(x)-y);
-    gErr2->SetPointError(i, xerr, xerr, y-gErr2Dn->Eval(x), gErr2Up->Eval(x)-y);
-    //gErr1->SetPointError(i, xerr, xerr, 0.0,0.0);
-    //gErr2->SetPointError(i, xerr, xerr, 0.0,0.0);
+    gErr1Up->GetPoint(i,x,yerrUp);
+    gErr1Dn->GetPoint(i,x,yerrDn);
+    gErr1->SetPointError(i, xerr, xerr, y-yerrDn, yerrUp-y );
+
+    gErr2Up->GetPoint(i,x,yerrUp);
+    gErr2Dn->GetPoint(i,x,yerrDn);
+    gErr2->SetPointError(i, xerr, xerr, y-yerrDn, yerrUp-y );
   }
 
   gErr2->SetFillColor( TColor::GetColor("#3182bd") );
@@ -436,8 +460,10 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
   gExp->SetLineColor(kRed);
   gExp->SetLineWidth(3);
   gObs->SetLineColor(kBlack);
+  gObs->SetMarkerColor(kBlack);
+  gObs->SetLineWidth(3);
   gObs->SetMarkerSize(1);
-  gObs->SetMarkerStyle(22);
+  gObs->SetMarkerStyle(20);
 
 	float min = arg->scanrangeMin == arg->scanrangeMax ? hObs->GetXaxis()->GetXmin() : arg->scanrangeMin;
 	float max = arg->scanrangeMin == arg->scanrangeMax ? hObs->GetXaxis()->GetXmax() : arg->scanrangeMax;
@@ -459,13 +485,14 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
 	bool optimizeNdiv = arg->ndiv<0 ? true : false;
 	haxes->GetXaxis()->SetNdivisions(xndiv, optimizeNdiv);
 	haxes->GetYaxis()->SetNdivisions(407, true);
+  haxes->GetYaxis()->SetRangeUser(0.,1.);
 
   // Legend:
 	// make the legend short, the text will extend over the boundary, but the symbol will be shorter
-  float legendXmin = arg->plotlegx!=-1. ? arg->plotlegx : 0.69 ;
-  float legendYmin = arg->plotlegy!=-1. ? arg->plotlegy : 0.65;
-  float legendXmax = legendXmin + ( arg->plotlegsizex!=-1. ? arg->plotlegsizex : 0.24 ) ;
-  float legendYmax = legendYmin + ( arg->plotlegsizey!=-1. ? arg->plotlegsizey : 0.24 ) ;
+  float legendXmin = 0.68 ;
+  float legendYmin = 0.58 ;
+  float legendXmax = legendXmin + 0.25 ;
+  float legendYmax = legendYmin + 0.22 ;
 	TLegend* leg = new TLegend(legendXmin,legendYmin,legendXmax,legendYmax);
 	leg->SetFillColor(kWhite);
 	leg->SetFillStyle(0);
@@ -480,22 +507,26 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
   leg->AddEntry( gErr1, "#pm 1#sigma", "F");
   leg->AddEntry( gErr2, "#pm 2#sigma", "F");
 
-  gErr2->SetHistogram(haxes);
-  gErr2->Draw("AE3");
+  haxes->Draw("AXIS+");
+  gErr2->Draw("E3same");
   gErr1->Draw("E3same");
   gExp->Draw("Lsame");
   if (obsError) gObs->Draw("LEPsame");
   else          gObs->Draw("LPsame");
-  gErr1Up->Draw("same");
-  gErr2Up->Draw("same");
   leg->Draw("same");
 
-  cout << "prob with canv?" << endl;
-   m_mainCanvas->Update();
-   m_mainCanvas->Modified();
+  drawCLguideLine(0.1);
+
+  double yGroup = 0.83;
+  if ( arg->plotprelim || arg->plotunoff ) yGroup = 0.8;
+  drawGroup(yGroup);
+
+  m_mainCanvas->SetTicks();
+  m_mainCanvas->RedrawAxis();
+  m_mainCanvas->Update();
+  m_mainCanvas->Modified();
    m_mainCanvas->Show();
-  cout << "prob with canv?" << endl;
-   savePlot( m_mainCanvas, name+"_cls"+arg->plotext );
+  savePlot( m_mainCanvas, name+"_cls"+arg->plotext );
 }
 
 void OneMinusClPlot::drawVerticalLine(float x, int color, int style)
@@ -700,7 +731,7 @@ void OneMinusClPlot::Draw()
 	m_mainCanvas->cd();
 
   // plot the CLs
-  for ( int i = 0; i < scanners.size(); i++ ) if (do_CLs[i]==2) scan1dCLsPlot(scanners[i]);
+  for ( int i = 0; i < scanners.size(); i++ ) if (do_CLs[i]==2) scan1dCLsPlot(scanners[i],arg->nsmooth);
 
 	// Legend:
 	// make the legend short, the text will extend over the boundary, but the symbol will be shorter

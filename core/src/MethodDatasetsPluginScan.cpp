@@ -332,6 +332,18 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     if (arg->debug) {
         printf("DEBUG %i %f %f %f\n", t.getScanpointN(), t.getScanpointMin() - halfBinWidth, t.getScanpointMax() + halfBinWidth, halfBinWidth);
     }
+    delete hCLsExp;
+    hCLsExp = new TH1F("hCLsExp", "hCLs", t.getScanpointN(), t.getScanpointMin() - halfBinWidth, t.getScanpointMax() + halfBinWidth);
+    delete hCLsErr1Up;
+    hCLsErr1Up = new TH1F("hCLsErr1Up", "hCLs", t.getScanpointN(), t.getScanpointMin() - halfBinWidth, t.getScanpointMax() + halfBinWidth);
+    delete hCLsErr1Dn;
+    hCLsErr1Dn = new TH1F("hCLsErr1Dn", "hCLs", t.getScanpointN(), t.getScanpointMin() - halfBinWidth, t.getScanpointMax() + halfBinWidth);
+    delete hCLsErr2Up;
+    hCLsErr2Up = new TH1F("hCLsErr2Up", "hCLs", t.getScanpointN(), t.getScanpointMin() - halfBinWidth, t.getScanpointMax() + halfBinWidth);
+    delete hCLsErr2Dn;
+    hCLsErr2Dn = new TH1F("hCLsErr2Dn", "hCLs", t.getScanpointN(), t.getScanpointMin() - halfBinWidth, t.getScanpointMax() + halfBinWidth);
+    delete hChi2min;
+    hChi2min = new TH1F("hChi2min", "hChi2min", t.getScanpointN(), t.getScanpointMin() - halfBinWidth, t.getScanpointMax() + halfBinWidth);
 
 
     // histogram to store number of toys which enter p Value calculation
@@ -484,38 +496,46 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         hCLs->SetBinError(i, sqrt(p_cls * (1. - p_cls) / nall));
 
         // the quantiles of the CLb distribution (for expected CLs)
-        // sort the sampled values
-        std::sort( sampledBValues[i].begin(), sampledBValues[i].end() );
-        //                          +2s                    +1s        0            -1s                -2s
-        vector<double> probs = { TMath::Prob(4,1), TMath::Prob(1,1), 0.5, 1.-TMath::Prob(1,1), 1.-TMath::Prob(4,1) };
-        double quantiles[probs.size()];
-        TMath::Quantiles( sampledBValues.size(), probs.size(), &sampledBValues[i][0], quantiles, &probs[0] );
-        vector<int> nSBValsAboveBkg = { 0, 0, 0, 0, 0};
-        for (int k=0; k<probs.size(); k++){
-          for (int l=0; l<sampledSBValues[i].size(); l++) {
-            if ( sampledSBValues[i][l] >= quantiles[k] ) nSBValsAboveBkg[k] += 1;
-          }
+        std::vector<double> probs  = { TMath::Prob(4,1), TMath::Prob(1,1), 0.5, 1.-TMath::Prob(1,1), 1.-TMath::Prob(4,1) };
+        std::vector<double> clb_vals  = { 1.-TMath::Prob(4,1), 1.-TMath::Prob(1,1), 0.5, TMath::Prob(1,1), TMath::Prob(4,1) };
+        std::vector<double> quantiles = Quantile<double>( sampledBValues[i], probs );
+        std::vector<double> clsb_vals;
+        //for (int k=0; k<quantiles.size(); k++) clsb_vals.push_back( TMath::Prob( quantiles[k], 1 ) );
+        for (int k=0; k<quantiles.size(); k++ ){
+          // asymptotic as chi2
+          //clsb_vals.push_back( TMath::Prob( quantiles[k], 1 ) );
+          // from toys
+          clsb_vals.push_back( getVectorFracAboveValue( sampledSBValues[i], quantiles[k] ) );
         }
 
-        hCLsExp->SetBinContent   ( i, TMath::Min(TMath::Prob( quantiles[2], 1 ) / probs[2] , 1.) );
-        hCLsErr1Up->SetBinContent( i, TMath::Min(TMath::Prob( quantiles[1], 1 ) / probs[1] , 1.) );
-        hCLsErr1Dn->SetBinContent( i, TMath::Min(TMath::Prob( quantiles[3], 1 ) / probs[3] , 1.) );
-        hCLsErr2Up->SetBinContent( i, TMath::Min(TMath::Prob( quantiles[0], 1 ) / probs[0] , 1.) );
-        hCLsErr2Dn->SetBinContent( i, TMath::Min(TMath::Prob( quantiles[4], 1 ) / probs[4] , 1.) );
+        // check
+        if ( arg->debug ) {
+          cout << i << endl;
+          cout << "Quants: ";
+          for (int k=0; k<quantiles.size(); k++) cout << quantiles[k] << " , ";
+          cout << endl;
+          cout << "CLb: ";
+          for (int k=0; k<clb_vals.size(); k++) cout << clb_vals[k] << " , ";
+          cout << endl;
+          cout << "CLsb: ";
+          for (int k=0; k<clsb_vals.size(); k++) cout << clsb_vals[k] << " , ";
+          cout << endl;
+          cout << "CLs: ";
+          for (int k=0; k<clsb_vals.size(); k++) cout << clsb_vals[k]/clb_vals[k] << " , ";
+          cout << endl;
+        }
+
+        hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] / clb_vals[2] , 1.) );
+        hCLsErr1Up->SetBinContent( i, TMath::Min( clsb_vals[1] / clb_vals[1] , 1.) );
+        hCLsErr1Dn->SetBinContent( i, TMath::Min( clsb_vals[3] / clb_vals[3] , 1.) );
+        hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[0] / clb_vals[0] , 1.) );
+        hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[4] / clb_vals[4] , 1.) );
 
         //hCLsExp->SetBinContent   ( i, (float(nSBValsAboveBkg[2]) / sampledSBValues[i].size() ) / probs[2] );
         //hCLsErr1Up->SetBinContent( i, (float(nSBValsAboveBkg[1]) / sampledSBValues[i].size() ) / probs[1] );
         //hCLsErr1Dn->SetBinContent( i, (float(nSBValsAboveBkg[3]) / sampledSBValues[i].size() ) / probs[3] );
         //hCLsErr2Up->SetBinContent( i, (float(nSBValsAboveBkg[0]) / sampledSBValues[i].size() ) / probs[0] );
         //hCLsErr2Dn->SetBinContent( i, (float(nSBValsAboveBkg[4]) / sampledSBValues[i].size() ) / probs[4] );
-
-        // check
-        cout << i << endl;
-        cout << "Probs:  " << probs[0] << " " << probs[1] << " " << probs[2] << " " << probs[3] << " " << probs[4] << endl;
-        cout << "Quants: " << quantiles[0] << " " << quantiles[1] << " " << quantiles[2] << " " << quantiles[3] << " " << quantiles[4] << endl;
-        cout << "CLsb:   " << TMath::Prob(quantiles[0],1) << " " << TMath::Prob(quantiles[1],1) << " " << TMath::Prob(quantiles[2],1) << " " << TMath::Prob(quantiles[3],1) << " " << TMath::Prob(quantiles[4],1) << endl;
-        cout << "CLb:    " << 1.-TMath::Prob(4,1) << " " << 1.-TMath::Prob(1,1) << " " << 0.5 << " " << TMath::Prob(1,1) << " " << TMath::Prob(4,1) << endl;
-        cout << "CLs:    " << hCLsErr2Up->GetBinContent(i) << " "  << hCLsErr1Up->GetBinContent(i) << " "  << hCLsExp->GetBinContent(i) << " "  << hCLsErr1Dn->GetBinContent(i) << " "  << hCLsErr2Dn->GetBinContent(i) << endl;
 
         // CLs values in data
         int nDataAboveBkgExp = 0;

@@ -125,6 +125,13 @@ namespace Utils
 	void                    setParsConstToBound(RooWorkspace* w, std::vector<TString> namesLow, std::vector<TString> namesHigh);
 	void                    setParametersFloating(RooWorkspace* w, std::vector<TString> names);
 	void                    setParametersFloating(RooWorkspace* w, std::vector<TString> names, std::vector<TString> names2);
+  std::vector<double>     computeNormalQuantiles( std::vector<double> &values, int nsigma);
+  template<typename T>
+    static inline double  Lerp(T v0, T v1, T t);
+  template<typename T>
+    static inline std::vector<T> Quantile(const std::vector<T>& inData, const std::vector<T>& probs);
+  template<typename T>
+    static inline double  getVectorFracAboveValue(const std::vector<T>& vec, T val);
 
 	void dump_vector(const std::vector<int>& l);
 	void dump_vector(const std::vector<float>& l);
@@ -134,6 +141,57 @@ namespace Utils
 	std::vector<std::vector<int> > transpose(std::vector<std::vector<int> >& v);
 	TCanvas* newNoWarnTCanvas(TString name="NoWarnTCanvas", TString title="NoWarnTCanvas", int width=800, int height=600);
 	TCanvas* newNoWarnTCanvas(TString name, TString title, int x, int y, int width, int height);
+}
+
+template<typename T>
+double Utils::Lerp(T v0, T v1, T t)
+{
+    return (1 - t)*v0 + t*v1;
+}
+
+template<typename T>
+std::vector<T> Utils::Quantile(const std::vector<T>& inData, const std::vector<T>& probs)
+{
+    if (inData.empty())
+    {
+        return std::vector<T>();
+    }
+
+    if (1 == inData.size())
+    {
+        return std::vector<T>(1, inData[0]);
+    }
+
+    std::vector<T> data = inData;
+    std::sort(data.begin(), data.end());
+    std::vector<T> quantiles;
+
+    for (size_t i = 0; i < probs.size(); ++i)
+    {
+        T poi = Lerp<T>(-0.5, data.size() - 0.5, probs[i]);
+
+        size_t left = std::max(int64_t(std::floor(poi)), int64_t(0));
+        size_t right = std::min(int64_t(std::ceil(poi)), int64_t(data.size() - 1));
+
+        T datLeft = data.at(left);
+        T datRight = data.at(right);
+
+        T quantile = Lerp<T>(datLeft, datRight, poi - left);
+
+        quantiles.push_back(quantile);
+    }
+
+    return quantiles;
+}
+
+template<typename T>
+double Utils::getVectorFracAboveValue(const std::vector<T>& vec, T val) {
+
+  int nabove = 0;
+  for (int i=0; i<vec.size(); i++) {
+    if ( vec[i] >= val ) nabove++;
+  }
+  return double(nabove)/vec.size();
 }
 
 #endif

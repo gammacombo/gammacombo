@@ -1228,3 +1228,22 @@ void Utils::assertFileExists( TString strFilename ){
         exit(EXIT_FAILURE);
     }
 }
+
+std::vector<double> Utils::computeNormalQuantiles( std::vector<double> &values, int nsigma ) {
+
+  //std::sort( values.begin(), values.end() );
+  std::vector<double> probs; // = { TMath::Prob(4,1), TMath::Prob(1,1), 0.5, 1.-TMath::Prob(1,1), 1.-TMath::Prob(4,1) };
+  for ( int i=nsigma; i>0; i-- ) probs.push_back( TMath::Prob( sq(i),1 ) );
+  probs.push_back(0.5);
+  for ( int i=0; i<nsigma; i++ ) probs.push_back( 1.-TMath::Prob( sq(i+1), 1) );
+
+  double quants[ nsigma*2 + 1 ];
+
+  TMath::Quantiles( values.size(), probs.size(), &values[0], quants, &probs[0], false );
+
+  std::vector<double> quantiles;
+  for ( int i=0; i < (nsigma*2 +1 ); i++ ) {
+    quantiles.push_back( quants[i] );
+  }
+  return quantiles;
+}
