@@ -92,6 +92,7 @@ OptParser::OptParser():
 	intprob = false;
 	probforce = false;
 	probimprove = false;
+	probScanResult = "notSet";
 	printcor = false;
   printSolX = -999.;
   printSolY = -999.;
@@ -120,6 +121,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("asimovfile");
   availableOptions.push_back("batchstartn");
   availableOptions.push_back("batcheos");
+	availableOptions.push_back("cls");
 	availableOptions.push_back("combid");
 	availableOptions.push_back("color");
 	availableOptions.push_back("controlplots");
@@ -173,8 +175,9 @@ void OptParser::defineOptions()
 	availableOptions.push_back("po");
 	availableOptions.push_back("prelim");
   availableOptions.push_back("printsolx");
-  availableOptions.push_back("printsoly");
 	availableOptions.push_back("probforce");
+	availableOptions.push_back("probScanResult");
+  availableOptions.push_back("printsoly");
 	//availableOptions.push_back("probimprove");
   availableOptions.push_back("plotsoln");
 	availableOptions.push_back("ps");
@@ -440,6 +443,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::SwitchArg scanforceArg("f", "scanforce", "Use a stronger minimum finding method for the Plugin method.", false);
 	TCLAP::SwitchArg probforceArg("", "probforce", "Use a stronger minimum finding method for the Prob method.", false);
 	TCLAP::SwitchArg probimproveArg("", "probimprove", "Use IMPROVE minimum finding for the Prob method.", false);
+	TCLAP::ValueArg<string> probScanResultArg("", "probScanResult", "Result of a probScan used as input for a Datasets Plugin Scan",false, "notSet","string");
 	TCLAP::SwitchArg largestArg("", "largest", "Report largest CL interval: lowest boundary of "
 			"all intervals to highest boundary of all intervals. Useful if two intervals are very "
 			"close together.", false);
@@ -496,6 +500,11 @@ void OptParser::parseArguments(int argc, char* argv[])
 			, false, "int");
 	TCLAP::MultiArg<int> colorArg("", "color", "ID of color to be used for the combination. "
 			"Default: 0 for first scanner, 1 for second, etc.", false, "int");
+  TCLAP::MultiArg<int> clsArg("", "cls", "Types of CLs to be plotted.\n"
+      "Default will not do anything\n"
+      "1: Naive CLs (assuming CLb is obtained from the point at zero)\n"
+      "2: Freq  CLs (sampling the full distribution for CLb)\n"
+      , false, "int");
   TCLAP::MultiArg<int> fillstyleArg("", "fillstyle", "Fill style of the 1D scan to be used for the combination. Default is 1001 (solid) for all.", false, "int");
   TCLAP::MultiArg<int> pevidArg("", "pevid", "ID of combination used for the profile likelihood"
 			"that determines the parameter evolution for the Plugin toy generation. If not given, "
@@ -527,6 +536,7 @@ void OptParser::parseArguments(int argc, char* argv[])
       "26: In 2D plots, slightly smaller text size for legend.\n"
       "27: In 2D plots, do not draw any fill color (only the fill style).\n"
       "28: In 2D plots, make fill styles even more transparent.\n"
+      "29: Remove method name from legend.\n"
 			, false, "int");
   TCLAP::MultiArg<string> readfromfileArg("", "readfromfile", "Read the observables, uncertainties and correlations from a file - e.g. for reading in toys."
       "If 'default' is given, the default values are used."
@@ -647,7 +657,8 @@ void OptParser::parseArguments(int argc, char* argv[])
   if ( isIn<TString>(bookedOptions, "plotsoln" ) ) cmd.add( plotsolnArg );
 	if ( isIn<TString>(bookedOptions, "probimprove" ) ) cmd.add( probimproveArg );
 	if ( isIn<TString>(bookedOptions, "probforce" ) ) cmd.add( probforceArg );
-  if ( isIn<TString>(bookedOptions, "printsolx" ) ) cmd.add( printSolXArg );
+  if ( isIn<TString>(bookedOptions, "probScanResult" ) ) cmd.add(probScanResultArg);
+	if ( isIn<TString>(bookedOptions, "printsolx" ) ) cmd.add( printSolXArg );
   if ( isIn<TString>(bookedOptions, "printsoly" ) ) cmd.add( printSolYArg );
 	if ( isIn<TString>(bookedOptions, "printcor" ) ) cmd.add( printcorArg );
 	if ( isIn<TString>(bookedOptions, "prelim" ) ) cmd.add( plotprelimArg );
@@ -707,6 +718,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "controlplots" ) ) cmd.add(controlplotArg);
 	if ( isIn<TString>(bookedOptions, "combid" ) ) cmd.add(combidArg);
 	if ( isIn<TString>(bookedOptions, "color" ) ) cmd.add(colorArg);
+	if ( isIn<TString>(bookedOptions, "cls" ) ) cmd.add(clsArg);
   if ( isIn<TString>(bookedOptions, "batchstartn" ) ) cmd.add( batchstartnArg );
   if ( isIn<TString>(bookedOptions, "batcheos" ) ) cmd.add(batcheosArg);
 	if ( isIn<TString>(bookedOptions, "asimovfile" ) ) cmd.add( asimovFileArg );
@@ -718,6 +730,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	// copy over parsed values into data members
 	//
 	asimov            = asimovArg.getValue();
+	cls 			  = clsArg.getValue();
 	color             = colorArg.getValue();
 	controlplot       = controlplotArg.getValue();
   confirmsols       = ! noconfsolsArg.getValue();
@@ -769,6 +782,7 @@ void OptParser::parseArguments(int argc, char* argv[])
   printSolY         = printSolYArg.getValue();
 	probforce         = probforceArg.getValue();
 	probimprove       = probimproveArg.getValue();
+  probScanResult    = probScanResultArg.getValue();
 	qh                = qhArg.getValue();
   queue             = TString(queueArg.getValue());
   save              = saveArg.getValue();
@@ -1056,12 +1070,17 @@ void OptParser::parseArguments(int argc, char* argv[])
 			plotsolutions.push_back(plotsolutions[0]);
 		}
 	}
-	// If --ps is given more than once, but not for every combiner,
+	// If --ps is given more than once and not for every combiner,
 	// fill the remaining ones up with 0=don't plot solution
 	else if ( plotsolutions.size() < combid.size() ){
 		for ( int i=plotsolutions.size(); i<combid.size(); i++ ){
 			plotsolutions.push_back(0);
 		}
+	}
+	// If no combiner is given (as in the datasets case), make sure no solutions are plotted
+	// without seing the program crash
+	else if ( combid.empty() && plotsolutions.empty() ){
+		plotsolutions.push_back(0);
 	}
 
   // --plotsoln
@@ -1086,8 +1105,25 @@ void OptParser::parseArguments(int argc, char* argv[])
       if ( isAction("plugin") && !plotpluginonly ) {
         plotsoln.push_back(0);
       }
+      // if CLs asked then add another one or two for each cls
+      for (int j=0; j< cls.size(); j++) {
+        plotsoln.push_back(0);
+        if ( isAction("plugin") && !plotpluginonly ) {
+          plotsoln.push_back(0);
+        }
+      }
 		}
 	}
+	// If no combiner is given (as in the datasets case), make sure no solutions are plotted
+	// without seing the program crash
+	else if ( combid.empty() ){
+		plotsoln.push_back(0);
+    if ( isAction("plugin") && !plotpluginonly ) plotsoln.push_back(0);
+    for (int j=0; j<cls.size(); j++ ) {
+      plotsoln.push_back(0);
+      if ( isAction("plugin") && !plotpluginonly ) plotsoln.push_back(0);
+	  }
+  }
 
   // --2dcl
 	plot2dcl = plot2dclArg.getValue();

@@ -14,42 +14,23 @@
 	scanDisableDragMode = false;
 	nScansDone					= 0;
 }
+
+
+MethodProbScan::MethodProbScan(OptParser* opt)
+: MethodAbsScan(opt)
+{
+	methodName = "Prob";
+	scanDisableDragMode = false;
+	nScansDone					= 0;
+}
+
 ///
 /// Default constructor
 ///
 MethodProbScan::MethodProbScan()
 {
-	exit(1);
 	methodName = "Prob";
 	scanDisableDragMode = false;
-	nScansDone					= 0;
-}
-///
-/// 'Dummy' constructor
-/// no scan needed here, hCL histogram is provided externally
-///
-MethodProbScan::MethodProbScan(PDF_Generic_Abs* PDF, OptParser* opt, TH1F* hcl, const TString &fname)
-{
-	exit(1);
-	name                = fname;
-	methodName          = "Prob";
-	scanDisableDragMode = false;
-	hCL                 = hcl;
-	combiner            = NULL;
-	w                   = PDF->getWorkspace();
-	name                = PDF->getName();
-	title               = PDF->getTitle();
-	arg                 = opt;
-	scanVar1            = arg->var[0];
-	if ( arg->var.size()>1 ) scanVar2 = arg->var[1];
-	verbose             = arg->verbose;
-	drawSolution        = 0;
-	nPoints1d           = arg->npoints1d;
-	nPoints2dx          = arg->npoints2dx;
-	nPoints2dy          = arg->npoints2dy;
-	pdfName             = PDF->getPdfName();
-	obsName             = PDF->getObsName();
-	parsName            = PDF->getParName();
 	nScansDone					= 0;
 }
 
@@ -677,6 +658,7 @@ void MethodProbScan::saveSolutions2d()
 
 	// loop over chi2 histogram to locate local minima
 	for ( int i=2; i<hChi2min2d->GetNbinsX(); i++ )
+	{	
 		for ( int j=2; j<hChi2min2d->GetNbinsY(); j++ )
 		{
 			if ( !(hChi2min2d->GetBinContent(i-1,   j) > hChi2min2d->GetBinContent(i, j)
@@ -698,6 +680,7 @@ void MethodProbScan::saveSolutions2d()
 			if ( arg->debug ) cout << "MethodProbScan::saveSolutions2d() : saving solution of bin " << Form("(%i,%i)",i,j) << " ..." << endl;
 			solutions.push_back((RooSlimFitResult*)curveResults2d[i-1][j-1]->Clone());
 		}
+	}	
 
 	if ( solutions.size()==0 ){
 		cout << "MethodProbScan::saveSolutions2d() : WARNING : No solutions found in 2D scan!" << endl;

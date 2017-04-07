@@ -10,7 +10,9 @@ SET(COMBINER_NAME
 #  end with .cpp.
 SET(COMBINER_EXECUTABLES
 	${COMBINER_NAME}
-	# tutorial2 # <-- add other execubables here
+        cartesian
+	tutorial_dataset
+	tutorial_dataset_build_workspace
 )
 
 # Configure if this combiner has custom ROOT objects
