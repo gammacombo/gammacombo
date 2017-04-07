@@ -735,16 +735,6 @@ void GammaComboEngine::setUpPlot()
 }
 
 ///
-/// Setup for datasets
-///   This is a little hacky but when running on datasets we don't want to pass any combination id (as there isn't one) but we do
-///   still need access to our options (the default ones) which usually depend on the combination id passed so we add a fake one here
-///
-void GammaComboEngine::setUpForDatasets()
-{
-  // cout << "Set" << endl;
-}
-
-///
 /// Save the plot to disc.
 ///
 void GammaComboEngine::savePlot()
@@ -1877,7 +1867,6 @@ void GammaComboEngine::run()
   if ( arg->nosyst ) disableSystematics();
   makeAddDelCombinations();
   if ( arg->nbatchjobs>0 ) writebatchscripts();
-  setUpForDatasets();
 	customizeCombinerTitles();
 	setUpPlot();
 	scan(); // most thing gets done here
