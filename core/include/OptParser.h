@@ -40,9 +40,11 @@ class OptParser
 		vector<int>		asimov;
 		vector<TString> asimovfile;
 		bool			cacheStartingValues;
+		vector<int>		cls;
 		vector<int>		color;
 		vector<int>		combid;
 		vector<vector<int> >	combmodifications; // encodes requested modifications to the combiner ID through the -c 26:+12 syntax,format is [cmbid:[+pdf1,-pdf2,...]]
+    bool            confirmsols;
 		bool			controlplot;
 		int 			coverageCorrectionID;
 		int 			coverageCorrectionPoint;
@@ -119,6 +121,7 @@ class OptParser
 		float           pluginPlotRangeMax;
 		bool		probforce;
 		bool		probimprove;
+		TString 				probScanResult;
 		bool		printcor;
     float           printSolX;
     float           printSolY;
@@ -126,6 +129,7 @@ class OptParser
     TString         queue;
     vector<TString> readfromfile;
 		vector<TString> relation;
+		bool 						runCLs;
     TString         save;
 		vector<float>   savenuisances1d;
 		vector<float>   savenuisances2dx;

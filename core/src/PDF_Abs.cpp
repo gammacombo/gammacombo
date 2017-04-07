@@ -7,18 +7,20 @@
 
 #include "PDF_Abs.h"
 
-	PDF_Abs::PDF_Abs(int nObs)
-: covMatrix(nObs),
+	PDF_Abs::PDF_Abs(int nObs): 
+	covMatrix(nObs),
 	corMatrix(nObs),
 	corStatMatrix(nObs),
 	corSystMatrix(nObs)
 {
-	this->nObs = nObs;
-	parameters = 0;
-	theory = 0;
-	observables = 0;
-	pdf = 0;
-	toyObservables = 0;
+	this->nObs  = nObs;
+	parameters  = NULL;
+	theory      = NULL;
+	observables = NULL;
+	pdf         = NULL;
+	pdfBkg      = NULL;
+	isBkgPdfSet = false;
+	toyObservables = NULL;
 	nToyObs = 1000;
 	iToyObs = 0;
 	for ( int i=0; i<nObs; i++ ){
@@ -34,6 +36,7 @@
 	uniqueGlobalID = counter;
 	m_isCrossCorPdf = false;
 	gcId = -1;
+
 }
 
 unsigned long long PDF_Abs::counter = 0;

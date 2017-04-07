@@ -26,8 +26,7 @@ Fitter::~Fitter()
 /// second fit, which then uses the start parameters of the first.
 /// This will show up in the RooFitResult.
 ///
-void Fitter::fitTwice()
-{
+void Fitter::fitTwice(){
   // first fit
 	setParametersFloating(w, parsName, startparsFirstFit);
   RooFitResult *r1 = fitToMinBringBackAngles(w->pdf(pdfName), false, -1);
