@@ -98,6 +98,7 @@ OptParser::OptParser():
   printSolY = -999.;
   queue = "";
   save = "";
+  saveAtMin = false;
 	scanforce = false;
 	scanrangeMax = -101;
 	scanrangeMin = -101;
@@ -187,6 +188,7 @@ void OptParser::defineOptions()
   availableOptions.push_back("readfromfile");
   availableOptions.push_back("removeRange");
   availableOptions.push_back("save");
+  availableOptions.push_back("saveAtMin");
 	availableOptions.push_back("sn");
 	availableOptions.push_back("sn2d");
 	availableOptions.push_back("scanforce");
@@ -462,7 +464,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::SwitchArg noconfsolsArg("", "noconfsols", "Do not confirm solutions.", false);
 	TCLAP::SwitchArg printcorArg("", "printcor", "Print the correlation matrix of each solution found.", false);
 	TCLAP::SwitchArg smooth2dArg("", "smooth2d", "Smooth 2D p-value or cl histograms for nicer contour (particularly useful for 2D plugin)", false);
-	//TCLAP::SwitchArg clsArg("", "cls", "Use the test statistic of the CLs method for determining upper limits. For the datasets part you need to define the bkg hypothesis (named bkg_pdf) you want to test your model against.", false);
+  TCLAP::SwitchArg saveAtMinArg("","saveAtMin","Save workspace after minimization", false);
 
 	// --------------- aruments that can be given multiple times
 	vector<string> vAction;
@@ -643,6 +645,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "scanrange" ) ) cmd.add( scanrangeArg );
 	if ( isIn<TString>(bookedOptions, "scanforce" ) ) cmd.add( scanforceArg );
   if ( isIn<TString>(bookedOptions, "save" ) ) cmd.add( saveArg );
+  if ( isIn<TString>(bookedOptions, "saveAtMin" ) ) cmd.add( saveAtMinArg );
 	if ( isIn<TString>(bookedOptions, "relation" ) ) cmd.add(relationArg);
   if ( isIn<TString>(bookedOptions, "removeRange" ) ) cmd.add(removeRangeArg);
   if ( isIn<TString>(bookedOptions, "readfromfile" ) ) cmd.add(readfromfileArg);
@@ -783,6 +786,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	qh                = qhArg.getValue();
   queue             = TString(queueArg.getValue());
   save              = saveArg.getValue();
+  saveAtMin         = saveAtMinArg.getValue();
 	savenuisances1d   = snArg.getValue();
 	scanforce         = scanforceArg.getValue();
 	smooth2d          = smooth2dArg.getValue();

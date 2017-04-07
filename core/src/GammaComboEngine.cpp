@@ -1551,10 +1551,9 @@ void GammaComboEngine::scan()
 		// printout and latex
 		c->print();
 		if ( arg->debug ) c->getWorkspace()->Print("v");
-
-    if ( arg->save != "" ) saveWorkspace( c, i );
+    if ( arg->save != "" && !arg->saveAtMin ) saveWorkspace( c, i );
     if ( arg->latex ) makeLatex( c );
-    if ( arg->info || arg->latex || arg->save!="" ) continue;
+    if ( arg->info || arg->latex || (arg->save!="" && !arg->saveAtMin) ) continue;
 
 
 		/////////////////////////////////////////////////////
@@ -1734,6 +1733,7 @@ void GammaComboEngine::scan()
       }
     }
 
+    if (arg->save!="" && arg->saveAtMin) saveWorkspace( c, i );
 		/////////////////////////////////////////////////////
 
 		if ( i<arg->combid.size()-1 ) {
@@ -1878,11 +1878,10 @@ void GammaComboEngine::run()
   makeAddDelCombinations();
   if ( arg->nbatchjobs>0 ) writebatchscripts();
   setUpForDatasets();
-  customizeCombinerTitles();
-  setUpPlot();
-  // most things get done here
-  scan();
-	if ( arg->info || arg->latex || arg->save!=""  ) return; // if only info is requested then we can go home
+	customizeCombinerTitles();
+	setUpPlot();
+	scan(); // most thing gets done here
+  if ( arg->info || arg->latex || (arg->save!="" && !arg->saveAtMin) ) return; // if only info is requested then we can go home
 	if (!arg->isAction("pluginbatch") && !arg->isAction("coveragebatch") && !arg->isAction("coverage") ) savePlot();
 	cout << endl;
 	t.Stop();

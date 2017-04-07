@@ -131,6 +131,7 @@ class OptParser
 		vector<TString> relation;
 		bool 						runCLs;
     TString         save;
+    bool            saveAtMin;
 		vector<float>   savenuisances1d;
 		vector<float>   savenuisances2dx;
 		vector<float>   savenuisances2dy;
