@@ -896,7 +896,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 
             // free parameter of interest
             parameterToScan->setConstant(false);
-            setLimit(w, scanVar1, "free");
+            //setLimit(w, scanVar1, "free");
+            w->var(scanVar1)->removeRange();
 
 						// set dataset back
 						if (arg->debug) cout << "Setting toy back as data " << tempData << endl;
