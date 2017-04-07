@@ -896,6 +896,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 
             // free parameter of interest
             parameterToScan->setConstant(false);
+            setLimit(w, scanVar1, "free");
 
 						// set dataset back
 						if (arg->debug) cout << "Setting toy back as data " << tempData << endl;
@@ -991,6 +992,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                     }
                 }
             }
+            // set the limit back again
+            setLimit(w, scanVar1, "scan");
 
             toyTree.chi2minGlobalToy    = 2 * r1->minNll(); //2*r1->minNll();
             toyTree.chi2minGlobalToyPDF = 2 * pdf->getMinNllFree(); //2*r1->minNll();

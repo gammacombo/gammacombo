@@ -1034,7 +1034,10 @@ void GammaComboEngine::make1dProbPlot(MethodProbScan *scanner, int cId)
 {
 	if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
 		scanner->setDrawSolution(arg->plotsolutions[cId]);
-    if ( arg->cls.size()>0 ) scanner->plotOn(plot, 1); // for prob ClsType>1 doesn't exist
+    if ( arg->cls.size()>0 ) {
+      ((MethodDatasetsProbScan*)scanner)->plotFitRes(m_fnamebuilder->getFileNamePlot(cmb)+"_fit");
+      scanner->plotOn(plot, 1); // for prob ClsType>1 doesn't exist
+    }
 		scanner->plotOn(plot);
 		int colorId = cId;
 		if ( arg->color.size()>cId ) colorId = arg->color[cId];

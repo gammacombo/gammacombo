@@ -30,7 +30,7 @@ public:
 		virtual bool        loadScanner(TString fName);
     inline  void        setInputFile(TString name) {inputFiles.push_back(name); explicitInputFile = true;};
     inline  void        addFile(TString name) {inputFiles.push_back(name);};
-    void                plot(TString fName);
+    void                plotFitRes(TString fName);
 
     PDF_Datasets*           pdf;
     TH1F*                   probPValues;

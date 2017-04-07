@@ -53,47 +53,6 @@ MethodDatasetsProbScan::MethodDatasetsProbScan(PDF_Datasets* PDF, OptParser* opt
         cerr << "MethodDatasetsProbScan::MethodDatasetsProbScan() : ERROR : no '" + pdf->getParName() + "' set found in workspace" << endl;
         exit(EXIT_FAILURE);
     }
-    if ( !w->var(scanVar1) ) {
-        cout << "MethodDatasetsProbScan::initScan() : ERROR : No such scan parameter: " << scanVar1 << endl;
-        cout << "MethodDatasetsProbScan::initScan() :         Choose an existing one using: --var par" << endl << endl;
-        cout << "  Available parameters:" << endl << "  ---------------------" << endl << endl << "  ";
-        pdf->printParameters();
-        exit(EXIT_FAILURE);
-    }
-
-    dataFreeFitResult = (RooFitResult*) w->obj("data_fit_result");
-    chi2minGlobal = 2 * dataFreeFitResult->minNll();
-    //chi2minGlobal = 2*pdf->getMinNll();
-    std::cout << "=============== Global minimum (2*-Log(Likelihood)) is: 2*" << dataFreeFitResult->minNll() << " = " << chi2minGlobal << endl;
-
-
-    // if bkg pdf is given, compute bkg chi2
-    if(pdf->getBkgPdf())
-    {
-        w->var(scanVar1)->setVal(0.);
-        w->var(scanVar1)->setConstant(true);
-
-        // TODO: suggest we shouldn't do a fit here
-        // e.g. when we are just loading a plot this will still perform this fit which is silly
-        // it should be passed from the workspace in the same way as for the "data_fit_result"
-
-        bkgOnlyFitResult = this->loadAndFit(this->pdf); // fit on data
-        assert(bkgOnlyFitResult);
-        chi2minBkg = 2 * bkgOnlyFitResult->minNll();
-        //chi2minBkg = 2*pdf->getMinNllBkg();
-        std::cout << "=============== Bkg minimum (2*-Log(Likelihood)) is: 2*" << bkgOnlyFitResult->minNll() << " = " << chi2minBkg << endl;
-        if (chi2minBkg<chi2minGlobal)
-        {
-            std::cout << "WARNING: BKG MINIMUM IS LOWER THAN GLOBAL MINIMUM! The likelihoods are screwed up! Set bkg minimum to global minimum for consistency." << std::endl;
-            chi2minBkg = chi2minGlobal;
-            std::cout << "=============== New bkg minimum (2*-Log(Likelihood)) is: " << chi2minBkg << endl;
-        }
-        w->var(scanVar1)->setConstant(false);
-
-    }
-
-    // now we should make a plot of our dataset and the pdf
-    plot("test");
 
     // setup a dummy empty combiner to help with file naming and global option later
     combiner = new Combiner( opt, name, title);
@@ -187,6 +146,32 @@ void MethodDatasetsProbScan::initScan() {
     // turn off some messages
     RooMsgService::instance().setStreamStatus(0, kFALSE);
     RooMsgService::instance().setStreamStatus(1, kFALSE);
+
+    // Perform the fits needed for later (the global minimum and the background)
+    // free data fit
+    w->var(scanVar1)->setConstant(false);
+    dataFreeFitResult = loadAndFit(pdf); // fit on data free
+    assert(dataFreeFitResult);
+    chi2minGlobal = 2 * dataFreeFitResult->minNll();
+    std::cout << "=============== Global minimum (2*-Log(Likelihood)) is: 2*" << dataFreeFitResult->minNll() << " = " << chi2minGlobal << endl;
+    // background only
+    if ( pdf->getBkgPdf() )
+    {
+      w->var(scanVar1)->setVal(0.);
+      w->var(scanVar1)->setConstant(true);
+      bkgOnlyFitResult = loadAndFit(pdf); // fit on data w/ bkg only hypoth
+      assert(bkgOnlyFitResult);
+      chi2minBkg = 2 * bkgOnlyFitResult->minNll();
+      std::cout << "=============== Bkg minimum (2*-Log(Likelihood)) is: 2*" << bkgOnlyFitResult->minNll() << " = " << chi2minBkg << endl;
+      w->var(scanVar1)->setConstant(false);
+      if (chi2minBkg<chi2minGlobal)
+      {
+          std::cout << "WARNING: BKG MINIMUM IS LOWER THAN GLOBAL MINIMUM! The likelihoods are screwed up! Set bkg minimum to global minimum for consistency." << std::endl;
+          chi2minBkg = chi2minGlobal;
+          std::cout << "=============== New bkg minimum (2*-Log(Likelihood)) is: " << chi2minBkg << endl;
+      }
+    }
+
     if (arg->debug) {
         std::cout << "DEBUG in MethodDatasetsProbScan::initScan() - Scan initialized successfully!\n" << std::endl;
     }
@@ -757,7 +742,7 @@ bool MethodDatasetsProbScan::loadScanner(TString fName) {
 // Have a nice plotting functiong
 //
 /////////////////////////////////////////////
-void MethodDatasetsProbScan::plot(TString fName) {
+void MethodDatasetsProbScan::plotFitRes(TString fName) {
 
   for (int i=0; i<pdf->getFitObs().size(); i++) {
     TString fitVar = pdf->getFitObs()[i];
@@ -784,11 +769,7 @@ void MethodDatasetsProbScan::plot(TString fName) {
     }
     plot->Draw();
     leg->Draw("same");
-    fitCanv->Print(Form("plots/pdf/%s_%s.pdf",fName.Data(),fitVar.Data()));
-    fitCanv->Print(Form("plots/png/%s_%s.png",fName.Data(),fitVar.Data()));
-    fitCanv->Print(Form("plots/eps/%s_%s.eps",fName.Data(),fitVar.Data()));
-    fitCanv->SaveAs(Form("plots/C/%s_%s.C",fName.Data(),fitVar.Data()));
-    fitCanv->SaveAs(Form("plots/root/%s_%s.root",fName.Data(),fitVar.Data()));
+    savePlot(fitCanv, fName);
   }
 
 }
