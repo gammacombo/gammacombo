@@ -12,11 +12,6 @@
 #include <ios>
 #include <iomanip>
 
-
-
-
-
-
 MethodDatasetsProbScan::MethodDatasetsProbScan(PDF_Datasets* PDF, OptParser* opt)
     : MethodProbScan(opt),
       pdf                 (PDF),
@@ -24,6 +19,7 @@ MethodDatasetsProbScan::MethodDatasetsProbScan(PDF_Datasets* PDF, OptParser* opt
       drawPlots           (false),
       explicitInputFile   (false),
       dataFreeFitResult   (NULL),
+      bkgOnlyFitResult    (NULL),
       probScanTree        (NULL)
 {
     chi2minGlobalFound = true; // the free fit to data must be done and must be saved to the workspace before gammacombo is even called
@@ -39,6 +35,8 @@ MethodDatasetsProbScan::MethodDatasetsProbScan(PDF_Datasets* PDF, OptParser* opt
     w = PDF->getWorkspace();
     title = PDF->getTitle();
     name =  PDF->getName();
+		pdfName = name;
+		parsName = "parameters";
 
     inputFiles.clear();
 
@@ -46,10 +44,6 @@ MethodDatasetsProbScan::MethodDatasetsProbScan(PDF_Datasets* PDF, OptParser* opt
         cerr << "ERROR: The workspace must contain the fit result of the fit to data. The name of the fit result must be 'data_fit_result'. " << endl;
         exit(EXIT_FAILURE);
     }
-    dataFreeFitResult = (RooFitResult*) w->obj("data_fit_result");
-    chi2minGlobal = 2 * dataFreeFitResult->minNll();
-    std::cout << "=============== Global Minimum (2*-Log(Likelihood)) is: 2*" << dataFreeFitResult->minNll() << " = " << chi2minGlobal << endl;
-
     if ( !w->set(pdf->getObsName()) ) {
         cerr << "MethodDatasetsProbScan::MethodDatasetsProbScan() : ERROR : no '" + pdf->getObsName() + "' set found in workspace" << endl;
         cerr << " You can specify the name of the set in the workspace using the pdf->initObservables(..) method.";
@@ -59,6 +53,9 @@ MethodDatasetsProbScan::MethodDatasetsProbScan(PDF_Datasets* PDF, OptParser* opt
         cerr << "MethodDatasetsProbScan::MethodDatasetsProbScan() : ERROR : no '" + pdf->getParName() + "' set found in workspace" << endl;
         exit(EXIT_FAILURE);
     }
+
+    // setup a dummy empty combiner to help with file naming and global option later
+    combiner = new Combiner( opt, name, title);
 }
 
 void MethodDatasetsProbScan::initScan() {
@@ -74,8 +71,10 @@ void MethodDatasetsProbScan::initScan() {
         pdf->printParameters();
         exit(EXIT_FAILURE);
     }
-    if ( arg->scanrangeMin != arg->scanrangeMax ) par1->setRange("scan", arg->scanrangeMin, arg->scanrangeMax);
-    Utils::setLimit(w, scanVar1, "scan");
+    if ( !m_xrangeset && arg->scanrangeMin != arg->scanrangeMax ) {
+			setXscanRange(arg->scanrangeMin,arg->scanrangeMax);
+		}
+    setLimit(w, scanVar1, "scan");
 
     if (hCL) delete hCL;
     // Titus: small change for consistency
@@ -86,17 +85,13 @@ void MethodDatasetsProbScan::initScan() {
     if ( hChi2min ) delete hChi2min;
     hChi2min = new TH1F("hChi2min" + getUniqueRootName(), "hChi2min" + pdf->getPdfName(), nPoints1d, min1, max1);
 
+    if (hCLs) delete hCLs;
+    hCLs = new TH1F("hCLs" + getUniqueRootName(), "hCLs" + pdf->getPdfName(), nPoints1d, min1, max1);
+
+
     // fill the chi2 histogram with very unlikely values such
     // that inside scan1d() the if clauses work correctly
     for ( int i = 1; i <= nPoints1d; i++ ) hChi2min->SetBinContent(i, 1e6);
-
-    ////////////////////////////////////////////////////////    
-    // Titus: 2D scan does work, so I have this commented out
-    // if ( scanVar2 != "" ) {
-    //     cout << "MethodDatasetsProbScan::initScan(): EROR: Scanning in more than one dimension is not supported." << std::endl;
-    //     exit(EXIT_FAILURE);
-    // }
-    ////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////////////////////
     // Titus: setup everything for 2D scan
@@ -119,6 +114,7 @@ void MethodDatasetsProbScan::initScan() {
         float min2 = par2->getMin();
         float max2 = par2->getMax();
         hCL2d      = new TH2F("hCL2d"+getUniqueRootName(),      "hCL2d"+pdfName, nPoints2dx, min1, max1, nPoints2dy, min2, max2);
+        hCLs2d      = new TH2F("hCL2d"+getUniqueRootName(),      "hCL2d"+pdfName, nPoints2dx, min1, max1, nPoints2dy, min2, max2);
         hChi2min2d = new TH2F("hChi2min2d"+getUniqueRootName(), "hChi2min",      nPoints2dx, min1, max1, nPoints2dy, min2, max2);
 
         for ( int i=1; i<=nPoints2dx; i++ )
@@ -150,6 +146,32 @@ void MethodDatasetsProbScan::initScan() {
     // turn off some messages
     RooMsgService::instance().setStreamStatus(0, kFALSE);
     RooMsgService::instance().setStreamStatus(1, kFALSE);
+
+    // Perform the fits needed for later (the global minimum and the background)
+    // free data fit
+    w->var(scanVar1)->setConstant(false);
+    dataFreeFitResult = loadAndFit(pdf); // fit on data free
+    assert(dataFreeFitResult);
+    chi2minGlobal = 2 * dataFreeFitResult->minNll();
+    std::cout << "=============== Global minimum (2*-Log(Likelihood)) is: 2*" << dataFreeFitResult->minNll() << " = " << chi2minGlobal << endl;
+    // background only
+    if ( pdf->getBkgPdf() )
+    {
+      w->var(scanVar1)->setVal(0.);
+      w->var(scanVar1)->setConstant(true);
+      bkgOnlyFitResult = loadAndFit(pdf); // fit on data w/ bkg only hypoth
+      assert(bkgOnlyFitResult);
+      chi2minBkg = 2 * bkgOnlyFitResult->minNll();
+      std::cout << "=============== Bkg minimum (2*-Log(Likelihood)) is: 2*" << bkgOnlyFitResult->minNll() << " = " << chi2minBkg << endl;
+      w->var(scanVar1)->setConstant(false);
+      if (chi2minBkg<chi2minGlobal)
+      {
+          std::cout << "WARNING: BKG MINIMUM IS LOWER THAN GLOBAL MINIMUM! The likelihoods are screwed up! Set bkg minimum to global minimum for consistency." << std::endl;
+          chi2minBkg = chi2minGlobal;
+          std::cout << "=============== New bkg minimum (2*-Log(Likelihood)) is: " << chi2minBkg << endl;
+      }
+    }
+
     if (arg->debug) {
         std::cout << "DEBUG in MethodDatasetsProbScan::initScan() - Scan initialized successfully!\n" << std::endl;
     }
@@ -170,7 +192,6 @@ void MethodDatasetsProbScan::loadScanFromFile(TString fileNameBaseIn) {
 
 
 void MethodDatasetsProbScan::sethCLFromProbScanTree() {
-    std::cout << probScanTree->t << std::endl;
     this->probScanTree->open();
     float halfBinWidth = (this->probScanTree->getScanpointMax() - this->probScanTree->getScanpointMin()) / ((float)this->probScanTree->getScanpointN()) / 2; //-1.)/2;
     /// \todo replace this such that there's always one bin per scan point, but still the range is the scan range.
@@ -181,14 +202,41 @@ void MethodDatasetsProbScan::sethCLFromProbScanTree() {
     delete hCL;
     this->hCL = new TH1F("hCL", "hCL", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth);
     if (arg->debug) printf("DEBUG %i %f %f %f\n", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth, halfBinWidth);
+    delete hCLs;
+    this->hCLs = new TH1F("hCLs", "hCLs", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth);
+    if (arg->debug) printf("DEBUG %i %f %f %f\n", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth, halfBinWidth);
     Long64_t nentries     = this->probScanTree->GetEntries();
-    // this->probScanTree->activateCoreBranchesOnly(); //< speeds up the event loop
+    // this->probScanTree->a - DATASETSctivateCoreBranchesOnly(); //< speeds up the event loop
     for (Long64_t i = 0; i < nentries; i++)
     {
         // load entry
         this->probScanTree->GetEntry(i);
-        this->hCL->SetBinContent(this->hCL->FindBin(this->probScanTree->scanpoint), this->probScanTree->genericProbPValue);
+
+        double deltaChi2 = probScanTree->chi2min - probScanTree->chi2minGlobal;
+				double oneMinusCL = TMath::Prob( deltaChi2, 1);
+				// save the value and corresponding fit result
+				// but only if an improvement
+				if ( hCL->GetBinContent(hCL->FindBin( probScanTree->scanpoint ) ) <= oneMinusCL ) {
+					hCL->SetBinContent( hCL->FindBin( probScanTree->scanpoint ) , oneMinusCL );
+					hChi2min->SetBinContent( hCL->FindBin( probScanTree->scanpoint ), probScanTree->chi2min );
+				}
+        // and whilst we here do the same relative to the background only hypothesis (i.e. for CLs method)
+        double deltaChi2Bkg  = probScanTree->chi2min - probScanTree->chi2minBkg;
+        //double oneMinusCLBkg = TMath::Prob( deltaChi2Bkg, 1);
+        double oneMinusCLBkg = getPValueTTestStatistic( deltaChi2Bkg, true );
+        if ( hCLs->GetBinCenter( hCLs->FindBin( probScanTree->scanpoint ) ) <= oneMinusCLBkg ) {
+          hCLs->SetBinContent( hCLs->FindBin( probScanTree->scanpoint ), oneMinusCLBkg );
+        }
     }
+		// put in best fit value
+		hCL->SetBinContent(hCL->FindBin( probScanTree->scanbest ),1.);
+		hChi2min->SetBinContent(hCL->FindBin( probScanTree->scanbest),chi2minGlobal);
+    hCLs->SetBinContent(hCLs->FindBin( probScanTree->scanbest ), 1.);
+
+		cout << "Best fit at: scanVar  = " << probScanTree->scanbest << " with Chi2Min: " << chi2minGlobal << endl;
+
+		sortSolutions();
+		//saveSolutions();
     // this->probScanTree->activateAllBranches(); //< Very important!
 
 }
@@ -250,8 +298,6 @@ void MethodDatasetsProbScan::print() {
     cout << "---------------------------------" << endl;
 }
 
-
-
 ///
 /// Perform the 1d Prob scan.
 /// Saves chi2 values and the prob-Scan p-values in a root tree
@@ -259,8 +305,12 @@ void MethodDatasetsProbScan::print() {
 /// MethodDatasetsProbScan
 /// \param nRun Part of the root tree file name to facilitate parallel production.
 ///
-int MethodDatasetsProbScan::scan1d()
+int MethodDatasetsProbScan::scan1d(bool fast, bool reverse)
 {
+	if (fast) return 0; // tmp
+
+	if ( arg->debug ) cout << "MethodDatasetsProbScan::scan1d() : starting ... " << endl;
+
     // Set limit to all parameters.
     this->loadParameterLimits(); /// Default is "free", if not changed by cmd-line parameter
 
@@ -270,7 +320,13 @@ int MethodDatasetsProbScan::scan1d()
     float parameterToScan_min = hCL->GetXaxis()->GetXmin();
     float parameterToScan_max = hCL->GetXaxis()->GetXmax();
 
-    double freeDataFitValue = w->var(scanVar1)->getVal();
+		// do a free fit
+		RooFitResult *result = this->loadAndFit(this->pdf); // fit on data
+		assert(result);
+    RooSlimFitResult *slimresult = new RooSlimFitResult(result,true);
+		slimresult->setConfirmed(true);
+		solutions.push_back(slimresult);
+		double freeDataFitValue = w->var(scanVar1)->getVal();
 
     // Define outputfile
     system("mkdir -p root");
@@ -288,7 +344,6 @@ int MethodDatasetsProbScan::scan1d()
     RooDataSet* parsFunctionCall = new RooDataSet("parsFunctionCall", "parsFunctionCall", *w->set(pdf->getParName()));
     parsFunctionCall->add(*w->set(pdf->getParName()));
 
-
     // start scan
     cout << "MethodDatasetsProbScan::scan1d_prob() : starting ... with " << nPoints1d << " scanpoints..." << endl;
     ProgressBar progressBar(arg, nPoints1d);
@@ -300,6 +355,7 @@ int MethodDatasetsProbScan::scan1d()
         // don't add half the bin size. try to solve this within plotting method
 
         float scanpoint = parameterToScan_min + (parameterToScan_max - parameterToScan_min) * (double)i / ((double)nPoints1d - 1);
+				if (arg->debug) cout << "DEBUG in MethodDatasetsProbScan::scan1d_prob() " << scanpoint << " " << parameterToScan_min << " " << parameterToScan_max << endl;
 
         this->probScanTree->scanpoint = scanpoint;
 
@@ -327,12 +383,13 @@ int MethodDatasetsProbScan::scan1d()
         assert(result);
 
         if (arg->debug) {
-            cout << "DEBUG in MethodDatasetsProbScan::scan1d_prob() - minNll data scan at scan point " << scanpoint << " : " << 2 * result->minNll() << endl;
+            cout << "DEBUG in MethodDatasetsProbScan::scan1d_prob() - minNll data scan at scan point " << scanpoint << " : " << 2 * result->minNll() << ": "<< 2 * pdf->getMinNll() << endl;
         }
         this->probScanTree->statusScanData = result->status();
 
         // set chi2 of fixed fit: scan fit on data
         this->probScanTree->chi2min           = 2 * result->minNll();
+        //this->probScanTree->chi2min           = 2 * pdf->getMinNll();
         this->probScanTree->covQualScanData   = result->covQual();
         this->probScanTree->scanbest  = freeDataFitValue;
 
@@ -345,18 +402,23 @@ int MethodDatasetsProbScan::scan1d()
 
         // also save the chi2 of the free data fit to the tree:
         this->probScanTree->chi2minGlobal = this->getChi2minGlobal();
+        this->probScanTree->chi2minBkg = this->getChi2minBkg();
 
         this->probScanTree->genericProbPValue = this->getPValueTTestStatistic(this->probScanTree->chi2min - this->probScanTree->chi2minGlobal);
         this->probScanTree->fill();
 
+        if(arg->debug && pdf->getBkgPdf())
+        {
+            float pval_cls = this->getPValueTTestStatistic(this->probScanTree->chi2min - this->probScanTree->chi2minBkg, true);
+            cout << "DEBUG in MethodDatasetsProbScan::scan1d() - p value CLs: " << pval_cls << endl;
+        }
+
+
         // reset
         setParameters(w, pdf->getParName(), parsFunctionCall->get(0));
         //setParameters(w, pdf->getObsName(), obsDataset->get(0));
-        this->probScanTree->writeToFile();
     } // End of npoints loop
-
-
-    outputFile->Write();
+    probScanTree->writeToFile();
     outputFile->Close();
     std::cout << "Wrote ToyTree to file" << std::endl;
     delete parsFunctionCall;
@@ -365,9 +427,11 @@ int MethodDatasetsProbScan::scan1d()
     // this->sethCLFromProbScanTree(); here, but the latter gives a segfault somehow....
     // \todo: use this->sethCLFromProbScanTree() directly after figuring out the cause of the segfault.
     this->loadScanFromFile();
+
+    return 0;
 }
 
-// sanity Checks for 2D scan \TODO: Idea: enlargen this function to be used for all scans 
+// sanity Checks for 2D scan \TODO: Idea: enlargen this function to be used for all scans
 void MethodDatasetsProbScan::sanityChecks()
 {
     // if ( !w->set(parsName) ){
@@ -454,10 +518,10 @@ int MethodDatasetsProbScan::scan2d()
     gStyle->SetOptTitle(1);
     TCanvas *cDbg = newNoWarnTCanvas(getUniqueRootName(), Form("DeltaChi2 for 2D scan %i",nScansDone));
     cDbg->SetMargin(0.1,0.15,0.1,0.1);
-    float hChi2min2dMin = hChi2min2d->GetMinimum();    
+    float hChi2min2dMin = hChi2min2d->GetMinimum();
     bool firstScanDone = hChi2min2dMin<1e5;
     TH2F *hDbgChi2min2d = histHardCopy(hChi2min2d, firstScanDone);
-    hDbgChi2min2d->SetTitle(Form("#Delta#chi^{2} for scan %i, %s",nScansDone,title.Data())); 
+    hDbgChi2min2d->SetTitle(Form("#Delta#chi^{2} for scan %i, %s",nScansDone,title.Data()));
     if ( firstScanDone ) hDbgChi2min2d->GetZaxis()->SetRangeUser(hChi2min2dMin,hChi2min2dMin+25);
     hDbgChi2min2d->GetXaxis()->SetTitle(par1->GetTitle());
     hDbgChi2min2d->GetYaxis()->SetTitle(par2->GetTitle());
@@ -539,7 +603,7 @@ int MethodDatasetsProbScan::scan2d()
                 // fit!
                 tFit.Start(false);
                 RooFitResult *fr;
-                // if ( !arg->probforce ) fr = fitToMinBringBackAngles(w->pdf(pdfName), false, -1); 
+                // if ( !arg->probforce ) fr = fitToMinBringBackAngles(w->pdf(pdfName), false, -1);
                 // else                   fr = fitToMinForce(w, combiner->getPdfName());
 
                 fr = this->loadAndFit(this->pdf);   //Titus: change fitting strategy to the one from the datasets \todo: should be possible to use the fittominforce etc methods
@@ -568,6 +632,7 @@ int MethodDatasetsProbScan::scan2d()
                     for ( int k=1; k<=hCL2d->GetNbinsX(); k++ )
                         for ( int l=1; l<=hCL2d->GetNbinsY(); l++ ){
                             hCL2d->SetBinContent(k, l, TMath::Prob(hChi2min2d->GetBinContent(k,l)-chi2minGlobal, ndof));
+                            hCLs2d->SetBinContent(k, l, TMath::Prob(hChi2min2d->GetBinContent(k,l)-chi2minBkg, ndof));
                         }
                 }
 
@@ -578,13 +643,14 @@ int MethodDatasetsProbScan::scan2d()
                 //     cout << "chi2minGlobal: " << chi2minGlobal << endl;
                 //     cout << "deltaChi2: " << deltaChi2 << endl;
                 //     cout << "ndof: " << ndof << endl;
-                //     cout << "oneMinusCL: " << oneMinusCL << endl << endl;   
+                //     cout << "oneMinusCL: " << oneMinusCL << endl << endl;
                 // }
 
 
                 // Save the 1-CL value. But only if better than before!
                 if ( hCL2d->GetBinContent(i, j) < oneMinusCL ){
                     hCL2d->SetBinContent(i, j, oneMinusCL);
+                    hCLs2d->SetBinContent(i, j, TMath::Prob(chi2minScan - chi2minBkg, ndof));
                     hChi2min2d->SetBinContent(i, j, chi2minScan);
                     hDbgChi2min2d->SetBinContent(i, j, chi2minScan);
                     curveResults2d[i-1][j-1] = r;
@@ -640,18 +706,70 @@ int MethodDatasetsProbScan::scan2d()
 }
 
 
-double MethodDatasetsProbScan::getPValueTTestStatistic(double test_statistic_value) {
+double MethodDatasetsProbScan::getPValueTTestStatistic(double test_statistic_value, bool isCLs) {
     if ( test_statistic_value > 0) {
         // this is the normal case
         return TMath::Prob(test_statistic_value, 1);
-    } else {
+    } else if(!isCLs){
+        if (arg->verbose) {
         cout << "MethodDatasetsProbScan::scan1d_prob() : WARNING : Test statistic is negative, forcing it to zero" << std::endl
              << "Fit at current scan point has higher likelihood than free fit." << std::endl
              << "This should not happen except for very small underflows when the scan point is at the best fit value. " << std::endl
              << "Value of test statistic is " << test_statistic_value << std::endl
              << "An equal upwards fluctuaion corresponds to a p value of " << TMath::Prob(abs(test_statistic_value), 1) << std::endl;
+        }
         // TMath::Prob will return 0 if the Argument is slightly below zero. As we are working with a float-zero we can not rely on it here:
         // TMath::Prob( 0 ) returns 1
         return 1.;
     }
+    else {
+        if (arg->verbose) cout << "MethodDatasetsProbScan::scan1d_prob() : WARNING : CLs test statistic is negative, forcing it to zero" << std::endl;
+        return 1.;
+    }
+}
+//////////////////////////////////////////////
+// Have to overload the loadScanner function
+// as we need to pick up the tree as well
+// when loading
+//////////////////////////////////////////////
+bool MethodDatasetsProbScan::loadScanner(TString fName) {
+	MethodAbsScan::loadScanner(fName);
+	this->loadScanFromFile();
+	return true;
+}
+
+/////////////////////////////////////////////
+// Have a nice plotting functiong
+//
+/////////////////////////////////////////////
+void MethodDatasetsProbScan::plotFitRes(TString fName) {
+
+  for (int i=0; i<pdf->getFitObs().size(); i++) {
+    TString fitVar = pdf->getFitObs()[i];
+    TCanvas *fitCanv = newNoWarnTCanvas( getUniqueRootName(), Form("S+B and B only fits to the dataset for %s",fitVar.Data()) );
+    TLegend *leg = new TLegend(0.6,0.7,0.92,0.92);
+    leg->SetFillColor(0);
+    leg->SetLineColor(0);
+    RooPlot *plot = w->var(fitVar)->frame();
+    // data invisible for norm
+    w->data(pdf->getDataName())->plotOn( plot, Invisible() );
+    // bkg pdf
+    setParameters(w, bkgOnlyFitResult);
+    w->pdf(pdf->getBkgPdfName())->plotOn( plot, LineColor(kRed) );
+    leg->AddEntry( plot->getObject(plot->numItems()-1), "Background Only Fit", "L");
+    // free fit
+    setParameters(w, dataFreeFitResult);
+    w->pdf(pdf->getPdfName())->plotOn(plot);
+    leg->AddEntry( plot->getObject(plot->numItems()-1), "Free Fit", "L");
+    // data unblinded if needed
+    map<TString,TString> unblindRegs = pdf->getUnblindRegions();
+    if ( unblindRegs.find( fitVar ) != unblindRegs.end() ) {
+      w->data(pdf->getDataName())->plotOn( plot, CutRange(pdf->getUnblindRegions()[fitVar]) );
+      leg->AddEntry( plot->getObject(plot->numItems()-1), "Data", "LEP");
+    }
+    plot->Draw();
+    leg->Draw("same");
+    savePlot(fitCanv, fName);
+  }
+
 }

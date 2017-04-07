@@ -47,6 +47,7 @@ class FileNameBuilder
 		TString getPluginNameAddition();
 		TString getPluginOnlyNameAddition();
 		TString getPreliminaryNameAddition();
+    TString getCLsNameAddition();
 
 	private:
 

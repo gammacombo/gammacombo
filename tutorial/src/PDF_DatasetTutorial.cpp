@@ -1,3 +1,5 @@
+#include <random>
+
 #include "PDF_DatasetTutorial.h"
 #include "RooExponential.h"
 
@@ -22,13 +24,13 @@ RooFitResult* PDF_DatasetTutorial::fit(RooDataSet* dataToFit){
 		std::cout<< "Other names can be passed via PDF_Datasets::initConstraints"<<std::endl;
 		  exit(EXIT_FAILURE);
 	  }
-  
+
   // Turn off RooMsg
   RooMsgService::instance().setGlobalKillBelow(ERROR);
   RooMsgService::instance().setSilentMode(kTRUE);
-  
-  
-  RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() 
+
+
+  RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save()
                                       ,RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName))
                                       ,RooFit::Minos(kFALSE)
                                       ,RooFit::Hesse(kFALSE)
@@ -59,6 +61,6 @@ void   PDF_DatasetTutorial::generateToys(int SeedShift) {
   RooDataSet* toys = this->getWorkspace()->pdf("g")->generate(*observables, sig_number);
   toys->append(*(this->getWorkspace()->pdf("background_model")->generate(*observables,bkg_number)));
 
-  this->toyObservables  = toys; 
+  this->toyObservables  = toys;
   this->isToyDataSet    = kTRUE;
 }

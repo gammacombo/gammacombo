@@ -899,6 +899,22 @@ TTree* Utils::convertRooDatasetToTTree(RooDataSet *d)
 	return t;
 }
 
+/// Converts a TH1* to a TGraph*
+/// doesn't take responsibilty for ownership
+TGraph* Utils::convertTH1ToTGraph(TH1* h, bool withErrors)
+{
+  TGraph *g;
+  if (withErrors) g = new TGraphErrors( h->GetNbinsX() );
+  else            g = new TGraph( h->GetNbinsX() );
+  g->SetName(getUniqueRootName());
+  for ( int i=0; i<h->GetNbinsX(); i++ ) {
+    g->SetPoint(i, h->GetBinCenter(i+1), h->GetBinContent(i+1) );
+    if (withErrors) ((TGraphErrors*)g)->SetPointError(i, 0.0, h->GetBinError(i+1) );
+  }
+  return g;
+}
+
+
 ///
 /// Creates a fresh, independent copy of the input histogram.
 /// We cannot use Root's Clone() or the like, because that
@@ -1211,4 +1227,23 @@ void Utils::assertFileExists( TString strFilename ){
         cout << "ERROR : File not found: " + strFilename << endl;
         exit(EXIT_FAILURE);
     }
+}
+
+std::vector<double> Utils::computeNormalQuantiles( std::vector<double> &values, int nsigma ) {
+
+  //std::sort( values.begin(), values.end() );
+  std::vector<double> probs; // = { TMath::Prob(4,1), TMath::Prob(1,1), 0.5, 1.-TMath::Prob(1,1), 1.-TMath::Prob(4,1) };
+  for ( int i=nsigma; i>0; i-- ) probs.push_back( TMath::Prob( sq(i),1 ) );
+  probs.push_back(0.5);
+  for ( int i=0; i<nsigma; i++ ) probs.push_back( 1.-TMath::Prob( sq(i+1), 1) );
+
+  double quants[ nsigma*2 + 1 ];
+
+  TMath::Quantiles( values.size(), probs.size(), &values[0], quants, &probs[0], false );
+
+  std::vector<double> quantiles;
+  for ( int i=0; i < (nsigma*2 +1 ); i++ ) {
+    quantiles.push_back( quants[i] );
+  }
+  return quantiles;
 }

@@ -955,7 +955,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
 /// \param runMin Number of first root file to read.
 /// \param runMax Number of lase root file to read.
 ///
-void MethodPluginScan::readScan1dTrees(int runMin, int runMax)
+void MethodPluginScan::readScan1dTrees(int runMin, int runMax, TString fName)
 {
 
 	TChain *c = new TChain("plugin");

@@ -47,7 +47,7 @@ int main()
   RooGaussian norm_constant_constraint("norm_constant_constraint","norm_constant_constraint", norm_constant_obs, norm_constant, norm_constant_sigma);
 
   // Now we can build the mass model by adding the signal and background probability density functions
-  RooRealVar branchingRatio("branchingRatio", "branchingRatio", 1e-6, 0,  1e-4);  // this is the branching ratio, the parameter of interest
+  RooRealVar branchingRatio("branchingRatio", "branchingRatio", 1e-7, 0,  0.0001);  // this is the branching ratio, the parameter of interest
   RooFormulaVar n_sig("Nsig", "branchingRatio/norm_constant", RooArgList(branchingRatio, norm_constant));
   RooRealVar n_bkg("Nbkg","Nbkg", 4900, 0, 10000);
   RooAddPdf mass_model("mass_model","mass_model", RooArgList(signal_model, background_model), RooArgList(n_sig, n_bkg));
@@ -122,6 +122,7 @@ int main()
 
   RooWorkspace workspace("dataset_workspace");
   workspace.import(mass_model);
+  workspace.import(background_model);
   workspace.import(data);
   workspace.import(rooFitResult, "data_fit_result"); // this MUST be called data_fit_result
   workspace.defineSet("constraint_set", constraint_set, true);

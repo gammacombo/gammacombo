@@ -25,10 +25,12 @@ public:
     void                loadScanFromFile(TString fileNameBaseIn = "default");
     void                loadParameterLimits();
     virtual void        print();
-    virtual int         scan1d();
+    virtual int         scan1d(bool fast=false, bool reverse=false);
     virtual int         scan2d();
+		virtual bool        loadScanner(TString fName);
     inline  void        setInputFile(TString name) {inputFiles.push_back(name); explicitInputFile = true;};
     inline  void        addFile(TString name) {inputFiles.push_back(name);};
+    void                plotFitRes(TString fName);
 
     PDF_Datasets*           pdf;
     TH1F*                   probPValues;
@@ -38,6 +40,7 @@ public:
     std::vector<double>     bootstrapPVals;
     TChain*                 chain;
     RooFitResult*           dataFreeFitResult;
+    RooFitResult*           bkgOnlyFitResult;
     ToyTree*                probScanTree;
 
 protected:
@@ -46,7 +49,7 @@ private:
     TChain*             readFiles(TString fileNameBaseIn = "default");
     void                readScan1dTrees(TString fileNameBaseIn = "default");
     RooFitResult*       loadAndFit(PDF_Datasets* pdf);
-    double              getPValueTTestStatistic(double test_statistic_value);
+    double              getPValueTTestStatistic(double test_statistic_value, bool isCLs=false);
     void                sanityChecks();
     void                setAndPrintFitStatusConstrainedToys(const ToyTree& toyTree);
     void                setAndPrintFitStatusFreeToys(const ToyTree& toyTree);

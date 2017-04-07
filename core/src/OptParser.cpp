@@ -56,6 +56,7 @@ OptParser::OptParser():
 	ndiv = 407;
 	ndivy = 407;
 	nosyst = false;
+	confirmsols = true;
 	npoints1d = -99;
 	npoints2dx = -99;
 	npoints2dy = -99;
@@ -119,6 +120,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("asimovfile");
   availableOptions.push_back("batchstartn");
   availableOptions.push_back("batcheos");
+	availableOptions.push_back("cls");
 	availableOptions.push_back("combid");
 	availableOptions.push_back("color");
 	availableOptions.push_back("controlplots");
@@ -152,6 +154,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("magnetic");
   availableOptions.push_back("nbatchjobs");
   //availableOptions.push_back("nBBpoints");
+	availableOptions.push_back("noconfsols");
 	availableOptions.push_back("nosyst");
 	availableOptions.push_back("npoints");
 	availableOptions.push_back("npoints2dx");
@@ -171,7 +174,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("po");
 	availableOptions.push_back("prelim");
   availableOptions.push_back("printsolx");
-	availableOptions.push_back("probforce");  
+	availableOptions.push_back("probforce");
 	availableOptions.push_back("probScanResult");
   availableOptions.push_back("printsoly");
 	//availableOptions.push_back("probimprove");
@@ -456,8 +459,10 @@ void OptParser::parseArguments(int argc, char* argv[])
   TCLAP::SwitchArg infoArg("", "info", "Print information about the passed combiners and exit", false);
 	TCLAP::SwitchArg importanceArg("", "importance", "Enable importance sampling for plugin toys.", false);
 	TCLAP::SwitchArg nosystArg("", "nosyst", "Sets all systematic errors to zero.", false);
+	TCLAP::SwitchArg noconfsolsArg("", "noconfsols", "Do not confirm solutions.", false);
 	TCLAP::SwitchArg printcorArg("", "printcor", "Print the correlation matrix of each solution found.", false);
 	TCLAP::SwitchArg smooth2dArg("", "smooth2d", "Smooth 2D p-value or cl histograms for nicer contour (particularly useful for 2D plugin)", false);
+	//TCLAP::SwitchArg clsArg("", "cls", "Use the test statistic of the CLs method for determining upper limits. For the datasets part you need to define the bkg hypothesis (named bkg_pdf) you want to test your model against.", false);
 
 	// --------------- aruments that can be given multiple times
 	vector<string> vAction;
@@ -493,6 +498,11 @@ void OptParser::parseArguments(int argc, char* argv[])
 			, false, "int");
 	TCLAP::MultiArg<int> colorArg("", "color", "ID of color to be used for the combination. "
 			"Default: 0 for first scanner, 1 for second, etc.", false, "int");
+  TCLAP::MultiArg<int> clsArg("", "cls", "Types of CLs to be plotted.\n"
+      "Default will not do anything\n"
+      "1: Naive CLs (assuming CLb is obtained from the point at zero)\n"
+      "2: Freq  CLs (sampling the full distribution for CLb)\n"
+      , false, "int");
   TCLAP::MultiArg<int> fillstyleArg("", "fillstyle", "Fill style of the 1D scan to be used for the combination. Default is 1001 (solid) for all.", false, "int");
   TCLAP::MultiArg<int> pevidArg("", "pevid", "ID of combination used for the profile likelihood"
 			"that determines the parameter evolution for the Plugin toy generation. If not given, "
@@ -524,6 +534,7 @@ void OptParser::parseArguments(int argc, char* argv[])
       "26: In 2D plots, slightly smaller text size for legend.\n"
       "27: In 2D plots, do not draw any fill color (only the fill style).\n"
       "28: In 2D plots, make fill styles even more transparent.\n"
+      "29: Remove method name from legend.\n"
 			, false, "int");
   TCLAP::MultiArg<string> readfromfileArg("", "readfromfile", "Read the observables, uncertainties and correlations from a file - e.g. for reading in toys."
       "If 'default' is given, the default values are used."
@@ -668,6 +679,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "npoints2dx" ) ) cmd.add(npoints2dxArg);
 	if ( isIn<TString>(bookedOptions, "npoints" ) ) cmd.add(npointsArg);
 	if ( isIn<TString>(bookedOptions, "nosyst" ) ) cmd.add( nosystArg );
+	if ( isIn<TString>(bookedOptions, "noconfsols" ) ) cmd.add( noconfsolsArg );
 	if ( isIn<TString>(bookedOptions, "ndivy" ) ) cmd.add(ndivyArg);
 	if ( isIn<TString>(bookedOptions, "ndiv" ) ) cmd.add(ndivArg);
 	if ( isIn<TString>(bookedOptions, "nBBpoints" ) ) cmd.add(nBBpointsArg);
@@ -703,6 +715,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "controlplots" ) ) cmd.add(controlplotArg);
 	if ( isIn<TString>(bookedOptions, "combid" ) ) cmd.add(combidArg);
 	if ( isIn<TString>(bookedOptions, "color" ) ) cmd.add(colorArg);
+	if ( isIn<TString>(bookedOptions, "cls" ) ) cmd.add(clsArg);
   if ( isIn<TString>(bookedOptions, "batchstartn" ) ) cmd.add( batchstartnArg );
   if ( isIn<TString>(bookedOptions, "batcheos" ) ) cmd.add(batcheosArg);
 	if ( isIn<TString>(bookedOptions, "asimovfile" ) ) cmd.add( asimovFileArg );
@@ -714,8 +727,10 @@ void OptParser::parseArguments(int argc, char* argv[])
 	// copy over parsed values into data members
 	//
 	asimov            = asimovArg.getValue();
+	cls 			  = clsArg.getValue();
 	color             = colorArg.getValue();
 	controlplot       = controlplotArg.getValue();
+  confirmsols       = ! noconfsolsArg.getValue();
 	digits            = digitsArg.getValue();
 	enforcePhysRange  = prArg.getValue();
 	filenameaddition  = filenameadditionArg.getValue();
@@ -1051,16 +1066,16 @@ void OptParser::parseArguments(int argc, char* argv[])
 			plotsolutions.push_back(plotsolutions[0]);
 		}
 	}
-	// If --ps is given more than once, but not for every combiner,
+	// If --ps is given more than once and not for every combiner,
 	// fill the remaining ones up with 0=don't plot solution
 	else if ( plotsolutions.size() < combid.size() ){
 		for ( int i=plotsolutions.size(); i<combid.size(); i++ ){
 			plotsolutions.push_back(0);
 		}
 	}
-	// Titus: If no combiner is given (as in the datasets case), make sure no solutions are plotted 
+	// If no combiner is given (as in the datasets case), make sure no solutions are plotted
 	// without seing the program crash
-	else if ( plotsolutions.empty() ){
+	else if ( combid.empty() && plotsolutions.empty() ){
 		plotsolutions.push_back(0);
 	}
 
@@ -1086,8 +1101,25 @@ void OptParser::parseArguments(int argc, char* argv[])
       if ( isAction("plugin") && !plotpluginonly ) {
         plotsoln.push_back(0);
       }
+      // if CLs asked then add another one or two for each cls
+      for (int j=0; j< cls.size(); j++) {
+        plotsoln.push_back(0);
+        if ( isAction("plugin") && !plotpluginonly ) {
+          plotsoln.push_back(0);
+        }
+      }
 		}
 	}
+	// If no combiner is given (as in the datasets case), make sure no solutions are plotted
+	// without seing the program crash
+	else if ( combid.empty() ){
+		plotsoln.push_back(0);
+    if ( isAction("plugin") && !plotpluginonly ) plotsoln.push_back(0);
+    for (int j=0; j<cls.size(); j++ ) {
+      plotsoln.push_back(0);
+      if ( isAction("plugin") && !plotpluginonly ) plotsoln.push_back(0);
+	  }
+  }
 
   // --2dcl
 	plot2dcl = plot2dclArg.getValue();
