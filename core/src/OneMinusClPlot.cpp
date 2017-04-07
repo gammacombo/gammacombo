@@ -35,7 +35,7 @@
 /// \param last
 /// \param filled
 ///
-TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool filled, bool isCLs)
+TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool filled, int CLsType)
 {
 	if ( arg->debug ){
 		cout << "OneMinusClPlot::scan1dPlot() : plotting ";
@@ -47,7 +47,8 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	m_mainCanvas->cd();
 	bool plotPoints = ( s->getMethodName()=="Plugin" || s->getMethodName()=="BergerBoos" || s->getMethodName()=="DatasetsPlugin" ) && plotPluginMarkers;
 	TH1F *hCL = (TH1F*)s->getHCL()->Clone(getUniqueRootName());
-	if (isCLs) hCL = (TH1F*)s->getHCLs()->Clone(getUniqueRootName());
+	if (CLsType==1) hCL = (TH1F*)s->getHCLs()->Clone(getUniqueRootName());
+  else if (CLsType==2) hCL = (TH1F*)s->getHCLsFreq()->Clone(getUniqueRootName());
 	// fix inf and nan entries
 	for ( int i=1; i<=s->getHCL()->GetNbinsX(); i++ ){
 		if ( s->getHCL()->GetBinContent(i)!=s->getHCL()->GetBinContent(i)
@@ -121,9 +122,14 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	}
 
 	int color = s->getLineColor();
-	// if(isCLs) color = color+2;
-	if(isCLs && s->getMethodName().Contains("Plugin") && !arg->plotpluginonly) color = kBlue+1;
-	else if(isCLs) color = s->getLineColor() - 5;
+	if(CLsType>0 && s->getMethodName().Contains("Plugin") && !arg->plotpluginonly) {
+    if (CLsType==1) color = kBlue-7;
+    else if (CLsType==2) color = kBlue+2;
+  }
+	else if(CLsType>0) {
+    if (CLsType==1) color = s->getLineColor() - 5;
+    if (CLsType==2) color = s->getLineColor() - 4;
+  }
 	g->SetLineColor(color);
 
 	if ( filled ){
@@ -145,16 +151,19 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 		g->SetMarkerColor(color);
 		g->SetMarkerStyle(8);
 		g->SetMarkerSize(0.6);
-		if(isCLs) {
+		if(CLsType==1) {
 			g->SetMarkerStyle(33);
 			g->SetMarkerSize(1);
+		}
+		if(CLsType==2) {
+			g->SetMarkerStyle(21);
 		}
 	}
 
 	// build a histogram which holds the axes
 	float min = arg->scanrangeMin == arg->scanrangeMax ? hCL->GetXaxis()->GetXmin() : arg->scanrangeMin;
 	float max = arg->scanrangeMin == arg->scanrangeMax ? hCL->GetXaxis()->GetXmax() : arg->scanrangeMax;
-	TH1F *haxes = new TH1F("haxes"+getUniqueRootName(), "haxes", 100, min, max);
+	TH1F *haxes = new TH1F("haxes"+getUniqueRootName(), "", 100, min, max);
 	haxes->SetStats(0);
 	haxes->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
 	haxes->GetYaxis()->SetTitle("1-CL");
@@ -281,7 +290,7 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 /// \param s The scanner to plot.
 /// \param first Set this to true for the first plotted scanner.
 ///
-void OneMinusClPlot::scan1dPlotSimple(MethodAbsScan* s, bool first, bool isCLs)
+void OneMinusClPlot::scan1dPlotSimple(MethodAbsScan* s, bool first, int CLsType)
 {
 	if ( arg->debug ){
 		cout << "OneMinusClPlot::scan1dPlotSimple() : plotting ";
@@ -290,7 +299,8 @@ void OneMinusClPlot::scan1dPlotSimple(MethodAbsScan* s, bool first, bool isCLs)
 	m_mainCanvas->cd();
 
 	TH1F *hCL = (TH1F*)s->getHCL()->Clone(getUniqueRootName());
-	if (isCLs) hCL = (TH1F*)s->getHCLs()->Clone(getUniqueRootName());
+	if (CLsType==1) hCL = (TH1F*)s->getHCLs()->Clone(getUniqueRootName());
+  else if (CLsType==2) hCL = (TH1F*)s->getHCLsFreq()->Clone(getUniqueRootName());
 
 	// get rid of nan and inf
 	for ( int i=1; i<=hCL->GetNbinsX(); i++ ){
@@ -299,7 +309,7 @@ void OneMinusClPlot::scan1dPlotSimple(MethodAbsScan* s, bool first, bool isCLs)
 	}
 
 	int color = s->getLineColor();
-	if(isCLs) color = color + 2 ;
+	if(CLsType==1) color = color + 2 ;
 	hCL->SetStats(0);
 	hCL->SetLineColor(color);
 	hCL->SetMarkerColor(color);
@@ -330,6 +340,162 @@ void OneMinusClPlot::scan1dPlotSimple(MethodAbsScan* s, bool first, bool isCLs)
 		else                hCL->GetYaxis()->SetRangeUser(0.0,1.0);
 	}
 	hCL->Draw(first?"":"same");
+}
+
+///
+/// Make a plot for the CLs stuff.
+/// The strategy is to convert the hCLExp and hCLErr histogrms
+/// into TGraphs and TGraphAsymmErrors
+/// We can then provide some smoothing options as well
+///
+/// \param s The scanner to plot.
+/// \param smooth
+///
+void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
+{
+  if ( arg->debug ){
+    cout << "OneMinusClPlot::scan1dCLsPlot() : plotting ";
+    cout << s->getName() << " (" << s->getMethodName() << ")" << endl;
+  }
+  //if ( m_mainCanvas==0 ){
+    //m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, 600);
+    //m_mainCanvas->SetRightMargin(0.1);
+  //}
+  m_mainCanvas->cd();
+  TH1F *hObs    = (TH1F*)s->getHCLsFreq()->Clone(getUniqueRootName());
+  TH1F *hExp    = (TH1F*)s->getHCLsExp()->Clone(getUniqueRootName());
+  TH1F *hErr1Up = (TH1F*)s->getHCLsErr1Up()->Clone(getUniqueRootName());
+  TH1F *hErr1Dn = (TH1F*)s->getHCLsErr1Dn()->Clone(getUniqueRootName());
+  TH1F *hErr2Up = (TH1F*)s->getHCLsErr2Up()->Clone(getUniqueRootName());
+  TH1F *hErr2Dn = (TH1F*)s->getHCLsErr2Dn()->Clone(getUniqueRootName());
+
+  if ( !hObs ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - can't find histogram hObs" << endl;
+  if ( !hExp ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - can't find histogram hExp" << endl;
+  if ( !hErr1Up ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - can't find histogram hErr1Up" << endl;
+  if ( !hErr1Dn ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - can't find histogram hErr1Dn" << endl;
+  if ( !hErr2Up ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - can't find histogram hErr2Up" << endl;
+  if ( !hErr2Dn ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - can't find histogram hErr2Dn" << endl;
+
+  // convert obs to graph
+  TGraph *gObs = convertTH1ToTGraph(hObs,obsError);
+
+  // convert others to raw graphs
+  TGraph *gExpRaw    = convertTH1ToTGraph(hExp);
+  TGraph *gErr1UpRaw = convertTH1ToTGraph(hErr1Up);
+  TGraph *gErr1DnRaw = convertTH1ToTGraph(hErr1Dn);
+  TGraph *gErr2UpRaw = convertTH1ToTGraph(hErr2Up);
+  TGraph *gErr2DnRaw = convertTH1ToTGraph(hErr2Dn);
+
+  // smoothing if needed
+  TGraph *gExp    = gExpRaw;
+  TGraph *gErr1Up = gErr1UpRaw;
+  TGraph *gErr1Dn = gErr1DnRaw;
+  TGraph *gErr2Up = gErr2UpRaw;
+  TGraph *gErr2Dn = gErr2DnRaw;
+
+  if (smooth) {
+    if ( arg->debug ) cout << "OneMinusClPlot::scan1dCLsPlot() : smoothing graphs" << endl;
+    TGraphSmooth *smoother = new TGraphSmooth();
+    gExp = smoother->SmoothSuper( gExpRaw, "", 0, 0 );
+    gErr1Up = smoother->SmoothSuper( gErr1UpRaw, "", 0, 0 );
+    gErr1Dn = smoother->SmoothSuper( gErr1DnRaw, "", 0, 0 );
+    gErr2Up = smoother->SmoothSuper( gErr2UpRaw, "", 0, 0 );
+    gErr2Dn = smoother->SmoothSuper( gErr2DnRaw, "", 0, 0 );
+    if ( arg->debug ) cout << "OneMinusClPlot::scan1dCLsPlot() : done smoothing graphs" << endl;
+  }
+
+  if ( !gObs ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - null graph gObs" << endl;
+  if ( !gExp ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - null graph gExp" << endl;
+  if ( !gErr1Up ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - null graph gErr1Up" << endl;
+  if ( !gErr1Dn ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - null graph gErr1Dn" << endl;
+  if ( !gErr2Up ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - null graph gErr2Up" << endl;
+  if ( !gErr2Dn ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - null graph gErr2Dn" << endl;
+
+  // now make the graphs for the error bands
+  TGraphAsymmErrors *gErr1 = new TGraphAsymmErrors( gExp->GetN() );
+  TGraphAsymmErrors *gErr2 = new TGraphAsymmErrors( gExp->GetN() );
+
+  double x,y;
+  double xerr = (hExp->GetBinCenter(2)-hExp->GetBinCenter(1))/2.;
+
+  for (int i=0; i<gExp->GetN(); i++) {
+    gExp->GetPoint(i,x,y);
+    gErr1->SetPoint(i,x,y);
+    gErr2->SetPoint(i,x,y);
+
+    gErr1->SetPointError(i, xerr, xerr, y-gErr1Dn->Eval(x), gErr1Up->Eval(x)-y);
+    gErr2->SetPointError(i, xerr, xerr, y-gErr2Dn->Eval(x), gErr2Up->Eval(x)-y);
+    //gErr1->SetPointError(i, xerr, xerr, 0.0,0.0);
+    //gErr2->SetPointError(i, xerr, xerr, 0.0,0.0);
+  }
+
+  gErr2->SetFillColor( TColor::GetColor("#3182bd") );
+  gErr2->SetLineColor( TColor::GetColor("#3182bd") );
+  gErr1->SetFillColor( TColor::GetColor("#9ecae1") );
+  gErr1->SetLineColor( TColor::GetColor("#9ecae1") );
+  gExp->SetLineColor(kRed);
+  gExp->SetLineWidth(3);
+  gObs->SetLineColor(kBlack);
+  gObs->SetMarkerSize(1);
+  gObs->SetMarkerStyle(22);
+
+	float min = arg->scanrangeMin == arg->scanrangeMax ? hObs->GetXaxis()->GetXmin() : arg->scanrangeMin;
+	float max = arg->scanrangeMin == arg->scanrangeMax ? hObs->GetXaxis()->GetXmax() : arg->scanrangeMax;
+	TH1F *haxes = new TH1F("haxes"+getUniqueRootName(), "", 100, min, max);
+	haxes->SetStats(0);
+	haxes->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
+	haxes->GetYaxis()->SetTitle("CL_{S}");
+	haxes->GetXaxis()->SetLabelFont(font);
+	haxes->GetYaxis()->SetLabelFont(font);
+	haxes->GetXaxis()->SetTitleFont(font);
+	haxes->GetYaxis()->SetTitleFont(font);
+	haxes->GetXaxis()->SetTitleOffset(0.9);
+	haxes->GetYaxis()->SetTitleOffset(0.85);
+	haxes->GetXaxis()->SetLabelSize(labelsize);
+	haxes->GetYaxis()->SetLabelSize(labelsize);
+	haxes->GetXaxis()->SetTitleSize(titlesize);
+	haxes->GetYaxis()->SetTitleSize(titlesize);
+	int xndiv = arg->ndiv==-1 ? 407 : abs(arg->ndiv);
+	bool optimizeNdiv = arg->ndiv<0 ? true : false;
+	haxes->GetXaxis()->SetNdivisions(xndiv, optimizeNdiv);
+	haxes->GetYaxis()->SetNdivisions(407, true);
+
+  // Legend:
+	// make the legend short, the text will extend over the boundary, but the symbol will be shorter
+  float legendXmin = arg->plotlegx!=-1. ? arg->plotlegx : 0.69 ;
+  float legendYmin = arg->plotlegy!=-1. ? arg->plotlegy : 0.65;
+  float legendXmax = legendXmin + ( arg->plotlegsizex!=-1. ? arg->plotlegsizex : 0.24 ) ;
+  float legendYmax = legendYmin + ( arg->plotlegsizey!=-1. ? arg->plotlegsizey : 0.24 ) ;
+	TLegend* leg = new TLegend(legendXmin,legendYmin,legendXmax,legendYmax);
+	leg->SetFillColor(kWhite);
+	leg->SetFillStyle(0);
+	leg->SetLineColor(kWhite);
+	leg->SetBorderSize(0);
+	leg->SetTextFont(font);
+	leg->SetTextSize(legendsize*0.75);
+
+  if (obsError) leg->AddEntry( gObs, "Observed", "LEP" );
+  else          leg->AddEntry( gObs, "Observed", "LP"  );
+  leg->AddEntry( gExp, "Expected", "L" );
+  leg->AddEntry( gErr1, "#pm 1#sigma", "F");
+  leg->AddEntry( gErr2, "#pm 2#sigma", "F");
+
+  gErr2->SetHistogram(haxes);
+  gErr2->Draw("AE3");
+  gErr1->Draw("E3same");
+  gExp->Draw("Lsame");
+  if (obsError) gObs->Draw("LEPsame");
+  else          gObs->Draw("LPsame");
+  gErr1Up->Draw("same");
+  gErr2Up->Draw("same");
+  leg->Draw("same");
+
+  cout << "prob with canv?" << endl;
+   m_mainCanvas->Update();
+   m_mainCanvas->Modified();
+   m_mainCanvas->Show();
+  cout << "prob with canv?" << endl;
+   savePlot( m_mainCanvas, name+"_cls"+arg->plotext );
 }
 
 void OneMinusClPlot::drawVerticalLine(float x, int color, int style)
@@ -521,7 +687,8 @@ void OneMinusClPlot::Draw()
 {
 	bool plotSimple = false;//arg->debug; ///< set to true to use a simpler plot function
 	///< which directly plots the 1-CL histograms without beautification
-	if ( m_mainCanvas==0 ){
+
+  if ( m_mainCanvas==0 ){
 		m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, 600);
     // put this in for exponent xaxes
     m_mainCanvas->SetRightMargin(0.1);
@@ -531,6 +698,9 @@ void OneMinusClPlot::Draw()
 		if ( !this->name.EndsWith("_log") ) this->name = this->name + "_log";
 	}
 	m_mainCanvas->cd();
+
+  // plot the CLs
+  for ( int i = 0; i < scanners.size(); i++ ) if (do_CLs[i]==2) scan1dCLsPlot(scanners[i]);
 
 	// Legend:
 	// make the legend short, the text will extend over the boundary, but the symbol will be shorter
@@ -559,8 +729,12 @@ void OneMinusClPlot::Draw()
 
     TString legTitle = scanners[i]->getTitle();
     if ( !arg->isQuickhack(29) ) {
-      if ( scanners[i]->getMethodName().Contains("Prob") ) legTitle += do_CLs[i] ? " (PROB CLs)" : " (PROB)";
-      if ( scanners[i]->getMethodName().Contains("Plugin") ) legTitle += do_CLs[i] ? " (PLUGIN CLs)" : " (PLUGIN)";
+      if ( scanners[i]->getMethodName().Contains("Prob") ) legTitle += do_CLs[i] ? " (Prob CLs)" : " (Prob)";
+      if ( scanners[i]->getMethodName().Contains("Plugin") ) {
+        if ( do_CLs[i]==0 )    legTitle += " (Plugin)";
+        else if (do_CLs[i]==1) legTitle += " (Plugin CLs)";
+        else if (do_CLs[i]==2) legTitle += " (Mixed CLs)";
+      }
     }
 
 		if ( plotSimple )
@@ -606,4 +780,5 @@ void OneMinusClPlot::Draw()
 
 	m_mainCanvas->Update();
 	m_mainCanvas->Show();
+
 }

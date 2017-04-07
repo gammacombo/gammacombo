@@ -59,6 +59,12 @@
 		textColor(kBlack),
 		hCL(0),
 		hCLs(0),
+    hCLsFreq(0),
+    hCLsExp(0),
+    hCLsErr1Up(0),
+    hCLsErr1Dn(0),
+    hCLsErr2Up(0),
+    hCLsErr2Dn(0),
 		hCL2d(0),
 		hCLs2d(0),
 		hChi2min(0),
@@ -82,6 +88,12 @@ MethodAbsScan::~MethodAbsScan()
 	}
 	if ( hCL ) delete hCL;
 	if ( hCLs ) delete hCLs;
+	if ( hCLsFreq ) delete hCLsFreq;
+	if ( hCLsExp ) delete hCLsExp;
+	if ( hCLsErr1Up ) delete hCLsErr1Up;
+	if ( hCLsErr1Dn ) delete hCLsErr1Dn;
+	if ( hCLsErr2Up ) delete hCLsErr2Up;
+	if ( hCLsErr2Dn ) delete hCLsErr2Dn;
 	if ( hCLs2d ) delete hCLs2d;
 	if ( hCL2d ) delete hCL2d;
 	if ( hChi2min ) delete hChi2min;
@@ -294,6 +306,12 @@ void MethodAbsScan::saveScanner(TString fName)
 	else {
     hCL->Write("hCL");
     if (hCLs) hCLs->Write("hCLs");
+    if (hCLsFreq) hCLsFreq->Write("hCLsFreq");
+    if (hCLsExp) hCLsExp->Write("hCLsExp");
+    if (hCLsErr1Up) hCLsErr1Up->Write("hCLsErr1Up");
+    if (hCLsErr1Dn) hCLsErr1Dn->Write("hCLsErr1Dn");
+    if (hCLsErr2Up) hCLsErr2Up->Write("hCLsErr2Up");
+    if (hCLsErr2Dn) hCLsErr2Dn->Write("hCLsErr2Dn");
   }
 	// save chi2 histograms
 	if ( scanVar2!="" ) hChi2min2d->Write("hChi2min");
@@ -359,6 +377,55 @@ bool MethodAbsScan::loadScanner(TString fName)
   else if ( scanVar2=="" ){
     hCLs = (TH1F*)obj;
     hCLs->SetName("hCLs"+getUniqueRootName());
+  }
+  // load CLs histograms
+  obj = f->Get("hCLsFreq");
+  if ( obj==0 ){
+    cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsFreq' not found in root file - you can ignore this if you're not running in dataset mode" << fName << endl;
+  }
+  else if ( scanVar2=="" ){
+    hCLsFreq = (TH1F*)obj;
+    hCLsFreq->SetName("hCLsFreq"+getUniqueRootName());
+  }
+  obj = f->Get("hCLsExp");
+  if ( obj==0 ){
+    cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsExp' not found in root file - you can ignore this if you're not running in dataset mode" << fName << endl;
+  }
+  else if ( scanVar2=="" ){
+    hCLsExp = (TH1F*)obj;
+    hCLsExp->SetName("hCLsExp"+getUniqueRootName());
+  }
+  obj = f->Get("hCLsErr1Up");
+  if ( obj==0 ){
+    cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsErr1Up' not found in root file - you can ignore this if you're not running in dataset mode" << fName << endl;
+  }
+  else if ( scanVar2=="" ){
+    hCLsErr1Up = (TH1F*)obj;
+    hCLsErr1Up->SetName("hCLsErr1Up"+getUniqueRootName());
+  }
+  obj = f->Get("hCLsErr1Dn");
+  if ( obj==0 ){
+    cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsErr1Dn' not found in root file - you can ignore this if you're not running in dataset mode" << fName << endl;
+  }
+  else if ( scanVar2=="" ){
+    hCLsErr1Dn = (TH1F*)obj;
+    hCLsErr1Dn->SetName("hCLsErr1Dn"+getUniqueRootName());
+  }
+  obj = f->Get("hCLsErr2Up");
+  if ( obj==0 ){
+    cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsErr2Up' not found in root file - you can ignore this if you're not running in dataset mode" << fName << endl;
+  }
+  else if ( scanVar2=="" ){
+    hCLsErr2Up = (TH1F*)obj;
+    hCLsErr2Up->SetName("hCLsErr2Up"+getUniqueRootName());
+  }
+  obj = f->Get("hCLsErr2Dn");
+  if ( obj==0 ){
+    cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsErr2Dn' not found in root file - you can ignore this if you're not running in dataset mode" << fName << endl;
+  }
+  else if ( scanVar2=="" ){
+    hCLsErr2Dn = (TH1F*)obj;
+    hCLsErr2Dn->SetName("hCLsErr2Dn"+getUniqueRootName());
   }
   // load solutions: try the first one hundred
 	solutions.clear();
@@ -541,14 +608,18 @@ bool MethodAbsScan::interpolate(TH1F* h, int i, float y, float central, bool upp
 /// Use a fit-based interpolation (interpolate()) if we have more than 25 bins,
 /// else revert to a straight line interpolation (interpolateSimple()).
 ///
-void MethodAbsScan::calcCLintervals(bool isCLs)
+void MethodAbsScan::calcCLintervals(int CLsType)
 {
 	TH1F *histogramCL = this->getHCL();
 	// calc CL intervals with CLs method
-	if (isCLs && this->getHCLs())
+	if (CLsType==1 && this->getHCLs())
 	{
 		histogramCL =this->getHCLs();
 	}
+  else if (CLsType==2 && this->getHCLsFreq())
+  {
+    histogramCL = this->getHCLsFreq();
+  }
 
 	if ( arg->isQuickhack(8) ){
 		// \todo Switch to the new CLIntervalMaker mechanism. It can be activated
@@ -574,15 +645,14 @@ void MethodAbsScan::calcCLintervals(bool isCLs)
 	//if(solutions.empty()){
 	//  cout 	<< "MethodAbsScan::calcCLintervals() : Solutions vector empty. "
 	//							<<"Using simple method with  linear splines."<<endl;
- 	//	this->calcCLintervalsSimple(isCLs);
+ 	//	this->calcCLintervalsSimple(CLsType);
 	//	return;
 	//}
 	//else {		//Since I want to have the CL_s method also, I do the simple method anyway.
 	//	cout<<"Using simple method with  linear splines."<<endl;
-	//	this->calcCLintervalsSimple(isCLs);
+	//	this->calcCLintervalsSimple(CLsType);
 	//}
 
-  cout << endl;
   if ( arg->debug ) cout << "MethodAbsScan::calcCLintervals() : ";
   cout << "CONFIDENCE INTERVALS for combination " << name << endl << endl;
 
@@ -667,7 +737,6 @@ void MethodAbsScan::calcCLintervals(bool isCLs)
 			clintervals1sigma.push_back(i);
 		}
 	}
-
 	printCLintervals();
 
 
@@ -731,7 +800,8 @@ void MethodAbsScan::calcCLintervals(bool isCLs)
 
 			int pErr = 2;
 			if ( arg && arg->digits>0 ) pErr = arg->digits;
-			if (isCLs && this->getHCLs()) cout << "CL_s: ";
+			if (CLsType==1 && this->getHCLs()) cout << "CL_s: ";
+			if (CLsType==2 && this->getHCLsFreq()) cout << "CL_s Freq: ";
 			printf("\n%s = [%7.*f, %7.*f] @%3.2fCL",
 					par->GetName(),
 					pErr, CLlo[c], pErr, CLhi[c],
@@ -839,9 +909,9 @@ float MethodAbsScan::getCL(double val)
 }
 
 
-void MethodAbsScan::plotOn(OneMinusClPlotAbs *plot, bool doCLs)
+void MethodAbsScan::plotOn(OneMinusClPlotAbs *plot, int CLsType)
 {
-	plot->addScanner(this, doCLs);
+	plot->addScanner(this, CLsType);
 }
 
 
@@ -1358,18 +1428,22 @@ void MethodAbsScan::setYscanRange(float min, float max)
 
 
 
-void MethodAbsScan::calcCLintervalsSimple(bool isCLs)
+void MethodAbsScan::calcCLintervalsSimple(int CLsType)
 {
   clintervals1sigma.clear();
   clintervals2sigma.clear();
   double levels[2] = {0.6827, 0.9545};
 
   TH1F *histogramCL = this->hCL;
-  if (this->hCLs && isCLs)
+  if (this->hCLs && CLsType==1)
   {
   	histogramCL = this->hCLs;
   }
-  if(!isCLs || (this->hCLs && isCLs))
+  else if (this->hCLsFreq && CLsType==2)
+  {
+    histogramCL = this->hCLsFreq;
+  }
+  if(CLsType==0 || (this->hCLs && CLsType==1) || (this->hCLsFreq && CLsType==2))
   {
 	  for (int c=0;c<2;c++){
 	    const std::pair<double, double> borders = getBorders(TGraph(histogramCL), levels[c]);
@@ -1380,7 +1454,8 @@ void MethodAbsScan::calcCLintervalsSimple(bool isCLs)
 	    cli.central = -1;
 	    if ( c==0 ) clintervals1sigma.push_back(cli);
 	    if ( c==1 ) clintervals2sigma.push_back(cli);
-	    if (isCLs) std::cout << "CL_s ";
+	    if (CLsType==1) std::cout << "CL_s ";
+	    if (CLsType==2) std::cout << "CL_s Freq";
 	    std::cout<<"borders at "<<levels[c]<<"  [ "<<borders.first<<" : "<<borders.second<<"]";
 		cout << ", " << methodName << " (simple boundary scan)" << endl;
 	  }
@@ -1390,8 +1465,9 @@ void MethodAbsScan::calcCLintervalsSimple(bool isCLs)
 	////////////////////////////////////////////////////////////////////////////////////////////
 	//// Add a hacky calculation of the CL_s intervals
 	//// \todo: Do it properly from the very start by introducing a bkg model and propagate it to the entire framework.
+  /// TODO: I think this can now disappear
 
-  if(!this->hCLs && isCLs)
+  if ( (!this->hCLs && CLsType==1) || (!this->hCLsFreq && CLsType==2) )
   {
   	std::cout << "**************************************************************************************************************************************" << std::endl;
   	std::cout << "WARNING: hCLs is empty! Will calculate CLs intervals by noramlizing the p values to the p value of the first bin." << std::endl;

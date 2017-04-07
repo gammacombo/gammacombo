@@ -899,6 +899,22 @@ TTree* Utils::convertRooDatasetToTTree(RooDataSet *d)
 	return t;
 }
 
+/// Converts a TH1* to a TGraph*
+/// doesn't take responsibilty for ownership
+TGraph* Utils::convertTH1ToTGraph(TH1* h, bool withErrors)
+{
+  TGraph *g;
+  if (withErrors) g = new TGraphErrors( h->GetNbinsX() );
+  else            g = new TGraph( h->GetNbinsX() );
+  g->SetName(getUniqueRootName());
+  for ( int i=0; i<h->GetNbinsX(); i++ ) {
+    g->SetPoint(i, h->GetBinCenter(i+1), h->GetBinContent(i+1) );
+    if (withErrors) ((TGraphErrors*)g)->SetPointError(i, 0.0, h->GetBinError(i+1) );
+  }
+  return g;
+}
+
+
 ///
 /// Creates a fresh, independent copy of the input histogram.
 /// We cannot use Root's Clone() or the like, because that

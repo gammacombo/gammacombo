@@ -29,7 +29,6 @@ OptParser::OptParser():
 
 	// Initialize the variables.
 	// For more complex arguments these are also the default values.
-	cls = false;
 	controlplot = false;
 	coverageCorrectionID = 0;
 	coverageCorrectionPoint = 0;
@@ -463,7 +462,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::SwitchArg noconfsolsArg("", "noconfsols", "Do not confirm solutions.", false);
 	TCLAP::SwitchArg printcorArg("", "printcor", "Print the correlation matrix of each solution found.", false);
 	TCLAP::SwitchArg smooth2dArg("", "smooth2d", "Smooth 2D p-value or cl histograms for nicer contour (particularly useful for 2D plugin)", false);
-	TCLAP::SwitchArg clsArg("", "cls", "Use the test statistic of the CLs method for determining upper limits. For the datasets part you need to define the bkg hypothesis (named bkg_pdf) you want to test your model against.", false);
+	//TCLAP::SwitchArg clsArg("", "cls", "Use the test statistic of the CLs method for determining upper limits. For the datasets part you need to define the bkg hypothesis (named bkg_pdf) you want to test your model against.", false);
 
 	// --------------- aruments that can be given multiple times
 	vector<string> vAction;
@@ -499,6 +498,11 @@ void OptParser::parseArguments(int argc, char* argv[])
 			, false, "int");
 	TCLAP::MultiArg<int> colorArg("", "color", "ID of color to be used for the combination. "
 			"Default: 0 for first scanner, 1 for second, etc.", false, "int");
+  TCLAP::MultiArg<int> clsArg("", "cls", "Types of CLs to be plotted.\n"
+      "Default will not do anything\n"
+      "1: Naive CLs (assuming CLb is obtained from the point at zero)\n"
+      "2: Freq  CLs (sampling the full distribution for CLb)\n"
+      , false, "int");
   TCLAP::MultiArg<int> fillstyleArg("", "fillstyle", "Fill style of the 1D scan to be used for the combination. Default is 1001 (solid) for all.", false, "int");
   TCLAP::MultiArg<int> pevidArg("", "pevid", "ID of combination used for the profile likelihood"
 			"that determines the parameter evolution for the Plugin toy generation. If not given, "
@@ -1097,8 +1101,8 @@ void OptParser::parseArguments(int argc, char* argv[])
       if ( isAction("plugin") && !plotpluginonly ) {
         plotsoln.push_back(0);
       }
-      // if CLs asked then add another one or two
-      if ( cls ) {
+      // if CLs asked then add another one or two for each cls
+      for (int j=0; j< cls.size(); j++) {
         plotsoln.push_back(0);
         if ( isAction("plugin") && !plotpluginonly ) {
           plotsoln.push_back(0);
@@ -1111,7 +1115,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	else if ( combid.empty() ){
 		plotsoln.push_back(0);
     if ( isAction("plugin") && !plotpluginonly ) plotsoln.push_back(0);
-    if ( cls ) {
+    for (int j=0; j<cls.size(); j++ ) {
       plotsoln.push_back(0);
       if ( isAction("plugin") && !plotpluginonly ) plotsoln.push_back(0);
 	  }

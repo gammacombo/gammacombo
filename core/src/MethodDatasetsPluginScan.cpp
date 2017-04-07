@@ -111,6 +111,18 @@ void MethodDatasetsPluginScan::initScan() {
     hCL = new TH1F("hCL" + getUniqueRootName(), "hCL" + pdf->getPdfName(), nPoints1d, par1->getMin(), par1->getMax());
     if (hCLs) delete hCLs;
     hCLs = new TH1F("hCLs" + getUniqueRootName(), "hCLs" + pdf->getPdfName(), nPoints1d, par1->getMin(), par1->getMax());
+    if (hCLsFreq) delete hCLsFreq;
+    hCLsFreq = new TH1F("hCLsFreq" + getUniqueRootName(), "hCLsFreq" + pdf->getPdfName(), nPoints1d, par1->getMin(), par1->getMax());
+    if (hCLsExp) delete hCLsExp;
+    hCLsExp = new TH1F("hCLsExp" + getUniqueRootName(), "hCLsExp" + pdf->getPdfName(), nPoints1d, par1->getMin(), par1->getMax());
+    if (hCLsErr1Up) delete hCLsErr1Up;
+    hCLsErr1Up = new TH1F("hCLsErr1Up" + getUniqueRootName(), "hCLsErr1Up" + pdf->getPdfName(), nPoints1d, par1->getMin(), par1->getMax());
+    if (hCLsErr1Dn) delete hCLsErr1Dn;
+    hCLsErr1Dn = new TH1F("hCLsErr1Dn" + getUniqueRootName(), "hCLsErr1Dn" + pdf->getPdfName(), nPoints1d, par1->getMin(), par1->getMax());
+    if (hCLsErr2Up) delete hCLsErr2Up;
+    hCLsErr2Up = new TH1F("hCLsErr2Up" + getUniqueRootName(), "hCLsErr2Up" + pdf->getPdfName(), nPoints1d, par1->getMin(), par1->getMax());
+    if (hCLsErr2Dn) delete hCLsErr2Dn;
+    hCLsErr2Dn = new TH1F("hCLsErr2Dn" + getUniqueRootName(), "hCLsErr2Dn" + pdf->getPdfName(), nPoints1d, par1->getMin(), par1->getMax());
     if ( hChi2min ) delete hChi2min;
     hChi2min = new TH1F("hChi2min" + getUniqueRootName(), "hChi2min" + pdf->getPdfName(), nPoints1d, par1->getMin(), par1->getMax());
 
@@ -315,6 +327,11 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     if (arg->debug) {
         printf("DEBUG %i %f %f %f\n", t.getScanpointN(), t.getScanpointMin() - halfBinWidth, t.getScanpointMax() + halfBinWidth, halfBinWidth);
     }
+    delete hCLsFreq;
+    hCLsFreq = new TH1F("hCLsFreq", "hCLs", t.getScanpointN(), t.getScanpointMin() - halfBinWidth, t.getScanpointMax() + halfBinWidth );
+    if (arg->debug) {
+        printf("DEBUG %i %f %f %f\n", t.getScanpointN(), t.getScanpointMin() - halfBinWidth, t.getScanpointMax() + halfBinWidth, halfBinWidth);
+    }
 
 
     // histogram to store number of toys which enter p Value calculation
@@ -335,6 +352,9 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     TH1F *h_tot           = (TH1F*)hCL->Clone("h_tot");
     // histogram illustrating the failure rate
     TH1F *h_fracGoodToys  = (TH1F*)hCL->Clone("h_fracGoodToys");
+    // map of vectors for CLb quantiles
+    std::map<int,std::vector<double> > sampledBValues;
+    std::map<int,std::vector<double> > sampledSBValues;
     TH1F *h_pVals         = new TH1F("p", "p", 200, 0.0, 1e-2);
     Long64_t nentries     = t.GetEntries();
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : average number of toys per scanpoint: " << (double) nentries / (double)nPoints1d << endl;
@@ -348,9 +368,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
 
 
     float printFreq = nentries > 101 ? 100 : nentries;  ///< for the status bar
-    t.activateCoreBranchesOnly();                       ///< speeds up the event loop
-    TString alternateTestStatName = scanVar1 + "_free";
-    t.activateBranch(alternateTestStatName);
+    t.activateAllBranches();
     for (Long64_t i = 0; i < nentries; i++)
     {
         // status bar
@@ -404,6 +422,15 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
             h_probPValues->SetBinContent(h_probPValues->FindBin(t.scanpoint), this->getPValueTTestStatistic(t.chi2min - this->chi2minGlobal)); //t.chi2minGlobal));
             if (t.scanpoint == 0.0) n0all++;
         }
+        int hBin = h_all->FindBin(t.scanpoint);
+        if ( sampledBValues.find(hBin) == sampledBValues.end() ) sampledBValues[hBin] = std::vector<double>();
+        if ( sampledSBValues.find(hBin) == sampledSBValues.end() ) sampledSBValues[hBin] = std::vector<double>();
+        double bkgTestStatVal = t.chi2minBkgToy - t.chi2minGlobalBkgToy;
+        bkgTestStatVal = t.scanbestBkg <= t.scanpoint ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
+        sampledBValues[hBin].push_back( bkgTestStatVal );
+        double sbTestStatVal = t.chi2minToy - t.chi2minGlobalToy;
+        sbTestStatVal = t.scanbest <= t.scanpoint ? sbTestStatVal : 0.; // if muhat < mu then q_mu = 0
+        sampledSBValues[hBin].push_back( sbTestStatVal );
 
         // use the unphysical events to estimate background (be careful with this,
         // at least inspect the control plots to judge if this can be at all reasonable)
@@ -456,10 +483,70 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         hCLs->SetBinContent(i, p_cls);
         hCLs->SetBinError(i, sqrt(p_cls * (1. - p_cls) / nall));
 
+        // the quantiles of the CLb distribution (for expected CLs)
+        // sort the sampled values
+        std::sort( sampledBValues[i].begin(), sampledBValues[i].end() );
+        //                          +2s                    +1s        0            -1s                -2s
+        vector<double> probs = { TMath::Prob(4,1), TMath::Prob(1,1), 0.5, 1.-TMath::Prob(1,1), 1.-TMath::Prob(4,1) };
+        double quantiles[probs.size()];
+        TMath::Quantiles( sampledBValues.size(), probs.size(), &sampledBValues[i][0], quantiles, &probs[0] );
+        vector<int> nSBValsAboveBkg = { 0, 0, 0, 0, 0};
+        for (int k=0; k<probs.size(); k++){
+          for (int l=0; l<sampledSBValues[i].size(); l++) {
+            if ( sampledSBValues[i][l] >= quantiles[k] ) nSBValsAboveBkg[k] += 1;
+          }
+        }
+
+        hCLsExp->SetBinContent   ( i, TMath::Min(TMath::Prob( quantiles[2], 1 ) / probs[2] , 1.) );
+        hCLsErr1Up->SetBinContent( i, TMath::Min(TMath::Prob( quantiles[1], 1 ) / probs[1] , 1.) );
+        hCLsErr1Dn->SetBinContent( i, TMath::Min(TMath::Prob( quantiles[3], 1 ) / probs[3] , 1.) );
+        hCLsErr2Up->SetBinContent( i, TMath::Min(TMath::Prob( quantiles[0], 1 ) / probs[0] , 1.) );
+        hCLsErr2Dn->SetBinContent( i, TMath::Min(TMath::Prob( quantiles[4], 1 ) / probs[4] , 1.) );
+
+        //hCLsExp->SetBinContent   ( i, (float(nSBValsAboveBkg[2]) / sampledSBValues[i].size() ) / probs[2] );
+        //hCLsErr1Up->SetBinContent( i, (float(nSBValsAboveBkg[1]) / sampledSBValues[i].size() ) / probs[1] );
+        //hCLsErr1Dn->SetBinContent( i, (float(nSBValsAboveBkg[3]) / sampledSBValues[i].size() ) / probs[3] );
+        //hCLsErr2Up->SetBinContent( i, (float(nSBValsAboveBkg[0]) / sampledSBValues[i].size() ) / probs[0] );
+        //hCLsErr2Dn->SetBinContent( i, (float(nSBValsAboveBkg[4]) / sampledSBValues[i].size() ) / probs[4] );
+
+        // check
+        cout << i << endl;
+        cout << "Probs:  " << probs[0] << " " << probs[1] << " " << probs[2] << " " << probs[3] << " " << probs[4] << endl;
+        cout << "Quants: " << quantiles[0] << " " << quantiles[1] << " " << quantiles[2] << " " << quantiles[3] << " " << quantiles[4] << endl;
+        cout << "CLsb:   " << TMath::Prob(quantiles[0],1) << " " << TMath::Prob(quantiles[1],1) << " " << TMath::Prob(quantiles[2],1) << " " << TMath::Prob(quantiles[3],1) << " " << TMath::Prob(quantiles[4],1) << endl;
+        cout << "CLb:    " << 1.-TMath::Prob(4,1) << " " << 1.-TMath::Prob(1,1) << " " << 0.5 << " " << TMath::Prob(1,1) << " " << TMath::Prob(4,1) << endl;
+        cout << "CLs:    " << hCLsErr2Up->GetBinContent(i) << " "  << hCLsErr1Up->GetBinContent(i) << " "  << hCLsExp->GetBinContent(i) << " "  << hCLsErr1Dn->GetBinContent(i) << " "  << hCLsErr2Dn->GetBinContent(i) << endl;
+
+        // CLs values in data
+        int nDataAboveBkgExp = 0;
+        double dataTestStat = p>0 ? TMath::ChisquareQuantile(1.-p,1) : 1.e10;
+        for (int j=0; j<sampledBValues[i].size(); j++ ) {
+          if ( sampledBValues[i][j] >= dataTestStat ) nDataAboveBkgExp += 1;
+        }
+        float dataCLb    = float(nDataAboveBkgExp)/sampledBValues[i].size();
+        float dataCLbErr = sqrt( dataCLb * (1.-dataCLb) / sampledBValues[i].size() );
+        if ( p/dataCLb >= 1. ) {
+          hCLsFreq->SetBinContent(i, 1.);
+          hCLsFreq->SetBinError  (i, 0.);
+        }
+        else if ( dataTestStat == 1.e10 ) {
+          hCLsFreq->SetBinContent(i, hCL->GetBinContent(i) );
+          hCLsFreq->SetBinError  (i, hCL->GetBinError(i) );
+        }
+        else if ( hCLsFreq->GetBinCenter(i) <= hCLsFreq->GetBinCenter(h_better->GetMaximumBin()) ) {
+          hCLsFreq->SetBinContent(i, 1.);
+          hCLsFreq->SetBinError  (i, 0.);
+        }
+        else {
+          hCLsFreq->SetBinContent(i, p / dataCLb);
+          hCLsFreq->SetBinError  (i, (p/dataCLb) * sqrt( sq( hCL->GetBinError(i) / hCL->GetBinContent(i) ) + sq( dataCLbErr / dataCLb ) ) );
+        }
+
         if (arg->debug) {
           cout << "At scanpoint " << std::scientific << hCL->GetBinCenter(i) << ": ===== number of toys for pValue calculation: " << nbetter << endl;
-          cout << "At scanpoint " << hCL->GetBinCenter(i) << ": ===== pValue: " << p << endl;
-          cout << "At scanpoint " << hCL->GetBinCenter(i) << ": ===== pValue CLs: " << p_cls << endl;
+          cout << "At scanpoint " << hCL->GetBinCenter(i) << ": ===== pValue:         " << p << endl;
+          cout << "At scanpoint " << hCL->GetBinCenter(i) << ": ===== pValue CLs:     " << p_cls << endl;
+          cout << "At scanpoint " << hCL->GetBinCenter(i) << ": ===== pValue CLsFreq: " << p / dataCLb << endl;
         }
     }
 

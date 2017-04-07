@@ -26,6 +26,8 @@
 #include "RooRandom.h"
 #include "RooMinuit.h"
 #include "TTree.h"
+#include "TH1.h"
+#include "TGraphErrors.h"
 #include "TMatrixDSymEigen.h"
 #include "TVectorD.h"
 #include <sys/stat.h>
@@ -80,6 +82,7 @@ namespace Utils
 	TH2F*           histHardCopy(const TH2F* h, bool copyContent=true, bool uniqueName=true);
 
 	TTree*  convertRooDatasetToTTree(RooDataSet *d);
+  TGraph* convertTH1ToTGraph(TH1* h, bool withErrors=false);
 
 	void mergeNamedSets(RooWorkspace *w, TString mergedSet, TString set1, TString set2);
 	void randomizeParameters(RooWorkspace* w, TString setname);

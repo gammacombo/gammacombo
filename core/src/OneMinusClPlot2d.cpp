@@ -269,7 +269,7 @@ void OneMinusClPlot2d::makeNewPlotStyle(TString htmlColor, int ROOTColor)
 void OneMinusClPlot2d::addScanner(MethodAbsScan* s, bool do_cls)
 {
 	if ( arg->debug ) cout << "OneMinusClPlot2d::addScanner() : adding " << s->getName() << endl;
-	if (do_cls && !s->getHCLs2d()){ 
+	if (do_cls && !s->getHCLs2d()){
 		cout << "OneMinusClPlot2d::addScanner() : ERROR : No hCLs available. Will not plot." << endl;
 		return;
 	}

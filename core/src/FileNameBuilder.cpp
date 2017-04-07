@@ -195,7 +195,7 @@ TString FileNameBuilder::getFileNamePlot(const vector<Combiner*>& cmb)
 	if ( m_arg->var.size()==2 )           name += "_"+m_arg->var[1];
 	if ( m_arg->plotpluginonly )          name += "_"+getPluginOnlyNameAddition();
 	else if ( m_arg->isAction("plugin") ) name += "_"+getPluginNameAddition();
-  if ( m_arg->cls )                     name += "_"+getCLsNameAddition();
+  if ( m_arg->cls.size()>0 )            name += "_"+getCLsNameAddition();
 	if ( m_arg->plotprelim )              name += "_"+getPreliminaryNameAddition();
 	return name;
 }
