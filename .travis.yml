@@ -28,9 +28,9 @@ script:
   docker run built_image_6 /bin/bash -c "
       cd /code/tutorial;
       bin/tutorial_dataset_build_workspace;
-      bin/tutorial_dataset --var branchingRatio --scanrange 5e-7:15e-7 --npoints 5;
-      bin/tutorial_dataset -a pluginbatch --var branchingRatio --ntoys 5 --scanrange 5e-7:15e-7 --npoints 5 --npointstoy 5;
-      bin/tutorial_dataset -a plugin --var branchingRatio --scanrange 5e-7:15e-7 --npoints 5 --npointstoy 5 --nrun 1
+      bin/tutorial_dataset --var branchingRatio --scanrange 0:15e-7 --npoints 5;
+      bin/tutorial_dataset -a pluginbatch --var branchingRatio --ntoys 5 --scanrange 0:15e-7 --npoints 5 --npointstoy 5;
+      bin/tutorial_dataset -a plugin --var branchingRatio --scanrange 0:15e-7 --npoints 5 --npointstoy 5 --nrun 1
       "
 # root5
 - docker run --name raw_container schubertkonstantin/root:v5-34-32 /bin/bash -c "mkdir /code"
