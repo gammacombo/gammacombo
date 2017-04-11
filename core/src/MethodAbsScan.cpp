@@ -372,60 +372,63 @@ bool MethodAbsScan::loadScanner(TString fName)
   // load CLs histograms
   obj = f->Get("hCLs");
   if ( obj==0 ){
-    cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLs' not found in root file - you can ignore this if you're not running in dataset mode" << fName << endl;
+    cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLs' not found in root file - you can ignore this if you're not running in dataset mode " << fName << endl;
   }
   else if ( scanVar2=="" ){
     hCLs = (TH1F*)obj;
     hCLs->SetName("hCLs"+getUniqueRootName());
   }
   // load CLs histograms
-  obj = f->Get("hCLsFreq");
-  if ( obj==0 ){
-    cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsFreq' not found in root file - you can ignore this if you're not running in dataset mode" << fName << endl;
-  }
-  else if ( scanVar2=="" ){
-    hCLsFreq = (TH1F*)obj;
-    hCLsFreq->SetName("hCLsFreq"+getUniqueRootName());
-  }
-  obj = f->Get("hCLsExp");
-  if ( obj==0 ){
-    cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsExp' not found in root file - you can ignore this if you're not running in dataset mode" << fName << endl;
-  }
-  else if ( scanVar2=="" ){
-    hCLsExp = (TH1F*)obj;
-    hCLsExp->SetName("hCLsExp"+getUniqueRootName());
-  }
-  obj = f->Get("hCLsErr1Up");
-  if ( obj==0 ){
-    cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsErr1Up' not found in root file - you can ignore this if you're not running in dataset mode" << fName << endl;
-  }
-  else if ( scanVar2=="" ){
-    hCLsErr1Up = (TH1F*)obj;
-    hCLsErr1Up->SetName("hCLsErr1Up"+getUniqueRootName());
-  }
-  obj = f->Get("hCLsErr1Dn");
-  if ( obj==0 ){
-    cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsErr1Dn' not found in root file - you can ignore this if you're not running in dataset mode" << fName << endl;
-  }
-  else if ( scanVar2=="" ){
-    hCLsErr1Dn = (TH1F*)obj;
-    hCLsErr1Dn->SetName("hCLsErr1Dn"+getUniqueRootName());
-  }
-  obj = f->Get("hCLsErr2Up");
-  if ( obj==0 ){
-    cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsErr2Up' not found in root file - you can ignore this if you're not running in dataset mode" << fName << endl;
-  }
-  else if ( scanVar2=="" ){
-    hCLsErr2Up = (TH1F*)obj;
-    hCLsErr2Up->SetName("hCLsErr2Up"+getUniqueRootName());
-  }
-  obj = f->Get("hCLsErr2Dn");
-  if ( obj==0 ){
-    cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsErr2Dn' not found in root file - you can ignore this if you're not running in dataset mode" << fName << endl;
-  }
-  else if ( scanVar2=="" ){
-    hCLsErr2Dn = (TH1F*)obj;
-    hCLsErr2Dn->SetName("hCLsErr2Dn"+getUniqueRootName());
+  bool lookForMixedCLs = std::find( arg->cls.begin(), arg->cls.end(), 2 ) != arg->cls.end();
+  if ( lookForMixedCLs ) {
+    obj = f->Get("hCLsFreq");
+    if ( obj==0 ){
+      cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsFreq' not found in root file - you can ignore this if you're not running in dataset mode " << fName << endl;
+    }
+    else if ( scanVar2=="" ){
+      hCLsFreq = (TH1F*)obj;
+      hCLsFreq->SetName("hCLsFreq"+getUniqueRootName());
+    }
+    obj = f->Get("hCLsExp");
+    if ( obj==0 ){
+      cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsExp' not found in root file - you can ignore this if you're not running in dataset mode " << fName << endl;
+    }
+    else if ( scanVar2=="" ){
+      hCLsExp = (TH1F*)obj;
+      hCLsExp->SetName("hCLsExp"+getUniqueRootName());
+    }
+    obj = f->Get("hCLsErr1Up");
+    if ( obj==0 ){
+      cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsErr1Up' not found in root file - you can ignore this if you're not running in dataset mode " << fName << endl;
+    }
+    else if ( scanVar2=="" ){
+      hCLsErr1Up = (TH1F*)obj;
+      hCLsErr1Up->SetName("hCLsErr1Up"+getUniqueRootName());
+    }
+    obj = f->Get("hCLsErr1Dn");
+    if ( obj==0 ){
+      cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsErr1Dn' not found in root file - you can ignore this if you're not running in dataset mode " << fName << endl;
+    }
+    else if ( scanVar2=="" ){
+      hCLsErr1Dn = (TH1F*)obj;
+      hCLsErr1Dn->SetName("hCLsErr1Dn"+getUniqueRootName());
+    }
+    obj = f->Get("hCLsErr2Up");
+    if ( obj==0 ){
+      cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsErr2Up' not found in root file - you can ignore this if you're not running in dataset mode " << fName << endl;
+    }
+    else if ( scanVar2=="" ){
+      hCLsErr2Up = (TH1F*)obj;
+      hCLsErr2Up->SetName("hCLsErr2Up"+getUniqueRootName());
+    }
+    obj = f->Get("hCLsErr2Dn");
+    if ( obj==0 ){
+      cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsErr2Dn' not found in root file - you can ignore this if you're not running in dataset mode " << fName << endl;
+    }
+    else if ( scanVar2=="" ){
+      hCLsErr2Dn = (TH1F*)obj;
+      hCLsErr2Dn->SetName("hCLsErr2Dn"+getUniqueRootName());
+    }
   }
   // load solutions: try the first one hundred
 	solutions.clear();
