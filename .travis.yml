@@ -6,8 +6,8 @@ services:
   - docker
 
 before_install:
-- docker pull root-project/root:v5-34-32
-- docker pull root-project/root:v6-04-00-patches
+- docker pull schubertkonstantin/root:v5-34-32
+- docker pull schubertkonstantin/root:v6-04-00-patches
 
 script:
 # root6
