@@ -6,39 +6,40 @@ services:
   - docker
 
 before_install:
-- docker pull schubertkonstantin/root:v5-34-32
-- docker pull schubertkonstantin/root:v6-04-00-patches
+- docker pull root-project/root:v5-34-32
+- docker pull root-project/root:v6-04-00-patches
 
 script:
 # root6
 - docker run --name raw_container_6 schubertkonstantin/root:v6-04-00-patches /bin/bash -c "mkdir /code"
-- docker cp  . raw_container_6:/code 
+- docker cp  . raw_container_6:/code
 - docker commit raw_container_6 image_with_files_6
 # build and install gammacombo
-- docker run --name built_container_6 image_with_files_6 /bin/bash -c "mkdir /code/build; cd /code/build; cmake ..; make; make install"
+- docker run --name built_container_6 image_with_files_6 /bin/bash -c "mkdir /code/build; cd /code/build; cmake ..; make -j8 ; make install"
 - docker commit built_container_6 built_image_6
-# run the tests 
-- >- 
-  docker run built_image_6 /bin/bash -c "
-      /code/tutorial/bin/tutorial_dataset_build_workspace;
-      /code/tutorial/bin/tutorial_dataset --var branchingRatio --scanrange 5e-7:15e-7 --npoints 5;
-      /code/tutorial/bin/tutorial_dataset -a pluginbatch --var branchingRatio --ntoys 5 --scanrange 5e-7:15e-7 --npoints 5;
-      /code/tutorial/bin/tutorial_dataset -a plugin --var branchingRatio --scanrange 5e-7:15e-7 --npoints 5
+# run the tests
+- >-
+  docker run built_image_6 /bin/bach -c "
+      cd /code;
+      /code/tutorial/bin/tutorial -c 6 --var a_gaus;
+      /code/tutorial/bin/tutorial -c 6 --var a_gaus -a pluginbatch --ntoys 5 --npoints 5 --npointstoy 5;
+      /code/tutorial/bin/tutorial -c 6 --var a_gaus -a plugin --npoints 5 --npointstoy 5 --nrun 1
       "
   docker run built_image_6 /bin/bash -c "
+      cd /code;
       /code/tutorial/bin/tutorial_dataset_build_workspace;
-      /code/tutorial/bin/tutorial_dataset --var branchingRatio --var exponent --npoints2dx 5 --npoints2dy 5 --scanrange 5e-7:2e-6 --scanrangey -1.1e-3:-8e-4;
-      " 
-# - docker run built_image_6 /bin/bash -c  "/code/tutorial/bin/tutorial -c 1 -c 2 -c 3  --var a_gaus --ps 1"
-
+      /code/tutorial/bin/tutorial_dataset --var branchingRatio --scanrange 5e-7:15e-7 --npoints 5;
+      /code/tutorial/bin/tutorial_dataset -a pluginbatch --var branchingRatio --ntoys 5 --scanrange 5e-7:15e-7 --npoints 5 --npointstoy 5;
+      /code/tutorial/bin/tutorial_dataset -a plugin --var branchingRatio --scanrange 5e-7:15e-7 --npoints 5 --npointstoy 5 --nrun 1
+      "
 # root5
 - docker run --name raw_container schubertkonstantin/root:v5-34-32 /bin/bash -c "mkdir /code"
-- docker cp  . raw_container:/code 
+- docker cp  . raw_container:/code
 - docker commit raw_container image_with_files
 # build and install gamacombo
 - docker run --name built_container image_with_files /bin/bash -c "mkdir /code/build; cd /code/build; cmake ..; make; make install"
 - docker commit built_container built_image
 # run the tests for root 5
-# - docker run built_image /bin/bash -c "/code/tutorial/bin/tutorial_dataset_build_workspace; /code/tutorial/bin/tutorial_dataset -a pluginbatch --lightfiles --var branchingRatio --ntoys 20 --scanrange 5e-7:15e-7 --npoints 10; /code/tutorial/bin/tutorial_dataset -a plugin --var branchingRatio" 
+# - docker run built_image /bin/bash -c "/code/tutorial/bin/tutorial_dataset_build_workspace; /code/tutorial/bin/tutorial_dataset -a pluginbatch --lightfiles --var branchingRatio --ntoys 20 --scanrange 5e-7:15e-7 --npoints 10; /code/tutorial/bin/tutorial_dataset -a plugin --var branchingRatio"
 # -docker run built_image /bin/bash -c  "/code/tutorial/bin/tutorial -c 1 -c 2 -c 3 -i --var a_gaus --ps 1"
 # the last line still causes a segfault in the master (!) at the moment, we will include it as soon as this is resolved.
