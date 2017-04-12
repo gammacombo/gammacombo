@@ -1793,6 +1793,7 @@ void GammaComboEngine::scanDataSet()
 					MethodDatasetsProbScan* scannerProb = new MethodDatasetsProbScan( (PDF_Datasets*) pdf[0], arg);
 					if ( !arg->plotpluginonly || ( arg->plotpluginonly && !arg->isAction("plot") ) ) {
 						if ( FileExists( m_fnamebuilder->getFileNameScanner(scannerProb)) ) {
+							scannerProb->initScan();
 							scannerProb->loadScanner( m_fnamebuilder->getFileNameScanner(scannerProb));
 						}
 						else {
