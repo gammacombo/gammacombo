@@ -7,6 +7,7 @@
 #include "RooAddPdf.h"
 #include "RooFormula.h"
 #include "RooExponential.h"
+#include "RooExtendPdf.h"
 #include "RooFitResult.h"
 #include "RooArgList.h"
 #include "RooWorkspace.h"
@@ -35,7 +36,10 @@ int main()
 
   // ... and of an exponential function to describe the background.
   RooRealVar exponent("exponent","exponent", -1e-3, -1., 1.);
+  RooRealVar n_bkg("Nbkg","Nbkg", 4900, 0, 10000);
   RooExponential background_model("background_model", "background_model", mass, exponent);
+  RooExponential bkg_only_model("bkg_only_model", "bkg_only_model", mass, exponent);
+  RooExtendPdf extended_bkg_model("extended_bkg_model", "extended_bkg_model", bkg_only_model, n_bkg);
 
   // The number of signal events is related to the branching ratio via the formula <branching ratio> = <n_sig> * <normalization factor>
   // The normalization factor is not exactly known. Instead, it has to be estimated. The estimator for the normalization factor is a global observable
@@ -49,7 +53,8 @@ int main()
   // Now we can build the mass model by adding the signal and background probability density functions
   RooRealVar branchingRatio("branchingRatio", "branchingRatio", 1e-7, 0,  0.0001);  // this is the branching ratio, the parameter of interest
   RooFormulaVar n_sig("Nsig", "branchingRatio/norm_constant", RooArgList(branchingRatio, norm_constant));
-  RooRealVar n_bkg("Nbkg","Nbkg", 4900, 0, 10000);
+  RooExtendPdf extended_sig_model("extended_sig_model", "extended_sig_model", signal_model, n_sig);
+
   RooAddPdf mass_model("mass_model","mass_model", RooArgList(signal_model, background_model), RooArgList(n_sig, n_bkg));
 
   /////////////////////////////////////////////////////////
@@ -88,6 +93,7 @@ int main()
   
   RooPlot* plot = mass.frame();
   data.plotOn(plot);	
+  extended_bkg_model.plotOn(plot, RooFit::LineColor(kRed));
   mass_model.plotOn(plot);
   TCanvas c("c","c",1024, 768);
   plot->Draw();
@@ -122,7 +128,7 @@ int main()
 
   RooWorkspace workspace("dataset_workspace");
   workspace.import(mass_model);
-  workspace.import(background_model);
+  workspace.import(extended_bkg_model);
   workspace.import(data);
   workspace.import(rooFitResult, "data_fit_result"); // this MUST be called data_fit_result
   workspace.defineSet("constraint_set", constraint_set, true);
