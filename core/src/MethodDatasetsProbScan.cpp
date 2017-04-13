@@ -94,7 +94,7 @@ void MethodDatasetsProbScan::initScan() {
     for ( int i = 1; i <= nPoints1d; i++ ) hChi2min->SetBinContent(i, 1e6);
 
     ///////////////////////////////////////////////////////////////////////////
-    // Titus: setup everything for 2D scan
+    // setup everything for 2D scan
     if ( scanVar2!="" )
     {
         RooRealVar *par2 = w->var(scanVar2);
@@ -152,16 +152,16 @@ void MethodDatasetsProbScan::initScan() {
     w->var(scanVar1)->setConstant(false);
     dataFreeFitResult = loadAndFit(pdf); // fit on data free
     assert(dataFreeFitResult);
-    chi2minGlobal = 2 * dataFreeFitResult->minNll();
+    // chi2minGlobal = 2 * dataFreeFitResult->minNll();
+    chi2minGlobal = 2 * pdf->getMinNll();
     std::cout << "=============== Global minimum (2*-Log(Likelihood)) is: 2*" << dataFreeFitResult->minNll() << " = " << chi2minGlobal << endl;
     // background only
     if ( pdf->getBkgPdf() )
     {
-      w->var(scanVar1)->setVal(0.);
-      w->var(scanVar1)->setConstant(true);
-      bkgOnlyFitResult = loadAndFit(pdf); // fit on data w/ bkg only hypoth
+      bkgOnlyFitResult = pdf->fitBkg(pdf->getData()); // fit on data w/ bkg only hypoth
       assert(bkgOnlyFitResult);
-      chi2minBkg = 2 * bkgOnlyFitResult->minNll();
+      // chi2minBkg = 2 * bkgOnlyFitResult->minNll();
+      chi2minBkg = 2 * pdf->getMinNllBkg();
       std::cout << "=============== Bkg minimum (2*-Log(Likelihood)) is: 2*" << bkgOnlyFitResult->minNll() << " = " << chi2minBkg << endl;
       w->var(scanVar1)->setConstant(false);
       if (chi2minBkg<chi2minGlobal)
@@ -171,6 +171,21 @@ void MethodDatasetsProbScan::initScan() {
           std::cout << "=============== New bkg minimum (2*-Log(Likelihood)) is: " << chi2minBkg << endl;
       }
     }
+    else if ( arg->cls.size()!=0 ){
+        std::cout << "**************************************************************************************************************************************" << std::endl;
+        std::cout << "WARNING: No Bkg PDF is given! Will calculate CLs method by assuming the bkgchi2 to be the chi2 of the first bin." << std::endl;
+        std::cout << "WARNING: This is only an approximate solution and MIGHT EVEN BE WRONG, if the first bin does not represent the background expectation!" << std::endl;
+        std::cout << "**************************************************************************************************************************************" << std::endl;
+
+        w->var(scanVar1)->setVal(min1);
+        w->var(scanVar1)->setConstant(true);
+        bkgOnlyFitResult = loadAndFit(pdf); // fit on data w/ bkg only hypoth
+        assert(bkgOnlyFitResult);
+        chi2minBkg = 2 * bkgOnlyFitResult->minNll();
+        std::cout << "=============== Bkg minimum (2*-Log(Likelihood)) is: 2*" << bkgOnlyFitResult->minNll() << " = " << chi2minBkg << endl;
+        w->var(scanVar1)->setConstant(false);
+    }
+
 
     if (arg->debug) {
         std::cout << "DEBUG in MethodDatasetsProbScan::initScan() - Scan initialized successfully!\n" << std::endl;
@@ -225,13 +240,13 @@ void MethodDatasetsProbScan::sethCLFromProbScanTree() {
         //double oneMinusCLBkg = TMath::Prob( deltaChi2Bkg, 1);
         double oneMinusCLBkg = getPValueTTestStatistic( deltaChi2Bkg, true );
         if ( hCLs->GetBinCenter( hCLs->FindBin( probScanTree->scanpoint ) ) <= oneMinusCLBkg ) {
-          hCLs->SetBinContent( hCLs->FindBin( probScanTree->scanpoint ), oneMinusCLBkg );
+            hCLs->SetBinContent( hCLs->FindBin( probScanTree->scanpoint ), oneMinusCLBkg );
         }
     }
 		// put in best fit value
 		hCL->SetBinContent(hCL->FindBin( probScanTree->scanbest ),1.);
 		hChi2min->SetBinContent(hCL->FindBin( probScanTree->scanbest),chi2minGlobal);
-    hCLs->SetBinContent(hCLs->FindBin( probScanTree->scanbest ), 1.);
+        hCLs->SetBinContent(hCLs->FindBin( probScanTree->scanbest ), 1.);
 
 		cout << "Best fit at: scanVar  = " << probScanTree->scanbest << " with Chi2Min: " << chi2minGlobal << endl;
 
@@ -388,8 +403,9 @@ int MethodDatasetsProbScan::scan1d(bool fast, bool reverse)
         this->probScanTree->statusScanData = result->status();
 
         // set chi2 of fixed fit: scan fit on data
-        this->probScanTree->chi2min           = 2 * result->minNll();
-        //this->probScanTree->chi2min           = 2 * pdf->getMinNll();
+        // CAVEAT: chi2min from fitresult gives incompatible results to chi2min from pdf
+        // this->probScanTree->chi2min           = 2 * result->minNll();
+        this->probScanTree->chi2min           = 2 * pdf->getMinNll();
         this->probScanTree->covQualScanData   = result->covQual();
         this->probScanTree->scanbest  = freeDataFitValue;
 
@@ -754,9 +770,12 @@ void MethodDatasetsProbScan::plotFitRes(TString fName) {
     // data invisible for norm
     w->data(pdf->getDataName())->plotOn( plot, Invisible() );
     // bkg pdf
-    setParameters(w, bkgOnlyFitResult);
-    w->pdf(pdf->getBkgPdfName())->plotOn( plot, LineColor(kRed) );
-    leg->AddEntry( plot->getObject(plot->numItems()-1), "Background Only Fit", "L");
+    if( pdf->getBkgPdf() ){
+        setParameters(w, bkgOnlyFitResult);
+        w->pdf(pdf->getBkgPdfName())->plotOn( plot, LineColor(kRed) );
+        leg->AddEntry( plot->getObject(plot->numItems()-1), "Background Only Fit", "L");
+    }
+    else cout << "MethodDatasetsProbScan::plotFitRes() : WARNING : No background pdf is given. Will only plot S+B hypothesis." << std::endl;
     // free fit
     setParameters(w, dataFreeFitResult);
     w->pdf(pdf->getPdfName())->plotOn(plot);
