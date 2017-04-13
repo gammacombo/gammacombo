@@ -1,6 +1,6 @@
 #include "CLIntervalPrinter.h"
 
-CLIntervalPrinter::CLIntervalPrinter(OptParser *arg, TString name, TString var, TString unit, TString method)
+CLIntervalPrinter::CLIntervalPrinter(OptParser *arg, TString name, TString var, TString unit, TString method, int CLsType)
 {
 	assert(arg);
 	_arg = arg;
@@ -8,6 +8,7 @@ CLIntervalPrinter::CLIntervalPrinter(OptParser *arg, TString name, TString var, 
 	_var = var;
 	_unit = unit;
 	_method = method;
+	_clstype = CLsType;
 	_degrees= false;
 }
 
@@ -65,6 +66,9 @@ void CLIntervalPrinter::print()
 			// to the CLIntervalMaker mechanism to get more useful information
 			// on the CL intervals
 			cout << ", " << _method;
+			if (_clstype==1) cout << " CL_s";
+			if (_clstype==2) cout << " CL_s Freq";
+
 			if ( _arg->isQuickhack(8) ){
 				if ( _arg->verbose ){
 					cout << Form(", central: %-7s", i.centralmethod.Data());
@@ -82,7 +86,9 @@ void CLIntervalPrinter::print()
 void CLIntervalPrinter::savePython()
 {
 	TString dirname = "plots/cl";
-        TString ofname = dirname+"/clintervals_"+_name+"_"+_var+"_"+_method+".py";
+        TString ofname;
+        if (_clstype==0) ofname = dirname+"/clintervals_"+_name+"_"+_var+"_"+_method+".py";
+        else ofname = dirname+"/clintervals_"+_name+"_"+_var+"_"+_method+"_CLs"+std::to_string(_clstype)+".py";
         if ( _arg->verbose ) cout << "CLIntervalPrinter::save() : saving " << ofname << endl;
         system("mkdir -p "+dirname);
         ofstream outf;

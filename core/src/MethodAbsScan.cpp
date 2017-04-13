@@ -619,11 +619,14 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 	{
 		histogramCL =this->getHCLs();
 	}
-  else if (CLsType==2 && this->getHCLsFreq())
-  {
-    histogramCL = this->getHCLsFreq();
-  }
+  	else if (CLsType==2 && this->getHCLsFreq())
+  	{
+    	histogramCL = this->getHCLsFreq();
+  	}
 
+  	if(CLsType!=0){
+  		std::cout<< "Confidence Intervals for CLs method "<< CLsType << ":" << std::endl;
+  	}
 	if ( arg->isQuickhack(8) ){
 		// \todo Switch to the new CLIntervalMaker mechanism. It can be activated
 		// already using --qh 8, but it really is in beta stage still
@@ -645,16 +648,16 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 		cout << endl;
 	}
 
-	//if(solutions.empty()){
-	//  cout 	<< "MethodAbsScan::calcCLintervals() : Solutions vector empty. "
-	//							<<"Using simple method with  linear splines."<<endl;
- 	//	this->calcCLintervalsSimple(CLsType);
-	//	return;
-	//}
-	//else {		//Since I want to have the CL_s method also, I do the simple method anyway.
-	//	cout<<"Using simple method with  linear splines."<<endl;
-	//	this->calcCLintervalsSimple(CLsType);
-	//}
+	if(solutions.empty()){
+	 cout 	<< "MethodAbsScan::calcCLintervals() : Solutions vector empty. "
+								<<"Using simple method with  linear splines."<<endl;
+ 		this->calcCLintervalsSimple(CLsType);
+		return;
+	}
+	// else if((CLsType==1||CLsType==2) && !this->getHCLs()) {
+	// 	cout<<"Using simple method with  linear splines."<<endl;
+	// 	this->calcCLintervalsSimple(CLsType);
+	// }
 
   if ( arg->debug ) cout << "MethodAbsScan::calcCLintervals() : ";
   cout << "CONFIDENCE INTERVALS for combination " << name << endl << endl;
@@ -740,7 +743,7 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 			clintervals1sigma.push_back(i);
 		}
 	}
-	printCLintervals();
+	printCLintervals(CLsType);
 
 
 
@@ -821,10 +824,10 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 ///
 /// Print CL intervals.
 ///
-void MethodAbsScan::printCLintervals()
+void MethodAbsScan::printCLintervals(int CLsType)
 {
 	TString unit = w->var(scanVar1)->getUnit();
-	CLIntervalPrinter clp(arg, name, scanVar1, unit, methodName);
+	CLIntervalPrinter clp(arg, name, scanVar1, unit, methodName, CLsType);
 	clp.setDegrees(isAngle(w->var(scanVar1)));
 	clp.addIntervals(clintervals1sigma);
 	clp.addIntervals(clintervals2sigma);
@@ -1473,7 +1476,7 @@ void MethodAbsScan::calcCLintervalsSimple(int CLsType)
   if ( (!this->hCLs && CLsType==1) || (!this->hCLsFreq && CLsType==2) )
   {
   	std::cout << "**************************************************************************************************************************************" << std::endl;
-  	std::cout << "WARNING: hCLs is empty! Will calculate CLs intervals by noramlizing the p values to the p value of the first bin." << std::endl;
+  	std::cout << "WARNING: hCLs is empty! Will calculate CLs intervals by normalising the p values to the p value of the first bin." << std::endl;
   	std::cout << "WARNING: This is only an approximate solution and MIGHT EVEN BE WRONG, if the first bin does not represent the background expectation!" << std::endl;
   	std::cout << "**************************************************************************************************************************************" << std::endl;
   	clintervals1sigma.clear();
