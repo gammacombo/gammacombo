@@ -109,7 +109,7 @@ class MethodAbsScan
 		void                            plotOn(OneMinusClPlotAbs *plot, int CLsType=0); // CLsType: 0 (off), 1 (naive CLs t_s+b - t_b), 2 (freq CLs)
 		void                            plotPulls(int nSolution=0);
 		virtual void                    print();
-		void                            printCLintervals();
+		void                            printCLintervals(int CLsType);
 		void                            printLocalMinima();
     void                            saveLocalMinima(TString fName="");
 		void                            saveScanner(TString fName="");
