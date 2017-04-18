@@ -624,7 +624,8 @@ int MethodDatasetsProbScan::scan2d()
                 // else                   fr = fitToMinForce(w, combiner->getPdfName());
 
                 fr = this->loadAndFit(this->pdf);   //Titus: change fitting strategy to the one from the datasets \todo: should be possible to use the fittominforce etc methods
-                double chi2minScan = 2 * fr->minNll(); //Titus: take 2*minNll vs. minNll? Where is the squared in the main gammacombo?
+                // double chi2minScan = 2 * fr->minNll(); //Titus: take 2*minNll vs. minNll? Where is the squared in the main gammacombo?
+                double chi2minScan = 2 * pdf->getMinNll();
                 tFit.Stop();
                 tSlimResult.Start(false);
                 RooSlimFitResult *r = new RooSlimFitResult(fr); // try to save memory by using the slim fit result
