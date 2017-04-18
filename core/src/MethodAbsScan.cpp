@@ -654,10 +654,10 @@ void MethodAbsScan::calcCLintervals(int CLsType)
  		this->calcCLintervalsSimple(CLsType);
 		return;
 	}
-	// else if((CLsType==1||CLsType==2) && !this->getHCLs()) {
-	// 	cout<<"Using simple method with  linear splines."<<endl;
-	// 	this->calcCLintervalsSimple(CLsType);
-	// }
+	else if((CLsType==1||CLsType==2) && !this->getHCLs()) {
+		cout<<"Using simple method with  linear splines."<<endl;
+		this->calcCLintervalsSimple(CLsType);
+	}
 
   if ( arg->debug ) cout << "MethodAbsScan::calcCLintervals() : ";
   cout << "CONFIDENCE INTERVALS for combination " << name << endl << endl;
@@ -1466,8 +1466,6 @@ void MethodAbsScan::calcCLintervalsSimple(int CLsType)
 		cout << ", " << methodName << " (simple boundary scan)" << endl;
 	  }
 	}
-
-
 	////////////////////////////////////////////////////////////////////////////////////////////
 	//// Add a hacky calculation of the CL_s intervals
 	//// \todo: Do it properly from the very start by introducing a bkg model and propagate it to the entire framework.
