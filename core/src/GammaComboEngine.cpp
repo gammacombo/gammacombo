@@ -1214,15 +1214,15 @@ void GammaComboEngine::make2dProbPlot(MethodProbScan *scanner, int cId)
 	OneMinusClPlot2d* plotf;
 	if (scanner->getMethodName()=="Prob") plotf = new OneMinusClPlot2d(arg, m_fnamebuilder->getFileNamePlotSingle(cmb, cId)+"_full", "p-value histogram: "+scanner->getTitle());
 	else if (scanner->getMethodName()=="DatasetsProb") plotf = new OneMinusClPlot2d(arg, m_fnamebuilder->getFileNamePlot(cmb)+"_full", "p-value histogram: "+scanner->getTitle());	//Titus: change to make datasets plot possible
-	else cout << "The name of the scanner mathes neither Prob nor DatasetsProb!" << endl;
-	scanner->plotOn(plotf);
+	else cout << "The name of the scanner matches neither Prob nor DatasetsProb!" << endl;
+	scanner->plotOn(plotf,0);
 	plotf->DrawFull();
 	plotf->save();
 	// contour plot
 	scanner->setDrawSolution(arg->plotsolutions[cId]);
 	scanner->setLineColor(colorsLine[cId]);
 	if(arg->cls.size()>0) scanner->plotOn(plot, 1);
-	scanner->plotOn(plot);
+	scanner->plotOn(plot, 0);
 	// only draw the plot once when multiple scanners are plotted,
 	// else we end up with too many graphs, and the transparency setting
 	// gets screwed up

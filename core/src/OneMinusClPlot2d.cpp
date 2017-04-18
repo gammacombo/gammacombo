@@ -266,27 +266,27 @@ void OneMinusClPlot2d::makeNewPlotStyle(TString htmlColor, int ROOTColor)
 ///
 /// Add a scanner to the list of things to be plotted.
 ///
-void OneMinusClPlot2d::addScanner(MethodAbsScan* s, bool do_cls)
+void OneMinusClPlot2d::addScanner(MethodAbsScan* s, int CLsType)
 {
 	if ( arg->debug ) cout << "OneMinusClPlot2d::addScanner() : adding " << s->getName() << endl;
-	if (do_cls && !s->getHCLs2d()){
+	if ((CLsType==1 || CLsType==2) && !s->getHCLs2d()){
 		cout << "OneMinusClPlot2d::addScanner() : ERROR : No hCLs available. Will not plot." << endl;
 		return;
 	}
 	scanners.push_back(s);
-	if ( (s->getMethodName().EqualTo("Prob") || s->getMethodName().EqualTo("DatasetsProb")) && !do_cls){
+	if ( (s->getMethodName().EqualTo("Prob") || s->getMethodName().EqualTo("DatasetsProb")) && CLsType==0){
 		histosType.push_back(kChi2);
 		histos.push_back(s->getHchisq2d());
 	}
 	else {
 		histosType.push_back(kPvalue);
-		if(do_cls) 	histos.push_back(s->getHCLs2d());
+		if(CLsType==1 ||CLsType==2) 	histos.push_back(s->getHCLs2d());
 		else 		histos.push_back(s->getHCL2d());
 	}
-	do_CLs.push_back(do_cls);
+	do_CLs.push_back(CLsType);
 	if ( arg->smooth2d ) for ( int i=0; i<arg->nsmooth; i++ ) { histos[histos.size()-1]->Smooth(); }
 	title = s->getTitle();
-	if(do_cls) title = s->getTitle() + " CLs";
+	if(CLsType==1 || CLsType==2) title = s->getTitle() + " CLs";
 	m_contours.push_back(0);
 	m_contours_computed.push_back(false);
 }
@@ -383,6 +383,8 @@ void OneMinusClPlot2d::DrawFull()
 	}
 	m_mainCanvas->cd();
 	m_mainCanvas->SetMargin(0.1,0.15,0.1,0.1);
+	if(histos.size()==0) std::cout << "OneMinusClPlot2d::DrawFull() : No histogram to plot!" << std::endl;
+	if(!histos[0]) std::cout << "OneMinusClPlot2d::DrawFull() : Histogram broken!" << std::endl;
 	TH2F *hChi2 = histos[0];
 	hChi2->SetContour(95);
 	hChi2->GetXaxis()->SetTitle(xTitle!="" ? xTitle : (TString)scanners[0]->getScanVar1()->GetTitle());
