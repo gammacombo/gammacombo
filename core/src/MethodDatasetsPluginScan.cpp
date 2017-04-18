@@ -766,13 +766,21 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             this->pdf->generateToys(); // this is generating the toy dataset
             this->pdf->generateToysGlobalObservables(); // this is generating the toy global observables and saves globalObs in snapshot
 
-						// keep hold of the background only toys
-						if ( i==0 ) {
-							cls_bkgOnlyToys.push_back( (RooDataSet*)this->pdf->getToyObservables()->Clone() ); // need to figure out why clone is needed
-						}
-						else {
-							assert( cls_bkgOnlyToys.size() == nToys );
-						}
+
+
+			// keep hold of the background only toys
+            if(i==0){
+                if(pdf->getBkgPdf()){
+                    pdf->generateBkgToys();
+                    cls_bkgOnlyToys.push_back( (RooDataSet*)this->pdf->getBkgToyObservables()->Clone() ); //surely not optimal
+                }
+    			else {
+    				cls_bkgOnlyToys.push_back( (RooDataSet*)this->pdf->getToyObservables()->Clone() ); // need to figure out why clone is needed
+    			}
+            }
+			else {
+				assert( cls_bkgOnlyToys.size() == nToys );
+			}
 
             // \todo: comment the following back in once I know what it does ...
             //      t.storeParsGau( we need to pass a rooargset of the means of the global observables here);
@@ -844,11 +852,11 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             parameterToScan->setConstant(true);
             this->pdf->setFitStrategy(0);
             // temporarily store our current toy here so we can put it back in a minute
-						RooDataSet *tempData = (RooDataSet*)this->pdf->getToyObservables();
-						// now get our background only toy (to fit under this hypothesis)
+			RooDataSet *tempData = (RooDataSet*)this->pdf->getToyObservables();
+			// now get our background only toy (to fit under this hypothesis)
             RooDataSet *bkgToy = (RooDataSet*)cls_bkgOnlyToys[j];
-						if (arg->debug) cout << "Setting background toy as data " << bkgToy << endl;
-						this->pdf->setToyData( bkgToy );
+			if (arg->debug) cout << "Setting background toy as data " << bkgToy << endl;
+			this->pdf->setToyData( bkgToy );
             RooFitResult* rb   = this->loadAndFit(this->pdf);
             assert(rb);
             pdf->setMinNllScan(pdf->minNll);

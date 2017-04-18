@@ -333,6 +333,20 @@ void   PDF_Datasets::generateToys(int SeedShift) {
     this->isToyDataSet    = kTRUE;
 }
 
+void   PDF_Datasets::generateBkgToys(int SeedShift) {
+
+    initializeRandomGenerator(SeedShift);
+
+    if(isBkgPdfSet){
+        RooDataSet* toys = pdfBkg->generate(*observables, RooFit::NumEvents(wspc->data(dataName)->numEntries()), RooFit::Extended(kTRUE));
+        this->toyBkgObservables  = toys;
+    }
+    else{
+        std::cerr << "Error in PDF_Datasets::generateBkgToys: No bkg pdf given." << std::endl;
+        exit(EXIT_FAILURE);
+    }
+}
+
 /*! \brief Initializes the random generator
  *
  *  If seedShift is set to zero, the machine environment is used to generate
