@@ -49,18 +49,13 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
     chi2minGlobal = probScan->getChi2minGlobal();
     std::cout << "=============== Global Minimum (2*-Log(Likelihood)) is: 2*" << dataFreeFitResult->minNll() << " = " << chi2minGlobal << endl;
 
-    // if bkg pdf is given, print bkg chi2
-    if(pdf->getBkgPdf())
+    chi2minBkg = probScan->getChi2minBkg();
+    std::cout << "=============== Bkg minimum (2*-Log(Likelihood)) is: " << chi2minBkg << endl;
+    if (chi2minBkg<chi2minGlobal)
     {
-        chi2minBkg = probScan->getChi2minBkg();
-        std::cout << "=============== Bkg minimum (2*-Log(Likelihood)) is: " << chi2minBkg << endl;
-        if (chi2minBkg<chi2minGlobal)
-        {
-            std::cout << "WARNING: BKG MINIMUM IS LOWER THAN GLOBAL MINIMUM! The likelihoods are screwed up! Set bkg minimum to global minimum for consistency." << std::endl;
-            chi2minBkg = chi2minGlobal;
-            std::cout << "=============== New bkg minimum (2*-Log(Likelihood)) is: " << chi2minBkg << endl;
-        }
-
+        std::cout << "WARNING: BKG MINIMUM IS LOWER THAN GLOBAL MINIMUM! The likelihoods are screwed up! Set bkg minimum to global minimum for consistency." << std::endl;
+        chi2minBkg = chi2minGlobal;
+        std::cout << "=============== New bkg minimum (2*-Log(Likelihood)) is: " << chi2minBkg << endl;
     }
 
     if ( !w->set(pdf->getObsName()) ) {
