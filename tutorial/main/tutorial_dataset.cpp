@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
   // 8.) There are various ways of prettyfying your plots - for CLs stuff you can try adding --qh 23 (moves the CL label) --group LHCb (adds LHCb label) --prelim (add preliminary label)
   //        bin/tutorial_dataset -a plugin --var branchingRatio --npoints 50 --scanrange 0.:1.e-6 -j 1-5 -a plot --cls 1 --cls 2 --qh 23 --group LHCb --prelim
   //
-  // If you have any problems contact Matthew Kenzie (matthew.kenzie@cern.ch) or Titus Mombacher (titus.mombacher@cern.ch)
+  // If you have any problems contact Matthew Kenzie (matthew.kenzie@cern.ch) or Titus Mombächer (titus.mombacher@cern.ch)
 
   // Load the workspace from its file
   TFile f("workspace.root");

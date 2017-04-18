@@ -140,12 +140,13 @@ class PDF_Abs
 		// The following three members are to gain performance during
 		// toy generation - generating 1000 toys is much faster than 1000 times one toy.
 		int                     nToyObs;        // Number of toy observables to be pregenerated.
-		RooDataSet*             toyObservables; // A dataset holding nToyObs pregenerated toy observables.
+		RooDataSet*             toyObservables; // A dataset holding nToyObs pregenerated bkg only toy observables.
+		RooDataSet*             toyBkgObservables; // A dataset holding nToyObs pregenerated toy observables.		
 		int                     iToyObs;        // Index of next unused set of toy observables.
 		int						gcId;			// ID of this PDF inside a GammaCombo object. Used to refer to this PDF.
 
 	private:
-		void						printCorMatrix(TString title, TString source, const TMatrixDSym& cor) const;
+		void					  printCorMatrix(TString title, TString source, const TMatrixDSym& cor) const;
 		TString                   uniquifyThisString(TString s, int uID);
 		TString                   uniqueID;       	// see also uniquify()
 		static unsigned long long counter;        	// Counts the total number of PDF_Abs objects that are created.

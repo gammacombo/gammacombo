@@ -31,6 +31,7 @@ public:
     virtual RooFitResult* fitBkg(RooDataSet* dataToFit);
     virtual void          generateToys(int SeedShift = 0);
     virtual void          generateToysGlobalObservables(int SeedShift = 0);
+    virtual void          generateBkgToys(int SeedShift = 0);
 
     void                  initConstraints(const TString& setName);
     void                  initData(const TString& name);
@@ -62,6 +63,7 @@ public:
     TString               getPdfName() {return pdfName;};
     TString               getBkgPdfName() {return pdfBkgName;};
     RooDataSet*           getToyObservables() {return this->toyObservables;};
+    RooDataSet*           getBkgToyObservables() {return toyBkgObservables;};
     RooWorkspace*         getWorkspace() {return wspc;};
     // setters
     inline void           setFitStatus(int stat = 0) {fitStatus = stat;};
