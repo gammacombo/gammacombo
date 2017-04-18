@@ -114,7 +114,7 @@ void MethodDatasetsProbScan::initScan() {
         float min2 = par2->getMin();
         float max2 = par2->getMax();
         hCL2d      = new TH2F("hCL2d"+getUniqueRootName(),      "hCL2d"+pdfName, nPoints2dx, min1, max1, nPoints2dy, min2, max2);
-        hCLs2d      = new TH2F("hCL2d"+getUniqueRootName(),      "hCL2d"+pdfName, nPoints2dx, min1, max1, nPoints2dy, min2, max2);
+        hCLs2d      = new TH2F("hCLs2d"+getUniqueRootName(),      "hCLs2d"+pdfName, nPoints2dx, min1, max1, nPoints2dy, min2, max2);
         hChi2min2d = new TH2F("hChi2min2d"+getUniqueRootName(), "hChi2min",      nPoints2dx, min1, max1, nPoints2dy, min2, max2);
 
         for ( int i=1; i<=nPoints2dx; i++ )
@@ -181,7 +181,8 @@ void MethodDatasetsProbScan::initScan() {
         w->var(scanVar1)->setConstant(true);
         bkgOnlyFitResult = loadAndFit(pdf); // fit on data w/ bkg only hypoth
         assert(bkgOnlyFitResult);
-        chi2minBkg = 2 * bkgOnlyFitResult->minNll();
+        // chi2minBkg = 2 * bkgOnlyFitResult->minNll();
+        chi2minBkg = 2 * pdf->getMinNll();
         std::cout << "=============== Bkg minimum (2*-Log(Likelihood)) is: 2*" << bkgOnlyFitResult->minNll() << " = " << chi2minBkg << endl;
         w->var(scanVar1)->setConstant(false);
     }
