@@ -3,7 +3,7 @@
  * Author: Maximilian Schlupp, maxschlupp@gmail.com
  * Author: Konstantin Schubert, schubert.konstantin@gmail.com
  * Date: October 2016
- * 
+ *
  * Abstract class for handling generic PDFs
  * The RooArgLists for Observables and Parameters must be
  * provided by an external workspace. Either there are
@@ -32,6 +32,7 @@ public:
     virtual void          generateToys(int SeedShift = 0);
     virtual void          generateToysGlobalObservables(int SeedShift = 0);
     virtual void          generateBkgToys(int SeedShift = 0);
+    virtual void          generateBkgToysGlobalObservables(int SeedShift = 0);
 
     void                  initConstraints(const TString& setName);
     void                  initData(const TString& name);

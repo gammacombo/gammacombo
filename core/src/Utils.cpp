@@ -914,6 +914,28 @@ TGraph* Utils::convertTH1ToTGraph(TH1* h, bool withErrors)
   return g;
 }
 
+/// Smooths a graph
+TGraph* Utils::smoothGraph(TGraph* g, int option)
+{
+  TGraphSmooth *smoother = new TGraphSmooth();
+  TGraph *gr;
+  if (option==0) gr = (TGraph*)smoother->SmoothSuper( g )->Clone(Form("sm%s",g->GetName()));
+  else if (option==1) gr = (TGraph*)smoother->Approx( g )->Clone(Form("sm%s",g->GetName()));
+  else {
+    cout << "Utils::smoothGraph() : ERROR - no such option " << option << endl;
+    exit(1);
+  }
+  delete smoother;
+  return gr;
+}
+
+// Smooths a histogram
+TGraph* Utils::smoothHist(TH1* h, int option)
+{
+  TGraph *g = convertTH1ToTGraph(h);
+  return smoothGraph(g);
+}
+
 
 ///
 /// Creates a fresh, independent copy of the input histogram.

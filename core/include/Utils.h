@@ -28,6 +28,7 @@
 #include "TTree.h"
 #include "TH1.h"
 #include "TGraphErrors.h"
+#include "TGraphSmooth.h"
 #include "TMatrixDSymEigen.h"
 #include "TVectorD.h"
 #include <sys/stat.h>
@@ -83,6 +84,8 @@ namespace Utils
 
 	TTree*  convertRooDatasetToTTree(RooDataSet *d);
   TGraph* convertTH1ToTGraph(TH1* h, bool withErrors=false);
+  TGraph* smoothGraph(TGraph* g, int option=0);
+  TGraph* smoothHist(TH1* h, int option=0);
 
 	void mergeNamedSets(RooWorkspace *w, TString mergedSet, TString set1, TString set2);
 	void randomizeParameters(RooWorkspace* w, TString setname);

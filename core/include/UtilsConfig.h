@@ -118,6 +118,7 @@ namespace Utils
     lhcb_3fb,
     lhcb_10fb,
     lhcb_22fb,
+    lhcb_50fb,
     lhcb_3fb_WA,
     lhcb_10fb_WA,
     lhcb_22fb_WA,

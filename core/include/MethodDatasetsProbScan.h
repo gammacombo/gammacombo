@@ -23,6 +23,7 @@ public:
 
     virtual void        initScan();
     void                loadScanFromFile(TString fileNameBaseIn = "default");
+    void                loadFitResults(TString file);
     void                loadParameterLimits();
     virtual void        print();
     virtual int         scan1d(bool fast=false, bool reverse=false);

@@ -53,6 +53,7 @@ private:
     void                setAndPrintFitStatusConstrainedToys(const ToyTree& ToyTree);
     void                setAndPrintFitStatusFreeToys(const ToyTree& ToyTree);
     void                checkExtProfileLH();
+    void                makeControlPlots( std::map<int, std::vector<double> > bVals, std::map<int, std::vector<double> > sbVals );
 };
 
 #endif

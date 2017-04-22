@@ -358,6 +358,9 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
     cout << s->getName() << " (" << s->getMethodName() << ")" << endl;
   }
   m_mainCanvas->cd();
+
+  s->checkCLs();
+
   TH1F *hObs    = (TH1F*)s->getHCLsFreq()->Clone(getUniqueRootName());
   TH1F *hExp    = (TH1F*)s->getHCLsExp()->Clone(getUniqueRootName());
   TH1F *hErr1Up = (TH1F*)s->getHCLsErr1Up()->Clone(getUniqueRootName());
@@ -525,8 +528,9 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
   m_mainCanvas->RedrawAxis();
   m_mainCanvas->Update();
   m_mainCanvas->Modified();
-   m_mainCanvas->Show();
+  m_mainCanvas->Show();
   savePlot( m_mainCanvas, name+"_cls"+arg->plotext );
+  m_mainCanvas->SetTicks(false);
 }
 
 void OneMinusClPlot::drawVerticalLine(float x, int color, int style)
@@ -750,16 +754,24 @@ void OneMinusClPlot::Draw()
 	{
 		TString legDrawOption = "lf";
 		if ( plotPluginMarkers
-				&& ( scanners[i]->getMethodName()=="Plugin"
-					|| scanners[i]->getMethodName()=="BergerBoos"
-					|| scanners[i]->getMethodName()=="DatasetsPlugin" ) )
-		{
-			legDrawOption = "lep";
-		}
+        && ( scanners[i]->getMethodName()=="Plugin"
+          || scanners[i]->getMethodName()=="BergerBoos"
+          || scanners[i]->getMethodName()=="DatasetsPlugin" ) )
+    {
+      legDrawOption = "lep";
+    }
     if ( arg->plotlegstyle != "default" ) legDrawOption = arg->plotlegstyle;
 
     TString legTitle = scanners[i]->getTitle();
-    if ( !arg->isQuickhack(29) ) {
+    if ( legTitle=="default" ) {
+      if ( scanners[i]->getMethodName().Contains("Prob") ) legTitle = do_CLs[i] ? "Prob CLs" : "Prob";
+      if ( scanners[i]->getMethodName().Contains("Plugin") ) {
+        if ( do_CLs[i]==0 ) legTitle    = "Plugin";
+        else if (do_CLs[i]==1) legTitle = "Plugin CLs";
+        else if (do_CLs[i]==2) legTitle = "Mixed CLs";
+      }
+    }
+    else if ( !arg->isQuickhack(29) ) {
       if ( scanners[i]->getMethodName().Contains("Prob") ) legTitle += do_CLs[i] ? " (Prob CLs)" : " (Prob)";
       if ( scanners[i]->getMethodName().Contains("Plugin") ) {
         if ( do_CLs[i]==0 )    legTitle += " (Plugin)";
