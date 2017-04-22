@@ -76,7 +76,8 @@ int main(int argc, char* argv[])
   pdf->initConstraints("constraint_set"); // RooArgSet containing the "constraint" PDF's
   // the below are optional (will not effect the results but just make some plots for you)
   pdf->addFitObs("mass");                         // this is not required but will make some sanity plots
-  pdf->unblind("mass","[4360:5260],[5460:6360]"); // have to be a bit careful about staying blind (this code isn't yet really blind friendly)
+  //pdf->unblind("mass","[4360:5260],[5460:6360]"); // have to be a bit careful about staying blind (this code isn't yet really blind friendly)
+  pdf->unblind("mass", "[4360:6360]" );
 
   // Start the Gammacombo Engine
   GammaComboEngine gc("tutorial_dataset", argc, argv);

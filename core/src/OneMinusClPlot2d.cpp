@@ -451,10 +451,16 @@ void OneMinusClPlot2d::drawLegend()
 
 	// build legend
 	for ( int i = 0; i < histos.size(); i++ ){
+    TString legTitle = scanners[i]->getTitle();
+    if ( legTitle=="default" ) {
+      if ( do_CLs[i] ) legTitle = "Prob CLs";
+      else legTitle = "Prob";
+    }
+    else if ( do_CLs[i] ) legTitle += " CLs";
+
 		if ( histos.size()==1 ){
 			// no legend symbol if only one scanner to be drawn
-			if(do_CLs[i]) m_legend->AddEntry((TObject*)0, scanners[i]->getTitle() + " CLs", "");
-			else m_legend->AddEntry((TObject*)0, scanners[i]->getTitle(), "");
+			m_legend->AddEntry((TObject*)0, legTitle, "");
 		}
 		else{
 			// construct a dummy TGraph that uses the style of the 1sigma line
@@ -472,8 +478,7 @@ void OneMinusClPlot2d::drawLegend()
 			TString options = "f";
 			if ( scanners[i]->getDrawSolution() ) options += "p"; // only plot marker symbol when solutions are plotted
 			if ( scanners[i]->getTitle() != "noleg" ) {
-				if(do_CLs[i])	m_legend->AddEntry(g, scanners[i]->getTitle() + " CLs", options);
-				else		m_legend->AddEntry(g, scanners[i]->getTitle(), options);
+        m_legend->AddEntry(g, legTitle, options );
 			}
 		}
 	}

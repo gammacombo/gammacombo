@@ -233,6 +233,23 @@ OptParser*   PDF_Datasets::getArg() {
     exit(EXIT_FAILURE);
 }
 
+void  PDF_Datasets::generateBkgToysGlobalObservables(int SeedShift) {
+
+    initializeRandomGenerator(SeedShift);
+
+    // generate the global observables into a RooArgSet
+    const RooArgSet* set = pdfBkg->generate(*(wspc->set(globalObsName)), 1)->get(0);
+    // iterate over the generated values and use them to update the actual global observables in the workspace
+
+    TIterator* it =  set->createIterator();
+    while (RooRealVar* genVal = dynamic_cast<RooRealVar*>(it->Next())) {
+        wspc->var(genVal->GetName())->setVal(genVal->getVal());
+    }
+
+    // take a snapshot of the global variables in the workspace so they can be loaded later
+    wspc->saveSnapshot(globalObsToySnapshotName, *wspc->set(globalObsName));
+}
+
 
 void  PDF_Datasets::generateToysGlobalObservables(int SeedShift) {
 

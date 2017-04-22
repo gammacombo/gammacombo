@@ -1,3 +1,4 @@
+// vim: ts=2 sw=2 et
 /*
  * Gamma Combination
  * Author: Maximilian Schlupp, maxschlupp@gmail.com
@@ -14,6 +15,8 @@
 
 #include "MethodDatasetsPluginScan.h"
 #include "TRandom3.h"
+#include "TArrow.h"
+#include "TLatex.h"
 #include <algorithm>
 #include <ios>
 #include <iomanip>
@@ -422,7 +425,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
             h_gof->Fill(t.scanpoint);
         }
         // all toys
-        if ( valid) { //inPhysicalRegion ){
+        if ( valid) { //inPhysicalRegion )
             // not efficient! TMath::Prob evaluated each toy, only needed once.
             // come up with smarter way
             h_all->Fill(t.scanpoint);
@@ -561,9 +564,11 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
           cout << "At scanpoint " << std::scientific << hCL->GetBinCenter(i) << ": ===== number of toys for pValue calculation: " << nbetter << endl;
           cout << "At scanpoint " << hCL->GetBinCenter(i) << ": ===== pValue:         " << p << endl;
           cout << "At scanpoint " << hCL->GetBinCenter(i) << ": ===== pValue CLs:     " << p_cls << endl;
-          cout << "At scanpoint " << hCL->GetBinCenter(i) << ": ===== pValue CLsFreq: " << p / dataCLb << endl;
+          cout << "At scanpoint " << hCL->GetBinCenter(i) << ": ===== pValue CLsFreq: " << hCLsFreq->GetBinContent(i) << endl;
         }
     }
+
+    if ( arg->controlplot ) makeControlPlots( sampledBValues, sampledSBValues );
 
     if (arg->debug || drawPlots) {
         TCanvas* can = new TCanvas("can", "can", 1024, 786);
@@ -679,10 +684,59 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
     RooDataSet* parsFunctionCall = new RooDataSet("parsFunctionCall", "parsFunctionCall", *w->set(pdf->getParName()));
     parsFunctionCall->add(*w->set(pdf->getParName()));
 
-		// if CLs toys we need to keep hold of what's going at the first point which should also be at zero
+		// if CLs toys we need to keep hold of what's going on in the bkg only case
+    // there is a small overhead here but it's necessary because the bkg only hypothesis
+    // might not necessarily be in the scan range (although often it will be the first point)
 		vector<RooDataSet*> cls_bkgOnlyToys;
     vector<float> chi2minGlobalBkgToysStore;
     vector<float> scanbestBkgToysStore;
+    // Titus: Try importance sampling from the combination part -> works, but definitely needs improvement in precision
+    int nActualToys = nToys;
+    if ( arg->importance ){
+        float plhPvalue = TMath::Prob(toyTree.chi2min - toyTree.chi2minGlobal,1);
+        nActualToys = nToys*importance(plhPvalue);
+    }
+    for ( int j = 0; j < nActualToys; j++ ) {
+      if(pdf->getBkgPdf()){
+        pdf->generateBkgToys();
+        pdf->generateToysGlobalObservables();
+        RooDataSet* bkgOnlyToy = pdf->getBkgToyObservables();
+        cls_bkgOnlyToys.push_back( (RooDataSet*)bkgOnlyToy->Clone() ); // clone required because of deleteToys() call at end of loop
+        pdf->setToyData( bkgOnlyToy );
+        parameterToScan->setConstant(false);
+        RooFitResult *rb = loadAndFit(pdf);
+        assert(rb);
+        pdf->setMinNllScan(pdf->minNll);
+        if (pdf->getFitStatus() != 0) {
+            pdf->setFitStrategy(1);
+            delete rb;
+            rb = loadAndFit(pdf);
+            pdf->setMinNllScan(pdf->minNll);
+            assert(rb);
+
+            if (pdf->getFitStatus() != 0) {
+                pdf->setFitStrategy(2);
+                delete rb;
+                rb = loadAndFit(pdf);
+                assert(rb);
+            }
+        }
+
+        if (std::isinf(pdf->minNll) || std::isnan(pdf->minNll)) {
+            cout  << "++++ > second and a half fit gives inf/nan: "  << endl
+                  << "++++ > minNll: " << pdf->minNll << endl
+                  << "++++ > status: " << pdf->getFitStatus() << endl;
+            pdf->setFitStatus(-99);
+        }
+        pdf->setMinNllScan(pdf->minNll);
+
+        chi2minGlobalBkgToysStore.push_back( 2 * rb->minNll() );
+        scanbestBkgToysStore.push_back( ((RooRealVar*)w->set(pdf->getParName())->find(scanVar1))->getVal() );
+
+        delete rb;
+        pdf->deleteToys();
+      }
+    }
 
     // start scan
     cout << "MethodDatasetsPluginScan::scan1d_plugin() : starting ... with " << nPoints1d << " scanpoints..." << endl;
@@ -762,20 +816,20 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             this->pdf->generateToysGlobalObservables(); // this is generating the toy global observables and saves globalObs in snapshot
 
 
-
-			// keep hold of the background only toys
-            if(i==0){
-                if(pdf->getBkgPdf()){
-                    pdf->generateBkgToys();
-                    cls_bkgOnlyToys.push_back( (RooDataSet*)this->pdf->getBkgToyObservables()->Clone() ); //surely not optimal
-                }
-    			else {
-    				cls_bkgOnlyToys.push_back( (RooDataSet*)this->pdf->getToyObservables()->Clone() ); // need to figure out why clone is needed
-    			}
-            }
-			else {
-				assert( cls_bkgOnlyToys.size() == nToys );
-			}
+            // TODO - DELETE THE FOLLOWING SMALL BLOCK
+            // keep hold of the background only toys -- this part is broken somehow
+            //if(i==0){
+              //if(pdf->getBkgPdf()){
+                //pdf->generateBkgToys();
+                //cls_bkgOnlyToys.push_back( (RooDataSet*)this->pdf->getBkgToyObservables()->Clone() ); //surely not optimal
+              //}
+              //else {
+              //cls_bkgOnlyToys.push_back( (RooDataSet*)this->pdf->getToyObservables()->Clone() ); // clone required because of deleteToys() call at end of loop
+                //}
+            //}
+            //else {
+              //assert( cls_bkgOnlyToys.size() == nToys );
+            //}
 
             // \todo: comment the following back in once I know what it does ...
             //      t.storeParsGau( we need to pass a rooargset of the means of the global observables here);
@@ -847,11 +901,11 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             parameterToScan->setConstant(true);
             this->pdf->setFitStrategy(0);
             // temporarily store our current toy here so we can put it back in a minute
-			RooDataSet *tempData = (RooDataSet*)this->pdf->getToyObservables();
-			// now get our background only toy (to fit under this hypothesis)
+            RooDataSet *tempData = (RooDataSet*)this->pdf->getToyObservables();
+            // now get our background only toy (to fit under this hypothesis)
             RooDataSet *bkgToy = (RooDataSet*)cls_bkgOnlyToys[j];
-			if (arg->debug) cout << "Setting background toy as data " << bkgToy << endl;
-			this->pdf->setToyData( bkgToy );
+            if (arg->debug) cout << "Setting background toy as data " << bkgToy << endl;
+            this->pdf->setToyData( bkgToy );
             RooFitResult* rb   = this->loadAndFit(this->pdf);
             assert(rb);
             pdf->setMinNllScan(pdf->minNll);
@@ -1009,14 +1063,14 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             pdf->deleteNLL();
 
             // now save the global min (and best fit val) for the background only toy for later (this just makes life easier even though we are duplicating a number in the tree)
-            if ( i==0 ) {
-              chi2minGlobalBkgToysStore.push_back( toyTree.chi2minGlobalToy );
-              scanbestBkgToysStore.push_back( toyTree.scanbest );
-            }
-            else {
+            //if ( i==0 ) {
+              //chi2minGlobalBkgToysStore.push_back( toyTree.chi2minGlobalToy );
+              //scanbestBkgToysStore.push_back( toyTree.scanbest );
+            //}
+            //else {
               assert( chi2minGlobalBkgToysStore.size() == nToys );
               assert( scanbestBkgToysStore.size() == nToys );
-            }
+              //}
             toyTree.chi2minGlobalBkgToy = chi2minGlobalBkgToysStore[j];
             toyTree.scanbestBkg      = scanbestBkgToysStore[j];
 
@@ -1054,6 +1108,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             //remove dataset and pointers
             delete r;
             delete r1;
+            delete rb;
             pdf->deleteToys();
         } // End of toys loop
 
@@ -1378,4 +1433,135 @@ void MethodDatasetsPluginScan::setAndPrintFitStatusFreeToys(const ToyTree& toyTr
             break;
         }
     }
+}
+
+void MethodDatasetsPluginScan::makeControlPlots(map<int, vector<double> > bVals, map<int, vector<double> > sbVals)
+{
+  // the quantiles of the CLb distribution (for expected CLs)
+  std::vector<double> probs  = { TMath::Prob(4,1), TMath::Prob(1,1), 0.5, 1.-TMath::Prob(1,1), 1.-TMath::Prob(4,1) };
+  std::vector<double> clb_vals  = { 1.-TMath::Prob(4,1), 1.-TMath::Prob(1,1), 0.5, TMath::Prob(1,1), TMath::Prob(4,1) };
+
+  for ( int i=1; i<= hCLs->GetNbinsX(); i++ ) {
+
+    std::vector<double> quantiles = Quantile<double>( bVals[i], probs );
+    std::vector<double> clsb_vals;
+    for (int k=0; k<quantiles.size(); k++ ){
+      clsb_vals.push_back( getVectorFracAboveValue( sbVals[i], quantiles[k] ) );
+    }
+    TCanvas *c = newNoWarnTCanvas( Form("q%d",i), Form("q%d",i) );
+    double max = *(std::max_element( bVals[i].begin(), bVals[i].end() ) );
+    TH1F *hb = new TH1F( Form("hb%d",i), "hbq", 50,0, max );
+    TH1F *hsb = new TH1F( Form("hsb%d",i), "hsbq", 50,0, max );
+
+    for ( int j=0; j<bVals[i].size(); j++ ) hb->Fill( bVals[i][j] );
+    for ( int j=0; j<sbVals[i].size(); j++ ) hsb->Fill( sbVals[i][j] );
+
+    double dataVal = TMath::ChisquareQuantile( 1.-hCL->GetBinContent(i),1 );
+    TArrow *lD = new TArrow( dataVal, 0.6*hsb->GetMaximum(), dataVal, 0., 0.15, "|>" );
+
+    vector<TLine*> qLs;
+    for ( int k=0; k<quantiles.size(); k++ ) {
+      qLs.push_back( new TLine( quantiles[k], 0, quantiles[k], 0.8*hsb->GetMaximum() ) );
+    }
+    TLatex *lat = new TLatex();
+    lat->SetTextColor(kRed);
+    lat->SetTextSize(0.6*lat->GetTextSize());
+    lat->SetTextAlign(22);
+
+    hsb->GetXaxis()->SetTitle("Test Statistic Value");
+    hsb->GetYaxis()->SetTitle("Entries");
+    hsb->GetXaxis()->SetTitleSize(0.06);
+    hsb->GetYaxis()->SetTitleSize(0.06);
+    hsb->GetXaxis()->SetLabelSize(0.06);
+    hsb->GetYaxis()->SetLabelSize(0.06);
+    hsb->SetLineWidth(2);
+    hb->SetLineWidth(2);
+    hsb->SetFillColor(kBlue);
+    hb->SetFillColor(kRed);
+    hsb->SetFillStyle(3003);
+    hb->SetFillStyle(3004);
+    hb->SetLineColor(kRed);
+    hsb->SetLineColor(kBlue);
+
+    //TGraph *gb = Utils::smoothHist(hb, 0);
+    //TGraph *gsb = Utils::smoothHist(hsb, 1);
+
+    //gb->SetLineColor(kRed+1);
+    //gb->SetLineWidth(4);
+    //gsb->SetLineColor(kBlue+1);
+    //gsb->SetLineWidth(4);
+
+    hsb->Draw();
+    hb->Draw("same");
+    //gb->Draw("Lsame");
+    //gsb->Draw("Lsame");
+
+    qLs[0]->SetLineWidth(2);
+    qLs[0]->SetLineStyle(kDashed);
+    qLs[4]->SetLineWidth(2);
+    qLs[4]->SetLineStyle(kDashed);
+    qLs[1]->SetLineWidth(3);
+    qLs[3]->SetLineWidth(3);
+    qLs[2]->SetLineWidth(5);
+
+    for ( int k=0; k<quantiles.size(); k++ ){
+      qLs[k]->SetLineColor(kRed);
+      qLs[k]->Draw("same");
+    }
+    lat->DrawLatex( quantiles[0], hsb->GetMaximum(), "-2#sigma" );
+    lat->DrawLatex( quantiles[1], hsb->GetMaximum(), "-1#sigma" );
+    lat->DrawLatex( quantiles[2], hsb->GetMaximum(), "<B>" );
+    lat->DrawLatex( quantiles[3], hsb->GetMaximum(), "+1#sigma" );
+    lat->DrawLatex( quantiles[4], hsb->GetMaximum(), "+2#sigma" );
+
+    lD->SetLineColor(kBlack);
+    lD->SetLineWidth(5);
+    lD->Draw("same");
+
+    TLegend *leg = new TLegend(0.74,0.54,0.94,0.7);
+    leg->SetHeader(Form("p=%4.2g",hCLs->GetBinCenter(i)));
+    leg->SetFillColor(0);
+    leg->AddEntry(hb,"B-only Toys","LF");
+    leg->AddEntry(hsb,"S+B Toys","LF");
+    leg->AddEntry(lD,"Data","L");
+    leg->Draw("same");
+    c->SetLogy();
+    savePlot(c,Form("cls_testStatControlPlot_p%d",i) );
+  }
+
+  TCanvas *c = newNoWarnTCanvas( "cls_ctr", "CLs Control" );
+  hCLsFreq->SetLineColor(kBlack);
+  hCLsFreq->SetLineWidth(3);
+  hCLsExp->SetLineColor(kRed);
+  hCLsExp->SetLineWidth(3);
+
+  hCLsErr1Up->SetLineColor(kBlue+2);
+  hCLsErr1Up->SetLineWidth(2);
+  hCLsErr1Dn->SetLineColor(kBlue+2);
+  hCLsErr1Dn->SetLineWidth(2);
+
+  hCLsErr2Up->SetLineColor(kBlue+2);
+  hCLsErr2Up->SetLineWidth(2);
+  hCLsErr2Up->SetLineStyle(kDashed);
+  hCLsErr2Dn->SetLineColor(kBlue+2);
+  hCLsErr2Dn->SetLineWidth(2);
+  hCLsErr2Dn->SetLineStyle(kDashed);
+
+  hCLsFreq->GetXaxis()->SetTitle("POI");
+  hCLsFreq->GetYaxis()->SetTitle("Raw CLs");
+  hCLsFreq->GetXaxis()->SetTitleSize(0.06);
+  hCLsFreq->GetYaxis()->SetTitleSize(0.06);
+  hCLsFreq->GetXaxis()->SetLabelSize(0.06);
+  hCLsFreq->GetYaxis()->SetLabelSize(0.06);
+
+  hCLsFreq->Draw("L");
+  hCLsErr2Up->Draw("Lsame");
+  hCLsErr2Dn->Draw("Lsame");
+  hCLsErr1Up->Draw("Lsame");
+  hCLsErr1Dn->Draw("Lsame");
+  hCLsExp->Draw("Lsame");
+  hCLsFreq->Draw("Lsame");
+
+  savePlot(c, "cls_ControlPlot");
+
 }

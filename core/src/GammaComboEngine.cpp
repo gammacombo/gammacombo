@@ -1022,19 +1022,19 @@ void GammaComboEngine::make1dCoverageScan(MethodCoverageScan *scanner, int cId)
 ///
 void GammaComboEngine::make1dProbPlot(MethodProbScan *scanner, int cId)
 {
-	if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
+
+  if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
 		scanner->setDrawSolution(arg->plotsolutions[cId]);
-    	if ( arg->cls.size()>0 && runOnDataSet) {
-      		((MethodDatasetsProbScan*)scanner)->plotFitRes(m_fnamebuilder->getFileNamePlot(cmb)+"_fit");
-      		scanner->plotOn(plot, 1); // for prob ClsType>1 doesn't exist
-    	}
-    	if( arg->cls.size()>0) scanner->plotOn(plot, 1); // for prob ClsType>1 doesn't exist
+    if ( arg->cls.size()>0 ) {
+      if ( runOnDataSet ) ((MethodDatasetsProbScan*)scanner)->plotFitRes(m_fnamebuilder->getFileNamePlot(cmb)+"_fit");
+      scanner->plotOn(plot, 1); // for prob ClsType>1 doesn't exist
+    }
 		scanner->plotOn(plot);
 		int colorId = cId;
 		if ( arg->color.size()>cId ) colorId = arg->color[cId];
 		scanner->setLineColor(colorsLine[colorId]);
 		scanner->setTextColor(colorsText[colorId]);
-    	scanner->setFillStyle(fillStyles[cId]);
+    scanner->setFillStyle(fillStyles[cId]);
 		plot->Draw();
 	}
 }
@@ -1219,6 +1219,16 @@ void GammaComboEngine::make2dProbPlot(MethodProbScan *scanner, int cId)
 	scanner->plotOn(plotf,0);
 	plotf->DrawFull();
 	plotf->save();
+	// plot full CLs
+  if ( arg->cls.size()>0 ) {
+    OneMinusClPlot2d* plotfcls;
+    if (scanner->getMethodName()=="Prob") plotfcls = new OneMinusClPlot2d(arg, m_fnamebuilder->getFileNamePlotSingle(cmb, cId)+"_cls_full", "p-value histogram: "+scanner->getTitle());
+    else if (scanner->getMethodName()=="DatasetsProb") plotfcls = new OneMinusClPlot2d(arg, m_fnamebuilder->getFileNamePlot(cmb)+"_cls_full", "p-value histogram: "+scanner->getTitle());	//Titus: change to make datasets plot possible
+    else cout << "The name of the scanner matches neither Prob nor DatasetsProb!" << endl;
+    scanner->plotOn(plotfcls,1);
+    plotfcls->DrawFull();
+    plotfcls->save();
+  }
 	// contour plot
 	scanner->setDrawSolution(arg->plotsolutions[cId]);
 	scanner->setLineColor(colorsLine[cId]);

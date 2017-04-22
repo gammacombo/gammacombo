@@ -302,7 +302,10 @@ void MethodAbsScan::saveScanner(TString fName)
 	if ( arg->debug ) cout << "MethodAbsScan::saveScanner() : saving scanner: " << fName << endl;
 	TFile f(fName, "recreate");
 	// save 1-CL histograms
-	if ( scanVar2!="" ) hCL2d->Write("hCL");
+	if ( scanVar2!="" ) {
+    hCL2d->Write("hCL");
+    if (hCLs2d) hCLs2d->Write("hCLs");
+  }
 	else {
     hCL->Write("hCL");
     if (hCLs) hCLs->Write("hCLs");
@@ -370,16 +373,22 @@ bool MethodAbsScan::loadScanner(TString fName)
 		hChi2min->SetName("hChi2min"+getUniqueRootName());
 	}
   // load CLs histograms
-  obj = f->Get("hCLs");
-  if ( obj==0 ){
-    cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLs' not found in root file - you can ignore this if you're not running in dataset mode " << fName << endl;
-  }
-  else if ( scanVar2=="" ){
-    hCLs = (TH1F*)obj;
-    hCLs->SetName("hCLs"+getUniqueRootName());
+  if ( std::find( arg->cls.begin(), arg->cls.end(), 1 ) != arg->cls.end() ) {
+    obj = f->Get("hCLs");
+    if ( obj==0 ){
+      cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLs' not found in root file - you can ignore this if you're not running in dataset mode " << fName << endl;
+    }
+    if ( scanVar2!="" ) {
+      hCLs2d = (TH2F*)obj;
+      hCLs2d->SetName("hCLs2d"+getUniqueRootName());
+    }
+    else {
+      hCLs = (TH1F*)obj;
+      hCLs->SetName("hCLs"+getUniqueRootName());
+    }
   }
   // load CLs histograms
-  bool lookForMixedCLs = std::find( arg->cls.begin(), arg->cls.end(), 2 ) != arg->cls.end();
+  bool lookForMixedCLs = std::find( arg->cls.begin(), arg->cls.end(), 2 ) != arg->cls.end() && !methodName.Contains("Prob");
   if ( lookForMixedCLs ) {
     obj = f->Get("hCLsFreq");
     if ( obj==0 ){
@@ -441,6 +450,7 @@ bool MethodAbsScan::loadScanner(TString fName)
 	if ( f->Get(Form("sol%i",nSol)) ){
 		cout << "MethodAbsScan::loadScanner() : WARNING : Only the first 100 solutions read from: " << fName << endl;
 	}
+
 	return true;
 }
 
@@ -1571,6 +1581,33 @@ const std::pair<double, double> MethodAbsScan::getBorders_CLs(const TGraph& grap
     }
   }
   return std::pair<double, double>(lower_edge,upper_edge);
+}
+
+void MethodAbsScan::checkCLs()
+{
+  assert( hCLsExp->GetNbinsX() == hCLsErr1Up->GetNbinsX() );
+  assert( hCLsExp->GetNbinsX() == hCLsErr2Up->GetNbinsX() );
+  assert( hCLsExp->GetNbinsX() == hCLsErr1Dn->GetNbinsX() );
+  assert( hCLsExp->GetNbinsX() == hCLsErr2Dn->GetNbinsX() );
+
+  // correct for low stats in the lower error
+  for ( int i=1; i<=hCLsExp->GetNbinsX(); i++ ) {
+    if ( hCLsErr1Dn->GetBinContent(i) >= hCLsExp->GetBinContent(i) ) {
+      hCLsErr1Dn->SetBinContent(i, hCLsExp->GetBinContent(i) - ( hCLsErr1Up->GetBinContent(i)-hCLsErr1Dn->GetBinContent(i) )/2. );
+    }
+    if ( hCLsErr1Dn->GetBinContent(i) >= hCLsExp->GetBinContent(i) ) {
+      hCLsErr1Dn->SetBinContent(i, hCLsExp->GetBinContent(i) - ( hCLsErr1Up->GetBinContent(i) - hCLsExp->GetBinContent(i) ) );
+    }
+    if ( ((hCLsExp->GetBinContent(i) - hCLsErr1Dn->GetBinContent(i))/hCLsExp->GetBinContent(i))<0.05 ) {
+      hCLsErr1Dn->SetBinContent(i, hCLsExp->GetBinContent(i) - ( hCLsErr1Up->GetBinContent(i)-hCLsErr1Dn->GetBinContent(i) )/2. );
+    }
+    if ( hCLsErr2Dn->GetBinContent(i) >= hCLsExp->GetBinContent(i) ) {
+      hCLsErr2Dn->SetBinContent(i, hCLsExp->GetBinContent(i) - ( hCLsErr2Up->GetBinContent(i)-hCLsErr2Dn->GetBinContent(i) )/2. );
+    }
+    if ( hCLsErr2Dn->GetBinContent(i) >= hCLsErr1Dn->GetBinContent(i) ) {
+      hCLsErr2Dn->SetBinContent(i, hCLsExp->GetBinContent(i) - ( hCLsExp->GetBinContent(i)-hCLsErr1Dn->GetBinContent(i))*2. );
+    }
+  }
 }
 
 

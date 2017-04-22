@@ -138,6 +138,7 @@ class MethodAbsScan
 		void							calcCLintervalsSimple(int CLsType=0);
 		const std::pair<double, double> getBorders(const TGraph& graph, const double confidence_level, bool qubic=false);
 		const std::pair<double, double> getBorders_CLs(const TGraph& graph, const double confidence_level, bool qubic=false);
+    virtual void                    checkCLs();
 
 		vector<RooSlimFitResult*> allResults;           ///< All fit results we encounter along the scan.
 		vector<RooSlimFitResult*> curveResults;         ///< All fit results of the the points that make it into the 1-CL curve.
