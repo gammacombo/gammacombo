@@ -169,7 +169,7 @@
 	fillcolor[4].push_back(cb.lightcolor(fillcolor[3][4]));
 	fillstyle[4].push_back(1001);
 
-	// scanners 6-13
+	// scanners 6-15
 	// colors based on http://colorbrewer2.org/, six classes, qualitative, second scheme
 	makeNewPlotStyle("#1b9e77"); // sea green
 	makeNewPlotStyle("#d95f02"); // dark orange
@@ -183,14 +183,40 @@
 	makeNewPlotStyle("",kBlue-5); // same as 1D scan 1
 	makeNewPlotStyle("",kGreen-8); // same as 1D scan 2
 
-	// if requested, remove any fill pattern to make cleaner plots
-	if ( arg->isQuickhack(10) ){
-		for ( int iScanners=0; iScanners<fillstyle.size(); iScanners++ ){
-			for ( int iContours=0; iContours<fillstyle[iScanners].size(); iContours++ ){
-				fillstyle[iScanners][iContours] = 1001;
-			}
-		}
-	}
+  // new colors from Alison
+  makeNewPlotStyle("#6a51a3"); // shades of purple
+  makeNewPlotStyle("#54278f");
+  makeNewPlotStyle("#3f007d");
+
+  makeNewPlotStyle("#fb6a4a"); // shades of red
+  makeNewPlotStyle("#ef3b2c");
+  makeNewPlotStyle("#cb181d");
+
+  makeNewPlotStyle("#a1d99b"); // shades of green
+  makeNewPlotStyle("#41ab5d");
+  makeNewPlotStyle("#238b45");
+
+  makeNewPlotStyle("#ffeda0"); // shades of orange
+  makeNewPlotStyle("#fed976");
+  makeNewPlotStyle("#feb24c");
+
+  makeNewPlotStyle("#6baed6"); // shades of blue
+  makeNewPlotStyle("#4292c6");
+  makeNewPlotStyle("#2171b5");
+
+  // any additional scanners
+  for ( int i=fillcolor[0].size(); i<arg->combid.size(); i++ ) {
+    makeNewPlotStyle("",kBlue-7);
+  }
+
+	// if requested, add or remove any fill pattern to make cleaner plots
+  for ( int iContour=0; iContour<fillstyle.size(); iContour++ ) {
+    for ( int iScanner=0; iScanner<fillstyle[iContour].size(); iScanner++ ) {
+      // remove any fill style at all
+      if ( arg->isQuickhack(10) ) fillstyle[iContour][iScanner] = 1001;
+      if ( iScanner < arg->fillstyle.size() ) fillstyle[iContour][iScanner] = arg->fillstyle[iScanner];
+    }
+  }
 }
 
 ///
@@ -240,20 +266,27 @@ void OneMinusClPlot2d::makeNewPlotStyle(TString htmlColor, int ROOTColor)
 ///
 /// Add a scanner to the list of things to be plotted.
 ///
-void OneMinusClPlot2d::addScanner(MethodAbsScan* s)
+void OneMinusClPlot2d::addScanner(MethodAbsScan* s, int CLsType)
 {
 	if ( arg->debug ) cout << "OneMinusClPlot2d::addScanner() : adding " << s->getName() << endl;
+	if ((CLsType==1 || CLsType==2) && !s->getHCLs2d()){
+		cout << "OneMinusClPlot2d::addScanner() : ERROR : No hCLs available. Will not plot." << endl;
+		return;
+	}
 	scanners.push_back(s);
-	if ( s->getMethodName().EqualTo("Prob") ){
+	if ( (s->getMethodName().EqualTo("Prob") || s->getMethodName().EqualTo("DatasetsProb")) && CLsType==0){
 		histosType.push_back(kChi2);
 		histos.push_back(s->getHchisq2d());
 	}
 	else {
 		histosType.push_back(kPvalue);
-		histos.push_back(s->getHCL2d());
+		if(CLsType==1 ||CLsType==2) 	histos.push_back(s->getHCLs2d());
+		else 		histos.push_back(s->getHCL2d());
 	}
+	do_CLs.push_back(CLsType);
 	if ( arg->smooth2d ) for ( int i=0; i<arg->nsmooth; i++ ) { histos[histos.size()-1]->Smooth(); }
 	title = s->getTitle();
+	if(CLsType==1 || CLsType==2) title = s->getTitle() + " CLs";
 	m_contours.push_back(0);
 	m_contours_computed.push_back(false);
 }
@@ -350,6 +383,8 @@ void OneMinusClPlot2d::DrawFull()
 	}
 	m_mainCanvas->cd();
 	m_mainCanvas->SetMargin(0.1,0.15,0.1,0.1);
+	if(histos.size()==0) std::cout << "OneMinusClPlot2d::DrawFull() : No histogram to plot!" << std::endl;
+	if(!histos[0]) std::cout << "OneMinusClPlot2d::DrawFull() : Histogram broken!" << std::endl;
 	TH2F *hChi2 = histos[0];
 	hChi2->SetContour(95);
 	hChi2->GetXaxis()->SetTitle(xTitle!="" ? xTitle : (TString)scanners[0]->getScanVar1()->GetTitle());
@@ -412,19 +447,27 @@ void OneMinusClPlot2d::drawLegend()
 	m_legend->SetBorderSize(0);
 	m_legend->SetTextFont(font);
 	m_legend->SetTextSize(legendsize);
+  if ( arg->isQuickhack(26) ) m_legend->SetTextSize(0.9*legendsize);
 
 	// build legend
 	for ( int i = 0; i < histos.size(); i++ ){
+    TString legTitle = scanners[i]->getTitle();
+    if ( legTitle=="default" ) {
+      if ( do_CLs[i] ) legTitle = "Prob CLs";
+      else legTitle = "Prob";
+    }
+    else if ( do_CLs[i] ) legTitle += " CLs";
+
 		if ( histos.size()==1 ){
 			// no legend symbol if only one scanner to be drawn
-			m_legend->AddEntry((TObject*)0, scanners[i]->getTitle(), "");
+			m_legend->AddEntry((TObject*)0, legTitle, "");
 		}
 		else{
 			// construct a dummy TGraph that uses the style of the 1sigma line
 			int styleId = i;
 			if ( arg->color.size()>i ) styleId = arg->color[i];
 			TGraph *g = new TGraph(1);
-			g->SetFillStyle(1001); // solid
+			g->SetFillStyle(fillstyle[0][i]); // solid
 			g->SetFillColor(fillcolor[0][styleId]);
 			g->SetLineWidth(2);
 			g->SetLineColor(linecolor[0][styleId]);
@@ -434,7 +477,9 @@ void OneMinusClPlot2d::drawLegend()
 			g->SetMarkerSize(markersize[styleId]);
 			TString options = "f";
 			if ( scanners[i]->getDrawSolution() ) options += "p"; // only plot marker symbol when solutions are plotted
-			if ( scanners[i]->getTitle() != "noleg" ) m_legend->AddEntry(g, scanners[i]->getTitle(), options);
+			if ( scanners[i]->getTitle() != "noleg" ) {
+        m_legend->AddEntry(g, legTitle, options );
+			}
 		}
 	}
 	m_legend->Draw();
@@ -509,7 +554,7 @@ void OneMinusClPlot2d::Draw()
 		cont->computeContours(histos[i], histosType[i], i);
 		int styleId = i;
 		if ( arg->color.size()>i ) styleId = arg->color[i];
-		cont->setStyle(transpose(linecolor)[styleId], transpose(linestyle)[styleId], transpose(fillcolor)[styleId], transpose(fillstyle)[styleId]);
+		cont->setStyle(transpose(linecolor)[styleId], transpose(linestyle)[styleId], transpose(fillcolor)[styleId], transpose(fillstyle)[i]);
 		m_contours[i] = cont;
 		m_contours_computed[i] = true;
 	}
@@ -519,6 +564,7 @@ void OneMinusClPlot2d::Draw()
 	if ( arg->isQuickhack(12) ){
 		for ( int i=0; i < histos.size(); i++ ){
 			m_contours[i]->setTransparency(0.2);
+      if ( arg->isQuickhack(28)  ) m_contours[i]->setTransparency(0.5);
 			// don't use transparency for the last scanner
 			if ( arg->isQuickhack(13) && i==histos.size()-1 ) m_contours[i]->setTransparency(0.);
 		}
@@ -662,7 +708,7 @@ void OneMinusClPlot2d::drawSolutions()
 	{
 		if ( scanners[i]->getDrawSolution()==0 ) continue;
 		if ( arg->debug ) cout << "OneMinusClPlot2d::drawSolutions() : adding solutions for scanner " << i << " ..." << endl;
-		if ( scanners[i]->getNSolutions()==0 ){
+		if ( scanners[i]->getSolutions().size()==0 ){
 			cout << "OneMinusClPlot2d::drawSolutions() : WARNING : \n"
 														 "        Plot solutions requested but no solutions found!\n"
 																						  "        Perform a 1d scan first or use MethodAbsScan::setSolutions()." << endl;
@@ -679,7 +725,7 @@ void OneMinusClPlot2d::drawSolutions()
 		if ( i<markersize.size() ) markerSize = markersize[styleId];
 		else cout << "OneMinusClPlot2d::drawSolutions() : ERROR : not enough marker sizes" << endl;
 
-		for ( int iSol=0; iSol<scanners[i]->getNSolutions(); iSol++ )
+		for ( int iSol=0; iSol<scanners[i]->getSolutions().size(); iSol++ )
 		{
 			/// if option 2 is given, only plot best fit points and equivalent ones
 			if ( scanners[i]->getDrawSolution()==2

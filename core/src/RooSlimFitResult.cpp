@@ -160,6 +160,68 @@ bool RooSlimFitResult::hasParameter(TString name) const
 	return false;
 }
 
+void RooSlimFitResult::SaveLatex(ofstream &outfile, bool verbose, bool printcor)
+{
+	outfile << "\%  FCN: " << minNll() << ", EDM: " << edm() << endl;
+	outfile << "\%  COV quality: " << covQual() << ", status: " << status()
+		<< ", confirmed: " << (_isConfirmed?"yes":"no") << endl;
+	outfile << endl;
+  outfile << "\\begin{tabular}{ l | l l l }" << endl;
+	outfile << "  Parameter &  Value & & Uncertainty \\\\" << endl;
+  vector<TString> myParNames;
+	for ( int i=0; i<_parsNames.size(); i++ ){
+    TString printName = "\\" + TString(_parsNames[i]).ReplaceAll("_","");
+		float val = _parsVal[i];
+		float err = _parsErr[i];
+		if (_parsAngle[i]){
+			val *= 180./TMath::Pi();
+			err *= 180./TMath::Pi();
+		}
+		// print constant parameters
+		if (_parsConst[i]){
+			if ( ! TString(_parsNames[i]).Contains("obs") ){
+        outfile << Form(" %-22s  &  $%5.3f$ & $\\pm$ & $%5.3f$",printName.Data(), val, err) ;
+				if (_parsAngle[i]) outfile << " (Deg)";
+        outfile << " \\\\" << endl;
+			}
+		}
+		// print floating parameters
+		else{
+      outfile << Form(" %-22s  &  $%5.3f$ & $\\pm$ & $%5.3f$",printName.Data(), val, err) ;
+      if (_parsAngle[i]) outfile << " (Deg)";
+      outfile << " \\\\" << endl;
+      myParNames.push_back(printName);
+		}
+	}
+  outfile << "\\end{tabular}" << endl;
+
+  // print correlations
+  outfile << "\n\%Correlation matrix" << endl;
+  outfile << "\\begin{tabular}{ l |";
+  for (int i=0; i<_correlationMatrix.GetNcols(); i++) outfile << " l";
+  outfile << " }" << endl;
+  outfile << Form("  %-10s"," ");
+  for (int i=0; i<_correlationMatrix.GetNcols(); i++) {
+    outfile << " & " << Form("%5s",myParNames[i].Data());
+  }
+  outfile << " \\\\" << endl;
+  for (int j=0; j<_correlationMatrix.GetNrows(); j++) {
+    outfile << Form("  %-22s",myParNames[j].Data()) ;
+    for (int i=0; i<_correlationMatrix.GetNcols(); i++) {
+      outfile << " & $";
+      if (TMath::Abs(_correlationMatrix[i][j])<0.01) outfile << "\\phantom{-}0   $";
+      else {
+        if (_correlationMatrix[i][j]>0) outfile << "\\phantom{-}";
+        else outfile << "          ";
+        outfile << Form("%4.2f$",_correlationMatrix[i][j]);
+      }
+    }
+    outfile << " \\\\" << endl;
+  }
+  outfile << "\\end{tabular}" << endl;
+  outfile << endl;
+}
+
 void RooSlimFitResult::Print(bool verbose, bool printcor)
 {
 	cout << "  FCN: " << minNll() << ", EDM: " << edm() << endl;

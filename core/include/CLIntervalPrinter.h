@@ -12,6 +12,7 @@
 #include "Rounder.h"
 #include "Utils.h"
 #include "CLInterval.h"
+#include <string>
 
 using namespace std;
 using namespace Utils;
@@ -23,7 +24,7 @@ class CLIntervalPrinter
 {
 public:
 
-	CLIntervalPrinter(OptParser *arg, TString name, TString var, TString unit, TString method);
+	CLIntervalPrinter(OptParser *arg, TString name, TString var, TString unit, TString method, int CLsType=0);
 	~CLIntervalPrinter();
 
 	void				print();
@@ -42,6 +43,7 @@ private:
 	TString _method;		///< method name (e.g. Prob)
 	bool _degrees;			///< convert values into degrees
 	vector< vector<CLInterval> > _intervals;	///< container of intervals
+	int _clstype;			///< Type of CLs intervals, 0 means no CLs method
 };
 
 #endif

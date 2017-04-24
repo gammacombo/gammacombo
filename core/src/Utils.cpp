@@ -899,6 +899,44 @@ TTree* Utils::convertRooDatasetToTTree(RooDataSet *d)
 	return t;
 }
 
+/// Converts a TH1* to a TGraph*
+/// doesn't take responsibilty for ownership
+TGraph* Utils::convertTH1ToTGraph(TH1* h, bool withErrors)
+{
+  TGraph *g;
+  if (withErrors) g = new TGraphErrors( h->GetNbinsX() );
+  else            g = new TGraph( h->GetNbinsX() );
+  g->SetName(getUniqueRootName());
+  for ( int i=0; i<h->GetNbinsX(); i++ ) {
+    g->SetPoint(i, h->GetBinCenter(i+1), h->GetBinContent(i+1) );
+    if (withErrors) ((TGraphErrors*)g)->SetPointError(i, 0.0, h->GetBinError(i+1) );
+  }
+  return g;
+}
+
+/// Smooths a graph
+TGraph* Utils::smoothGraph(TGraph* g, int option)
+{
+  TGraphSmooth *smoother = new TGraphSmooth();
+  TGraph *gr;
+  if (option==0) gr = (TGraph*)smoother->SmoothSuper( g )->Clone(Form("sm%s",g->GetName()));
+  else if (option==1) gr = (TGraph*)smoother->Approx( g )->Clone(Form("sm%s",g->GetName()));
+  else {
+    cout << "Utils::smoothGraph() : ERROR - no such option " << option << endl;
+    exit(1);
+  }
+  delete smoother;
+  return gr;
+}
+
+// Smooths a histogram
+TGraph* Utils::smoothHist(TH1* h, int option)
+{
+  TGraph *g = convertTH1ToTGraph(h);
+  return smoothGraph(g);
+}
+
+
 ///
 /// Creates a fresh, independent copy of the input histogram.
 /// We cannot use Root's Clone() or the like, because that
@@ -1140,4 +1178,94 @@ TCanvas* Utils::newNoWarnTCanvas(TString name, TString title, int x, int y, int 
 	return c;
 }
 
+void Utils::HFAGLabel(const TString& label, Double_t xpos, Double_t ypos, Double_t scale)
+{
+  TVirtualPad* thePad;
 
+  if ((thePad = TVirtualPad::Pad()) == 0) return;
+
+  UInt_t pad_width(thePad->XtoPixel(thePad->GetX2()));
+  UInt_t pad_height(thePad->YtoPixel(thePad->GetY1()));
+
+  Double_t ysiz_pixel(25);
+  Double_t ysiz(Double_t(ysiz_pixel)/Double_t(pad_height));
+  Double_t xsiz(4.2*ysiz*Double_t(pad_height)/Double_t(pad_width));
+
+  Double_t x1, x2, y1, y2;
+  xsiz = scale*xsiz;
+  ysiz = scale*ysiz;
+
+  if (xpos >= 0) {
+    x1 = xpos;
+    x2 = xpos + xsiz;
+  } else {
+    x1 = 1 + xpos - xsiz;
+    x2 = 1 + xpos;
+  }
+
+  if (ypos >= 0) {
+    y1 = ypos+0.9*ysiz;
+    y2 = ypos+0.9*ysiz + ysiz;
+  } else {
+    y1 = 1 + ypos - ysiz;
+    y2 = 1 + ypos;
+  }
+
+  TPaveText *tbox1 = new TPaveText(x1, y1, x2, y2, "BRNDC");
+  // tbox1->SetLineColor(1);
+  // tbox1->SetLineStyle(1);
+  // tbox1->SetLineWidth(2);
+  tbox1->SetFillColor(kBlack);
+  tbox1->SetFillStyle(1001);
+  // tbox1->SetBorderSize(1);
+  tbox1->SetShadowColor(kWhite);
+  tbox1->SetTextColor(kWhite);
+  tbox1->SetTextFont(76);
+  tbox1->SetTextSize(24*scale);
+  tbox1->SetTextAlign(22); //center-adjusted and vertically centered
+  tbox1->AddText(TString("HFAG"));
+  tbox1->Draw();
+  //
+  TPaveText *tbox2 = new TPaveText(x1, y1-0.9*ysiz, x2, y2-ysiz, "BRNDC");
+  // tbox2->SetLineColor(1);
+  // tbox2->SetLineStyle(1);
+  // tbox2->SetLineWidth(2);
+  tbox2->SetFillColor(kWhite);
+  tbox2->SetFillStyle(1001);
+  // tbox2->SetBorderSize(1);
+  tbox2->SetShadowColor(kWhite);
+  tbox2->SetTextColor(kBlack);
+  tbox2->SetTextFont(76);
+  tbox2->SetTextSize(18*scale);
+  tbox2->SetTextAlign(22); //center-adjusted and vertically centered
+  tbox2->AddText(label);
+  tbox2->Draw();
+  return;
+
+}
+
+void Utils::assertFileExists( TString strFilename ){
+    if ( !FileExists(strFilename) ){
+        cout << "ERROR : File not found: " + strFilename << endl;
+        exit(EXIT_FAILURE);
+    }
+}
+
+std::vector<double> Utils::computeNormalQuantiles( std::vector<double> &values, int nsigma ) {
+
+  //std::sort( values.begin(), values.end() );
+  std::vector<double> probs; // = { TMath::Prob(4,1), TMath::Prob(1,1), 0.5, 1.-TMath::Prob(1,1), 1.-TMath::Prob(4,1) };
+  for ( int i=nsigma; i>0; i-- ) probs.push_back( TMath::Prob( sq(i),1 ) );
+  probs.push_back(0.5);
+  for ( int i=0; i<nsigma; i++ ) probs.push_back( 1.-TMath::Prob( sq(i+1), 1) );
+
+  double quants[ nsigma*2 + 1 ];
+
+  TMath::Quantiles( values.size(), probs.size(), &values[0], quants, &probs[0], false );
+
+  std::vector<double> quantiles;
+  for ( int i=0; i < (nsigma*2 +1 ); i++ ) {
+    quantiles.push_back( quants[i] );
+  }
+  return quantiles;
+}

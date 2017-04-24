@@ -34,6 +34,7 @@ class FileNameBuilder
 		TString getFileBaseName(const Combiner *c);
 		TString getFileBaseName(const MethodAbsScan *s);
 		TString getFileNameScanner(const MethodAbsScan *s);
+		TString getFileNameSolution(const MethodAbsScan *s);
 		TString getFileNamePar(const Combiner *c);
 		TString getFileNamePar(const MethodAbsScan *s);
 		TString getFileNamePlot(const vector<Combiner*>& cmb);
@@ -46,6 +47,7 @@ class FileNameBuilder
 		TString getPluginNameAddition();
 		TString getPluginOnlyNameAddition();
 		TString getPreliminaryNameAddition();
+    TString getCLsNameAddition();
 
 	private:
 

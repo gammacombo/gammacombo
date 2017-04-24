@@ -26,11 +26,11 @@ INCLUDE(macros)
 INCLUDE(combiners)
 
 # use ccache if available
-find_program(CCACHE_FOUND ccache)                                                                                                                                                   
-if(CCACHE_FOUND)                                                                                                                                                                    
+find_program(CCACHE_FOUND ccache)
+if(CCACHE_FOUND)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
-endif(CCACHE_FOUND) 
+endif(CCACHE_FOUND)
 
 # find ROOT
 FIND_PACKAGE(ROOT REQUIRED)
@@ -110,11 +110,11 @@ if (HAS_CPP11)
 elseif (HAS_CPP11_ALTERNATIVE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 else()
-  message("No C++11 support.  Moving on.")
+  message(FATAL_ERROR "No C++11 support.")
 endif()
 
 # set additional compiler flags
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++11-extensions"   )
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++11-extensions -Wno-inconsistent-missing-override"   )
 
 ######################################
 #

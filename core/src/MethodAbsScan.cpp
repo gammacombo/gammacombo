@@ -7,65 +7,79 @@
 
 #include "MethodAbsScan.h"
 
-///
-/// 'Default Constructor'
-/// Introduced so that inherited classes do not have to call an
-/// explicit constructor
-///
-	MethodAbsScan::MethodAbsScan()
-: rndm()
-{
-	exit(1);
-	methodName = "Abs";
-	drawFilled = true;
-};
+    MethodAbsScan::MethodAbsScan()
+	: rndm()
+	{
+       methodName = "Abs";
+       drawFilled = true;
+	};
 
-	MethodAbsScan::MethodAbsScan(Combiner *c)
-: rndm()
-{
-	combiner = c;
-	methodName = "Abs";
-	w = combiner->getWorkspace();
-	name = combiner->getName();
-	title = combiner->getTitle();
-	arg = combiner->getArg();
-	scanVar1 = arg->var[0];
-	if ( arg->var.size()>1 ) scanVar2 = arg->var[1];
-	verbose = arg->verbose;
-	drawSolution = 0;
-	nPoints1d  = arg->npoints1d;
-	nPoints2dx = arg->npoints2dx;
-	nPoints2dy = arg->npoints2dy;
-	pvalueCorrectorSet = false;
-	pdfName  = "pdf_"+combiner->getPdfName();
-	obsName  = "obs_"+combiner->getPdfName();
-	parsName = "par_"+combiner->getPdfName();
-	thName   = "th_"+combiner->getPdfName();
-  toysName = "toy_"+combiner->getPdfName();
-	chi2minGlobal = 0.0;
-	chi2minGlobalFound = false;
-	lineStyle = 0;
-	lineColor = kBlue-8;
-	textColor = kBlack;
-	hCL = 0;
-	hCL2d = 0;
-	hChi2min = 0;
-	hChi2min2d = 0;
-	obsDataset = 0;
-	startPars = 0;
-	globalMin = 0;
-	nWarnings = 0;
-	drawFilled = true;
-	m_xrangeset = false;
-	m_yrangeset = false;
-	m_initialized = false;
 
-	// check workspace content
-	if ( !w->pdf(pdfName) ) { cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << pdfName  << endl; exit(1); }
-	if ( !w->set(obsName) ) { cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << obsName << endl; exit(1); }
-	if ( !w->set(parsName) ){ cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << parsName << endl; exit(1); }
-	if ( !w->set(thName) )  { cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << thName << endl; exit(1); }
-}
+	MethodAbsScan::MethodAbsScan(Combiner *c):
+		MethodAbsScan(c->getArg())
+		// C++11 onwards, one can delegate constructors,
+		// but then, there can be no other initializers
+	{
+		combiner = c;
+		w = c->getWorkspace();
+		name = c->getName();
+		title = c->getTitle();
+		pdfName = "pdf_"+combiner->getPdfName();
+		obsName = "obs_"+combiner->getPdfName();
+		parsName = "par_"+combiner->getPdfName();
+		thName = "th_"+combiner->getPdfName();
+
+		// check workspace content
+		if ( !w->pdf(pdfName) ) { cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << pdfName  << endl; exit(1); }
+		if ( !w->set(obsName) ) { cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << obsName << endl; exit(1); }
+		if ( !w->set(parsName) ){ cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << parsName << endl; exit(1); }
+		if ( !w->set(thName) )  { cout << "MethodAbsScan::MethodAbsScan() : ERROR : not found in workspace : " << thName << endl; exit(1); }
+	}
+
+
+	// constructor without combiner, this is atm still needed for the datasets stuff
+	MethodAbsScan::MethodAbsScan(OptParser* opt):
+		rndm(),
+		methodName("Abs"),
+		combiner(NULL),
+		w(NULL),
+		arg(opt),
+		scanVar1(opt->var[0]),
+		verbose(opt->verbose),
+		drawSolution(0),
+		nPoints1d(opt->npoints1d),
+		nPoints2dx(opt->npoints2dx),
+		nPoints2dy(opt->npoints2dy),
+		pvalueCorrectorSet(false),
+		chi2minGlobal(0.0),
+		chi2minBkg(0.0),
+		chi2minGlobalFound(false),
+		lineStyle(0),
+		lineColor(kBlue-8),
+		textColor(kBlack),
+		hCL(0),
+		hCLs(0),
+    hCLsFreq(0),
+    hCLsExp(0),
+    hCLsErr1Up(0),
+    hCLsErr1Dn(0),
+    hCLsErr2Up(0),
+    hCLsErr2Dn(0),
+		hCL2d(0),
+		hCLs2d(0),
+		hChi2min(0),
+		hChi2min2d(0),
+		obsDataset(NULL),
+		startPars(0),
+		globalMin(0),
+		nWarnings(0),
+		drawFilled(true),
+		m_xrangeset(false),
+		m_yrangeset(false),
+		m_initialized(false)
+	{
+		if ( opt->var.size()>1 ) scanVar2 = opt->var[1];
+	}
 
 MethodAbsScan::~MethodAbsScan()
 {
@@ -73,6 +87,14 @@ MethodAbsScan::~MethodAbsScan()
 		if ( allResults[i] ) delete allResults[i];
 	}
 	if ( hCL ) delete hCL;
+	if ( hCLs ) delete hCLs;
+	if ( hCLsFreq ) delete hCLsFreq;
+	if ( hCLsExp ) delete hCLsExp;
+	if ( hCLsErr1Up ) delete hCLsErr1Up;
+	if ( hCLsErr1Dn ) delete hCLsErr1Dn;
+	if ( hCLsErr2Up ) delete hCLsErr2Up;
+	if ( hCLsErr2Dn ) delete hCLsErr2Dn;
+	if ( hCLs2d ) delete hCLs2d;
 	if ( hCL2d ) delete hCL2d;
 	if ( hChi2min ) delete hChi2min;
 	if ( hChi2min2d ) delete hChi2min2d;
@@ -280,8 +302,20 @@ void MethodAbsScan::saveScanner(TString fName)
 	if ( arg->debug ) cout << "MethodAbsScan::saveScanner() : saving scanner: " << fName << endl;
 	TFile f(fName, "recreate");
 	// save 1-CL histograms
-	if ( scanVar2!="" ) hCL2d->Write("hCL");
-	else hCL->Write("hCL");
+	if ( scanVar2!="" ) {
+    hCL2d->Write("hCL");
+    if (hCLs2d) hCLs2d->Write("hCLs");
+  }
+	else {
+    hCL->Write("hCL");
+    if (hCLs) hCLs->Write("hCLs");
+    if (hCLsFreq) hCLsFreq->Write("hCLsFreq");
+    if (hCLsExp) hCLsExp->Write("hCLsExp");
+    if (hCLsErr1Up) hCLsErr1Up->Write("hCLsErr1Up");
+    if (hCLsErr1Dn) hCLsErr1Dn->Write("hCLsErr1Dn");
+    if (hCLsErr2Up) hCLsErr2Up->Write("hCLsErr2Up");
+    if (hCLsErr2Dn) hCLsErr2Dn->Write("hCLsErr2Dn");
+  }
 	// save chi2 histograms
 	if ( scanVar2!="" ) hChi2min2d->Write("hChi2min");
 	else hChi2min->Write("hChi2min");
@@ -338,7 +372,74 @@ bool MethodAbsScan::loadScanner(TString fName)
 		hChi2min = (TH1F*)obj;
 		hChi2min->SetName("hChi2min"+getUniqueRootName());
 	}
-	// load solutions: try the first one hundred
+  // load CLs histograms
+  if ( std::find( arg->cls.begin(), arg->cls.end(), 1 ) != arg->cls.end() ) {
+    obj = f->Get("hCLs");
+    if ( obj==0 ){
+      cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLs' not found in root file - you can ignore this if you're not running in dataset mode " << fName << endl;
+    }
+    if ( scanVar2!="" ) {
+      hCLs2d = (TH2F*)obj;
+      hCLs2d->SetName("hCLs2d"+getUniqueRootName());
+    }
+    else {
+      hCLs = (TH1F*)obj;
+      hCLs->SetName("hCLs"+getUniqueRootName());
+    }
+  }
+  // load CLs histograms
+  bool lookForMixedCLs = std::find( arg->cls.begin(), arg->cls.end(), 2 ) != arg->cls.end() && !methodName.Contains("Prob");
+  if ( lookForMixedCLs ) {
+    obj = f->Get("hCLsFreq");
+    if ( obj==0 ){
+      cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsFreq' not found in root file - you can ignore this if you're not running in dataset mode " << fName << endl;
+    }
+    else if ( scanVar2=="" ){
+      hCLsFreq = (TH1F*)obj;
+      hCLsFreq->SetName("hCLsFreq"+getUniqueRootName());
+    }
+    obj = f->Get("hCLsExp");
+    if ( obj==0 ){
+      cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsExp' not found in root file - you can ignore this if you're not running in dataset mode " << fName << endl;
+    }
+    else if ( scanVar2=="" ){
+      hCLsExp = (TH1F*)obj;
+      hCLsExp->SetName("hCLsExp"+getUniqueRootName());
+    }
+    obj = f->Get("hCLsErr1Up");
+    if ( obj==0 ){
+      cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsErr1Up' not found in root file - you can ignore this if you're not running in dataset mode " << fName << endl;
+    }
+    else if ( scanVar2=="" ){
+      hCLsErr1Up = (TH1F*)obj;
+      hCLsErr1Up->SetName("hCLsErr1Up"+getUniqueRootName());
+    }
+    obj = f->Get("hCLsErr1Dn");
+    if ( obj==0 ){
+      cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsErr1Dn' not found in root file - you can ignore this if you're not running in dataset mode " << fName << endl;
+    }
+    else if ( scanVar2=="" ){
+      hCLsErr1Dn = (TH1F*)obj;
+      hCLsErr1Dn->SetName("hCLsErr1Dn"+getUniqueRootName());
+    }
+    obj = f->Get("hCLsErr2Up");
+    if ( obj==0 ){
+      cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsErr2Up' not found in root file - you can ignore this if you're not running in dataset mode " << fName << endl;
+    }
+    else if ( scanVar2=="" ){
+      hCLsErr2Up = (TH1F*)obj;
+      hCLsErr2Up->SetName("hCLsErr2Up"+getUniqueRootName());
+    }
+    obj = f->Get("hCLsErr2Dn");
+    if ( obj==0 ){
+      cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsErr2Dn' not found in root file - you can ignore this if you're not running in dataset mode " << fName << endl;
+    }
+    else if ( scanVar2=="" ){
+      hCLsErr2Dn = (TH1F*)obj;
+      hCLsErr2Dn->SetName("hCLsErr2Dn"+getUniqueRootName());
+    }
+  }
+  // load solutions: try the first one hundred
 	solutions.clear();
 	int nSol = 100;
 	for ( int i=0; i<nSol; i++ ){
@@ -349,6 +450,7 @@ bool MethodAbsScan::loadScanner(TString fName)
 	if ( f->Get(Form("sol%i",nSol)) ){
 		cout << "MethodAbsScan::loadScanner() : WARNING : Only the first 100 solutions read from: " << fName << endl;
 	}
+
 	return true;
 }
 
@@ -519,13 +621,27 @@ bool MethodAbsScan::interpolate(TH1F* h, int i, float y, float central, bool upp
 /// Use a fit-based interpolation (interpolate()) if we have more than 25 bins,
 /// else revert to a straight line interpolation (interpolateSimple()).
 ///
-void MethodAbsScan::calcCLintervals()
+void MethodAbsScan::calcCLintervals(int CLsType)
 {
+	TH1F *histogramCL = this->getHCL();
+	// calc CL intervals with CLs method
+	if (CLsType==1 && this->getHCLs())
+	{
+		histogramCL =this->getHCLs();
+	}
+  	else if (CLsType==2 && this->getHCLsFreq())
+  	{
+    	histogramCL = this->getHCLsFreq();
+  	}
+
+  	if(CLsType!=0){
+  		std::cout<< "Confidence Intervals for CLs method "<< CLsType << ":" << std::endl;
+  	}
 	if ( arg->isQuickhack(8) ){
 		// \todo Switch to the new CLIntervalMaker mechanism. It can be activated
 		// already using --qh 8, but it really is in beta stage still
 		cout << "\nMethodAbsScan::calcCLintervals() : USING NEW CLIntervalMaker for " << name << endl << endl;
-		CLIntervalMaker clm(arg, *hCL);
+		CLIntervalMaker clm(arg, *histogramCL);
 		clm.findMaxima(0.04); // ignore maxima under pvalue=0.04
 		for ( int iSol=0; iSol<solutions.size(); iSol++ ){
 			float sol = getScanVar1Solution(iSol);
@@ -542,13 +658,24 @@ void MethodAbsScan::calcCLintervals()
 		cout << endl;
 	}
 
-	cout << endl;
-	if ( arg->debug ) cout << "MethodAbsScan::calcCLintervals() : ";
-	cout << "CONFIDENCE INTERVALS for combination " << name << endl << endl;
+	if(solutions.empty()){
+	 cout 	<< "MethodAbsScan::calcCLintervals() : Solutions vector empty. "
+								<<"Using simple method with  linear splines."<<endl;
+ 		this->calcCLintervalsSimple(CLsType);
+		return;
+	}
+	else if((CLsType==1||CLsType==2) && !this->getHCLs()) {
+		cout<<"Using simple method with  linear splines."<<endl;
+		this->calcCLintervalsSimple(CLsType);
+	}
+
+  if ( arg->debug ) cout << "MethodAbsScan::calcCLintervals() : ";
+  cout << "CONFIDENCE INTERVALS for combination " << name << endl << endl;
+
 	clintervals1sigma.clear(); // clear, else calling this function twice doesn't work
 	clintervals2sigma.clear();
   clintervals3sigma.clear();
-	int n = hCL->GetNbinsX();
+	int n = histogramCL->GetNbinsX();
 	RooRealVar* par = w->var(scanVar1);
 
 	for ( int iSol=0; iSol<solutions.size(); iSol++ )
@@ -561,21 +688,21 @@ void MethodAbsScan::calcCLintervals()
 
 		for ( int c=0; c<3; c++ )
 		{
-			CLlo[c] = hCL->GetXaxis()->GetXmin();
-			CLhi[c] = hCL->GetXaxis()->GetXmax();
+			CLlo[c] = histogramCL->GetXaxis()->GetXmin();
+			CLhi[c] = histogramCL->GetXaxis()->GetXmax();
 			float y = 1.-CL[c];
 			float sol = getScanVar1Solution(iSol);
-			int sBin = hCL->FindBin(sol);
+			int sBin = histogramCL->FindBin(sol);
 
 			// find lower interval bound
 			for ( int i=sBin; i>0; i-- ){
-				if ( hCL->GetBinContent(i) < y ){
+				if ( histogramCL->GetBinContent(i) < y ){
 					if ( n>25 ){
-						bool check = interpolate(hCL, i, y, sol, false, CLlo[c], CLloErr[c]);
-						if ( !check || CLlo[c]!=CLlo[c] ) interpolateSimple(hCL, i, y, CLlo[c]);
+						bool check = interpolate(histogramCL, i, y, sol, false, CLlo[c], CLloErr[c]);
+						if ( !check || CLlo[c]!=CLlo[c] ) interpolateSimple(histogramCL, i, y, CLlo[c]);
 					}
 					else{
-						interpolateSimple(hCL, i, y, CLlo[c]);
+						interpolateSimple(histogramCL, i, y, CLlo[c]);
 					}
 					break;
 				}
@@ -583,20 +710,20 @@ void MethodAbsScan::calcCLintervals()
 
 			// find upper interval bound
 			for ( int i=sBin; i<n; i++ ){
-				if ( hCL->GetBinContent(i) < y ){
+				if ( histogramCL->GetBinContent(i) < y ){
 					if ( n>25 ){
-						bool check = interpolate(hCL, i-1, y, sol, true, CLhi[c], CLhiErr[c]);
-						if ( CLhi[c]!=CLhi[c] ) interpolateSimple(hCL, i-1, y, CLhi[c]);
+						bool check = interpolate(histogramCL, i-1, y, sol, true, CLhi[c], CLhiErr[c]);
+						if ( CLhi[c]!=CLhi[c] ) interpolateSimple(histogramCL, i-1, y, CLhi[c]);
 					}
 					else{
-						interpolateSimple(hCL, i-1, y, CLhi[c]);
+						interpolateSimple(histogramCL, i-1, y, CLhi[c]);
 					}
 					break;
 				}
 			}
 
 			// save interval if solution is contained in it
-			if ( hCL->GetBinContent(sBin)>y )
+			if ( histogramCL->GetBinContent(sBin)>y )
 			{
 				CLInterval cli;
 				cli.pvalue = 1.-CL[c];
@@ -626,8 +753,10 @@ void MethodAbsScan::calcCLintervals()
 			clintervals1sigma.push_back(i);
 		}
 	}
+	printCLintervals(CLsType);
 
-	printCLintervals();
+
+
 
 	//
 	// scan again from the histogram boundaries
@@ -642,20 +771,20 @@ void MethodAbsScan::calcCLintervals()
 
 		for ( int c=0; c<2; c++ )
 		{
-			CLlo[c] = hCL->GetXaxis()->GetXmin();
-			CLhi[c] = hCL->GetXaxis()->GetXmax();
+			CLlo[c] = histogramCL->GetXaxis()->GetXmin();
+			CLhi[c] = histogramCL->GetXaxis()->GetXmax();
 			float y = 1.-CL[c];
 
 			if ( iBoundary==1 )
 			{
 				// find lower interval bound
-				if ( hCL->GetBinContent(n)<y ) continue;  ///< skip if p-value is too low at boundary
+				if ( histogramCL->GetBinContent(n)<y ) continue;  ///< skip if p-value is too low at boundary
 				for ( int i=n; i>0; i-- )
 				{
-					if ( hCL->GetBinContent(i) > y )
+					if ( histogramCL->GetBinContent(i) > y )
 					{
-						if ( n>25 ) interpolate(hCL, i, y, hCL->GetXaxis()->GetXmax(), false, CLlo[c], CLloErr[c]);
-						else        interpolateSimple(hCL, i, y, CLlo[c]);
+						if ( n>25 ) interpolate(histogramCL, i, y, histogramCL->GetXaxis()->GetXmax(), false, CLlo[c], CLloErr[c]);
+						else        interpolateSimple(histogramCL, i, y, CLlo[c]);
 						break;
 					}
 				}
@@ -663,13 +792,13 @@ void MethodAbsScan::calcCLintervals()
 			else
 			{
 				// find upper interval bound
-				if ( hCL->GetBinContent(1)<y ) continue;  ///< skip if p-value is too low at boundary
+				if ( histogramCL->GetBinContent(1)<y ) continue;  ///< skip if p-value is too low at boundary
 				for ( int i=1; i<n; i++ )
 				{
-					if ( hCL->GetBinContent(i) > y )
+					if ( histogramCL->GetBinContent(i) > y )
 					{
-						if ( n>25 ) interpolate(hCL, i-1, y, hCL->GetXaxis()->GetXmin(), true, CLhi[c], CLhiErr[c]);
-						else        interpolateSimple(hCL, i-1, y, CLhi[c]);
+						if ( n>25 ) interpolate(histogramCL, i-1, y, histogramCL->GetXaxis()->GetXmin(), true, CLhi[c], CLhiErr[c]);
+						else        interpolateSimple(histogramCL, i-1, y, CLhi[c]);
 						break;
 					}
 				}
@@ -687,6 +816,8 @@ void MethodAbsScan::calcCLintervals()
 
 			int pErr = 2;
 			if ( arg && arg->digits>0 ) pErr = arg->digits;
+			if (CLsType==1 && this->getHCLs()) cout << "CL_s: ";
+			if (CLsType==2 && this->getHCLsFreq()) cout << "CL_s Freq: ";
 			printf("\n%s = [%7.*f, %7.*f] @%3.2fCL",
 					par->GetName(),
 					pErr, CLlo[c], pErr, CLhi[c],
@@ -703,10 +834,10 @@ void MethodAbsScan::calcCLintervals()
 ///
 /// Print CL intervals.
 ///
-void MethodAbsScan::printCLintervals()
+void MethodAbsScan::printCLintervals(int CLsType)
 {
 	TString unit = w->var(scanVar1)->getUnit();
-	CLIntervalPrinter clp(arg, name, scanVar1, unit, methodName);
+	CLIntervalPrinter clp(arg, name, scanVar1, unit, methodName, CLsType);
 	clp.setDegrees(isAngle(w->var(scanVar1)));
 	clp.addIntervals(clintervals1sigma);
 	clp.addIntervals(clintervals2sigma);
@@ -716,7 +847,7 @@ void MethodAbsScan::printCLintervals()
 	cout << endl;
 
 	// print solutions not contained in the 1sigma and 2sigma intervals
-	for ( int i=0; i<getNSolutions(); i++ )
+	for ( int i=0; i<solutions.size(); i++ )
 	{
 		float sol = getScanVar1Solution(i);
 		bool cont=false;
@@ -732,12 +863,20 @@ void MethodAbsScan::printCLintervals()
 		cout << endl;
 	}
 }
-
 ///
 /// Get the CL interval that includes the best-fit value.
 /// \param sigma 1,2
 ///
 CLInterval MethodAbsScan::getCLintervalCentral(int sigma)
+{
+  return getCLinterval(0,sigma);
+}
+
+///
+/// Get the CL interval that includes the best-fit value.
+/// \param sigma 1,2
+///
+CLInterval MethodAbsScan::getCLinterval(int iSol, int sigma)
 {
 	if ( clintervals1sigma.size()==0 ) calcCLintervals();
 	if ( clintervals1sigma.size()==0 ){
@@ -760,19 +899,23 @@ CLInterval MethodAbsScan::getCLintervalCentral(int sigma)
 		exit(1);
 	}
 
+	if ( iSol >= intervals.size() ) {
+    cout << "MethodAbsScan::getCLinterval() : ERROR : no solution with id " << iSol << endl;
+    exit(1);
+  }
+
 	// compute largest interval
 	if ( arg->largest ){
 		CLInterval i;
-		i.pvalue = intervals[0].pvalue;
-		i.min = intervals[0].min;
+		i.pvalue = intervals[iSol].pvalue;
+		i.min = intervals[iSol].min;
 		for ( int j=0; j<intervals.size(); j++ ) i.min = TMath::Min(i.min, intervals[j].min);
-		i.max = intervals[0].max;
+		i.max = intervals[iSol].max;
 		for ( int j=0; j<intervals.size(); j++ ) i.max = TMath::Max(i.max, intervals[j].max);
 		return i;
 	}
 
-	// the first entry corresponds to the central value!
-	return intervals[0];
+  return intervals[iSol];
 }
 
 
@@ -782,9 +925,9 @@ float MethodAbsScan::getCL(double val)
 }
 
 
-void MethodAbsScan::plotOn(OneMinusClPlotAbs *plot)
+void MethodAbsScan::plotOn(OneMinusClPlotAbs *plot, int CLsType)
 {
-	plot->addScanner(this);
+	plot->addScanner(this, CLsType);
 }
 
 
@@ -933,6 +1076,30 @@ void MethodAbsScan::printLocalMinima()
 		cout << "  date:        " << date.AsString() << endl;
 		solutions[i]->Print(arg->verbose, arg->printcor);
 	}
+}
+
+///
+/// Save local minima solutions.
+///
+void MethodAbsScan::saveLocalMinima(TString fName)
+{
+	TDatime date; // lets also print the current date
+	if ( arg->debug ){
+		cout << "MethodAbsScan::saveLocalMinima() : LOCAL MINIMA for " << title << endl;
+		cout << endl;
+	}
+  ofstream outfile;
+  outfile.open(fName.Data());
+
+	for ( int i=0; i<solutions.size(); i++ ){
+		outfile << "\%SOLUTION " << i << ":\n" << endl;
+		outfile << "\%  combination: " << name << endl;
+		outfile << "\%  title:       " << title << endl;
+		outfile << "\%  date:        " << date.AsString() << endl;
+		solutions[i]->SaveLatex(outfile, arg->verbose, arg->printcor);
+	}
+  outfile.close();
+
 }
 
 ///
@@ -1275,3 +1442,175 @@ void MethodAbsScan::setYscanRange(float min, float max)
 	m_yrangeset = true;
 }
 
+
+
+void MethodAbsScan::calcCLintervalsSimple(int CLsType)
+{
+  clintervals1sigma.clear();
+  clintervals2sigma.clear();
+  double levels[2] = {0.6827, 0.9545};
+
+  TH1F *histogramCL = this->hCL;
+  if (this->hCLs && CLsType==1)
+  {
+  	histogramCL = this->hCLs;
+  }
+  else if (this->hCLsFreq && CLsType==2)
+  {
+    histogramCL = this->hCLsFreq;
+  }
+  if(CLsType==0 || (this->hCLs && CLsType==1) || (this->hCLsFreq && CLsType==2))
+  {
+	  for (int c=0;c<2;c++){
+	    const std::pair<double, double> borders = getBorders(TGraph(histogramCL), levels[c]);
+	    CLInterval cli;
+	    cli.pvalue = 1. - levels[c];
+	    cli.min = borders.first;
+	    cli.max = borders.second;
+	    cli.central = -1;
+	    if ( c==0 ) clintervals1sigma.push_back(cli);
+	    if ( c==1 ) clintervals2sigma.push_back(cli);
+	    if (CLsType==1) std::cout << "CL_s ";
+	    if (CLsType==2) std::cout << "CL_s Freq";
+	    std::cout<<"borders at "<<levels[c]<<"  [ "<<borders.first<<" : "<<borders.second<<"]";
+		cout << ", " << methodName << " (simple boundary scan)" << endl;
+	  }
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////
+	//// Add a hacky calculation of the CL_s intervals
+	//// \todo: Do it properly from the very start by introducing a bkg model and propagate it to the entire framework.
+  /// TODO: I think this can now disappear
+
+  if ( (!this->hCLs && CLsType==1) || (!this->hCLsFreq && CLsType==2) )
+  {
+  	std::cout << "**************************************************************************************************************************************" << std::endl;
+  	std::cout << "WARNING: hCLs is empty! Will calculate CLs intervals by normalising the p values to the p value of the first bin." << std::endl;
+  	std::cout << "WARNING: This is only an approximate solution and MIGHT EVEN BE WRONG, if the first bin does not represent the background expectation!" << std::endl;
+  	std::cout << "**************************************************************************************************************************************" << std::endl;
+  	clintervals1sigma.clear();
+  	clintervals2sigma.clear();
+
+  	for (int c=0;c<2;c++){
+    	const std::pair<double, double> borders_CLs = getBorders_CLs(TGraph(histogramCL), levels[c]);
+    	CLInterval cli;
+    	cli.pvalue = 1. - levels[c];
+    	cli.min = borders_CLs.first;
+    	cli.max = borders_CLs.second;
+    	cli.central = -1;
+    	if ( c==0 ) clintervals1sigma.push_back(cli);
+    	if ( c==1 ) clintervals2sigma.push_back(cli);
+    	std::cout<<"CL_s borders at "<<levels[c]<<"  [ "<<borders_CLs.first<<" : "<<borders_CLs.second<<"]";
+		cout << ", " << methodName << " (simple boundary scan)" << endl;
+  	}
+  }
+
+}
+
+/*!
+\brief determines the borders of the confidence interval by linear or qubic interpolation.
+\param graph The graph holding the p-values.
+\param confidence_level The confidence level at which the interval is to be determined.
+\param qubic Optional parameter. False by default. If true, qubic interpolation is used.
+*/
+const std::pair<double, double> MethodAbsScan::getBorders(const TGraph& graph, const double confidence_level, bool qubic){
+
+  const double p_val = 1 - confidence_level;
+  TSpline* splines = NULL;
+  if(qubic) splines = new TSpline3();
+
+
+  double min_edge = graph.GetX()[0];
+  // will never return smaller edge than min_edge
+  double max_edge = graph.GetX()[graph.GetN()-1];
+  // will never return higher edge than max_edge
+  int scan_steps = 1000;
+  double lower_edge = min_edge;
+  double upper_edge = max_edge;
+
+  for(double point = min_edge; point < max_edge; point+= (max_edge-min_edge)/scan_steps){
+
+   if(graph.Eval(point, splines)>p_val){
+      lower_edge = point;
+      break;
+    }
+  }
+  for(double point = max_edge; point > min_edge; point-= (max_edge-min_edge)/scan_steps){
+    if(graph.Eval(point, splines)>p_val){
+      upper_edge = point;
+      break;
+    }
+  }
+  return std::pair<double, double>(lower_edge,upper_edge);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////
+//// Do a hacky calculation of the CL_s intervals, where essentially the pValue is normalized to the pValue with n_sig=0.
+//// Let's first assume that the parameter of interest is ALWAYS a parameter correlated with n_sig, so that parameter=0 means n_sig=0.
+//// Therefore the pValue(CL_s) is given by the ratio of the pValue at scanpointand the pValue of the lowest bin.
+//// \todo Do it properly from the very start by introducing a bkg model and propagate it to the entire framework.
+
+const std::pair<double, double> MethodAbsScan::getBorders_CLs(const TGraph& graph, const double confidence_level, bool qubic){
+
+  const double p_val = 1 - confidence_level;
+  TSpline* splines = NULL;
+  if(qubic) splines = new TSpline3();
+
+
+  double min_edge = graph.GetX()[0];
+  // will never return smaller edge than min_edge
+  double max_edge = graph.GetX()[graph.GetN()-1];
+  // will never return higher edge than max_edge
+  int scan_steps = 1000;
+  double lower_edge = min_edge;
+  double upper_edge = max_edge;
+
+  for(double point = min_edge; point < max_edge; point+= (max_edge-min_edge)/scan_steps){
+
+	//for CL_s normalize pVal to the pVal at 0 (which has to be the background model)
+   if(graph.Eval(point, splines)/graph.Eval(min_edge, splines)>p_val){
+      lower_edge = point;
+      break;
+    }
+  }
+  for(double point = max_edge; point > min_edge; point-= (max_edge-min_edge)/scan_steps){
+
+  	//for CL_s normalize pVal to the pVal at 0 (which has to be the background model)
+    if(graph.Eval(point, splines)/graph.Eval(min_edge, splines)>p_val){
+      upper_edge = point;
+      break;
+    }
+  }
+  return std::pair<double, double>(lower_edge,upper_edge);
+}
+
+void MethodAbsScan::checkCLs()
+{
+  assert( hCLsExp->GetNbinsX() == hCLsErr1Up->GetNbinsX() );
+  assert( hCLsExp->GetNbinsX() == hCLsErr2Up->GetNbinsX() );
+  assert( hCLsExp->GetNbinsX() == hCLsErr1Dn->GetNbinsX() );
+  assert( hCLsExp->GetNbinsX() == hCLsErr2Dn->GetNbinsX() );
+
+  // correct for low stats in the lower error
+  for ( int i=1; i<=hCLsExp->GetNbinsX(); i++ ) {
+    if ( hCLsErr1Dn->GetBinContent(i) >= hCLsExp->GetBinContent(i) ) {
+      hCLsErr1Dn->SetBinContent(i, hCLsExp->GetBinContent(i) - ( hCLsErr1Up->GetBinContent(i)-hCLsErr1Dn->GetBinContent(i) )/2. );
+    }
+    if ( hCLsErr1Dn->GetBinContent(i) >= hCLsExp->GetBinContent(i) ) {
+      hCLsErr1Dn->SetBinContent(i, hCLsExp->GetBinContent(i) - ( hCLsErr1Up->GetBinContent(i) - hCLsExp->GetBinContent(i) ) );
+    }
+    if ( ((hCLsExp->GetBinContent(i) - hCLsErr1Dn->GetBinContent(i))/hCLsExp->GetBinContent(i))<0.05 ) {
+      hCLsErr1Dn->SetBinContent(i, hCLsExp->GetBinContent(i) - ( hCLsErr1Up->GetBinContent(i)-hCLsErr1Dn->GetBinContent(i) )/2. );
+    }
+    if ( hCLsErr2Dn->GetBinContent(i) >= hCLsExp->GetBinContent(i) ) {
+      hCLsErr2Dn->SetBinContent(i, hCLsExp->GetBinContent(i) - ( hCLsErr2Up->GetBinContent(i)-hCLsErr2Dn->GetBinContent(i) )/2. );
+    }
+    if ( hCLsErr2Dn->GetBinContent(i) >= hCLsErr1Dn->GetBinContent(i) ) {
+      hCLsErr2Dn->SetBinContent(i, hCLsExp->GetBinContent(i) - ( hCLsExp->GetBinContent(i)-hCLsErr1Dn->GetBinContent(i))*2. );
+    }
+  }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+//// end of CL_s part
+////////////////////////////////////////////////////////////////////////////////////////////////////

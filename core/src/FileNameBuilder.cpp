@@ -154,6 +154,24 @@ TString FileNameBuilder::getFileNameScanner(const MethodAbsScan *c)
 }
 
 ///
+/// Compute the file name of the file to which a solution gets saved.
+/// Format of returned filename:
+///
+/// plots/latex/combo_solution[_Plugin]_var1[_var2].root
+///
+/// \return - filename
+///
+TString FileNameBuilder::getFileNameSolution(const MethodAbsScan *c)
+{
+	TString name = "plots/latex/"+m_basename+"_solution_"+c->getName();
+	if ( c->getMethodName()!=TString("Prob") ) name += "_"+c->getMethodName();
+	name += "_"+m_arg->var[0];
+	if ( m_arg->var.size()==2 ) name += "_"+m_arg->var[1];
+	name += ".tex";
+	return name;
+}
+
+///
 /// Compute the file name for plots. It can contain multiple combiners
 /// in the name. Format of the file name:
 ///
@@ -177,6 +195,7 @@ TString FileNameBuilder::getFileNamePlot(const vector<Combiner*>& cmb)
 	if ( m_arg->var.size()==2 )           name += "_"+m_arg->var[1];
 	if ( m_arg->plotpluginonly )          name += "_"+getPluginOnlyNameAddition();
 	else if ( m_arg->isAction("plugin") ) name += "_"+getPluginNameAddition();
+  if ( m_arg->cls.size()>0 )            name += "_"+getCLsNameAddition();
 	if ( m_arg->plotprelim )              name += "_"+getPreliminaryNameAddition();
 	return name;
 }
@@ -234,3 +253,10 @@ TString FileNameBuilder::getPreliminaryNameAddition()
 	return "prelim";
 }
 
+///
+/// Define the addition for cls plots.
+///
+TString FileNameBuilder::getCLsNameAddition()
+{
+  return "cls";
+}
