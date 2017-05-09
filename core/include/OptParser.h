@@ -111,6 +111,7 @@ class OptParser
 		bool            plotpluginonly;
 		bool            plotpulls;
 		bool            plotprelim;
+    bool            plotorigin;
 		vector<int>     plotsolutions;
     vector<int>     plotsoln;
 		bool            plotunoff;
