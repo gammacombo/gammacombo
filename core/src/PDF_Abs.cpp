@@ -7,7 +7,7 @@
 
 #include "PDF_Abs.h"
 
-	PDF_Abs::PDF_Abs(int nObs): 
+	PDF_Abs::PDF_Abs(int nObs):
 	covMatrix(nObs),
 	corMatrix(nObs),
 	corStatMatrix(nObs),
@@ -713,3 +713,4 @@ void PDF_Abs::getSubCorrelationSyst(TMatrixDSym& target, vector<int>& indices)
 {
 	getSubMatrix(target, corSystMatrix, indices);
 }
+
