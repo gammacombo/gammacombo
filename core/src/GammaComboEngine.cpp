@@ -116,6 +116,103 @@ void GammaComboEngine::addPdf(int id, PDF_Abs* pdf, TString title)
 }
 
 ///
+/// Add a pdf with a subset of the observables to the GammaComboEngine
+///
+void GammaComboEngine::addSubsetPdf(int id, PDF_Abs* pdf, vector<int>& indices, TString title)
+{
+  if ( indices.size() > pdf->getObservables()->getSize() ) {
+    cout << "GammaComboEngine::addSubsetPdf() : ERROR - the subset size " << indices.size() << " is bigger than the observables size " << pdf->getObservables()->getSize() << endl;
+    exit(1);
+  }
+  for ( int i=0; i<indices.size(); i++ ) {
+    int index = indices[i];
+    if ( index > pdf->getObservables()->getSize()-1 || index<0) {
+      cout << "GammaComboEngine::addSubsetPdf() : ERROR - one of the subset index values " << index << " is larger than the total number of of observables " << pdf->getObservables()->getSize() << " or it's less than zero" << endl;
+      exit(1);
+    }
+  }
+  RooArgList *obsToRemove = new RooArgList();
+  RooArgList *theoryToRemove = new RooArgList();
+
+  // loop over all observables and remove the ones that aren't in indices
+  for ( int i=0; i<pdf->getObservables()->getSize(); i++ ) {
+    if ( std::find( indices.begin(), indices.end(), i) == indices.end() ) {
+      obsToRemove->add( *(pdf->getObservables()->at(i)) );
+      theoryToRemove->add( *(pdf->getTheory()->at(i)) );
+    }
+  }
+  pdf->getObservables()->remove( *obsToRemove );
+  pdf->getTheory()->remove( *theoryToRemove );
+  delete obsToRemove;
+  delete theoryToRemove;
+
+  // now sort out uncertainties
+  vector<double> oldStatErrs = pdf->StatErr;
+  vector<double> oldSystErrs = pdf->SystErr;
+  pdf->StatErr.clear();
+  pdf->SystErr.clear();
+  for (int i=0; i<indices.size(); i++ ) {
+    int index = indices[i];
+    pdf->StatErr.push_back( oldStatErrs[index] );
+    pdf->SystErr.push_back( oldSystErrs[index] );
+  }
+
+  pdf->setNObs( indices.size() );
+  TMatrixDSym newCorStatMatrix( indices.size() );
+  TMatrixDSym newCorSystMatrix( indices.size() );
+
+  pdf->getSubCorrelationStat( newCorStatMatrix, indices );
+  pdf->getSubCorrelationSyst( newCorSystMatrix, indices );
+
+  pdf->corStatMatrix.ResizeTo( indices.size(), indices.size() );
+  pdf->corSystMatrix.ResizeTo( indices.size(), indices.size() );
+  pdf->corMatrix.ResizeTo( indices.size(), indices.size() );
+  pdf->covMatrix.ResizeTo( indices.size(), indices.size() );
+
+  pdf->corStatMatrix = newCorStatMatrix;
+  pdf->corSystMatrix = newCorSystMatrix;
+
+  pdf->buildCov();
+  pdf->buildPdf();
+
+  addPdf(id, pdf, title);
+}
+
+void GammaComboEngine::addSubsetPdf( int id, PDF_Abs* pdf, int i1, TString title )
+{
+  vector<int> indices;
+  indices.push_back(i1);
+  addSubsetPdf(id, pdf, indices, title);
+}
+
+void GammaComboEngine::addSubsetPdf( int id, PDF_Abs* pdf, int i1, int i2, TString title )
+{
+  vector<int> indices;
+  indices.push_back(i1);
+  indices.push_back(i2);
+  addSubsetPdf(id, pdf, indices, title);
+}
+
+void GammaComboEngine::addSubsetPdf( int id, PDF_Abs* pdf, int i1, int i2, int i3, TString title )
+{
+  vector<int> indices;
+  indices.push_back(i1);
+  indices.push_back(i2);
+  indices.push_back(i3);
+  addSubsetPdf(id, pdf, indices, title);
+}
+
+void GammaComboEngine::addSubsetPdf( int id, PDF_Abs* pdf, int i1, int i2, int i3, int i4, TString title )
+{
+  vector<int> indices;
+  indices.push_back(i1);
+  indices.push_back(i2);
+  indices.push_back(i3);
+  indices.push_back(i4);
+  addSubsetPdf(id, pdf, indices, title);
+}
+
+///
 /// Add a Combiner to the GammaComboEngine object.
 ///
 void GammaComboEngine::addCombiner(int id, Combiner* cmb)
