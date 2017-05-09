@@ -99,6 +99,7 @@ class PDF_Abs
 		void                setObservablesTruth();
 		void                setObservablesToy();
 		inline void					setObservableSourceString(TString source){obsValSource=source;};
+    inline void         setNObs(int val){ nObs = val; };
 		inline void         setTitle(TString t){title=t;};
 		void                setUncertainty(TString obsName, float stat, float syst);
 		virtual void        setUncertainties(TString c);
@@ -141,7 +142,7 @@ class PDF_Abs
 		// toy generation - generating 1000 toys is much faster than 1000 times one toy.
 		int                     nToyObs;        // Number of toy observables to be pregenerated.
 		RooDataSet*             toyObservables; // A dataset holding nToyObs pregenerated bkg only toy observables.
-		RooDataSet*             toyBkgObservables; // A dataset holding nToyObs pregenerated toy observables.		
+		RooDataSet*             toyBkgObservables; // A dataset holding nToyObs pregenerated toy observables.
 		int                     iToyObs;        // Index of next unused set of toy observables.
 		int						gcId;			// ID of this PDF inside a GammaCombo object. Used to refer to this PDF.
 
