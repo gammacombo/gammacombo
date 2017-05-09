@@ -54,8 +54,10 @@
 	fillstyle[4].push_back(1001);
 
 	// 2nd scanner
-	markerstyle.push_back(29);
-	markersize.push_back(1.7);
+	//markerstyle.push_back(29);
+	//markersize.push_back(1.7);
+	markerstyle.push_back(20);
+	markersize.push_back(1.1);
 
 	linecolor[0].push_back(kOrange-5);
 	linestyle[0].push_back(kSolid);
@@ -535,6 +537,14 @@ void OneMinusClPlot2d::Draw()
 	haxes->GetXaxis()->SetNdivisions(xndiv, optimizeNdivx);
 	haxes->GetYaxis()->SetNdivisions(yndiv, optimizeNdivy);
 	haxes->Draw();
+
+  // draw origin if requested
+  TLine *lOrig;
+  if ( arg->plotorigin ) {
+    lOrig = new TLine();
+    lOrig->DrawLine( 0., arg->scanrangeyMin, 0., arg->scanrangeyMax );
+    lOrig->DrawLine( arg->scanrangeMin, 0., arg->scanrangeMax, 0. );
+  }
 
 	// make new scanner styles if we're plotting more scanners
 	// than styles defined in the constructor.
