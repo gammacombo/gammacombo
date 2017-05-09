@@ -726,7 +726,7 @@ void OneMinusClPlot::Draw()
   if ( m_mainCanvas==0 ){
 		m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, 600);
     // put this in for exponent xaxes
-    m_mainCanvas->SetRightMargin(0.1);
+    if ( !arg->isQuickhack(30) ) m_mainCanvas->SetRightMargin(0.1);
 	}
 	if ( arg->plotlog ){
 		m_mainCanvas->SetLogy();

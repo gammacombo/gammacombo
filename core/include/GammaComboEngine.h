@@ -48,12 +48,17 @@ class GammaComboEngine
 
 		void            adjustRanges(Combiner *c, int cId);
     void            setupToyVariationSets(Combiner *c, int cId);
-		void			addPdf(int id, PDF_Abs* pdf, TString title="");
-    void      setPdf( PDF_Abs* pdf);
-		void			addCombiner(int id, Combiner* cmb);
-		void			cloneCombiner(int newId, int oldId, TString name, TString title);
-		Combiner* 		getCombiner(int id) const;
-		PDF_Abs*		getPdf(int id);
+		void			      addPdf(int id, PDF_Abs* pdf, TString title="");
+    void            addSubsetPdf(int id, PDF_Abs* pdf, vector<int>& indices, TString title="" );
+    void            addSubsetPdf(int id, PDF_Abs* pdf, int i1, TString title="" );
+    void            addSubsetPdf(int id, PDF_Abs* pdf, int i1, int i2, TString title="" );
+    void            addSubsetPdf(int id, PDF_Abs* pdf, int i1, int i2, int i3, TString title="" );
+    void            addSubsetPdf(int id, PDF_Abs* pdf, int i1, int i2, int i3, int i4, TString title="" );
+    void            setPdf( PDF_Abs* pdf);
+		void			      addCombiner(int id, Combiner* cmb);
+		void			      cloneCombiner(int newId, int oldId, TString name, TString title);
+		Combiner* 		  getCombiner(int id) const;
+		PDF_Abs*		    getPdf(int id);
 		inline OptParser* 	getArg(){return arg;};
 		void			newCombiner(int id, TString name, TString title,
 					int pdf1=-1, int pdf2=-1, int pdf3=-1, int pdf4=-1, int pdf5=-1,

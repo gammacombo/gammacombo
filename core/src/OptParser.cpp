@@ -84,7 +84,8 @@ OptParser::OptParser():
 	plotpluginonly = false;
 	plotprelim = false;
 	plotpulls = false;
-	plotunoff = false;
+	plotorigin = false;
+  plotunoff = false;
   plotymin = -99.;
   plotymax = -99.;
 	pluginPlotRangeMax = -100;
@@ -165,6 +166,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("nrun");
 	availableOptions.push_back("ntoys");
 	availableOptions.push_back("nsmooth");
+  availableOptions.push_back("origin");
 	//availableOptions.push_back("pevid");
 	availableOptions.push_back("pr");
 	availableOptions.push_back("physrange");
@@ -454,6 +456,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::SwitchArg lightfilesArg("", "lightfiles", "Produce only light weight root files for the plugin toys."
 			" They cannot be used for control plots but save disk space.", false);
 	TCLAP::SwitchArg plotprelimArg("", "prelim", "Plot 'Preliminiary' into the plots. See also --unoff .", false);
+  TCLAP::SwitchArg plotoriginArg("", "origin", "Plot Origin on 2D plots.", false);
 	TCLAP::SwitchArg plotunoffArg("", "unoff", "Plot 'Unofficial' into the plots. See also --prelim .", false);
 	TCLAP::SwitchArg prArg("", "pr", "Enforce the physical range on all parameters (needed to reproduce "
 			"the standard Feldman-Cousins with boundary example). If set, no nuisance will be allowed outside the "
@@ -537,6 +540,7 @@ void OptParser::parseArguments(int argc, char* argv[])
       "27: In 2D plots, do not draw any fill color (only the fill style).\n"
       "28: In 2D plots, make fill styles even more transparent.\n"
       "29: Remove method name from legend.\n"
+      "30: Do not increase the canvas right margin.\n"
 			, false, "int");
   TCLAP::MultiArg<string> readfromfileArg("", "readfromfile", "Read the observables, uncertainties and correlations from a file - e.g. for reading in toys."
       "If 'default' is given, the default values are used."
@@ -673,6 +677,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "pr" ) ) cmd.add( prArg );
 	if ( isIn<TString>(bookedOptions, "physrange" ) ) cmd.add(physrangeArg);
 	if ( isIn<TString>(bookedOptions, "pevid" ) ) cmd.add( pevidArg );
+  if ( isIn<TString>(bookedOptions, "origin" ) ) cmd.add( plotoriginArg );
   if ( isIn<TString>(bookedOptions, "nsmooth" ) ) cmd.add(nsmoothArg);
 	if ( isIn<TString>(bookedOptions, "ntoys" ) ) cmd.add(ntoysArg);
 	if ( isIn<TString>(bookedOptions, "nrun" ) ) cmd.add(nrunArg);
@@ -774,7 +779,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	plotmagnetic      = plotmagneticArg.getValue();
 	plotnsigmacont    = plotnsigmacontArg.getValue();
 	plotpluginonly    = plotpluginonlyArg.getValue();
-	plotprelim        = plotprelimArg.getValue();
+	plotorigin        = plotoriginArg.getValue();
+  plotprelim        = plotprelimArg.getValue();
 	plotpulls         = plotpullsArg.getValue();
 	plotunoff         = plotunoffArg.getValue();
 	printcor          = printcorArg.getValue();

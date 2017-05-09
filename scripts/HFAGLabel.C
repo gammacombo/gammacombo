@@ -54,7 +54,7 @@ void HFAGLabel(const TString& label,
   tbox1->SetTextFont(76);
   tbox1->SetTextSize(24*scale);
   tbox1->SetTextAlign(22); //center-adjusted and vertically centered
-  tbox1->AddText(TString("HFAG"));
+  tbox1->AddText(TString("HFLAV"));
   tbox1->Draw();
   //
   TPaveText *tbox2 = new TPaveText(x1, y1-0.9*ysiz, x2, y2-ysiz, "BRNDC");
