@@ -206,6 +206,7 @@ void OptParser::defineOptions()
 	//availableOptions.push_back("relation");
 	availableOptions.push_back("pluginplotrange");
 	availableOptions.push_back("plotnsigmacont");
+  availableOptions.push_back("plotcontourlabels");
 	availableOptions.push_back("plot2dcl");
 	availableOptions.push_back("ndiv");
 	availableOptions.push_back("ndivy");
@@ -239,6 +240,7 @@ void OptParser::bookPlottingOptions()
 	bookedOptions.push_back("ps");
   bookedOptions.push_back("plotsoln");
 	bookedOptions.push_back("plotnsigmacont");
+	bookedOptions.push_back("plotcontourlabels");
 	bookedOptions.push_back("plot2dcl");
 	bookedOptions.push_back("ndiv");
 	bookedOptions.push_back("ndivy");
@@ -388,6 +390,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::ValueArg<string> pluginplotrangeArg("", "pluginplotrange", "Restrict the Plugin plot to a given range to "
 			"rejcet low-statistics outliers. Format: --pluginplotrange min-max.", false, "default", "string");
 	TCLAP::ValueArg<int> plotnsigmacontArg("", "ncontours", "plot this many sigma contours in 2d plots (max 5)", false, 2, "int");
+	TCLAP::ValueArg<string> plotcontourlabelsArg("", "labelcontours", "Add labels for the contours. Pass in the format of cId:ncontours."
+      "e.g. if you want to label the 5th combiner (index 4) up to 4 sigma contours and the 2nd combiner (index 1) up to 3 sigma use --labelcontours 4:4,1:3", false, "", "string");
 	TCLAP::ValueArg<string> filenameadditionArg("","ext","Add this piece into the file name (in case you don't want files/plots to be overwritten", false, "", "string");
   TCLAP::ValueArg<string> filenamechangeArg("","filename", "Change filename to this name (after the basename of the executable)", false, "", "string");
   TCLAP::ValueArg<string> hfagLabelArg("", "hfagLabel", "Use the HFAG label with a name (e.g. ICHEP 2016). Passing \'default\' gives the HFAG label with no subname", false, "", "string");
@@ -671,6 +675,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "intprob" ) ) cmd.add( intprobArg );
   if ( isIn<TString>(bookedOptions, "plotrangey" ) ) cmd.add( plotrangeyArg );
 	if ( isIn<TString>(bookedOptions, "plotnsigmacont" ) ) cmd.add(plotnsigmacontArg);
+  if ( isIn<TString>(bookedOptions, "plotcontourlabels" ) ) cmd.add(plotcontourlabelsArg);
 	if ( isIn<TString>(bookedOptions, "plotid" ) ) cmd.add(plotidArg);
   if ( isIn<TString>(bookedOptions, "plotext" ) ) cmd.add(plotextArg);
 	if ( isIn<TString>(bookedOptions, "plot2dcl" ) ) cmd.add( plot2dclArg );
@@ -1153,6 +1158,18 @@ void OptParser::parseArguments(int argc, char* argv[])
     for ( int i=plot2dcl.size(); i<combid.size(); i++ ) {
       plot2dcl.push_back(0);
     }
+  }
+
+  // --labelcontours
+  //
+  // another quite complicated one. split first by comma and then by colon
+	string val = plotcontourlabelsArg.getValue();
+  TObjArray *assignmentArray = TString(val).Tokenize(","); // split string at ","
+  for (int i=0; i<assignmentArray->GetEntries(); i++ ) {
+    TString assignmentString = ((TObjString*)assignmentArray->At(i))->GetString();
+    TObjArray *subAssignArray = assignmentString.Tokenize(":"); // now split at ":"
+    assert( subAssignArray->GetEntries() == 2 );
+    contourlabels[ convertToIntWithCheck( ((TObjString*)subAssignArray->At(0))->GetString() ,"convertfail" ) ] = convertToIntWithCheck( ((TObjString*)subAssignArray->At(1))->GetString(),"convertfail" );
   }
 
 	// check --po argument

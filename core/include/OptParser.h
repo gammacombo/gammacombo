@@ -108,6 +108,7 @@ class OptParser
     Double_t        plotHFAGLabelScale;
 		bool            plotmagnetic;
 		int             plotnsigmacont;
+    map<int,int>    contourlabels;
 		bool            plotpluginonly;
 		bool            plotpulls;
 		bool            plotprelim;
