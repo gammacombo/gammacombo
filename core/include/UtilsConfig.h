@@ -116,6 +116,7 @@ namespace Utils
     lhcb_pipi,
     lhcb_kk,
     lhcb_3fb,
+    lhcb_8fb,
     lhcb_10fb,
     lhcb_22fb,
     lhcb_50fb,

@@ -171,7 +171,7 @@
 	fillcolor[4].push_back(cb.lightcolor(fillcolor[3][4]));
 	fillstyle[4].push_back(1001);
 
-	// scanners 6-15
+	// scanners 6-16
 	// colors based on http://colorbrewer2.org/, six classes, qualitative, second scheme
 	makeNewPlotStyle("#1b9e77"); // sea green
 	makeNewPlotStyle("#d95f02"); // dark orange
@@ -186,25 +186,33 @@
 	makeNewPlotStyle("",kGreen-8); // same as 1D scan 2
 
   // new colors from Alison
+  // 17-19
   makeNewPlotStyle("#6a51a3"); // shades of purple
   makeNewPlotStyle("#54278f");
   makeNewPlotStyle("#3f007d");
 
+  // 20-22
   makeNewPlotStyle("#fb6a4a"); // shades of red
   makeNewPlotStyle("#ef3b2c");
   makeNewPlotStyle("#cb181d");
 
+  //23-25
   makeNewPlotStyle("#a1d99b"); // shades of green
   makeNewPlotStyle("#41ab5d");
   makeNewPlotStyle("#238b45");
 
+  //26-28
   makeNewPlotStyle("#ffeda0"); // shades of orange
   makeNewPlotStyle("#fed976");
   makeNewPlotStyle("#feb24c");
 
+  //29-31
   makeNewPlotStyle("#6baed6"); // shades of blue
   makeNewPlotStyle("#4292c6");
   makeNewPlotStyle("#2171b5");
+
+  // some other colors (should we just change this to take the color hex string directly?)
+  makeNewPlotStyle("#bdbdbd"); // gray
 
   // any additional scanners
   for ( int i=fillcolor[0].size(); i<arg->combid.size(); i++ ) {
@@ -585,7 +593,15 @@ void OneMinusClPlot2d::Draw()
 	// draw filled contours first
 	if ( ! contoursOnly ){
 		for ( int i=0; i < m_contours.size(); i++ ){
-			m_contours[i]->Draw();
+			if ( arg->contourlabels.size()>0 && arg->contourlabels.find(i) != arg->contourlabels.end() ) {
+        int tmpnconts = arg->plotnsigmacont;
+        arg->plotnsigmacont = arg->contourlabels[i];
+        m_contours[i]->Draw();
+        arg->plotnsigmacont = tmpnconts;
+      }
+      else {
+        m_contours[i]->Draw();
+      }
 		}
 	}
 
