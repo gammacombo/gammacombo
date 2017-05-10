@@ -12,14 +12,16 @@ WebLink
 ======
 
 You can find information about the package at our website
-* [gammacombo.hepforge.org](http://gammacombo.hepforge.org/web/HTML/index.html)
+* [gammacombo.github.io](https://gammacombo.github.io)
+
+This also includes a quick start guide, some tutorials and the details on reproducing results
 
 
 Manual
 ======
 
 A manual is provided in
-* [GammaComboManual.pdf](http://gammacombo.hepforge.org/web/HTML/GammaComboManual.pdf)
+* [GammaComboManual.pdf](https://gammacombo.github.io/manual.pdf)
 
 Installation
 ============
