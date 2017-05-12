@@ -29,6 +29,7 @@ class ConfidenceContours
 		void                     DrawDashedLine();
 		void                     setStyle(vector<int>& linecolor, vector<int>& linestyle, vector<int>& fillcolor, vector<int>& fillstyle);
 		inline void              setTransparency(float percent){m_transparency = percent;};
+    inline void              setContoursToPlot( vector<int>& contstoplot ){ m_contstoplots = contstoplot;};
 
 	private:
 
@@ -43,6 +44,7 @@ class ConfidenceContours
 		vector<int>              m_fillstyle;
 		vector<int>              m_linewidth;
 		float                    m_transparency;
+    vector<int>              m_contstoplots; ///< container for which contours to actually draw
 };
 
 #endif
