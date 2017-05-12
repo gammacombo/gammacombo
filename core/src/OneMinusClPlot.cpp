@@ -744,6 +744,7 @@ void OneMinusClPlot::Draw()
   float legendXmax = legendXmin + ( arg->plotlegsizex!=-1. ? arg->plotlegsizex : 0.31 ) ;
   float legendYmax = legendYmin + ( arg->plotlegsizey!=-1. ? arg->plotlegsizey : 0.1640559 ) ;
 	TLegend* leg = new TLegend(legendXmin,legendYmin,legendXmax,legendYmax);
+  leg->SetNColumns( arg->plotlegcols );
 	leg->SetFillColor(kWhite);
 	leg->SetFillStyle(0);
 	leg->SetLineColor(kWhite);
