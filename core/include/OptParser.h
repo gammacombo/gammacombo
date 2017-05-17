@@ -101,6 +101,7 @@ class OptParser
 		float           plotlegsizex;
 		float           plotlegsizey;
     TString         plotlegstyle;
+    int             plotlegcols;
 		float           plotgroupx;
 		float           plotgroupy;
     Double_t        plotHFAGLabelPosX;
@@ -108,6 +109,7 @@ class OptParser
     Double_t        plotHFAGLabelScale;
 		bool            plotmagnetic;
 		int             plotnsigmacont;
+    map<int,vector<int> > contourlabels;
 		bool            plotpluginonly;
 		bool            plotpulls;
 		bool            plotprelim;

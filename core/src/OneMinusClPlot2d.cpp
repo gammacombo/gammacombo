@@ -171,7 +171,7 @@
 	fillcolor[4].push_back(cb.lightcolor(fillcolor[3][4]));
 	fillstyle[4].push_back(1001);
 
-	// scanners 6-15
+	// scanners 6-16
 	// colors based on http://colorbrewer2.org/, six classes, qualitative, second scheme
 	makeNewPlotStyle("#1b9e77"); // sea green
 	makeNewPlotStyle("#d95f02"); // dark orange
@@ -186,25 +186,33 @@
 	makeNewPlotStyle("",kGreen-8); // same as 1D scan 2
 
   // new colors from Alison
-  makeNewPlotStyle("#6a51a3"); // shades of purple
+  // 16-18
+  makeNewPlotStyle("#9e9ac8"); // shades of purple
   makeNewPlotStyle("#54278f");
   makeNewPlotStyle("#3f007d");
 
+  // 19-21
   makeNewPlotStyle("#fb6a4a"); // shades of red
   makeNewPlotStyle("#ef3b2c");
   makeNewPlotStyle("#cb181d");
 
+  //22-24
   makeNewPlotStyle("#a1d99b"); // shades of green
   makeNewPlotStyle("#41ab5d");
   makeNewPlotStyle("#238b45");
 
+  //25-27
   makeNewPlotStyle("#ffeda0"); // shades of orange
   makeNewPlotStyle("#fed976");
   makeNewPlotStyle("#feb24c");
 
+  //28-30
   makeNewPlotStyle("#6baed6"); // shades of blue
   makeNewPlotStyle("#4292c6");
   makeNewPlotStyle("#2171b5");
+
+  // some other colors (should we just change this to take the color hex string directly?)
+  makeOneColorPlotStyle("#bdbdbd"); // gray
 
   // any additional scanners
   for ( int i=fillcolor[0].size(); i<arg->combid.size(); i++ ) {
@@ -261,6 +269,43 @@ void OneMinusClPlot2d::makeNewPlotStyle(TString htmlColor, int ROOTColor)
 	linecolor[4].push_back(cb.darklightcolor(linecolor[3][currentNumberOfStyles],thisMuchDarker));
 	linestyle[4].push_back(kSolid);
 	fillcolor[4].push_back(cb.darklightcolor(fillcolor[3][currentNumberOfStyles],thisMuchDarker));
+	fillstyle[4].push_back(1001);
+
+}
+
+void OneMinusClPlot2d::makeOneColorPlotStyle(TString htmlColor, int ROOTColor)
+{
+
+	int currentNumberOfStyles = linecolor[0].size();
+	// get index of new color. Either use the provided HTML color, or
+	// take a predefined ROOT color.
+	int newColor;
+	if ( htmlColor.EqualTo("ROOT") ) newColor = currentNumberOfStyles;
+	else if ( ROOTColor > 0 ) newColor = ROOTColor;
+	else newColor = TColor::GetColor(htmlColor);
+	ColorBuilder cb;
+  float thisMuchLighter = 1.2;
+	markerstyle.push_back(20);
+	markersize.push_back(1.1);
+	linecolor[0].push_back(newColor);
+	linestyle[0].push_back(kSolid);
+	fillcolor[0].push_back(cb.darklightcolor(newColor,thisMuchLighter));
+	fillstyle[0].push_back(3005);
+	linecolor[1].push_back(newColor);
+	linestyle[1].push_back(kSolid);
+	fillcolor[1].push_back(cb.darklightcolor(newColor,thisMuchLighter));
+	fillstyle[1].push_back(1001);
+	linecolor[2].push_back(newColor);
+	linestyle[2].push_back(kSolid);
+	fillcolor[2].push_back(cb.darklightcolor(newColor,thisMuchLighter));
+	fillstyle[2].push_back(1001);
+	linecolor[3].push_back(newColor);
+	linestyle[3].push_back(kSolid);
+	fillcolor[3].push_back(cb.darklightcolor(newColor,thisMuchLighter));
+	fillstyle[3].push_back(1001);
+	linecolor[4].push_back(newColor);
+	linestyle[4].push_back(kSolid);
+	fillcolor[4].push_back(cb.darklightcolor(newColor,thisMuchLighter));
 	fillstyle[4].push_back(1001);
 
 }
@@ -444,6 +489,7 @@ void OneMinusClPlot2d::drawLegend()
 	float legendYmax = legendYmin + (arg->plotlegsizey!=-1. ? arg->plotlegsizey : 0.15) ;
 	if ( m_legend ) delete m_legend;
 	m_legend = new TLegend(legendXmin,legendYmin,legendXmax,legendYmax);
+  m_legend->SetNColumns( arg->plotlegcols );
 	m_legend->SetFillColor(0);
 	m_legend->SetFillStyle(0);
 	m_legend->SetBorderSize(0);
@@ -567,6 +613,7 @@ void OneMinusClPlot2d::Draw()
 		int styleId = i;
 		if ( arg->color.size()>i ) styleId = arg->color[i];
 		cont->setStyle(transpose(linecolor)[styleId], transpose(linestyle)[styleId], transpose(fillcolor)[styleId], transpose(fillstyle)[i]);
+    cont->setContoursToPlot( arg->contourlabels[i] );
 		m_contours[i] = cont;
 		m_contours_computed[i] = true;
 	}
@@ -585,7 +632,7 @@ void OneMinusClPlot2d::Draw()
 	// draw filled contours first
 	if ( ! contoursOnly ){
 		for ( int i=0; i < m_contours.size(); i++ ){
-			m_contours[i]->Draw();
+        m_contours[i]->Draw();
 		}
 	}
 

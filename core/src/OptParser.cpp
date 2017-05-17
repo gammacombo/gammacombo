@@ -73,6 +73,7 @@ OptParser::OptParser():
 	plotlegy = -99;
 	plotlegsizex = -99;
 	plotlegsizey = -99;
+  plotlegcols = 1;
 	plotgroupx = -99;
 	plotgroupy = -99;
   plotHFAGLabelPosX = 0;
@@ -148,6 +149,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("leg");
 	availableOptions.push_back("legsize");
   availableOptions.push_back("legstyle");
+  availableOptions.push_back("legcols");
 	availableOptions.push_back("group");
 	availableOptions.push_back("grouppos");
 	availableOptions.push_back("lightfiles");
@@ -206,6 +208,7 @@ void OptParser::defineOptions()
 	//availableOptions.push_back("relation");
 	availableOptions.push_back("pluginplotrange");
 	availableOptions.push_back("plotnsigmacont");
+  availableOptions.push_back("plotcontourlabels");
 	availableOptions.push_back("plot2dcl");
 	availableOptions.push_back("ndiv");
 	availableOptions.push_back("ndivy");
@@ -239,6 +242,7 @@ void OptParser::bookPlottingOptions()
 	bookedOptions.push_back("ps");
   bookedOptions.push_back("plotsoln");
 	bookedOptions.push_back("plotnsigmacont");
+	bookedOptions.push_back("plotcontourlabels");
 	bookedOptions.push_back("plot2dcl");
 	bookedOptions.push_back("ndiv");
 	bookedOptions.push_back("ndivy");
@@ -385,9 +389,12 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"2d plots: set the size of the legend. "
 			"Format: --legsize xsize:ysize in normalized coordinates [0,1]. Default: 0.38:0.15", false, "default", "string");
   TCLAP::ValueArg<string> plotlegstyleArg("", "legstyle", "Change the legend style.", false, "default", "string");
+  TCLAP::ValueArg<int>    plotlegcolsArg("", "legcols", "Set the number of columns in the legend. Default: 1", false, 1, "int");
 	TCLAP::ValueArg<string> pluginplotrangeArg("", "pluginplotrange", "Restrict the Plugin plot to a given range to "
 			"rejcet low-statistics outliers. Format: --pluginplotrange min-max.", false, "default", "string");
 	TCLAP::ValueArg<int> plotnsigmacontArg("", "ncontours", "plot this many sigma contours in 2d plots (max 5)", false, 2, "int");
+	TCLAP::ValueArg<string> plotcontourlabelsArg("", "labelcontours", "Add labels for the contours. Pass in the format of cId:ncontours."
+      "e.g. if you want to label the 5th combiner (index 4) up to 4 sigma contours and the 2nd combiner (index 1) up to 3 sigma use --labelcontours 4:4,1:3", false, "", "string");
 	TCLAP::ValueArg<string> filenameadditionArg("","ext","Add this piece into the file name (in case you don't want files/plots to be overwritten", false, "", "string");
   TCLAP::ValueArg<string> filenamechangeArg("","filename", "Change filename to this name (after the basename of the executable)", false, "", "string");
   TCLAP::ValueArg<string> hfagLabelArg("", "hfagLabel", "Use the HFAG label with a name (e.g. ICHEP 2016). Passing \'default\' gives the HFAG label with no subname", false, "", "string");
@@ -671,6 +678,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "intprob" ) ) cmd.add( intprobArg );
   if ( isIn<TString>(bookedOptions, "plotrangey" ) ) cmd.add( plotrangeyArg );
 	if ( isIn<TString>(bookedOptions, "plotnsigmacont" ) ) cmd.add(plotnsigmacontArg);
+  if ( isIn<TString>(bookedOptions, "plotcontourlabels" ) ) cmd.add(plotcontourlabelsArg);
 	if ( isIn<TString>(bookedOptions, "plotid" ) ) cmd.add(plotidArg);
   if ( isIn<TString>(bookedOptions, "plotext" ) ) cmd.add(plotextArg);
 	if ( isIn<TString>(bookedOptions, "plot2dcl" ) ) cmd.add( plot2dclArg );
@@ -698,6 +706,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "lightfiles" ) ) cmd.add( lightfilesArg );
 	if ( isIn<TString>(bookedOptions, "legsize" ) ) cmd.add( plotlegsizeArg );
   if ( isIn<TString>(bookedOptions, "legstyle" ) ) cmd.add( plotlegstyleArg );
+  if ( isIn<TString>(bookedOptions, "legcols" ) ) cmd.add( plotlegcolsArg );
 	if ( isIn<TString>(bookedOptions, "leg" ) ) cmd.add( plotlegArg );
 	if ( isIn<TString>(bookedOptions, "largest" ) ) cmd.add( largestArg );
   if ( isIn<TString>(bookedOptions, "latex" ) ) cmd.add( latexArg );
@@ -775,6 +784,7 @@ void OptParser::parseArguments(int argc, char* argv[])
   plotext           = plotextArg.getValue();
 	plotid            = plotidArg.getValue();
 	plotlog           = plotlogArg.getValue();
+  plotlegcols       = plotlegcolsArg.getValue();
   plotlegstyle      = plotlegstyleArg.getValue();
 	plotmagnetic      = plotmagneticArg.getValue();
 	plotnsigmacont    = plotnsigmacontArg.getValue();
@@ -1152,6 +1162,30 @@ void OptParser::parseArguments(int argc, char* argv[])
   else if ( plot2dcl.size() > 1 && plot2dcl.size() <= combid.size() ) {
     for ( int i=plot2dcl.size(); i<combid.size(); i++ ) {
       plot2dcl.push_back(0);
+    }
+  }
+
+  // --labelcontours
+  //
+  // another quite complicated one. split first by comma and then by colon
+	usage = "";
+	usage += "Required format: '--labelcontours cId=[a,b,c]:cId=[d,e,f]'\n";
+	usage += "  Examples:\n";
+	usage += "  --labelcontours 0=[1,2,3]           (0th combiner gets 1,2,3 sigma contours)\n";
+	usage += "  --labelcontours 0=[1,2,3]:6=[1,3,5] (as above and also 6th combiner gets 1,3,5 sigma contours)\n";
+	string val = plotcontourlabelsArg.getValue();
+  TObjArray *assignmentArray = TString(val).Tokenize(":"); // split string at ":"
+  for (int i=0; i<assignmentArray->GetEntries(); i++ ) {
+    TString assignmentString = ((TObjString*)assignmentArray->At(i))->GetString();
+    TObjArray *subAssignArray = assignmentString.Tokenize("="); // now split at "="
+    assert( subAssignArray->GetEntries() == 2 );
+    int relComb = convertToDigitWithCheck( ((TObjString*)subAssignArray->At(0))->GetString(), usage);
+    TString subAssignString = ((TObjString*)subAssignArray->At(1))->GetString();
+    subAssignString.ReplaceAll("[",""); // strip brackets
+    subAssignString.ReplaceAll("]","");
+    TObjArray *intAssignArray = subAssignString.Tokenize(","); // split at ","
+    for (int j=0; j<intAssignArray->GetEntries(); j++) {
+      contourlabels[ relComb ].push_back( convertToIntWithCheck( ((TObjString*)intAssignArray->At(j))->GetString(), usage ) );
     }
   }
 
