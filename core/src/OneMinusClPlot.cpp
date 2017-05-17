@@ -156,7 +156,7 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 			g->SetMarkerSize(1);
 		}
 		if(CLsType==2) {
-			g->SetMarkerStyle(21);
+			g->SetMarkerStyle(25);
 		}
 	}
 
