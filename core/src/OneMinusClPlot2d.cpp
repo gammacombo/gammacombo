@@ -207,12 +207,15 @@
   makeNewPlotStyle("#feb24c");
 
   //28-30
-  makeNewPlotStyle("#6baed6"); // shades of blue
+  makeNewPlotStyle("#9ecae1"); // shades of blue
   makeNewPlotStyle("#4292c6");
   makeNewPlotStyle("#2171b5");
 
   // some other colors (should we just change this to take the color hex string directly?)
   makeOneColorPlotStyle("#bdbdbd"); // gray
+  makeOneColorPlotStyle("#969696"); // dark gray
+  makeOneColorPlotStyle("#525252"); // darker gray
+  makeOneColorPlotStyle("#252525"); // black
 
   // any additional scanners
   for ( int i=fillcolor[0].size(); i<arg->combid.size(); i++ ) {
