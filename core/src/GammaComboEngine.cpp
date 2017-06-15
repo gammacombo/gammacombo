@@ -212,6 +212,29 @@ void GammaComboEngine::addSubsetPdf( int id, PDF_Abs* pdf, int i1, int i2, int i
   addSubsetPdf(id, pdf, indices, title);
 }
 
+void GammaComboEngine::addSubsetPdf( int id, PDF_Abs* pdf, int i1, int i2, int i3, int i4, int i5, TString title )
+{
+  vector<int> indices;
+  indices.push_back(i1);
+  indices.push_back(i2);
+  indices.push_back(i3);
+  indices.push_back(i4);
+  indices.push_back(i5);
+  addSubsetPdf(id, pdf, indices, title);
+}
+
+void GammaComboEngine::addSubsetPdf( int id, PDF_Abs* pdf, int i1, int i2, int i3, int i4, int i5, int i6, TString title )
+{
+  vector<int> indices;
+  indices.push_back(i1);
+  indices.push_back(i2);
+  indices.push_back(i3);
+  indices.push_back(i4);
+  indices.push_back(i5);
+  indices.push_back(i6);
+  addSubsetPdf(id, pdf, indices, title);
+}
+
 ///
 /// Add a Combiner to the GammaComboEngine object.
 ///
