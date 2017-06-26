@@ -45,6 +45,7 @@ class ConfidenceContours
 		vector<int>              m_linewidth;
 		float                    m_transparency;
     vector<int>              m_contstoplots; ///< container for which contours to actually draw
+    int                      m_nMaxContours;
 };
 
 #endif

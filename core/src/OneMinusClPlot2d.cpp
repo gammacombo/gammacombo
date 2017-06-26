@@ -17,7 +17,7 @@
 	m_legend = 0;
 
 	// ==== define style ====
-	for ( int i=0; i<5; i++ ){
+	for ( int i=0; i<9; i++ ){
 		// initialize containers holding the plot style
 		vector<int> tmp1; linecolor.push_back(tmp1);
 		vector<int> tmp2; linestyle.push_back(tmp2);
@@ -52,6 +52,26 @@
 	linestyle[4].push_back(kSolid);
 	fillcolor[4].push_back(cb.lightcolor(fillcolor[3][0]));
 	fillstyle[4].push_back(1001);
+	// 6 sigma
+	linecolor[5].push_back(cb.lightcolor(linecolor[4][0]));
+	linestyle[5].push_back(kSolid);
+	fillcolor[5].push_back(cb.lightcolor(fillcolor[4][0]));
+	fillstyle[5].push_back(1001);
+	// 7 sigma
+	linecolor[6].push_back(cb.lightcolor(linecolor[5][0]));
+	linestyle[6].push_back(kSolid);
+	fillcolor[6].push_back(cb.lightcolor(fillcolor[5][0]));
+	fillstyle[6].push_back(1001);
+	// 8 sigma
+	linecolor[7].push_back(cb.lightcolor(linecolor[6][0]));
+	linestyle[7].push_back(kSolid);
+	fillcolor[7].push_back(cb.lightcolor(fillcolor[6][0]));
+	fillstyle[7].push_back(1001);
+	// 9 sigma
+	linecolor[8].push_back(cb.lightcolor(linecolor[7][0]));
+	linestyle[8].push_back(kSolid);
+	fillcolor[8].push_back(cb.lightcolor(fillcolor[7][0]));
+	fillstyle[8].push_back(1001);
 
 	// 2nd scanner
 	//markerstyle.push_back(29);
@@ -84,6 +104,26 @@
 	fillcolor[4].push_back(cb.lightcolor(fillcolor[3][1]));
 	fillstyle[4].push_back(1001);
 
+	linecolor[5].push_back(cb.lightcolor(linecolor[4][1]));
+	linestyle[5].push_back(kSolid);
+	fillcolor[5].push_back(cb.lightcolor(fillcolor[4][1]));
+	fillstyle[5].push_back(1001);
+
+	linecolor[6].push_back(cb.lightcolor(linecolor[5][1]));
+	linestyle[6].push_back(kSolid);
+	fillcolor[6].push_back(cb.lightcolor(fillcolor[5][1]));
+	fillstyle[6].push_back(1001);
+
+	linecolor[7].push_back(cb.lightcolor(linecolor[6][1]));
+	linestyle[7].push_back(kSolid);
+	fillcolor[7].push_back(cb.lightcolor(fillcolor[6][1]));
+	fillstyle[7].push_back(1001);
+
+	linecolor[8].push_back(cb.lightcolor(linecolor[7][1]));
+	linestyle[8].push_back(kSolid);
+	fillcolor[8].push_back(cb.lightcolor(fillcolor[7][1]));
+	fillstyle[8].push_back(1001);
+
 	// 3rd scanner
 	markerstyle.push_back(20);
 	markersize.push_back(1.1);
@@ -112,6 +152,26 @@
 	linestyle[4].push_back(kSolid);
 	fillcolor[4].push_back(cb.lightcolor(fillcolor[3][2]));
 	fillstyle[4].push_back(1001);
+
+	linecolor[5].push_back(cb.lightcolor(linecolor[4][2]));
+	linestyle[5].push_back(kSolid);
+	fillcolor[5].push_back(cb.lightcolor(fillcolor[4][2]));
+	fillstyle[5].push_back(1001);
+
+	linecolor[6].push_back(cb.lightcolor(linecolor[5][2]));
+	linestyle[6].push_back(kSolid);
+	fillcolor[6].push_back(cb.lightcolor(fillcolor[5][2]));
+	fillstyle[6].push_back(1001);
+
+	linecolor[7].push_back(cb.lightcolor(linecolor[6][2]));
+	linestyle[7].push_back(kSolid);
+	fillcolor[7].push_back(cb.lightcolor(fillcolor[6][2]));
+	fillstyle[7].push_back(1001);
+
+	linecolor[8].push_back(cb.lightcolor(linecolor[7][2]));
+	linestyle[8].push_back(kSolid);
+	fillcolor[8].push_back(cb.lightcolor(fillcolor[7][2]));
+	fillstyle[8].push_back(1001);
 
 	// 4th scanner
 	markerstyle.push_back(22);
@@ -142,6 +202,26 @@
 	fillcolor[4].push_back(cb.lightcolor(fillcolor[3][3]));
 	fillstyle[4].push_back(1001);
 
+	linecolor[5].push_back(cb.lightcolor(linecolor[4][3]));
+	linestyle[5].push_back(kSolid);
+	fillcolor[5].push_back(cb.lightcolor(fillcolor[4][3]));
+	fillstyle[5].push_back(1001);
+
+	linecolor[6].push_back(cb.lightcolor(linecolor[5][3]));
+	linestyle[6].push_back(kSolid);
+	fillcolor[6].push_back(cb.lightcolor(fillcolor[5][3]));
+	fillstyle[6].push_back(1001);
+
+	linecolor[7].push_back(cb.lightcolor(linecolor[6][3]));
+	linestyle[7].push_back(kSolid);
+	fillcolor[7].push_back(cb.lightcolor(fillcolor[6][3]));
+	fillstyle[7].push_back(1001);
+
+	linecolor[8].push_back(cb.lightcolor(linecolor[7][3]));
+	linestyle[8].push_back(kSolid);
+	fillcolor[8].push_back(cb.lightcolor(fillcolor[7][3]));
+	fillstyle[8].push_back(1001);
+
 	// 5th scanner
 	markerstyle.push_back(22);
 	markersize.push_back(1.1);
@@ -170,6 +250,26 @@
 	linestyle[4].push_back(kSolid);
 	fillcolor[4].push_back(cb.lightcolor(fillcolor[3][4]));
 	fillstyle[4].push_back(1001);
+
+	linecolor[5].push_back(cb.lightcolor(linecolor[4][4]));
+	linestyle[5].push_back(kSolid);
+	fillcolor[5].push_back(cb.lightcolor(fillcolor[4][4]));
+	fillstyle[5].push_back(1001);
+
+	linecolor[6].push_back(cb.lightcolor(linecolor[5][4]));
+	linestyle[6].push_back(kSolid);
+	fillcolor[6].push_back(cb.lightcolor(fillcolor[5][4]));
+	fillstyle[6].push_back(1001);
+
+	linecolor[7].push_back(cb.lightcolor(linecolor[6][4]));
+	linestyle[7].push_back(kSolid);
+	fillcolor[7].push_back(cb.lightcolor(fillcolor[6][4]));
+	fillstyle[7].push_back(1001);
+
+	linecolor[8].push_back(cb.lightcolor(linecolor[7][4]));
+	linestyle[8].push_back(kSolid);
+	fillcolor[8].push_back(cb.lightcolor(fillcolor[7][4]));
+	fillstyle[8].push_back(1001);
 
 	// scanners 6-16
 	// colors based on http://colorbrewer2.org/, six classes, qualitative, second scheme
@@ -216,6 +316,7 @@
   makeOneColorPlotStyle("#969696"); // dark gray
   makeOneColorPlotStyle("#525252"); // darker gray
   makeOneColorPlotStyle("#252525"); // black
+  makeOneColorPlotStyle("#9c1216"); // dark red
 
   // any additional scanners
   for ( int i=fillcolor[0].size(); i<arg->combid.size(); i++ ) {
@@ -273,6 +374,22 @@ void OneMinusClPlot2d::makeNewPlotStyle(TString htmlColor, int ROOTColor)
 	linestyle[4].push_back(kSolid);
 	fillcolor[4].push_back(cb.darklightcolor(fillcolor[3][currentNumberOfStyles],thisMuchDarker));
 	fillstyle[4].push_back(1001);
+	linecolor[5].push_back(cb.darklightcolor(linecolor[4][currentNumberOfStyles],thisMuchDarker));
+	linestyle[5].push_back(kSolid);
+	fillcolor[5].push_back(cb.darklightcolor(fillcolor[4][currentNumberOfStyles],thisMuchDarker));
+	fillstyle[5].push_back(1001);
+	linecolor[6].push_back(cb.darklightcolor(linecolor[5][currentNumberOfStyles],thisMuchDarker));
+	linestyle[6].push_back(kSolid);
+	fillcolor[6].push_back(cb.darklightcolor(fillcolor[5][currentNumberOfStyles],thisMuchDarker));
+	fillstyle[6].push_back(1001);
+	linecolor[7].push_back(cb.darklightcolor(linecolor[6][currentNumberOfStyles],thisMuchDarker));
+	linestyle[7].push_back(kSolid);
+	fillcolor[7].push_back(cb.darklightcolor(fillcolor[6][currentNumberOfStyles],thisMuchDarker));
+	fillstyle[7].push_back(1001);
+	linecolor[8].push_back(cb.darklightcolor(linecolor[7][currentNumberOfStyles],thisMuchDarker));
+	linestyle[8].push_back(kSolid);
+	fillcolor[8].push_back(cb.darklightcolor(fillcolor[7][currentNumberOfStyles],thisMuchDarker));
+	fillstyle[8].push_back(1001);
 
 }
 
@@ -310,6 +427,22 @@ void OneMinusClPlot2d::makeOneColorPlotStyle(TString htmlColor, int ROOTColor)
 	linestyle[4].push_back(kSolid);
 	fillcolor[4].push_back(cb.darklightcolor(newColor,thisMuchLighter));
 	fillstyle[4].push_back(1001);
+	linecolor[5].push_back(newColor);
+	linestyle[5].push_back(kSolid);
+	fillcolor[5].push_back(cb.darklightcolor(newColor,thisMuchLighter));
+	fillstyle[5].push_back(1001);
+	linecolor[6].push_back(newColor);
+	linestyle[6].push_back(kSolid);
+	fillcolor[6].push_back(cb.darklightcolor(newColor,thisMuchLighter));
+	fillstyle[6].push_back(1001);
+	linecolor[7].push_back(newColor);
+	linestyle[7].push_back(kSolid);
+	fillcolor[7].push_back(cb.darklightcolor(newColor,thisMuchLighter));
+	fillstyle[7].push_back(1001);
+	linecolor[8].push_back(newColor);
+	linestyle[8].push_back(kSolid);
+	fillcolor[8].push_back(cb.darklightcolor(newColor,thisMuchLighter));
+	fillstyle[8].push_back(1001);
 
 }
 
@@ -442,7 +575,7 @@ void OneMinusClPlot2d::DrawFull()
 	float zMin = hChi2->GetMinimum();
 	float zMax;
 	if ( histosType[0]==kChi2 ){
-		zMax = fmin(zMin+25, hChi2->GetMaximum());
+		zMax = fmin(zMin+81, hChi2->GetMaximum());
 	}
 	else{
 		zMax = 1;
@@ -454,13 +587,13 @@ void OneMinusClPlot2d::DrawFull()
   // draw contours if requested
   ConfidenceContours* cont = new ConfidenceContours(arg);
   cont->computeContours(histos[0], histosType[0], 0);
-  vector<int> linecolor { kRed, kRed, kRed, kRed, kRed };
+  vector<int> linecolor { kRed, kRed, kRed, kRed, kRed, kRed, kRed };
   //vector<int> linestyle { kDashed, kDashed, kDashed, kDashed, kDashed };
-  vector<int> linestyle { 1, 2, 3, 4, 5 };
+  vector<int> linestyle { 1, 2, 3, 4, 5, 6, 7 };
   TColor *col = gROOT->GetColor(0);
   col->SetAlpha(1.);
-  vector<int> fillcolor { 0, 0, 0, 0, 0 };
-  vector<int> fillstyle { 0, 0, 0, 0, 0 };
+  vector<int> fillcolor { 0, 0, 0, 0, 0, 0, 0 };
+  vector<int> fillstyle { 0, 0, 0, 0, 0, 0, 0 };
   cont->setStyle( linecolor, linestyle, fillcolor, fillstyle );
   cont->setTransparency( 1. );
   cont->Draw();
@@ -591,10 +724,13 @@ void OneMinusClPlot2d::Draw()
 
   // draw origin if requested
   TLine *lOrig;
-  if ( arg->plotorigin ) {
+  if ( arg->plotoriginx>-99 ) {
     lOrig = new TLine();
-    lOrig->DrawLine( 0., arg->scanrangeyMin, 0., arg->scanrangeyMax );
-    lOrig->DrawLine( arg->scanrangeMin, 0., arg->scanrangeMax, 0. );
+    lOrig->DrawLine( arg->plotoriginx, arg->scanrangeyMin, arg->plotoriginx, arg->scanrangeyMax );
+  }
+  if ( arg->plotoriginy>-99 ) {
+    lOrig = new TLine();
+    lOrig->DrawLine( arg->scanrangeMin, arg->plotoriginy, arg->scanrangeMax, arg->plotoriginy );
   }
 
 	// make new scanner styles if we're plotting more scanners

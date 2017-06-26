@@ -419,7 +419,7 @@ int MethodProbScan::scan2d()
 	bool firstScanDone = hChi2min2dMin<1e5;
 	TH2F *hDbgChi2min2d = histHardCopy(hChi2min2d, firstScanDone);
 	hDbgChi2min2d->SetTitle(Form("#Delta#chi^{2} for scan %i, %s",nScansDone,title.Data()));
-	if ( firstScanDone ) hDbgChi2min2d->GetZaxis()->SetRangeUser(hChi2min2dMin,hChi2min2dMin+25);
+	if ( firstScanDone ) hDbgChi2min2d->GetZaxis()->SetRangeUser(hChi2min2dMin,hChi2min2dMin+81);
 	hDbgChi2min2d->GetXaxis()->SetTitle(par1->GetTitle());
 	hDbgChi2min2d->GetYaxis()->SetTitle(par2->GetTitle());
 	hDbgChi2min2d->GetZaxis()->SetTitle("#Delta#chi^{2}");
@@ -658,7 +658,7 @@ void MethodProbScan::saveSolutions2d()
 
 	// loop over chi2 histogram to locate local minima
 	for ( int i=2; i<hChi2min2d->GetNbinsX(); i++ )
-	{	
+	{
 		for ( int j=2; j<hChi2min2d->GetNbinsY(); j++ )
 		{
 			if ( !(hChi2min2d->GetBinContent(i-1,   j) > hChi2min2d->GetBinContent(i, j)
@@ -680,7 +680,7 @@ void MethodProbScan::saveSolutions2d()
 			if ( arg->debug ) cout << "MethodProbScan::saveSolutions2d() : saving solution of bin " << Form("(%i,%i)",i,j) << " ..." << endl;
 			solutions.push_back((RooSlimFitResult*)curveResults2d[i-1][j-1]->Clone());
 		}
-	}	
+	}
 
 	if ( solutions.size()==0 ){
 		cout << "MethodProbScan::saveSolutions2d() : WARNING : No solutions found in 2D scan!" << endl;
