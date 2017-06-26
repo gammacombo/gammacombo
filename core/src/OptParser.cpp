@@ -85,7 +85,8 @@ OptParser::OptParser():
 	plotpluginonly = false;
 	plotprelim = false;
 	plotpulls = false;
-	plotorigin = false;
+  plotoriginx = -99.;
+  plotoriginy = -99.;
   plotunoff = false;
   plotymin = -99.;
   plotymax = -99.;
@@ -359,6 +360,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::ValueArg<string> scanrangeyArg("", "scanrangey", "For 2D plots, restrict the scan range "
 			"of the y variable to a given range. "
 			"Format: --scanrangey min:max.", false, "default", "string");
+  TCLAP::ValueArg<string> plotoriginArg("", "origin", "Plot Origin on 2D plots. Default 0:0. Can move to another location. Format: --origin min:max", false, "default", "string");
   TCLAP::ValueArg<string> plotrangeyArg("", "plotrangey", "Plot range of the y-axis for 1D plots. Default 0:1. For log plots 1.e-3:1. "
       "Format: --plotrangey min:max.",false, "default", "string");
 	TCLAP::ValueArg<int> ndivArg("", "ndiv", "Set the number of axis divisions (x axis in 1d and 2d plots): "
@@ -463,7 +465,6 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::SwitchArg lightfilesArg("", "lightfiles", "Produce only light weight root files for the plugin toys."
 			" They cannot be used for control plots but save disk space.", false);
 	TCLAP::SwitchArg plotprelimArg("", "prelim", "Plot 'Preliminiary' into the plots. See also --unoff .", false);
-  TCLAP::SwitchArg plotoriginArg("", "origin", "Plot Origin on 2D plots.", false);
 	TCLAP::SwitchArg plotunoffArg("", "unoff", "Plot 'Unofficial' into the plots. See also --prelim .", false);
 	TCLAP::SwitchArg prArg("", "pr", "Enforce the physical range on all parameters (needed to reproduce "
 			"the standard Feldman-Cousins with boundary example). If set, no nuisance will be allowed outside the "
@@ -789,7 +790,6 @@ void OptParser::parseArguments(int argc, char* argv[])
 	plotmagnetic      = plotmagneticArg.getValue();
 	plotnsigmacont    = plotnsigmacontArg.getValue();
 	plotpluginonly    = plotpluginonlyArg.getValue();
-	plotorigin        = plotoriginArg.getValue();
   plotprelim        = plotprelimArg.getValue();
 	plotpulls         = plotpullsArg.getValue();
 	plotunoff         = plotunoffArg.getValue();
@@ -984,6 +984,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 	// --scanrange
 	parseRange(scanrangeArg.getValue(), scanrangeMin, scanrangeMax);
 	parseRange(scanrangeyArg.getValue(), scanrangeyMin, scanrangeyMax);
+
+  // --origin
+  parseRange(plotoriginArg.getValue(), plotoriginx, plotoriginy);
 
   // --plotrange
   parseRange(plotrangeyArg.getValue(), plotymin, plotymax );

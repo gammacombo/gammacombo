@@ -5,6 +5,7 @@ ConfidenceContours::ConfidenceContours(OptParser *arg)
 	assert(arg);
 	m_arg = arg;
 	m_transparency = 0.;
+  m_nMaxContours = 9;
 }
 
 ConfidenceContours::~ConfidenceContours()
@@ -120,12 +121,12 @@ void ConfidenceContours::addFilledPlotArea(TH2F* hist)
 	float ymin = hist->GetYaxis()->GetXmin();
 	float ymax = hist->GetYaxis()->GetXmax();
 	// make new graph covering the plotted area
-	TGraph *g = new TGraph(5);
+	TGraph *g = new TGraph(m_nMaxContours);
 	g->SetPoint(0, xmin, ymin);
 	g->SetPoint(1, xmin, ymax);
 	g->SetPoint(2, xmax, ymax);
 	g->SetPoint(3, xmax, ymin);
-	g->SetPoint(4, xmin, ymin);
+  for ( int i=4; i<m_nMaxContours; i++ ) g->SetPoint(i, xmin, ymin);
 	// make a new Contour object from it
 	TList *l = new TList();
 	l->Add(g);
@@ -152,47 +153,46 @@ void ConfidenceContours::computeContours(TH2F* hist, histogramType type, int id)
 	m_contours.clear();
 
 	// transform chi2 from valley to hill
-	float offset = 30.;
+	float offset = 100.;
 	if ( type==kChi2 ) hist = transformChi2valleyToHill(hist,offset);
 
 	// add boundaries
 	TH2F* histb = addBoundaryBins(hist);
 
 	// make contours
-	const int nMaxContours = 5;
-	histb->SetContour(nMaxContours);
+	histb->SetContour(m_nMaxContours);
 	if ( type==kChi2 ) {
 		// chi2 units
 		if ( m_arg->plot2dcl[id]>0 ){
-			histb->SetContourLevel(4, offset- 2.30);
-			histb->SetContourLevel(3, offset- 6.18);
-			histb->SetContourLevel(2, offset-11.83);
-			histb->SetContourLevel(1, offset-19.34);
-			histb->SetContourLevel(0, offset-28.76);
+      for ( int i=0;i <m_nMaxContours; i++ ) {
+        int cLev = m_nMaxContours-1-i;
+        // hack for >= 9 when ROOT precision fails
+        if (i==8)       histb->SetContourLevel( cLev, offset - 83.9733 ); // 9 sigma
+        else if (i==9)  histb->SetContourLevel( cLev, offset - 99.2688 ); // 10 sigma
+        else if (i==10) histb->SetContourLevel( cLev, offset - 114.564 ); // 11 sigma
+        else            histb->SetContourLevel( cLev, offset - TMath::ChisquareQuantile( 1.-TMath::Prob( (i+1)*(i+1), 1), 2) );
+      }
 		}
 		else{
-			histb->SetContourLevel(4, offset-1.);
-			histb->SetContourLevel(3, offset-4.);
-			histb->SetContourLevel(2, offset-9.);
-			histb->SetContourLevel(1, offset-16.);
-			histb->SetContourLevel(0, offset-25.);
+      for ( int i=0;i <m_nMaxContours; i++ ) {
+        int cLev = m_nMaxContours-1-i;
+        histb->SetContourLevel( cLev, offset - (i+1)*(i+1) );
+      }
 		}
 	}
 	else {
 		// p-value units
 		if ( m_arg->plot2dcl[id]>0 ){
-			histb->SetContourLevel(4, 0.3173);
-			histb->SetContourLevel(3, 4.55e-2);
-			histb->SetContourLevel(2, 2.7e-3);
-			histb->SetContourLevel(1, 6.3e-5);
-			histb->SetContourLevel(0, 5.7e-7);
+      for ( int i=0;i <m_nMaxContours; i++ ) {
+        int cLev = m_nMaxContours-1-i;
+        histb->SetContourLevel( cLev, offset - TMath::Prob( (i+1)*(i+1), 1) );
+      }
 		}
 		else{
-			histb->SetContourLevel(4, 1.-0.39);
-			histb->SetContourLevel(3, 1.-0.87);
-			histb->SetContourLevel(2, 1.-0.989);
-			histb->SetContourLevel(1, 1.-0.9997);
-			histb->SetContourLevel(0, 1.-0.999997);
+      for ( int i=0;i <m_nMaxContours; i++ ) {
+        int cLev = m_nMaxContours-1-i;
+        histb->SetContourLevel( cLev, 1.-TMath::Prob( (i+1)*(i+1), 2) );
+      }
 		}
 	}
 
@@ -211,10 +211,10 @@ void ConfidenceContours::computeContours(TH2F* hist, histogramType type, int id)
 	// are filled, index 0 is 5sigma. If only 2 are filled, index 0
 	// is 2 sigma.
 	int nEmptyContours = 0;
-	for ( int ic=4; ic>=0; ic-- ){
+	for ( int ic=m_nMaxContours-1; ic>=0; ic-- ){
 		if (((TList*)contours->At(ic))->IsEmpty()) nEmptyContours++;
 	}
-	for ( int ic=4; ic>=0; ic-- ){
+	for ( int ic=m_nMaxContours-1; ic>=0; ic-- ){
 		if ( !(((TList*)contours->At(ic))->IsEmpty()) ){
 			Contour* cont = new Contour(m_arg, (TList*)contours->At(ic));
 			cont->setSigma(5-nEmptyContours-ic);
@@ -230,7 +230,7 @@ void ConfidenceContours::computeContours(TH2F* hist, histogramType type, int id)
 
 	// magnetic boundaries
 	if ( m_arg->plotmagnetic ) {
-		for ( int ic=4; ic>=0; ic-- ){
+		for ( int ic=m_nMaxContours-1; ic>=0; ic-- ){
 			if ( ic>=m_contours.size() ) continue;
 			m_contours[ic]->magneticBoundaries(hist);
 		}
