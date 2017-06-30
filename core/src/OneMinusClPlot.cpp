@@ -166,7 +166,7 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	TH1F *haxes = new TH1F("haxes"+getUniqueRootName(), "", 100, min, max);
 	haxes->SetStats(0);
 	haxes->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
-	haxes->GetYaxis()->SetTitle("1-CL");
+	haxes->GetYaxis()->SetTitle("1#minusCL");
 	haxes->GetXaxis()->SetLabelFont(font);
 	haxes->GetYaxis()->SetLabelFont(font);
 	haxes->GetXaxis()->SetTitleFont(font);
@@ -320,7 +320,7 @@ void OneMinusClPlot::scan1dPlotSimple(MethodAbsScan* s, bool first, int CLsType)
 	hCL->SetMarkerSize(0.6);
 	hCL->GetYaxis()->SetNdivisions(407, true);
 	hCL->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
-	hCL->GetYaxis()->SetTitle("1-CL");
+	hCL->GetYaxis()->SetTitle("1#minusCL");
 	hCL->GetXaxis()->SetLabelFont(font);
 	hCL->GetYaxis()->SetLabelFont(font);
 	hCL->GetXaxis()->SetTitleFont(font);
