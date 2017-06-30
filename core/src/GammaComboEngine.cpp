@@ -168,7 +168,7 @@ void GammaComboEngine::addSubsetPdf(int id, PDF_Abs* pdf, vector<int>& indices, 
   pdf->corSystMatrix.ResizeTo( indices.size(), indices.size() );
   pdf->corMatrix.ResizeTo( indices.size(), indices.size() );
   pdf->covMatrix.ResizeTo( indices.size(), indices.size() );
-
+  
   pdf->corStatMatrix = newCorStatMatrix;
   pdf->corSystMatrix = newCorSystMatrix;
 
@@ -232,6 +232,33 @@ void GammaComboEngine::addSubsetPdf( int id, PDF_Abs* pdf, int i1, int i2, int i
   indices.push_back(i4);
   indices.push_back(i5);
   indices.push_back(i6);
+  addSubsetPdf(id, pdf, indices, title);
+}
+
+void GammaComboEngine::addSubsetPdf( int id, PDF_Abs* pdf, int i1, int i2, int i3, int i4, int i5, int i6, int i7, TString title )
+{
+  vector<int> indices;
+  indices.push_back(i1);
+  indices.push_back(i2);
+  indices.push_back(i3);
+  indices.push_back(i4);
+  indices.push_back(i5);
+  indices.push_back(i6);
+  indices.push_back(i7);
+  addSubsetPdf(id, pdf, indices, title);
+}
+
+void GammaComboEngine::addSubsetPdf( int id, PDF_Abs* pdf, int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8, TString title )
+{
+  vector<int> indices;
+  indices.push_back(i1);
+  indices.push_back(i2);
+  indices.push_back(i3);
+  indices.push_back(i4);
+  indices.push_back(i5);
+  indices.push_back(i6);
+  indices.push_back(i7);
+  indices.push_back(i8);
   addSubsetPdf(id, pdf, indices, title);
 }
 
