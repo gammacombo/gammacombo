@@ -61,7 +61,7 @@ void PDF_Gaus2d::setObservables(TString c)
 	}
 	else if ( c.EqualTo("year2013") ){
 		obsValSource = "1fb-1 just some values";
-		setObservable("a_gaus_obs", 0.1);
+		setObservable("a_gaus_obs", -0.5);
 		setObservable("b_gaus_obs", 1.5);
 	}
 	else{
@@ -76,7 +76,7 @@ void PDF_Gaus2d::setUncertainties(TString c)
 	if ( c.EqualTo("year2013") ){
 		obsErrSource = "1fb-1 just some errors";
 		StatErr[0] = 1; // a
-		StatErr[1] = 1; // b
+		StatErr[1] = 0.25; // b
 		SystErr[0] = 0; // a
 		SystErr[1] = 0; // b
 	}

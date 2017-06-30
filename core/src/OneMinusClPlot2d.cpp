@@ -317,6 +317,7 @@
   makeOneColorPlotStyle("#525252"); // darker gray
   makeOneColorPlotStyle("#252525"); // black
   makeOneColorPlotStyle("#9c1216"); // dark red
+  makeOneColorPlotStyle("#9e9ac8"); // blue
 
   // any additional scanners
   for ( int i=fillcolor[0].size(); i<arg->combid.size(); i++ ) {
