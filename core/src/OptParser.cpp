@@ -107,6 +107,8 @@ OptParser::OptParser():
 	scanrangeMin = -101;
 	scanrangeyMax = -102;
 	scanrangeyMin = -102;
+  scaleerr = -999.;
+  scalestaterr = -999.;
 	smooth2d = false;
   toyFiles = "";
 	usage = false;
@@ -199,6 +201,8 @@ void OptParser::defineOptions()
 	availableOptions.push_back("scanforce");
 	availableOptions.push_back("scanrange");
 	availableOptions.push_back("scanrangey");
+  availableOptions.push_back("scaleerr");
+  availableOptions.push_back("scalestaterr");
 	availableOptions.push_back("smooth2d");
   availableOptions.push_back("toyFiles");
 	availableOptions.push_back("title");
@@ -360,6 +364,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::ValueArg<string> scanrangeyArg("", "scanrangey", "For 2D plots, restrict the scan range "
 			"of the y variable to a given range. "
 			"Format: --scanrangey min:max.", false, "default", "string");
+  TCLAP::ValueArg<float> scaleerrArg("", "scaleerr", "Scale the errors by this number", false, -999., "float");
+  TCLAP::ValueArg<float> scalestaterrArg("", "scalestaterr", "Scale the STAT only errors by this number", false, -999., "float");
   TCLAP::ValueArg<string> plotoriginArg("", "origin", "Plot Origin on 2D plots. Default 0:0. Can move to another location. Format: --origin min:max", false, "default", "string");
   TCLAP::ValueArg<string> plotrangeyArg("", "plotrangey", "Plot range of the y-axis for 1D plots. Default 0:1. For log plots 1.e-3:1. "
       "Format: --plotrangey min:max.",false, "default", "string");
@@ -656,6 +662,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "scanrangey" ) ) cmd.add( scanrangeyArg );
 	if ( isIn<TString>(bookedOptions, "scanrange" ) ) cmd.add( scanrangeArg );
 	if ( isIn<TString>(bookedOptions, "scanforce" ) ) cmd.add( scanforceArg );
+  if ( isIn<TString>(bookedOptions, "scaleerr" ) ) cmd.add( scaleerrArg );
+  if ( isIn<TString>(bookedOptions, "scalestaterr" ) ) cmd.add( scalestaterrArg );
   if ( isIn<TString>(bookedOptions, "save" ) ) cmd.add( saveArg );
   if ( isIn<TString>(bookedOptions, "saveAtMin" ) ) cmd.add( saveAtMinArg );
 	if ( isIn<TString>(bookedOptions, "relation" ) ) cmd.add(relationArg);
@@ -801,6 +809,8 @@ void OptParser::parseArguments(int argc, char* argv[])
   probScanResult    = probScanResultArg.getValue();
 	qh                = qhArg.getValue();
   queue             = TString(queueArg.getValue());
+  scaleerr          = scaleerrArg.getValue();
+  scalestaterr      = scalestaterrArg.getValue();
   save              = saveArg.getValue();
   saveAtMin         = saveAtMinArg.getValue();
 	savenuisances1d   = snArg.getValue();

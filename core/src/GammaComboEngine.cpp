@@ -400,6 +400,40 @@ void GammaComboEngine::scaleDownErrors()
 }
 
 ///
+/// scale stat errors
+///
+void GammaComboEngine::scaleStatErrors()
+{
+  cout << "\nConfiguration: Scaling ALL STAT ERRORS by " << arg->scalestaterr << ".\n" << endl;
+  for ( int i=0; i<pdf.size(); i++ ){
+    if ( pdf[i]==0 ) continue;
+    for ( int iObs=0; iObs<pdf[i]->getNobs(); iObs++ ) {
+      pdf[i]->StatErr[iObs] *= arg->scalestaterr;
+    }
+    pdf[i]->buildCov();
+    pdf[i]->buildPdf();
+  }
+}
+
+///
+/// scale stat+syst errors
+///
+void GammaComboEngine::scaleStatAndSystErrors()
+{
+  cout << "\nConfiguration: Scaling ALL STAT AND SYST ERRORS by " << arg->scaleerr << ".\n" << endl;
+  for ( int i=0; i<pdf.size(); i++ ){
+    if ( pdf[i]==0 ) continue;
+    for ( int iObs=0; iObs<pdf[i]->getNobs(); iObs++ ) {
+      pdf[i]->StatErr[iObs] *= arg->scaleerr;
+      pdf[i]->StatErr[iObs] *= arg->scaleerr;
+    }
+    pdf[i]->buildCov();
+    pdf[i]->buildPdf();
+  }
+}
+
+
+///
 /// disable systematics
 ///
 void GammaComboEngine::disableSystematics()
@@ -1996,6 +2030,8 @@ void GammaComboEngine::run()
 	checkCombinationArg();
 	checkColorArg();
 	checkAsimovArg();
+  if ( arg->scalestaterr > -99 ) scaleStatErrors();
+  if ( arg->scaleerr > -99 ) scaleStatAndSystErrors();
   if ( arg->nosyst ) disableSystematics();
   makeAddDelCombinations();
   if ( arg->nbatchjobs>0 ) writebatchscripts();

@@ -144,6 +144,8 @@ class OptParser
 		float           scanrangeMax;
 		float           scanrangeyMin;
 		float           scanrangeyMax;
+    float           scaleerr;
+    float           scalestaterr;
 		bool    smooth2d;
 		vector<TString> title;
     TString         toyFiles;

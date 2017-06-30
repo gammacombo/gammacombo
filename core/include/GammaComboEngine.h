@@ -108,7 +108,9 @@ class GammaComboEngine
 		void			printBanner();
 		bool			pdfExists(int id);
 		void			savePlot();
-		void			scaleDownErrors();
+    void      scaleStatErrors();
+    void      scaleStatAndSystErrors();
+		void			scaleDownErrors(); // now defunct
 		void			scan();
 		void			scanDataSet();
 		void			setAsimovObservables(Combiner* c);
