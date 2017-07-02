@@ -123,12 +123,13 @@ import time
 if opts.synch:
   # check if back_up is required
   back_up_req = False
-  for root,dirs, files in os.walk('root'):
-    if root!='root': continue
-    for dir in dirs:
-      if dir in job_dirs:
-        back_up_req = True
-        break
+  if not opts.skipBackUp:
+    for root,dirs, files in os.walk('root'):
+      if root!='root': continue
+      for dir in dirs:
+        if dir in job_dirs:
+          back_up_req = True
+          break
   # do back up if needed
   if back_up_req and not opts.skipBackUp:
     os.system('mkdir -p root/back_up')
