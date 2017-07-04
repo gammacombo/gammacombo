@@ -555,6 +555,8 @@ void OptParser::parseArguments(int argc, char* argv[])
       "28: In 2D plots, make fill styles even more transparent.\n"
       "29: Remove method name from legend.\n"
       "30: Do not increase the canvas right margin.\n"
+      "31: Move the CL labels in 1D plots to the very left.\n"
+      "32: Make the text for printed solutions on 1D plots larger.\n"
 			, false, "int");
   TCLAP::MultiArg<string> readfromfileArg("", "readfromfile", "Read the observables, uncertainties and correlations from a file - e.g. for reading in toys."
       "If 'default' is given, the default values are used."
