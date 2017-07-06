@@ -652,8 +652,9 @@ void OneMinusClPlot2d::drawLegend()
 			int styleId = i;
 			if ( arg->color.size()>i ) styleId = arg->color[i];
 			TGraph *g = new TGraph(1);
-			g->SetFillStyle(fillstyle[0][i]); // solid
-			g->SetFillColor(fillcolor[0][styleId]);
+			if ( arg->isQuickhack(33) ) g->SetFillStyle(1001); // solid
+      else g->SetFillStyle(fillstyle[0][i]);
+      g->SetFillColor(fillcolor[0][styleId]);
 			g->SetLineWidth(2);
 			g->SetLineColor(linecolor[0][styleId]);
 			g->SetLineStyle(linestyle[0][styleId]);
