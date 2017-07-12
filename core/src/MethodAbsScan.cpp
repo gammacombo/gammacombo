@@ -577,6 +577,12 @@ bool MethodAbsScan::interpolate(TH1F* h, int i, float y, float central, bool upp
 	float sol1 = pq(p[0], p[1], p[2], y, 1);
 	// cout << upper << " ";
 	// printf("%f %f %f\n", central, sol0, sol1);
+	if(h->GetBinCenter(i-2) > sol0 || sol0 > h->GetBinCenter(i+2) || h->GetBinCenter(i-2) > sol1 || sol1 > h->GetBinCenter(i+2))
+	{
+		cout << "Polynomial interpolation out of bounds." << endl;
+		return false;
+	}
+
 	int useSol = 0;
 
 	if ( (sol0<central && sol1>central) || (sol1<central && sol0>central) )
@@ -674,7 +680,7 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 
 	clintervals1sigma.clear(); // clear, else calling this function twice doesn't work
 	clintervals2sigma.clear();
-  clintervals3sigma.clear();
+  	clintervals3sigma.clear();
 	int n = histogramCL->GetNbinsX();
 	RooRealVar* par = w->var(scanVar1);
 
@@ -699,6 +705,7 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 				if ( histogramCL->GetBinContent(i) < y ){
 					if ( n>25 ){
 						bool check = interpolate(histogramCL, i, y, sol, false, CLlo[c], CLloErr[c]);
+						if(!check) cout << "Using linear interpolation." << endl;
 						if ( !check || CLlo[c]!=CLlo[c] ) interpolateSimple(histogramCL, i, y, CLlo[c]);
 					}
 					else{
@@ -713,7 +720,8 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 				if ( histogramCL->GetBinContent(i) < y ){
 					if ( n>25 ){
 						bool check = interpolate(histogramCL, i-1, y, sol, true, CLhi[c], CLhiErr[c]);
-						if ( CLhi[c]!=CLhi[c] ) interpolateSimple(histogramCL, i-1, y, CLhi[c]);
+						if(!check) cout << "Using linear interpolation." << endl;
+						if (!check || CLhi[c]!=CLhi[c] ) interpolateSimple(histogramCL, i-1, y, CLhi[c]);
 					}
 					else{
 						interpolateSimple(histogramCL, i-1, y, CLhi[c]);
