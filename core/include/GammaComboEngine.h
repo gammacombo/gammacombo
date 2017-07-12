@@ -54,6 +54,10 @@ class GammaComboEngine
     void            addSubsetPdf(int id, PDF_Abs* pdf, int i1, int i2, TString title="" );
     void            addSubsetPdf(int id, PDF_Abs* pdf, int i1, int i2, int i3, TString title="" );
     void            addSubsetPdf(int id, PDF_Abs* pdf, int i1, int i2, int i3, int i4, TString title="" );
+    void            addSubsetPdf(int id, PDF_Abs* pdf, int i1, int i2, int i3, int i4, int i5, TString title="" );
+    void            addSubsetPdf(int id, PDF_Abs* pdf, int i1, int i2, int i3, int i4, int i5, int i6, TString title="" );
+    void            addSubsetPdf(int id, PDF_Abs* pdf, int i1, int i2, int i3, int i4, int i5, int i6, int i7, TString title="" );
+    void            addSubsetPdf(int id, PDF_Abs* pdf, int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8, TString title="" );
     void            setPdf( PDF_Abs* pdf);
 		void			      addCombiner(int id, Combiner* cmb);
 		void			      cloneCombiner(int newId, int oldId, TString name, TString title);
@@ -106,7 +110,9 @@ class GammaComboEngine
 		void			printBanner();
 		bool			pdfExists(int id);
 		void			savePlot();
-		void			scaleDownErrors();
+    void      scaleStatErrors();
+    void      scaleStatAndSystErrors();
+		void			scaleDownErrors(); // now defunct
 		void			scan();
 		void			scanDataSet();
 		void			setAsimovObservables(Combiner* c);

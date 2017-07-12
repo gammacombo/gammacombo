@@ -66,7 +66,7 @@ void LatexMaker::writeFile()
 void LatexMaker::writeCorrMatrix( ofstream& file, TMatrixDSym mat, RooArgList *observables, vector<TString> labels ) {
 
   file << "\\begin{tabular}{ l |";
-  for ( int i=0; i < mat.GetNcols(); i++) file << "c";
+  for ( int i=0; i < mat.GetNcols(); i++) file << "l";
   file << "}" << endl;
   file << "\\hline" << endl;
   file << "\\hline" << endl;
@@ -88,20 +88,20 @@ void LatexMaker::writeCorrMatrix( ofstream& file, TMatrixDSym mat, RooArgList *o
     file << Form("%-15s",title.Data());
 
     for (int j=0; j < mat.GetNcols(); j++) {
-      if ( TMath::Abs(mat[i][j]-1) < 1.e-3 ) {
-        file << " &       1";
+      if ( TMath::Abs(mat[i][j]-1) < 1.e-2 ) {
+        file << " & $\\phantom{-}1   $";
       }
-      else if ( TMath::Abs(mat[i][j]) < 1.e-3 ) {
-        file << " &       0";
+      else if ( TMath::Abs(mat[i][j]) < 1.e-2 ) {
+        file << " & $\\phantom{-}0   $";
       }
       else if ( mat[i][j] < 0 ) {
-        file << Form(" &  %5.3f",mat[i][j]);
+        file << Form(" & $          %4.2f$",mat[i][j]);
       }
       else if ( mat[i][j] > 0 ) {
-        file << Form(" &   %5.3f",mat[i][j]);
+        file << Form(" & $\\phantom{-}%4.2f$",mat[i][j]);
       }
       else {
-        file << " &       0";
+        file << " & $\\phantom{-}0   $";
       }
     }
     file << "  \\\\" << endl;

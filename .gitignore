@@ -6,6 +6,7 @@ tutorial/bin/
 tutorial/plots/
 tutorial/root/
 .DS_Store
+alphacombo/
 belle2/
 belle2_Vub/
 CompatibilityOfResultsOnSubsets/
@@ -18,8 +19,15 @@ hfag/
 hfag_wa_gamma/
 GammaComboManual/
 Vub_Vcb/
+BcToDD/
+Rd_Rdst/
+ReImPlots/
+RhoEta/
 commit_msg
 fullModel.dot
+scripts/*_C.d
+scripts/*_C.so
+scripts/*_rdict.pcm
 nbproject
 .cproject
 .project

@@ -166,7 +166,7 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	TH1F *haxes = new TH1F("haxes"+getUniqueRootName(), "", 100, min, max);
 	haxes->SetStats(0);
 	haxes->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
-	haxes->GetYaxis()->SetTitle("1-CL");
+	haxes->GetYaxis()->SetTitle("1#minusCL");
 	haxes->GetXaxis()->SetLabelFont(font);
 	haxes->GetYaxis()->SetLabelFont(font);
 	haxes->GetXaxis()->SetTitleFont(font);
@@ -320,7 +320,7 @@ void OneMinusClPlot::scan1dPlotSimple(MethodAbsScan* s, bool first, int CLsType)
 	hCL->SetMarkerSize(0.6);
 	hCL->GetYaxis()->SetNdivisions(407, true);
 	hCL->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
-	hCL->GetYaxis()->SetTitle("1-CL");
+	hCL->GetYaxis()->SetTitle("1#minusCL");
 	hCL->GetXaxis()->SetLabelFont(font);
 	hCL->GetYaxis()->SetLabelFont(font);
 	hCL->GetXaxis()->SetTitleFont(font);
@@ -640,6 +640,8 @@ void OneMinusClPlot::drawSolutions()
 		t1->SetTextAlign(13);
 		t1->SetTextFont(font);
 		t1->SetTextColor(color);
+    t1->SetTextSize(labelsize);
+    if ( arg->isQuickhack(32) ) t1->SetTextSize(1.5*labelsize);
 		if ( isAngle(scanners[i]->getScanVar1()) ){
 			xCentral = RadToDeg(xCentral);
 			xCLmin = RadToDeg(xCLmin);
@@ -652,8 +654,9 @@ void OneMinusClPlot::drawSolutions()
 		t1->AddText(Form("%.*f^{+%.*f}_{#font[122]{-}%.*f}",
 					d, xCentralRd,
 					d, myRounder.errPos(),
-					d, myRounder.errNeg()))->SetTextSize(labelsize);
-		t1->Draw();
+					d, myRounder.errNeg()));
+
+    if ( !arg->isQuickhack(21) ) t1->Draw();
 		iDrawn += 1;
 	}
 }
@@ -674,6 +677,7 @@ void OneMinusClPlot::drawCLguideLine(float pvalue)
 	float labelPos = xmin+(xmax-xmin)*0.10;
 	if ( arg->isQuickhack(2) ) labelPos = xmin+(xmax-xmin)*0.55;
   if ( arg->isQuickhack(23) ) labelPos = xmin+(xmax-xmin)*0.8;
+  if ( arg->isQuickhack(31) ) labelPos = xmin+(xmax-xmin)*0.01;
 	float labelPosYmin = 0;
 	float labelPosYmax = 0;
 

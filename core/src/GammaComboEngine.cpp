@@ -168,7 +168,7 @@ void GammaComboEngine::addSubsetPdf(int id, PDF_Abs* pdf, vector<int>& indices, 
   pdf->corSystMatrix.ResizeTo( indices.size(), indices.size() );
   pdf->corMatrix.ResizeTo( indices.size(), indices.size() );
   pdf->covMatrix.ResizeTo( indices.size(), indices.size() );
-
+  
   pdf->corStatMatrix = newCorStatMatrix;
   pdf->corSystMatrix = newCorSystMatrix;
 
@@ -209,6 +209,56 @@ void GammaComboEngine::addSubsetPdf( int id, PDF_Abs* pdf, int i1, int i2, int i
   indices.push_back(i2);
   indices.push_back(i3);
   indices.push_back(i4);
+  addSubsetPdf(id, pdf, indices, title);
+}
+
+void GammaComboEngine::addSubsetPdf( int id, PDF_Abs* pdf, int i1, int i2, int i3, int i4, int i5, TString title )
+{
+  vector<int> indices;
+  indices.push_back(i1);
+  indices.push_back(i2);
+  indices.push_back(i3);
+  indices.push_back(i4);
+  indices.push_back(i5);
+  addSubsetPdf(id, pdf, indices, title);
+}
+
+void GammaComboEngine::addSubsetPdf( int id, PDF_Abs* pdf, int i1, int i2, int i3, int i4, int i5, int i6, TString title )
+{
+  vector<int> indices;
+  indices.push_back(i1);
+  indices.push_back(i2);
+  indices.push_back(i3);
+  indices.push_back(i4);
+  indices.push_back(i5);
+  indices.push_back(i6);
+  addSubsetPdf(id, pdf, indices, title);
+}
+
+void GammaComboEngine::addSubsetPdf( int id, PDF_Abs* pdf, int i1, int i2, int i3, int i4, int i5, int i6, int i7, TString title )
+{
+  vector<int> indices;
+  indices.push_back(i1);
+  indices.push_back(i2);
+  indices.push_back(i3);
+  indices.push_back(i4);
+  indices.push_back(i5);
+  indices.push_back(i6);
+  indices.push_back(i7);
+  addSubsetPdf(id, pdf, indices, title);
+}
+
+void GammaComboEngine::addSubsetPdf( int id, PDF_Abs* pdf, int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8, TString title )
+{
+  vector<int> indices;
+  indices.push_back(i1);
+  indices.push_back(i2);
+  indices.push_back(i3);
+  indices.push_back(i4);
+  indices.push_back(i5);
+  indices.push_back(i6);
+  indices.push_back(i7);
+  indices.push_back(i8);
   addSubsetPdf(id, pdf, indices, title);
 }
 
@@ -375,6 +425,40 @@ void GammaComboEngine::scaleDownErrors()
 
 	cout << endl;
 }
+
+///
+/// scale stat errors
+///
+void GammaComboEngine::scaleStatErrors()
+{
+  cout << "\nConfiguration: Scaling ALL STAT ERRORS by " << arg->scalestaterr << ".\n" << endl;
+  for ( int i=0; i<pdf.size(); i++ ){
+    if ( pdf[i]==0 ) continue;
+    for ( int iObs=0; iObs<pdf[i]->getNobs(); iObs++ ) {
+      pdf[i]->StatErr[iObs] *= arg->scalestaterr;
+    }
+    pdf[i]->buildCov();
+    pdf[i]->buildPdf();
+  }
+}
+
+///
+/// scale stat+syst errors
+///
+void GammaComboEngine::scaleStatAndSystErrors()
+{
+  cout << "\nConfiguration: Scaling ALL STAT AND SYST ERRORS by " << arg->scaleerr << ".\n" << endl;
+  for ( int i=0; i<pdf.size(); i++ ){
+    if ( pdf[i]==0 ) continue;
+    for ( int iObs=0; iObs<pdf[i]->getNobs(); iObs++ ) {
+      pdf[i]->StatErr[iObs] *= arg->scaleerr;
+      pdf[i]->StatErr[iObs] *= arg->scaleerr;
+    }
+    pdf[i]->buildCov();
+    pdf[i]->buildPdf();
+  }
+}
+
 
 ///
 /// disable systematics
@@ -1973,6 +2057,8 @@ void GammaComboEngine::run()
 	checkCombinationArg();
 	checkColorArg();
 	checkAsimovArg();
+  if ( arg->scalestaterr > -99 ) scaleStatErrors();
+  if ( arg->scaleerr > -99 ) scaleStatAndSystErrors();
   if ( arg->nosyst ) disableSystematics();
   makeAddDelCombinations();
   if ( arg->nbatchjobs>0 ) writebatchscripts();

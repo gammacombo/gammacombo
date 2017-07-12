@@ -113,7 +113,8 @@ class OptParser
 		bool            plotpluginonly;
 		bool            plotpulls;
 		bool            plotprelim;
-    bool            plotorigin;
+    float           plotoriginx;
+    float           plotoriginy;
 		vector<int>     plotsolutions;
     vector<int>     plotsoln;
 		bool            plotunoff;
@@ -143,6 +144,8 @@ class OptParser
 		float           scanrangeMax;
 		float           scanrangeyMin;
 		float           scanrangeyMax;
+    float           scaleerr;
+    float           scalestaterr;
 		bool    smooth2d;
 		vector<TString> title;
     TString         toyFiles;

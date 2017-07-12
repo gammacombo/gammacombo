@@ -85,7 +85,8 @@ OptParser::OptParser():
 	plotpluginonly = false;
 	plotprelim = false;
 	plotpulls = false;
-	plotorigin = false;
+  plotoriginx = -99.;
+  plotoriginy = -99.;
   plotunoff = false;
   plotymin = -99.;
   plotymax = -99.;
@@ -106,6 +107,8 @@ OptParser::OptParser():
 	scanrangeMin = -101;
 	scanrangeyMax = -102;
 	scanrangeyMin = -102;
+  scaleerr = -999.;
+  scalestaterr = -999.;
 	smooth2d = false;
   toyFiles = "";
 	usage = false;
@@ -198,6 +201,8 @@ void OptParser::defineOptions()
 	availableOptions.push_back("scanforce");
 	availableOptions.push_back("scanrange");
 	availableOptions.push_back("scanrangey");
+  availableOptions.push_back("scaleerr");
+  availableOptions.push_back("scalestaterr");
 	availableOptions.push_back("smooth2d");
   availableOptions.push_back("toyFiles");
 	availableOptions.push_back("title");
@@ -359,6 +364,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::ValueArg<string> scanrangeyArg("", "scanrangey", "For 2D plots, restrict the scan range "
 			"of the y variable to a given range. "
 			"Format: --scanrangey min:max.", false, "default", "string");
+  TCLAP::ValueArg<float> scaleerrArg("", "scaleerr", "Scale the errors by this number", false, -999., "float");
+  TCLAP::ValueArg<float> scalestaterrArg("", "scalestaterr", "Scale the STAT only errors by this number", false, -999., "float");
+  TCLAP::ValueArg<string> plotoriginArg("", "origin", "Plot Origin on 2D plots. Default 0:0. Can move to another location. Format: --origin min:max", false, "default", "string");
   TCLAP::ValueArg<string> plotrangeyArg("", "plotrangey", "Plot range of the y-axis for 1D plots. Default 0:1. For log plots 1.e-3:1. "
       "Format: --plotrangey min:max.",false, "default", "string");
 	TCLAP::ValueArg<int> ndivArg("", "ndiv", "Set the number of axis divisions (x axis in 1d and 2d plots): "
@@ -463,7 +471,6 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::SwitchArg lightfilesArg("", "lightfiles", "Produce only light weight root files for the plugin toys."
 			" They cannot be used for control plots but save disk space.", false);
 	TCLAP::SwitchArg plotprelimArg("", "prelim", "Plot 'Preliminiary' into the plots. See also --unoff .", false);
-  TCLAP::SwitchArg plotoriginArg("", "origin", "Plot Origin on 2D plots.", false);
 	TCLAP::SwitchArg plotunoffArg("", "unoff", "Plot 'Unofficial' into the plots. See also --prelim .", false);
 	TCLAP::SwitchArg prArg("", "pr", "Enforce the physical range on all parameters (needed to reproduce "
 			"the standard Feldman-Cousins with boundary example). If set, no nuisance will be allowed outside the "
@@ -548,6 +555,9 @@ void OptParser::parseArguments(int argc, char* argv[])
       "28: In 2D plots, make fill styles even more transparent.\n"
       "29: Remove method name from legend.\n"
       "30: Do not increase the canvas right margin.\n"
+      "31: Move the CL labels in 1D plots to the very left.\n"
+      "32: Make the text for printed solutions on 1D plots larger.\n"
+      "33: Solid fill for 2D legends.\n"
 			, false, "int");
   TCLAP::MultiArg<string> readfromfileArg("", "readfromfile", "Read the observables, uncertainties and correlations from a file - e.g. for reading in toys."
       "If 'default' is given, the default values are used."
@@ -655,6 +665,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "scanrangey" ) ) cmd.add( scanrangeyArg );
 	if ( isIn<TString>(bookedOptions, "scanrange" ) ) cmd.add( scanrangeArg );
 	if ( isIn<TString>(bookedOptions, "scanforce" ) ) cmd.add( scanforceArg );
+  if ( isIn<TString>(bookedOptions, "scaleerr" ) ) cmd.add( scaleerrArg );
+  if ( isIn<TString>(bookedOptions, "scalestaterr" ) ) cmd.add( scalestaterrArg );
   if ( isIn<TString>(bookedOptions, "save" ) ) cmd.add( saveArg );
   if ( isIn<TString>(bookedOptions, "saveAtMin" ) ) cmd.add( saveAtMinArg );
 	if ( isIn<TString>(bookedOptions, "relation" ) ) cmd.add(relationArg);
@@ -789,7 +801,6 @@ void OptParser::parseArguments(int argc, char* argv[])
 	plotmagnetic      = plotmagneticArg.getValue();
 	plotnsigmacont    = plotnsigmacontArg.getValue();
 	plotpluginonly    = plotpluginonlyArg.getValue();
-	plotorigin        = plotoriginArg.getValue();
   plotprelim        = plotprelimArg.getValue();
 	plotpulls         = plotpullsArg.getValue();
 	plotunoff         = plotunoffArg.getValue();
@@ -801,6 +812,8 @@ void OptParser::parseArguments(int argc, char* argv[])
   probScanResult    = probScanResultArg.getValue();
 	qh                = qhArg.getValue();
   queue             = TString(queueArg.getValue());
+  scaleerr          = scaleerrArg.getValue();
+  scalestaterr      = scalestaterrArg.getValue();
   save              = saveArg.getValue();
   saveAtMin         = saveAtMinArg.getValue();
 	savenuisances1d   = snArg.getValue();
@@ -984,6 +997,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 	// --scanrange
 	parseRange(scanrangeArg.getValue(), scanrangeMin, scanrangeMax);
 	parseRange(scanrangeyArg.getValue(), scanrangeyMin, scanrangeyMax);
+
+  // --origin
+  parseRange(plotoriginArg.getValue(), plotoriginx, plotoriginy);
 
   // --plotrange
   parseRange(plotrangeyArg.getValue(), plotymin, plotymax );
