@@ -48,8 +48,9 @@ class OneMinusClPlot2d : public OneMinusClPlotAbs
 		bool		contoursOnly;
 		vector<vector<int> > linecolor;   ///< defines colors of 1 sigma lines and solutions of different scanners
 		vector<vector<int> > fillcolor;   ///< defines colors of 1 sigma areas of different scanners
-		vector<vector<int> > linestyle;   ///< defines the style of 1 sigma line of different scanners
-		vector<vector<int> > fillstyle;
+		vector<vector<int> > linestyle;   ///< defines the line style of 1 sigma line of different scanners
+		vector<vector<int> > fillstyle;   ///< defines the fill style of
+    vector<vector<int> > linewidth;   ///< defines the line width
 		vector<int>          markerstyle; ///< defines marker styles of the solutions of different scanners
 		vector<float>        markersize;
 

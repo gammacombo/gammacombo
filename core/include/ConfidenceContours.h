@@ -27,7 +27,7 @@ class ConfidenceContours
 		void                     computeContours(TH2F* hist, histogramType type, int id=0);
 		void                     Draw();
 		void                     DrawDashedLine();
-		void                     setStyle(vector<int>& linecolor, vector<int>& linestyle, vector<int>& fillcolor, vector<int>& fillstyle);
+		void                     setStyle(vector<int>& linecolor, vector<int>& linestyle, vector<int>& linewidth, vector<int>& fillcolor, vector<int>& fillstyle);
 		inline void              setTransparency(float percent){m_transparency = percent;};
     inline void              setContoursToPlot( vector<int>& contstoplot ){ m_contstoplots = contstoplot;};
 
