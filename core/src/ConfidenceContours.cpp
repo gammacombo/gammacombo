@@ -292,13 +292,14 @@ void ConfidenceContours::DrawDashedLine()
 ///
 /// Set the contour style.
 ///
-void ConfidenceContours::setStyle(vector<int>& linecolor, vector<int>& linestyle, vector<int>& fillcolor, vector<int>& fillstyle)
+void ConfidenceContours::setStyle(vector<int>& linecolor, vector<int>& linestyle, vector<int>& linewidth, vector<int>& fillcolor, vector<int>& fillstyle)
 {
 	m_linecolor = linecolor;
 	m_linestyle = linestyle;
 	m_fillcolor = fillcolor;
 	m_fillstyle = fillstyle;
-	for ( int i=0; i<m_linestyle.size(); i++ ) m_linewidth.push_back(2);
+  m_linewidth = linewidth;
+  //for ( int i=0; i<m_linestyle.size(); i++ ) m_linewidth.push_back(2);
 	// check if enough styles where given for the number of contours to be plotted
 	if ( m_arg->plotnsigmacont > m_linestyle.size() ){
 		cout << "ConfidenceContours::setStyle() : ERROR : not enough sigma contour styles defined! ";

@@ -156,6 +156,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("group");
 	availableOptions.push_back("grouppos");
 	availableOptions.push_back("lightfiles");
+  availableOptions.push_back("linewidth");
 	availableOptions.push_back("loadParamsFile");
 	availableOptions.push_back("log");
 	availableOptions.push_back("magnetic");
@@ -522,7 +523,8 @@ void OptParser::parseArguments(int argc, char* argv[])
       "1: Naive CLs (assuming CLb is obtained from the point at zero)\n"
       "2: Freq  CLs (sampling the full distribution for CLb)\n"
       , false, "int");
-  TCLAP::MultiArg<int> fillstyleArg("", "fillstyle", "Fill style of the 1D scan to be used for the combination. Default is 1001 (solid) for all.", false, "int");
+  TCLAP::MultiArg<int> fillstyleArg("", "fillstyle", "Fill style of the 1D and 2D contours to be used for the combination. Default is 1001 (solid) for all.", false, "int");
+  TCLAP::MultiArg<int> linewidthArg("", "linewidth", "Set line width of the 1D and 2D contours to be used for the combination. Default is 2 for all.", false, "int");
   TCLAP::MultiArg<int> pevidArg("", "pevid", "ID of combination used for the profile likelihood"
 			"that determines the parameter evolution for the Plugin toy generation. If not given, "
 			"the --combid will be used. Use -u to get a list of possible choices.", false, "int");
@@ -715,6 +717,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "magnetic" ) ) cmd.add( plotmagneticArg );
 	if ( isIn<TString>(bookedOptions, "log" ) ) cmd.add( plotlogArg );
 	if ( isIn<TString>(bookedOptions, "loadParamsFile" ) ) cmd.add( loadParamsFileArg );
+  if ( isIn<TString>(bookedOptions, "linewidth" ) ) cmd.add( linewidthArg );
 	if ( isIn<TString>(bookedOptions, "lightfiles" ) ) cmd.add( lightfilesArg );
 	if ( isIn<TString>(bookedOptions, "legsize" ) ) cmd.add( plotlegsizeArg );
   if ( isIn<TString>(bookedOptions, "legstyle" ) ) cmd.add( plotlegstyleArg );
@@ -765,6 +768,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	filenameaddition  = filenameadditionArg.getValue();
   filenamechange    = filenamechangeArg.getValue();
   fillstyle         = fillstyleArg.getValue();
+  linewidth         = linewidthArg.getValue();
   hfagLabel         = hfagLabelArg.getValue();
 	group             = plotgroupArg.getValue();
 	id                = idArg.getValue();
