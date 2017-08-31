@@ -146,6 +146,20 @@ void GammaComboEngine::addSubsetPdf(int id, PDF_Abs* pdf, vector<int>& indices, 
   delete obsToRemove;
   delete theoryToRemove;
 
+  // now sort out parameters
+  RooArgList *paramsToRemove = new RooArgList();
+  for ( int i=0; i<pdf->getParameters()->getSize(); i++ ) {
+    bool paramFoundInTheory = false;
+    for ( int j=0; j<pdf->getTheory()->getSize(); j++ ) {
+      if ( pdf->getTheory()->at(j)->dependsOn( *(pdf->getParameters()->at(i)) ) ) {
+        paramFoundInTheory = true;
+      }
+    }
+    if (!paramFoundInTheory) paramsToRemove->add( *(pdf->getParameters()->at(i)) );
+  }
+  pdf->getParameters()->remove( *paramsToRemove );
+  delete paramsToRemove;
+
   // now sort out uncertainties
   vector<double> oldStatErrs = pdf->StatErr;
   vector<double> oldSystErrs = pdf->SystErr;
@@ -168,7 +182,7 @@ void GammaComboEngine::addSubsetPdf(int id, PDF_Abs* pdf, vector<int>& indices, 
   pdf->corSystMatrix.ResizeTo( indices.size(), indices.size() );
   pdf->corMatrix.ResizeTo( indices.size(), indices.size() );
   pdf->covMatrix.ResizeTo( indices.size(), indices.size() );
-  
+
   pdf->corStatMatrix = newCorStatMatrix;
   pdf->corSystMatrix = newCorSystMatrix;
 
