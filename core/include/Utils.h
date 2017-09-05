@@ -135,6 +135,10 @@ namespace Utils
     static inline std::vector<T> Quantile(const std::vector<T>& inData, const std::vector<T>& probs);
   template<typename T>
     static inline double  getVectorFracAboveValue(const std::vector<T>& vec, T val);
+  template<typename T>
+    static inline void print(const std::vector<T>& vec);
+  template<typename T>
+    static inline void print(T val);
 
 	void dump_vector(const std::vector<int>& l);
 	void dump_vector(const std::vector<float>& l);
@@ -195,6 +199,21 @@ double Utils::getVectorFracAboveValue(const std::vector<T>& vec, T val) {
     if ( vec[i] >= val ) nabove++;
   }
   return double(nabove)/vec.size();
+}
+
+template<typename T>
+void Utils::print(const std::vector<T>& vec){
+  cout << "[ (size=" << vec.size() << ") ";
+  for (int i=0; i<vec.size(); i++) {
+    print(vec[i]);
+    if ( i<vec.size()-1) cout << " , ";
+  }
+  cout << " ]";
+}
+
+template<typename T>
+void Utils::print(T val){
+  cout << val;
 }
 
 #endif
