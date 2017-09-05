@@ -149,6 +149,7 @@ class MethodAbsScan
 		vector<CLInterval> clintervals1sigma;           ///< all 1 sigma intervals that were found by calcCLintervals()
 		vector<CLInterval> clintervals2sigma;           ///< all 2 sigma intervals that were found by calcCLintervals()
 		vector<CLInterval> clintervals3sigma;           ///< all 3 sigma intervals that were found by calcCLintervals()
+		vector<CLInterval> clintervalsuser;           ///< all intervals with user specific CL that were found by calcCLintervals()
 
 	protected:
 
@@ -206,6 +207,7 @@ class MethodAbsScan
 		bool m_xrangeset; 			///< true if the x range was set manually (setXscanRange())
 		bool m_yrangeset; 			///< true if the y range was set manually (setYscanRange())
 		bool m_initialized; 		///< true if initScan() was called
+		double CLuser;
 
 	private:
 
