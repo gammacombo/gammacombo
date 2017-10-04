@@ -207,7 +207,7 @@ class MethodAbsScan
 		bool m_xrangeset; 			///< true if the x range was set manually (setXscanRange())
 		bool m_yrangeset; 			///< true if the y range was set manually (setYscanRange())
 		bool m_initialized; 		///< true if initScan() was called
-		double CLuser;
+		std::vector<double> ConfidenceLevels;	///< container of the confidence levels to be computed
 
 	private:
 

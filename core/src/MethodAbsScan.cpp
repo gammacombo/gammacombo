@@ -39,48 +39,56 @@
 
 	// constructor without combiner, this is atm still needed for the datasets stuff
 	MethodAbsScan::MethodAbsScan(OptParser* opt):
-		rndm(),
-		methodName("Abs"),
-		combiner(NULL),
-		w(NULL),
-		arg(opt),
-		scanVar1(opt->var[0]),
-		verbose(opt->verbose),
-		drawSolution(0),
-		nPoints1d(opt->npoints1d),
-		nPoints2dx(opt->npoints2dx),
-		nPoints2dy(opt->npoints2dy),
-		pvalueCorrectorSet(false),
-		chi2minGlobal(0.0),
-		chi2minBkg(0.0),
-		chi2minGlobalFound(false),
-		lineStyle(0),
-		lineColor(kBlue-8),
-		textColor(kBlack),
-		hCL(0),
-		hCLs(0),
+	rndm(),
+	methodName("Abs"),
+	combiner(NULL),
+	w(NULL),
+	arg(opt),
+	scanVar1(opt->var[0]),
+	verbose(opt->verbose),
+	drawSolution(0),
+	nPoints1d(opt->npoints1d),
+	nPoints2dx(opt->npoints2dx),
+	nPoints2dy(opt->npoints2dy),
+	pvalueCorrectorSet(false),
+	chi2minGlobal(0.0),
+	chi2minBkg(0.0),
+	chi2minGlobalFound(false),
+	lineStyle(0),
+	lineColor(kBlue-8),
+	textColor(kBlack),
+	hCL(0),
+	hCLs(0),
     hCLsFreq(0),
     hCLsExp(0),
     hCLsErr1Up(0),
     hCLsErr1Dn(0),
     hCLsErr2Up(0),
     hCLsErr2Dn(0),
-		hCL2d(0),
-		hCLs2d(0),
-		hChi2min(0),
-		hChi2min2d(0),
-		obsDataset(NULL),
-		startPars(0),
-		globalMin(0),
-		nWarnings(0),
-		drawFilled(true),
-		m_xrangeset(false),
-		m_yrangeset(false),
-		m_initialized(false),
-		CLuser(0.9)
+	hCL2d(0),
+	hCLs2d(0),
+	hChi2min(0),
+	hChi2min2d(0),
+	obsDataset(NULL),
+	startPars(0),
+	globalMin(0),
+	nWarnings(0),
+	drawFilled(true),
+	m_xrangeset(false),
+	m_yrangeset(false),
+	m_initialized(false)
 	{
 		if ( opt->var.size()>1 ) scanVar2 = opt->var[1];
-		//todo initialise user specific CL from command line
+		if( opt->CL.size()>0 ){
+			for ( auto level: opt->CL ) {
+				ConfidenceLevels.push_back(level/100.);
+			} 
+		}
+		else{
+			ConfidenceLevels.push_back(0.6827);	// 1sigma
+			ConfidenceLevels.push_back(0.9545);	// 2sigma
+			ConfidenceLevels.push_back(0.9973);	// 3sigma
+		}
 	}
 
 MethodAbsScan::~MethodAbsScan()
@@ -690,17 +698,17 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 
 	for ( int iSol=0; iSol<solutions.size(); iSol++ )
 	{
-		float CL[4]      = {0.6827, 0.9545, 0.9973, CLuser };
-		float CLhi[4]    = {0.0};
-		float CLhiErr[4] = {0.0};
-		float CLlo[4]    = {0.0};
-		float CLloErr[4] = {0.0};
+		const int NumOfCL = ConfidenceLevels.size();
+		float CLhi[NumOfCL]    = {0.0};
+		float CLhiErr[NumOfCL] = {0.0};
+		float CLlo[NumOfCL]    = {0.0};
+		float CLloErr[NumOfCL] = {0.0};
 
-		for ( int c=0; c<4; c++ )
+		for ( int c=0; c<NumOfCL; c++ )
 		{
 			CLlo[c] = histogramCL->GetXaxis()->GetXmin();
 			CLhi[c] = histogramCL->GetXaxis()->GetXmax();
-			float y = 1.-CL[c];
+			float y = 1.- ConfidenceLevels[c];
 			float sol = getScanVar1Solution(iSol);
 			int sBin = histogramCL->FindBin(sol);
 
@@ -735,10 +743,11 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 			}
 
 			// save interval if solution is contained in it
+			// /todo save clintervals properly dynamically
 			if ( histogramCL->GetBinContent(sBin)>y )
 			{
 				CLInterval cli;
-				cli.pvalue = 1.-CL[c];
+				cli.pvalue = 1.-ConfidenceLevels[c];
 				cli.min = CLlo[c];
 				cli.max = CLhi[c];
 				cli.central = sol;
@@ -777,17 +786,17 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 	// \todo: something is buggy here
 	for ( int iBoundary=0; iBoundary<2; iBoundary++ )
 	{
-		float CL[3]      = {0.6827, 0.9545, CLuser};
-		float CLhi[3]    = {0.0};
-		float CLhiErr[3] = {0.0};
-		float CLlo[3]    = {0.0};
-		float CLloErr[3] = {0.0};
+		const int NumOfCL = ConfidenceLevels.size();
+		float CLhi[NumOfCL]    = {0.0};
+		float CLhiErr[NumOfCL] = {0.0};
+		float CLlo[NumOfCL]    = {0.0};
+		float CLloErr[NumOfCL] = {0.0};
 
-		for ( int c=0; c<3; c++ )
+		for ( int c=0; c<NumOfCL; c++ )
 		{
 			CLlo[c] = histogramCL->GetXaxis()->GetXmin();
 			CLhi[c] = histogramCL->GetXaxis()->GetXmax();
-			float y = 1.-CL[c];
+			float y = 1.-ConfidenceLevels[c];
 
 			if ( iBoundary==1 )
 			{
@@ -835,7 +844,7 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 			printf("\n%s = [%7.*f, %7.*f] @%3.2fCL",
 					par->GetName(),
 					pErr, CLlo[c], pErr, CLhi[c],
-					CL[c]);
+					ConfidenceLevels[c]);
 			if ( CLloErr[c]!=0 || CLhiErr[c]!=0 ) printf(", accuracy = [%1.5f, %1.5f]", CLloErr[c], CLhiErr[c]);
 			if ( unit!="" ) cout << ", ["<<unit<<"]";
 			cout << ", " << methodName << " (boundary scan)" << endl;
@@ -1465,7 +1474,7 @@ void MethodAbsScan::calcCLintervalsSimple(int CLsType)
   clintervals1sigma.clear();
   clintervals2sigma.clear();
   clintervalsuser.clear();
-  double levels[3] = {0.6827, 0.9545, CLuser};
+  // double levels[3] = {0.6827, 0.9545, CLuser};
 
   TH1F *histogramCL = this->hCL;
   if (this->hCLs && CLsType==1)
@@ -1479,9 +1488,9 @@ void MethodAbsScan::calcCLintervalsSimple(int CLsType)
   if(CLsType==0 || (this->hCLs && CLsType==1) || (this->hCLsFreq && CLsType==2))
   {
 	  for (int c=0;c<3;c++){
-	    const std::pair<double, double> borders = getBorders(TGraph(histogramCL), levels[c]);
+	    const std::pair<double, double> borders = getBorders(TGraph(histogramCL), ConfidenceLevels[c]);
 	    CLInterval cli;
-	    cli.pvalue = 1. - levels[c];
+	    cli.pvalue = 1. - ConfidenceLevels[c];
 	    cli.min = borders.first;
 	    cli.max = borders.second;
 	    cli.central = -1;
@@ -1490,7 +1499,7 @@ void MethodAbsScan::calcCLintervalsSimple(int CLsType)
 	    if ( c==2 ) clintervalsuser.push_back(cli);
 	    if (CLsType==1) std::cout << "CL_s ";
 	    if (CLsType==2) std::cout << "CL_s Freq";
-	    std::cout<<"borders at "<<levels[c]<<"  [ "<<borders.first<<" : "<<borders.second<<"]";
+	    std::cout<<"borders at "<<ConfidenceLevels[c]<<"  [ "<<borders.first<<" : "<<borders.second<<"]";
 		cout << ", " << methodName << " (simple boundary scan)" << endl;
 	  }
 	}
@@ -1510,16 +1519,16 @@ void MethodAbsScan::calcCLintervalsSimple(int CLsType)
   	clintervalsuser.clear();
 
   	for (int c=0;c<3;c++){
-    	const std::pair<double, double> borders_CLs = getBorders_CLs(TGraph(histogramCL), levels[c]);
+    	const std::pair<double, double> borders_CLs = getBorders_CLs(TGraph(histogramCL), ConfidenceLevels[c]);
     	CLInterval cli;
-    	cli.pvalue = 1. - levels[c];
+    	cli.pvalue = 1. - ConfidenceLevels[c];
     	cli.min = borders_CLs.first;
     	cli.max = borders_CLs.second;
     	cli.central = -1;
     	if ( c==0 ) clintervals1sigma.push_back(cli);
     	if ( c==1 ) clintervals2sigma.push_back(cli);
     	if ( c==2 ) clintervalsuser.push_back(cli);
-    	std::cout<<"CL_s borders at "<<levels[c]<<"  [ "<<borders_CLs.first<<" : "<<borders_CLs.second<<"]";
+    	std::cout<<"CL_s borders at "<<ConfidenceLevels[c]<<"  [ "<<borders_CLs.first<<" : "<<borders_CLs.second<<"]";
 		cout << ", " << methodName << " (simple boundary scan)" << endl;
   	}
   }
