@@ -240,6 +240,10 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 			axisb->SetName("axisb");
 			axisb->SetLabelFont(font);
 			axisb->SetLabelSize(labelsize);
+      axisb->SetTitle(s->getScanVar1()->GetTitle() + TString(" [#circ]"));
+      axisb->SetTitleOffset(0.85);
+      axisb->SetTitleSize(titlesize);
+      axisb->SetTitleFont(font);
 			axisb->Draw();
 		}
 	}
