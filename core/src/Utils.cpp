@@ -1044,7 +1044,7 @@ std::vector<TString> Utils::getParsWithName(const TString& subString, const RooA
 	std::vector<TString>      _results;
 	boost::split(_names,vars,boost::is_any_of(","));
 	for( std::string str : _names){
-		std::size_t found = str.find(subString);
+		std::size_t found = str.find(subString.Data());
 		if(found != std::string::npos){
 			_results.push_back(TString(str));
 		}
