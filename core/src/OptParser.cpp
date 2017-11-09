@@ -137,6 +137,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("evol");
   availableOptions.push_back("filename");
   availableOptions.push_back("fillstyle");
+  availableOptions.push_back("fillcolor");
 	availableOptions.push_back("fix");
 	availableOptions.push_back("ext");
   availableOptions.push_back("hfagLabel");
@@ -157,6 +158,8 @@ void OptParser::defineOptions()
 	availableOptions.push_back("grouppos");
 	availableOptions.push_back("lightfiles");
   availableOptions.push_back("linewidth");
+  availableOptions.push_back("linestyle");
+  availableOptions.push_back("linecolor");
 	availableOptions.push_back("loadParamsFile");
 	availableOptions.push_back("log");
 	availableOptions.push_back("magnetic");
@@ -524,7 +527,10 @@ void OptParser::parseArguments(int argc, char* argv[])
       "2: Freq  CLs (sampling the full distribution for CLb)\n"
       , false, "int");
   TCLAP::MultiArg<int> fillstyleArg("", "fillstyle", "Fill style of the 1D and 2D contours to be used for the combination. Default is 1001 (solid) for all.", false, "int");
+  TCLAP::MultiArg<int> fillcolorArg("", "fillcolor", "Fill color of the 1D and 2D contours to be used for the combination. Default is picked up from color vector", false, "int");
   TCLAP::MultiArg<int> linewidthArg("", "linewidth", "Set line width of the 1D and 2D contours to be used for the combination. Default is 2 for all.", false, "int");
+  TCLAP::MultiArg<int> linecolorArg("", "linecolor", "Set line color of the 1D and 2D contours to be used for the combination. Default is picked up from color vector.", false, "int");
+  TCLAP::MultiArg<int> linestyleArg("", "linestyle", "Set line style of the 1D and 2D contours to be used for the combination. Default is a solid line for all.", false, "int");
   TCLAP::MultiArg<int> pevidArg("", "pevid", "ID of combination used for the profile likelihood"
 			"that determines the parameter evolution for the Plugin toy generation. If not given, "
 			"the --combid will be used. Use -u to get a list of possible choices.", false, "int");
@@ -560,6 +566,7 @@ void OptParser::parseArguments(int argc, char* argv[])
       "31: Move the CL labels in 1D plots to the very left.\n"
       "32: Make the text for printed solutions on 1D plots larger.\n"
       "33: Solid fill for 2D legends.\n"
+      "34: Remove CL guide lines.\n"
 			, false, "int");
   TCLAP::MultiArg<string> readfromfileArg("", "readfromfile", "Read the observables, uncertainties and correlations from a file - e.g. for reading in toys."
       "If 'default' is given, the default values are used."
@@ -718,6 +725,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "log" ) ) cmd.add( plotlogArg );
 	if ( isIn<TString>(bookedOptions, "loadParamsFile" ) ) cmd.add( loadParamsFileArg );
   if ( isIn<TString>(bookedOptions, "linewidth" ) ) cmd.add( linewidthArg );
+  if ( isIn<TString>(bookedOptions, "linestyle" ) ) cmd.add( linestyleArg );
+  if ( isIn<TString>(bookedOptions, "linecolor" ) ) cmd.add( linecolorArg );
 	if ( isIn<TString>(bookedOptions, "lightfiles" ) ) cmd.add( lightfilesArg );
 	if ( isIn<TString>(bookedOptions, "legsize" ) ) cmd.add( plotlegsizeArg );
   if ( isIn<TString>(bookedOptions, "legstyle" ) ) cmd.add( plotlegstyleArg );
@@ -737,6 +746,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "grouppos" ) ) cmd.add( plotgroupposArg );
 	if ( isIn<TString>(bookedOptions, "fix" ) ) cmd.add(fixArg);
   if ( isIn<TString>(bookedOptions, "fillstyle" ) ) cmd.add( fillstyleArg );
+  if ( isIn<TString>(bookedOptions, "fillcolor" ) ) cmd.add( fillcolorArg );
 	if ( isIn<TString>(bookedOptions, "ext" ) ) cmd.add(filenameadditionArg);
     if ( isIn<TString>(bookedOptions, "filename" ) ) cmd.add( filenamechangeArg );
 	if ( isIn<TString>(bookedOptions, "evol" ) ) cmd.add(parevolArg);
@@ -768,7 +778,10 @@ void OptParser::parseArguments(int argc, char* argv[])
 	filenameaddition  = filenameadditionArg.getValue();
   filenamechange    = filenamechangeArg.getValue();
   fillstyle         = fillstyleArg.getValue();
+  fillcolor         = fillcolorArg.getValue();
   linewidth         = linewidthArg.getValue();
+  linestyle         = linestyleArg.getValue();
+  linecolor         = linecolorArg.getValue();
   hfagLabel         = hfagLabelArg.getValue();
 	group             = plotgroupArg.getValue();
 	id                = idArg.getValue();
