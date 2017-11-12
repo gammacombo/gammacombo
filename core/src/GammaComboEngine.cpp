@@ -992,14 +992,37 @@ void GammaComboEngine::defineColors()
 		colorsText.push_back(kBlue-2 + i);
 	}
 
+  // sort out the fill style vector
   for ( int i=0; i<arg->combid.size(); i++ ) {
     if ( i>= arg->fillstyle.size() ) fillStyles.push_back( 1001 );
     else fillStyles.push_back( arg->fillstyle[i] );
+  }
+  // sort out the fill color vector
+  for ( int i=0; i<arg->combid.size(); i++ ) {
+    if ( i>= arg->fillcolor.size() ) fillColors.push_back( colorsLine[i] );
+    else fillColors.push_back( arg->fillcolor[i] );
+  }
+  // sort out the line width vector
+  for ( int i=0; i<arg->combid.size(); i++ ) {
+    if ( i>= arg->linewidth.size() ) lineWidths.push_back( 2 );
+    else lineWidths.push_back( arg->linewidth[i] );
+  }
+  // sort out the line style vector
+  for ( int i=0; i<arg->combid.size(); i++ ) {
+    if ( i>= arg->linestyle.size() ) lineStyles.push_back( 1 );
+    else lineStyles.push_back( arg->linestyle[i] );
+  }
+  // sort out the line color vector
+  for ( int i=0; i<arg->combid.size(); i++ ) {
+    if ( i>= arg->linecolor.size() ) lineColors.push_back( colorsLine[i] );
+    else lineColors.push_back( arg->linecolor[i] );
   }
 	// catch for datasets
 	if ( arg->combid.size()==0 ) {
 		if ( arg->fillstyle.size()>0 ) fillStyles.push_back( arg->fillstyle[0] );
 		else fillStyles.push_back(1001);
+    if ( arg->linewidth.size()>0 ) lineWidths.push_back( arg->linewidth[0] );
+    else lineWidths.push_back(2);
 	}
 }
 
@@ -1227,8 +1250,12 @@ void GammaComboEngine::make1dProbPlot(MethodProbScan *scanner, int cId)
 		scanner->plotOn(plot);
 		int colorId = cId;
 		if ( arg->color.size()>cId ) colorId = arg->color[cId];
-		scanner->setLineColor(colorsLine[colorId]);
+		//scanner->setLineColor(colorsLine[colorId]);
 		scanner->setTextColor(colorsText[colorId]);
+    scanner->setLineColor(lineColors[cId]);
+    scanner->setLineStyle(lineStyles[cId]);
+    scanner->setLineWidth(lineWidths[cId]);
+    scanner->setFillColor(fillColors[cId]);
     scanner->setFillStyle(fillStyles[cId]);
 		plot->Draw();
 	}
@@ -1319,7 +1346,12 @@ void GammaComboEngine::make2dPluginPlot(MethodPluginScan *sPlugin, MethodProbSca
 		sPlugin->setTitle(sPlugin->getTitle() + " (Plugin)");
 	}
 	sProb->setDrawSolution(arg->plotsolutions[cId]);
-	sProb->setLineColor(colorsLine[cId]);
+  //sProb->setLineColor(colorsLine[cId]);
+  sProb->setLineColor(lineColors[cId]);
+  sProb->setLineStyle(lineStyles[cId]);
+  sProb->setLineWidth(lineWidths[cId]);
+  sProb->setFillColor(fillColors[cId]);
+  sProb->setFillStyle(fillStyles[cId]);
 	sPlugin->setDrawSolution(arg->plotsolutions[cId]);
 	if ( arg->isQuickhack(17) ) {
 		sPlugin->plotOn(plot);
@@ -1344,8 +1376,11 @@ void GammaComboEngine::make1dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId)
 	((OneMinusClPlot*)plot)->setPluginMarkers(false);
 	int colorId = cId;
 	if ( arg->color.size()>cId ) colorId = arg->color[cId];
-	sPlugin->setLineColor(colorsLine[colorId]);
 	sPlugin->setTextColor(colorsText[colorId]);
+  sPlugin->setLineColor(lineColors[cId]);
+  sPlugin->setLineStyle(lineStyles[cId]);
+  sPlugin->setLineWidth(lineWidths[cId]);
+  sPlugin->setFillColor(fillColors[cId]);
   sPlugin->setFillStyle(fillStyles[cId]);
 	sPlugin->setDrawSolution(arg->plotsolutions[cId]);
   for (int i=0; i<arg->cls.size(); i++) sPlugin->plotOn(plot, arg->cls[i]);

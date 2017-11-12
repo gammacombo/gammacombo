@@ -130,6 +130,10 @@ class GammaComboEngine
 		vector<int> 		colorsLine;
 		vector<int> 		colorsText;
     vector<int>     fillStyles;
+    vector<int>     fillColors;
+    vector<int>     lineColors;
+    vector<int>     lineStyles;
+    vector<int>     lineWidths;
 		TString 			execname;
 		FileNameBuilder*	m_fnamebuilder;
     BatchScriptWriter* m_batchscriptwriter;

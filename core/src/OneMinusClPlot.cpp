@@ -133,16 +133,20 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	g->SetLineColor(color);
 
 	if ( filled ){
-		g->SetLineWidth(2);
     double alpha = arg->isQuickhack(12) ? 0.4 : 1.;
     if ( arg->isQuickhack(24) ) alpha = 0.;
-		g->SetFillColorAlpha(color,alpha);
-		g->SetLineStyle(1);
+		if (s->getFillColor()>0) g->SetFillColorAlpha(s->getFillColor(), alpha);
+    else g->SetFillColorAlpha(color,alpha);
     g->SetFillStyle( s->getFillStyle() );
+		g->SetLineWidth( s->getLineWidth() );
+		g->SetLineStyle( s->getLineStyle() );
+    g->SetLineColor( s->getLineColor() );
 	}
 	else{
-		g->SetLineWidth(2);
-		g->SetLineStyle(s->getLineStyle());
+		g->SetLineWidth( s->getLineWidth() );
+		g->SetLineStyle( s->getLineStyle() );
+    g->SetLineColor( s->getLineColor() );
+    g->SetFillStyle( s->getFillStyle() );
     if ( last && arg->isQuickhack(25) ) g->SetLineWidth(3);
 	}
 
@@ -728,7 +732,7 @@ void OneMinusClPlot::drawCLguideLines()
 
 void OneMinusClPlot::Draw()
 {
-	bool plotSimple = false;//arg->debug; ///< set to true to use a simpler plot function
+  bool plotSimple = false;//arg->debug; ///< set to true to use a simpler plot function
 	///< which directly plots the 1-CL histograms without beautification
 
   if ( m_mainCanvas==0 ){
@@ -752,16 +756,19 @@ void OneMinusClPlot::Draw()
   float legendXmax = legendXmin + ( arg->plotlegsizex!=-1. ? arg->plotlegsizex : 0.31 ) ;
   float legendYmax = legendYmin + ( arg->plotlegsizey!=-1. ? arg->plotlegsizey : 0.1640559 ) ;
 	TLegend* leg = new TLegend(legendXmin,legendYmin,legendXmax,legendYmax);
+  leg->Clear();
   leg->SetNColumns( arg->plotlegcols );
 	leg->SetFillColor(kWhite);
-	leg->SetFillStyle(0);
+  //leg->SetFillStyle(0);
 	leg->SetLineColor(kWhite);
 	leg->SetBorderSize(0);
 	leg->SetTextFont(font);
 	leg->SetTextSize(legendsize*0.75);
+  vector<TString> legTitles;
+
 	for ( int i = 0; i < scanners.size(); i++ )
 	{
-		TString legDrawOption = "lf";
+		TString legDrawOption = "f";
 		if ( plotPluginMarkers
         && ( scanners[i]->getMethodName()=="Plugin"
           || scanners[i]->getMethodName()=="BergerBoos"
@@ -788,6 +795,7 @@ void OneMinusClPlot::Draw()
         else if (do_CLs[i]==2) legTitle += " (Mixed CLs)";
       }
     }
+    legTitles.push_back(legTitle);
 
 		if ( plotSimple )
 		{
@@ -797,24 +805,28 @@ void OneMinusClPlot::Draw()
 		}
 		else
 		{
-			TGraph* g = scan1dPlot(scanners[i], i==0, false, scanners[i]->getFilled(), do_CLs[i]);
-			if(do_CLs[i] &&  scanners[i]->getTitle() != "noleg") 	leg->AddEntry(g, legTitle, legDrawOption);
-			else if ( scanners[i]->getTitle() != "noleg" )			leg->AddEntry(g, legTitle, legDrawOption);
+      if ( scanners[i]->getFillStyle()!=0 || scanners[i]->getFillColor()!=0 ) {
+        TGraph* g = scan1dPlot(scanners[i], i==0, false, scanners[i]->getFilled(), do_CLs[i]);
+        leg->AddEntry(g, legTitle, legDrawOption);
+       }
 		}
 	}
 
 	// lines only
 	if ( !plotSimple )
-		for ( int i = 0; i < scanners.size(); i++ )
+	for ( int i = 0; i < scanners.size(); i++ )
 		{
 			bool last = i==scanners.size()-1;
-			scan1dPlot(scanners[i], false, last, false, do_CLs[i]);
+			TGraph *g = scan1dPlot(scanners[i], false, last, false, do_CLs[i]);
+      if ( scanners[i]->getFillStyle()==0 && scanners[i]->getFillColor()==0 ) {
+        leg->AddEntry(g, legTitles[i], "L");
+      }
 		}
 	drawSolutions();
 	if ( plotLegend ) leg->Draw();
   if ( arg->isQuickhack(22) ) leg->Draw();
 	m_mainCanvas->Update();
-	drawCLguideLines();
+	if ( !arg->isQuickhack(34) ) drawCLguideLines();
 
 	// draw the logo
 	float yGroup = 0.6;
