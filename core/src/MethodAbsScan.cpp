@@ -699,10 +699,10 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 	for ( int iSol=0; iSol<solutions.size(); iSol++ )
 	{
 		const int NumOfCL = ConfidenceLevels.size();
-		float CLhi[NumOfCL]    = {0.0};
-		float CLhiErr[NumOfCL] = {0.0};
-		float CLlo[NumOfCL]    = {0.0};
-		float CLloErr[NumOfCL] = {0.0};
+		std::vector<float> CLhi(NumOfCL, 0.0);
+		std::vector<float> CLhiErr(NumOfCL, 0.0);
+		std::vector<float> CLlo(NumOfCL, 0.0);
+		std::vector<float> CLloErr(NumOfCL, 0.0);
 
 		for ( int c=0; c<NumOfCL; c++ )
 		{
@@ -787,10 +787,10 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 	for ( int iBoundary=0; iBoundary<2; iBoundary++ )
 	{
 		const int NumOfCL = ConfidenceLevels.size();
-		float CLhi[NumOfCL]    = {0.0};
-		float CLhiErr[NumOfCL] = {0.0};
-		float CLlo[NumOfCL]    = {0.0};
-		float CLloErr[NumOfCL] = {0.0};
+		std::vector<float> CLhi(NumOfCL, 0.0);
+		std::vector<float> CLhiErr(NumOfCL, 0.0);
+		std::vector<float> CLlo(NumOfCL, 0.0);
+		std::vector<float> CLloErr(NumOfCL, 0.0);
 
 		for ( int c=0; c<NumOfCL; c++ )
 		{

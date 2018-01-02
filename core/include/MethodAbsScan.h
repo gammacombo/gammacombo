@@ -146,10 +146,13 @@ class MethodAbsScan
 		vector<vector<RooSlimFitResult*> > curveResults2d;  ///< All fit results of the the points that make it into the 1-CL curve.
 		///< Index is the gobal bin number of hCL2d -1.
 		vector<RooSlimFitResult*> solutions;            ///< Local minima filled by saveSolutions() and saveSolutions2d().
+
+		///< The names of the CL interval vectors might be misleading. They correspond to the default CL intervals. 
+		///< If the option --CL is given, the 1-3 sigma correspond to the first, second,... given value of the CL.
 		vector<CLInterval> clintervals1sigma;           ///< all 1 sigma intervals that were found by calcCLintervals()
 		vector<CLInterval> clintervals2sigma;           ///< all 2 sigma intervals that were found by calcCLintervals()
 		vector<CLInterval> clintervals3sigma;           ///< all 3 sigma intervals that were found by calcCLintervals()
-		vector<CLInterval> clintervalsuser;           ///< all intervals with user specific CL that were found by calcCLintervals()
+		vector<CLInterval> clintervalsuser;           ///< all intervals with an additional user specific CL that were found by calcCLintervals()
 
 	protected:
 
