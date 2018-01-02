@@ -39,26 +39,29 @@
 
 	// constructor without combiner, this is atm still needed for the datasets stuff
 	MethodAbsScan::MethodAbsScan(OptParser* opt):
-	rndm(),
-	methodName("Abs"),
-	combiner(NULL),
-	w(NULL),
-	arg(opt),
-	scanVar1(opt->var[0]),
-	verbose(opt->verbose),
-	drawSolution(0),
-	nPoints1d(opt->npoints1d),
-	nPoints2dx(opt->npoints2dx),
-	nPoints2dy(opt->npoints2dy),
-	pvalueCorrectorSet(false),
-	chi2minGlobal(0.0),
-	chi2minBkg(0.0),
-	chi2minGlobalFound(false),
-	lineStyle(0),
-	lineColor(kBlue-8),
-	textColor(kBlack),
-	hCL(0),
-	hCLs(0),
+		rndm(),
+		methodName("Abs"),
+		combiner(NULL),
+		w(NULL),
+		arg(opt),
+		scanVar1(opt->var[0]),
+		verbose(opt->verbose),
+		drawSolution(0),
+		nPoints1d(opt->npoints1d),
+		nPoints2dx(opt->npoints2dx),
+		nPoints2dy(opt->npoints2dy),
+		pvalueCorrectorSet(false),
+		chi2minGlobal(0.0),
+		chi2minBkg(0.0),
+		chi2minGlobalFound(false),
+		lineStyle(0),
+		lineColor(kBlue-8),
+    lineWidth(2),
+		textColor(kBlack),
+    fillStyle(1001),
+    fillColor(kBlue-8),
+		hCL(0),
+		hCLs(0),
     hCLsFreq(0),
     hCLsExp(0),
     hCLsErr1Up(0),
@@ -717,7 +720,7 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 				if ( histogramCL->GetBinContent(i) < y ){
 					if ( n>25 ){
 						bool check = interpolate(histogramCL, i, y, sol, false, CLlo[c], CLloErr[c]);
-						if(!check && (arg->verbose ||arg->debug)) cout << "Using linear interpolation." << endl;
+            if(!check && (arg->verbose ||arg->debug)) cout << "Using linear interpolation." << endl;
 						if ( !check || CLlo[c]!=CLlo[c] ) interpolateSimple(histogramCL, i, y, CLlo[c]);
 					}
 					else{

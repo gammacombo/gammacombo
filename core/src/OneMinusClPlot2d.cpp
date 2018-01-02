@@ -892,6 +892,10 @@ void OneMinusClPlot2d::Draw()
 		axisb->SetLabelOffset(haxes->GetXaxis()->GetLabelOffset());
 		axisb->SetLabelFont(font);
 		axisb->SetLabelSize(labelsize);
+    axisb->SetTitle(xTitle!="" ? xTitle : (TString)scanners[0]->getScanVar1()->GetTitle() + TString(" [#circ]"));
+    axisb->SetTitleOffset(0.85);
+    axisb->SetTitleSize(titlesize);
+    axisb->SetTitleFont(font);
 		axisb->Draw();
 	}
 	else
@@ -907,6 +911,10 @@ void OneMinusClPlot2d::Draw()
 		axisb->SetLabelOffset(haxes->GetXaxis()->GetLabelOffset());
 		axisb->SetLabelFont(font);
 		axisb->SetLabelSize(labelsize);
+    axisb->SetTitle(xTitle!="" ? xTitle : (TString)scanners[0]->getScanVar1()->GetTitle());
+    axisb->SetTitleOffset(0.85);
+    axisb->SetTitleSize(titlesize);
+    axisb->SetTitleFont(font);
 		axisb->Draw();
 	}
 
@@ -920,6 +928,10 @@ void OneMinusClPlot2d::Draw()
 		axisl->SetLabelOffset(haxes->GetYaxis()->GetLabelOffset());
 		axisl->SetLabelFont(font);
 		axisl->SetLabelSize(labelsize);
+    axisl->SetTitle(xTitle!="" ? xTitle : (TString)scanners[0]->getScanVar2()->GetTitle() + TString(" [#circ]"));
+    axisl->SetTitleOffset(0.85);
+    axisl->SetTitleSize(titlesize);
+    axisl->SetTitleFont(font);
 		axisl->Draw();
 
 		// new axis for the right ticks
@@ -936,6 +948,10 @@ void OneMinusClPlot2d::Draw()
 		axisl->SetLabelOffset(haxes->GetYaxis()->GetLabelOffset());
 		axisl->SetLabelFont(font);
 		axisl->SetLabelSize(labelsize);
+    axisl->SetTitle(xTitle!="" ? xTitle : (TString)scanners[0]->getScanVar2()->GetTitle());
+    axisl->SetTitleOffset(0.85);
+    axisl->SetTitleSize(titlesize);
+    axisl->SetTitleFont(font);
 		axisl->Draw();
 
 		// new right axis

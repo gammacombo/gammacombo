@@ -53,7 +53,10 @@ class OptParser
 		int		        digits;
 		bool            enforcePhysRange;
     vector<int>     fillstyle;
+    vector<int>     fillcolor;
     vector<int>     linewidth;
+    vector<int>     linecolor;
+    vector<int>     linestyle;
     TString         filenamechange;
 		TString         filenameaddition;
 		vector<vector<FixPar> >     fixParameters;
