@@ -53,6 +53,7 @@ class OptParser
 		bool            enforcePhysRange;
     vector<int>     fillstyle;
     vector<int>     fillcolor;
+    vector<float>   filltransparency;
     vector<int>     linewidth;
     vector<int>     linecolor;
     vector<int>     linestyle;
