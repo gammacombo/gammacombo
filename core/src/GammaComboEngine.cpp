@@ -1025,10 +1025,21 @@ void GammaComboEngine::defineColors()
   }
 	// catch for datasets
 	if ( arg->combid.size()==0 ) {
+		//sort out fill style
 		if ( arg->fillstyle.size()>0 ) fillStyles.push_back( arg->fillstyle[0] );
 		else fillStyles.push_back(1001);
-    if ( arg->linewidth.size()>0 ) lineWidths.push_back( arg->linewidth[0] );
-    else lineWidths.push_back(2);
+		//sort out fill color
+		if ( arg->fillcolor.size()>0 ) fillColors.push_back( arg->fillcolor[0] );
+		else fillColors.push_back(colorsLine[0]);
+		//sort out line width
+    	if ( arg->linewidth.size()>0 ) lineWidths.push_back( arg->linewidth[0] );
+    	else lineWidths.push_back(2);
+    	//sort out line style
+    	if ( arg->linestyle.size()>0 ) lineStyles.push_back( arg->linestyle[0] );
+    	else lineStyles.push_back(1);
+    	//sort out line color
+    	if ( arg->linecolor.size()>0 ) lineColors.push_back( arg->linecolor[0] );
+    	else lineColors.push_back(colorsLine[0]);
 	}
 }
 
@@ -1247,12 +1258,12 @@ void GammaComboEngine::make1dCoverageScan(MethodCoverageScan *scanner, int cId)
 void GammaComboEngine::make1dProbPlot(MethodProbScan *scanner, int cId)
 {
 
-  if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
+  	if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
 		scanner->setDrawSolution(arg->plotsolutions[cId]);
-    if ( arg->cls.size()>0 ) {
-      if ( runOnDataSet ) ((MethodDatasetsProbScan*)scanner)->plotFitRes(m_fnamebuilder->getFileNamePlot(cmb)+"_fit");
-      scanner->plotOn(plot, 1); // for prob ClsType>1 doesn't exist
-    }
+    	if ( arg->cls.size()>0 ) {
+      		if ( runOnDataSet ) ((MethodDatasetsProbScan*)scanner)->plotFitRes(m_fnamebuilder->getFileNamePlot(cmb)+"_fit");
+      		scanner->plotOn(plot, 1); // for prob ClsType>1 doesn't exist
+    	}
 		scanner->plotOn(plot);
 		int colorId = cId;
 		if ( arg->color.size()>cId ) colorId = arg->color[cId];

@@ -126,6 +126,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("asimovfile");
   availableOptions.push_back("batchstartn");
   availableOptions.push_back("batcheos");
+	availableOptions.push_back("CL");
 	availableOptions.push_back("cls");
 	availableOptions.push_back("combid");
 	availableOptions.push_back("color");
@@ -522,6 +523,12 @@ void OptParser::parseArguments(int argc, char* argv[])
 			, false, "int");
 	TCLAP::MultiArg<int> colorArg("", "color", "ID of color to be used for the combination. "
 			"Default: 0 for first scanner, 1 for second, etc.", false, "int");
+	 TCLAP::MultiArg<float> CLArg("", "CL", "Confidence Levels to be computed and plotted in percent. This argument can be passed multiple times.\n"
+     "Default will print 1 & 2 (3) sigma confidence levels\n"
+     "Syntax: --CL 90  \n"
+     "alternative: -cl 95.45  \n"
+     , false, "float");
+
   TCLAP::MultiArg<int> clsArg("", "cls", "Types of CLs to be plotted.\n"
       "Default will not do anything\n"
       "1: Naive CLs (assuming CLb is obtained from the point at zero)\n"
@@ -761,6 +768,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "combid" ) ) cmd.add(combidArg);
 	if ( isIn<TString>(bookedOptions, "color" ) ) cmd.add(colorArg);
 	if ( isIn<TString>(bookedOptions, "cls" ) ) cmd.add(clsArg);
+	if ( isIn<TString>(bookedOptions, "CL" ) ) cmd.add(CLArg);
   if ( isIn<TString>(bookedOptions, "batchstartn" ) ) cmd.add( batchstartnArg );
   if ( isIn<TString>(bookedOptions, "batcheos" ) ) cmd.add(batcheosArg);
 	if ( isIn<TString>(bookedOptions, "asimovfile" ) ) cmd.add( asimovFileArg );
@@ -773,6 +781,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	//
 	asimov            = asimovArg.getValue();
 	cls 			  = clsArg.getValue();
+	CL 			  	  = CLArg.getValue();
 	color             = colorArg.getValue();
 	controlplot       = controlplotArg.getValue();
   confirmsols       = ! noconfsolsArg.getValue();
@@ -1231,6 +1240,12 @@ void OptParser::parseArguments(int argc, char* argv[])
 		cout << "ERROR : --po can only be given when -a plugin is set." << endl;
 		exit(1);
 	}
+
+	// check --CL argument
+	if ( var.size()>1 && CL.size()>0){
+		std::cout << "ERROR: User specific confidence levels are only available for 1D option." << std::endl;
+		exit(1);
+	}	
 }
 
 ///

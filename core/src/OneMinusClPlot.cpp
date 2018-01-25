@@ -123,24 +123,24 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 
 	int color = s->getLineColor();
 	if(CLsType>0 && s->getMethodName().Contains("Plugin") && !arg->plotpluginonly) {
-    if (CLsType==1) color = kBlue-7;
-    else if (CLsType==2) color = kBlue+2;
-  }
+    	if (CLsType==1) color = kBlue-7;
+    	else if (CLsType==2) color = kBlue+2;
+  	}
 	else if(CLsType>0) {
-    if (CLsType==1) color = s->getLineColor() - 5;
-    if (CLsType==2) color = s->getLineColor() - 4;
-  }
+    	if (CLsType==1) color = s->getLineColor() - 5;
+    	if (CLsType==2) color = s->getLineColor() - 4;
+  	}
 	g->SetLineColor(color);
 
 	if ( filled ){
-    double alpha = arg->isQuickhack(12) ? 0.4 : 1.;
-    if ( arg->isQuickhack(24) ) alpha = 0.;
-		if (s->getFillColor()>0) g->SetFillColorAlpha(s->getFillColor(), alpha);
-    else g->SetFillColorAlpha(color,alpha);
-    g->SetFillStyle( s->getFillStyle() );
+    	double alpha = arg->isQuickhack(12) ? 0.4 : 1.;
+    	if ( arg->isQuickhack(24) ) alpha = 0.;
+		if (s->getFillColor()>0 && CLsType==0) g->SetFillColorAlpha(s->getFillColor(), alpha);
+    	else g->SetFillColorAlpha(color,alpha);
+    	g->SetFillStyle( s->getFillStyle() );
 		g->SetLineWidth( s->getLineWidth() );
 		g->SetLineStyle( s->getLineStyle() );
-    g->SetLineColor( s->getLineColor() );
+    	g->SetLineColor( s->getLineColor() );
 	}
 	else{
 		g->SetLineWidth( s->getLineWidth() );
@@ -719,13 +719,28 @@ void OneMinusClPlot::drawCLguideLine(float pvalue)
 ///
 void OneMinusClPlot::drawCLguideLines()
 {
-	drawCLguideLine(0.3173);
-	drawCLguideLine(4.55e-2);
-	if ( arg->plotlog ){
-		drawCLguideLine(2.7e-3);
-		if ( arg->plotymin < 6.3e-5 ) {
-      drawCLguideLine(6.3e-5);
-    }
+	if ( arg->CL.size()==0){
+		drawCLguideLine(0.3173);
+		drawCLguideLine(4.55e-2);
+		if ( arg->plotlog ){
+			drawCLguideLine(2.7e-3);
+			if ( arg->plotymin < 6.3e-5 ) {
+	      		drawCLguideLine(6.3e-5);
+	    	}
+		}
+	}
+	if ( arg->CL.size()>0){
+		for ( auto level : arg->CL ){
+			if ( level < 99 ){
+				drawCLguideLine(1. - level/100.);
+			}
+			else if ( arg->plotlog ){
+				if ( arg->plotymin > 6.3e-5 && level < 99.9937){
+					continue;
+				}
+				drawCLguideLine(1. - level/100.);
+			}
+		}
 	}
 }
 
