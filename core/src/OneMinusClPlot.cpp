@@ -807,7 +807,7 @@ void OneMinusClPlot::Draw()
 		{
       if ( scanners[i]->getFillStyle()!=0 || scanners[i]->getFillColor()!=0 ) {
         TGraph* g = scan1dPlot(scanners[i], i==0, false, scanners[i]->getFilled(), do_CLs[i]);
-        leg->AddEntry(g, legTitle, legDrawOption);
+        if ( legTitles[i]!="noleg" ) leg->AddEntry(g, legTitle, legDrawOption);
        }
 		}
 	}
@@ -819,7 +819,7 @@ void OneMinusClPlot::Draw()
 			bool last = i==scanners.size()-1;
 			TGraph *g = scan1dPlot(scanners[i], false, last, false, do_CLs[i]);
       if ( scanners[i]->getFillStyle()==0 && scanners[i]->getFillColor()==0 ) {
-        leg->AddEntry(g, legTitles[i], "L");
+        if ( legTitles[i]!="noleg" ) leg->AddEntry(g, legTitles[i], "L");
       }
 		}
 	drawSolutions();

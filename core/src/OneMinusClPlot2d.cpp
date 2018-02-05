@@ -800,7 +800,7 @@ void OneMinusClPlot2d::Draw()
   haxes->GetYaxis()->SetTitleFont(font);
   haxes->GetXaxis()->SetTitleOffset(0.85);
   if ( arg->isQuickhack(14) ){
-    haxes->GetYaxis()->SetTitleOffset(0.65);
+    haxes->GetYaxis()->SetTitleOffset(0.6);
   }
   else {
     haxes->GetYaxis()->SetTitleOffset(0.95);
@@ -916,7 +916,7 @@ void OneMinusClPlot2d::Draw()
     axisb->SetLabelFont(font);
     axisb->SetLabelSize(labelsize);
     axisb->SetTitle(xTitle!="" ? xTitle : (TString)scanners[0]->getScanVar1()->GetTitle() + TString(" [#circ]"));
-    axisb->SetTitleOffset(0.85);
+    axisb->SetTitleOffset(0.8);
     axisb->SetTitleSize(titlesize);
     axisb->SetTitleFont(font);
     axisb->Draw();
@@ -935,7 +935,7 @@ void OneMinusClPlot2d::Draw()
     axisb->SetLabelFont(font);
     axisb->SetLabelSize(labelsize);
     axisb->SetTitle(xTitle!="" ? xTitle : (TString)scanners[0]->getScanVar1()->GetTitle());
-    axisb->SetTitleOffset(0.85);
+    axisb->SetTitleOffset(0.8);
     axisb->SetTitleSize(titlesize);
     axisb->SetTitleFont(font);
     axisb->Draw();
@@ -952,7 +952,7 @@ void OneMinusClPlot2d::Draw()
     axisl->SetLabelFont(font);
     axisl->SetLabelSize(labelsize);
     axisl->SetTitle(xTitle!="" ? xTitle : (TString)scanners[0]->getScanVar2()->GetTitle() + TString(" [#circ]"));
-    axisl->SetTitleOffset(0.85);
+    axisl->SetTitleOffset(0.8);
     axisl->SetTitleSize(titlesize);
     axisl->SetTitleFont(font);
     axisl->Draw();
@@ -972,7 +972,7 @@ void OneMinusClPlot2d::Draw()
     axisl->SetLabelFont(font);
     axisl->SetLabelSize(labelsize);
     axisl->SetTitle(xTitle!="" ? xTitle : (TString)scanners[0]->getScanVar2()->GetTitle());
-    axisl->SetTitleOffset(0.85);
+    axisl->SetTitleOffset(0.8);
     axisl->SetTitleSize(titlesize);
     axisl->SetTitleFont(font);
     axisl->Draw();
