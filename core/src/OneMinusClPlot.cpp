@@ -773,8 +773,8 @@ void OneMinusClPlot::Draw()
 	TLegend* leg = new TLegend(legendXmin,legendYmin,legendXmax,legendYmax);
   leg->Clear();
   leg->SetNColumns( arg->plotlegcols );
-	leg->SetFillColor(kWhite);
-  //leg->SetFillStyle(0);
+	leg->SetFillColorAlpha(kWhite,1.);
+  leg->SetFillStyle(0);
 	leg->SetLineColor(kWhite);
 	leg->SetBorderSize(0);
 	leg->SetTextFont(font);
