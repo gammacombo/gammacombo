@@ -2037,7 +2037,18 @@ void GammaComboEngine::scanDataSet()
 		{
 				if ( arg->isAction("pluginbatch") ){
 					MethodDatasetsProbScan* scannerProb = new MethodDatasetsProbScan( (PDF_Datasets*) pdf[0], arg);
-					make1dProbScan( scannerProb, 0 );
+					if ( FileExists( m_fnamebuilder->getFileNameScanner(scannerProb)) ) {
+							scannerProb->initScan();
+							scannerProb->loadScanner( m_fnamebuilder->getFileNameScanner(scannerProb));
+					}
+					else{
+							cout << "\nWARNING : Couldn't load the Prob scanner, will rerun the Prob" << endl;
+							cout <<   "          scan now. You should have run the Prob scan locally" << endl;
+							cout <<   "          before running the Plugin scan." << endl;
+							cout <<   "          missing file: " << m_fnamebuilder->getFileNameScanner(scannerProb) << endl;
+							cout << endl;
+							make1dProbScan(scannerProb, 0);
+					}
 					MethodDatasetsPluginScan *scannerPlugin = new MethodDatasetsPluginScan( scannerProb, (PDF_Datasets*) pdf[0], arg);
 					make1dPluginScan(scannerPlugin, 0 );
 				}
