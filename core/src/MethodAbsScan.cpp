@@ -244,6 +244,11 @@ void MethodAbsScan::initScan()
 	hCL = new TH1F("hCL"+getUniqueRootName(), "hCL"+pdfName, nPoints1d, min1, max1);
 	if ( hChi2min ) delete hChi2min;
 	hChi2min = new TH1F("hChi2min"+getUniqueRootName(), "hChi2min"+pdfName, nPoints1d, min1, max1);
+    if (hCLs) delete hCLs;
+    hCLs = new TH1F("hCLs" + getUniqueRootName(), "hCLs" + pdfName, nPoints1d, min1, max1);
+    if (hCLs) delete hCLsFreq;
+    hCLsFreq = new TH1F("hCLsFreq" + getUniqueRootName(), "hCLsFreq" + pdfName, nPoints1d, min1, max1);
+
 
 	// fill the chi2 histogram with very unlikely values such
 	// that inside scan1d() the if clauses work correctly
@@ -1615,8 +1620,14 @@ const std::pair<double, double> MethodAbsScan::getBorders_CLs(const TGraph& grap
   return std::pair<double, double>(lower_edge,upper_edge);
 }
 
-void MethodAbsScan::checkCLs()
+bool MethodAbsScan::checkCLs()
 {
+	if (!hCLsExp || !hCLsErr1Up || !hCLsErr1Dn || !hCLsErr2Up || !hCLsErr2Dn){
+		std::cout << "ERROR: ***************************************************" << std::endl;
+		std::cout << "ERROR: MethodAbsScan::checkCLs() : No CLs plot available!!" << std::endl;
+		std::cout << "ERROR: ***************************************************" << std::endl;
+		return false;
+	}
   assert( hCLsExp->GetNbinsX() == hCLsErr1Up->GetNbinsX() );
   assert( hCLsExp->GetNbinsX() == hCLsErr2Up->GetNbinsX() );
   assert( hCLsExp->GetNbinsX() == hCLsErr1Dn->GetNbinsX() );
@@ -1640,6 +1651,7 @@ void MethodAbsScan::checkCLs()
       hCLsErr2Dn->SetBinContent(i, hCLsExp->GetBinContent(i) - ( hCLsExp->GetBinContent(i)-hCLsErr1Dn->GetBinContent(i))*2. );
     }
   }
+  return true;
 }
 
 

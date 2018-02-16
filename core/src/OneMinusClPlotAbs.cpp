@@ -50,10 +50,10 @@ void OneMinusClPlotAbs::addScanner(MethodAbsScan* s, int CLsType)
 		scanners.push_back(s);
 		do_CLs.push_back(CLsType);
 	}
-	else if ((CLsType==1 && !s->getHCLs()) || (CLsType==2 && !s->getHCLsFreq()))
-	{
-		cout << "No CLs histogram was determined. Will not plot." << endl;
-	}
+	// else if ((CLsType==1 && !s->getHCLs()) || (CLsType==2 && !s->getHCLsFreq()))
+	// {
+	// 	cout << "No CLs histogram was determined. Will not plot." << endl;
+	// }
 }
 
 ///
