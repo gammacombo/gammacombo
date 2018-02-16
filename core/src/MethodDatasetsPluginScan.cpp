@@ -523,11 +523,16 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
           cout << endl;
         }
 
-        hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] / clb_vals[2] , 1.) );
-        hCLsErr1Up->SetBinContent( i, TMath::Min( clsb_vals[1] / clb_vals[1] , 1.) );
-        hCLsErr1Dn->SetBinContent( i, TMath::Min( clsb_vals[3] / clb_vals[3] , 1.) );
-        hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[0] / clb_vals[0] , 1.) );
-        hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[4] / clb_vals[4] , 1.) );
+        // hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] / clb_vals[2] , 1.) );
+        // hCLsErr1Up->SetBinContent( i, TMath::Min( clsb_vals[1] / clb_vals[1] , 1.) );
+        // hCLsErr1Dn->SetBinContent( i, TMath::Min( clsb_vals[3] / clb_vals[3] , 1.) );
+        // hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[0] / clb_vals[0] , 1.) );
+        // hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[4] / clb_vals[4] , 1.) );
+        hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] , 1.) );
+        hCLsErr1Up->SetBinContent( i, TMath::Min( clsb_vals[1] , 1.) );
+        hCLsErr1Dn->SetBinContent( i, TMath::Min( clsb_vals[3] , 1.) );
+        hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[0] , 1.) );
+        hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[4] , 1.) );
 
         //hCLsExp->SetBinContent   ( i, (float(nSBValsAboveBkg[2]) / sampledSBValues[i].size() ) / probs[2] );
         //hCLsErr1Up->SetBinContent( i, (float(nSBValsAboveBkg[1]) / sampledSBValues[i].size() ) / probs[1] );
