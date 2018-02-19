@@ -131,6 +131,7 @@ class GammaComboEngine
 		vector<int> 		colorsText;
     vector<int>     fillStyles;
     vector<int>     fillColors;
+    vector<float>   fillTransparencies;
     vector<int>     lineColors;
     vector<int>     lineStyles;
     vector<int>     lineWidths;

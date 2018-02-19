@@ -138,6 +138,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("evol");
   availableOptions.push_back("filename");
   availableOptions.push_back("fillstyle");
+  availableOptions.push_back("filltransparency");
   availableOptions.push_back("fillcolor");
 	availableOptions.push_back("fix");
 	availableOptions.push_back("ext");
@@ -533,6 +534,7 @@ void OptParser::parseArguments(int argc, char* argv[])
       "1: Naive CLs (assuming CLb is obtained from the point at zero)\n"
       "2: Freq  CLs (sampling the full distribution for CLb)\n"
       , false, "int");
+  TCLAP::MultiArg<float> filltransparencyArg("", "filltransparency", "Fill transparency of the 1D and 2D contours to be used for the combination. Default is 0 (solid) for all.", false, "float");
   TCLAP::MultiArg<int> fillstyleArg("", "fillstyle", "Fill style of the 1D and 2D contours to be used for the combination. Default is 1001 (solid) for all.", false, "int");
   TCLAP::MultiArg<int> fillcolorArg("", "fillcolor", "Fill color of the 1D and 2D contours to be used for the combination. Default is picked up from color vector", false, "int");
   TCLAP::MultiArg<int> linewidthArg("", "linewidth", "Set line width of the 1D and 2D contours to be used for the combination. Default is 2 for all.", false, "int");
@@ -752,6 +754,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "group" ) ) cmd.add( plotgroupArg );
 	if ( isIn<TString>(bookedOptions, "grouppos" ) ) cmd.add( plotgroupposArg );
 	if ( isIn<TString>(bookedOptions, "fix" ) ) cmd.add(fixArg);
+  if ( isIn<TString>(bookedOptions, "filltransparency" ) ) cmd.add( filltransparencyArg );
   if ( isIn<TString>(bookedOptions, "fillstyle" ) ) cmd.add( fillstyleArg );
   if ( isIn<TString>(bookedOptions, "fillcolor" ) ) cmd.add( fillcolorArg );
 	if ( isIn<TString>(bookedOptions, "ext" ) ) cmd.add(filenameadditionArg);
@@ -786,6 +789,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	enforcePhysRange  = prArg.getValue();
 	filenameaddition  = filenameadditionArg.getValue();
   filenamechange    = filenamechangeArg.getValue();
+  filltransparency  = filltransparencyArg.getValue();
   fillstyle         = fillstyleArg.getValue();
   fillcolor         = fillcolorArg.getValue();
   linewidth         = linewidthArg.getValue();

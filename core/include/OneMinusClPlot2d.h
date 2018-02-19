@@ -51,6 +51,7 @@ class OneMinusClPlot2d : public OneMinusClPlotAbs
 		vector<vector<int> > linestyle;   ///< defines the line style of 1 sigma line of different scanners
 		vector<vector<int> > fillstyle;   ///< defines the fill style of
     vector<vector<int> > linewidth;   ///< defines the line width
+    vector<vector<float> > filltransparency; ///< defines the fill transparency
 		vector<int>          markerstyle; ///< defines marker styles of the solutions of different scanners
 		vector<float>        markersize;
 
