@@ -348,6 +348,8 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     TH1F *h_better        = (TH1F*)hCL->Clone("h_better");
     // histogram to store number of toys which enter CLs p Value calculation
     TH1F *h_better_cls        = (TH1F*)hCL->Clone("h_better_cls");
+    // histogram to store number of toys which enter CLb p Value calculation
+    TH1F *h_better_clb        = (TH1F*)hCL->Clone("h_better_clb");
     // numbers for all toys
     TH1F *h_all           = (TH1F*)hCL->Clone("h_all");
     // numbers of toys failing the selection criteria
@@ -418,6 +420,9 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         if ( valid && (t.chi2minToy - t.chi2minGlobalToy) >= (t.chi2min - this->chi2minBkg) ) { //t.chi2minGlobal ){
             h_better_cls->Fill(t.scanpoint);
         }
+        if ( valid && (t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy) >= (chi2minBkg - chi2minGlobal) ) {
+            h_better_clb->Fill(t.scanpoint);
+        }
         if (t.scanpoint == 0.0) n0better++;
 
         // goodness-of-fit
@@ -435,12 +440,28 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         int hBin = h_all->FindBin(t.scanpoint);
         if ( sampledBValues.find(hBin) == sampledBValues.end() ) sampledBValues[hBin] = std::vector<double>();
         if ( sampledSBValues.find(hBin) == sampledSBValues.end() ) sampledSBValues[hBin] = std::vector<double>();
-        double bkgTestStatVal = t.chi2minBkgToy - t.chi2minGlobalBkgToy;
-        bkgTestStatVal = t.scanbestBkg <= t.scanpoint ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
+
+        ////// comment Matt's part for the moment
+        // // chi2minBkgToy is the best fit at scanpoint of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
+        // double bkgTestStatVal = t.chi2minBkgToy - t.chi2minGlobalBkgToy;
+        // std::cout << bkgTestStatVal << ": " << t.chi2minBkgToy << " - " << t.chi2minGlobalBkgToy << std::endl;
+        // bkgTestStatVal = t.scanbestBkg <= t.scanpoint ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
+        // sampledBValues[hBin].push_back( bkgTestStatVal );
+        // double sbTestStatVal = t.chi2minToy - t.chi2minGlobalToy;
+        // sbTestStatVal = t.scanbest <= t.scanpoint ? sbTestStatVal : 0.; // if muhat < mu then q_mu = 0
+        // sampledSBValues[hBin].push_back( sbTestStatVal );
+
+        // chi2minBkgToy is the best fit at scanpoint of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
+        double bkgTestStatVal = t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy;
+        std::cout << bkgTestStatVal << ": " << t.chi2minBkgBkgToy << " - " << t.chi2minGlobalBkgToy << std::endl;
+        if(bkgTestStatVal < 0.) bkgTestStatVal = 0.;
+        bkgTestStatVal = t.scanbestBkgfitBkg <= t.scanpoint ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
         sampledBValues[hBin].push_back( bkgTestStatVal );
-        double sbTestStatVal = t.chi2minToy - t.chi2minGlobalToy;
-        sbTestStatVal = t.scanbest <= t.scanpoint ? sbTestStatVal : 0.; // if muhat < mu then q_mu = 0
+        double sbTestStatVal = t.chi2minBkgToy - t.chi2minGlobalBkgToy;
+        sbTestStatVal = t.scanbestBkg <= t.scanpoint ? sbTestStatVal : 0.; // if muhat < mu then q_mu = 0
         sampledSBValues[hBin].push_back( sbTestStatVal );
+
+
 
         // use the unphysical events to estimate background (be careful with this,
         // at least inspect the control plots to judge if this can be at all reasonable)
@@ -469,6 +490,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     for (int i = 1; i <= h_better->GetNbinsX(); i++) {
         float nbetter = h_better->GetBinContent(i);
         float nbetter_cls = h_better_cls->GetBinContent(i);
+        float nbetter_clb = h_better_clb->GetBinContent(i);
         float nall = h_all->GetBinContent(i);
         // get number of background and failed toys
         float nbackground     = h_background->GetBinContent(i);
@@ -488,6 +510,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         // don't subtract background
         float p = nbetter / nall;
         float p_cls = nbetter_cls / nall;
+        float p_clb = nbetter_clb / nall;
         hCL->SetBinContent(i, p);
         hCL->SetBinError(i, sqrt(p * (1. - p) / nall));
         hCLs->SetBinContent(i, p_cls);
@@ -503,7 +526,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
           // asymptotic as chi2
           //clsb_vals.push_back( TMath::Prob( quantiles[k], 1 ) );
           // from toys
-          clsb_vals.push_back( getVectorFracAboveValue( sampledSBValues[i], quantiles[k] ) );
+          clsb_vals.push_back(1.-getVectorFracAboveValue( sampledSBValues[i], quantiles[k] ) );
         }
 
         // check
@@ -522,17 +545,24 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
           for (int k=0; k<clsb_vals.size(); k++) cout << clsb_vals[k]/clb_vals[k] << " , ";
           cout << endl;
         }
-
+        //// Matt's idea
         // hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] / clb_vals[2] , 1.) );
         // hCLsErr1Up->SetBinContent( i, TMath::Min( clsb_vals[1] / clb_vals[1] , 1.) );
         // hCLsErr1Dn->SetBinContent( i, TMath::Min( clsb_vals[3] / clb_vals[3] , 1.) );
         // hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[0] / clb_vals[0] , 1.) );
         // hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[4] / clb_vals[4] , 1.) );
+
+        //// Titus wrongly transformed
+        // hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] , 1.) );
+        // hCLsErr1Up->SetBinContent( i, TMath::Min( clsb_vals[1] , 1.) );
+        // hCLsErr1Dn->SetBinContent( i, TMath::Min( clsb_vals[3] , 1.) );
+        // hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[0] , 1.) );
+        // hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[4] , 1.) );
         hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] , 1.) );
-        hCLsErr1Up->SetBinContent( i, TMath::Min( clsb_vals[1] , 1.) );
-        hCLsErr1Dn->SetBinContent( i, TMath::Min( clsb_vals[3] , 1.) );
-        hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[0] , 1.) );
-        hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[4] , 1.) );
+        hCLsErr1Up->SetBinContent( i, TMath::Min( clsb_vals[3] , 1.) );
+        hCLsErr1Dn->SetBinContent( i, TMath::Min( clsb_vals[1] , 1.) );
+        hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[4] , 1.) );
+        hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[0] , 1.) );
 
         //hCLsExp->SetBinContent   ( i, (float(nSBValsAboveBkg[2]) / sampledSBValues[i].size() ) / probs[2] );
         //hCLsErr1Up->SetBinContent( i, (float(nSBValsAboveBkg[1]) / sampledSBValues[i].size() ) / probs[1] );
@@ -546,7 +576,8 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         for (int j=0; j<sampledBValues[i].size(); j++ ) {
           if ( sampledBValues[i][j] >= dataTestStat ) nDataAboveBkgExp += 1;
         }
-        float dataCLb    = float(nDataAboveBkgExp)/sampledBValues[i].size();
+        // float dataCLb    = float(nDataAboveBkgExp)/sampledBValues[i].size();
+        float dataCLb    = p_clb;
         float dataCLbErr = sqrt( dataCLb * (1.-dataCLb) / sampledBValues[i].size() );
         if ( p/dataCLb >= 1. ) {
           hCLsFreq->SetBinContent(i, 1.);
@@ -692,9 +723,11 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 		// if CLs toys we need to keep hold of what's going on in the bkg only case
     // there is a small overhead here but it's necessary because the bkg only hypothesis
     // might not necessarily be in the scan range (although often it will be the first point)
-		vector<RooDataSet*> cls_bkgOnlyToys;
-    vector<float> chi2minGlobalBkgToysStore;
-    vector<float> scanbestBkgToysStore;
+	vector<RooDataSet*> cls_bkgOnlyToys;
+    vector<float> chi2minGlobalBkgToysStore;    // Global fit to bkg-only toys
+    vector<float> chi2minBkgBkgToysStore;       // Bkg fit to bkg-only toys
+    vector<float> scanbestBkgToysStore;         // best fit point of gloabl fit to bkg-only toys 
+    vector<float> scanbestBkgBkgToysStore;      // best fit point of bkg fit to bkg-only toys (usually zero because bkg pdf will not depend on signal parameter)
     // Titus: Try importance sampling from the combination part -> works, but definitely needs improvement in precision
     int nActualToys = nToys;
     if ( arg->importance ){
@@ -703,19 +736,24 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
     }
     for ( int j = 0; j < nActualToys; j++ ) {
       if(pdf->getBkgPdf()){
+        pdf->fitBkg(pdf->getData());     //Need to fit bkg first to get the proper parameters for the toy generation
         pdf->generateBkgToys();
         pdf->generateToysGlobalObservables();
         RooDataSet* bkgOnlyToy = pdf->getBkgToyObservables();
         cls_bkgOnlyToys.push_back( (RooDataSet*)bkgOnlyToy->Clone() ); // clone required because of deleteToys() call at end of loop
         pdf->setToyData( bkgOnlyToy );
         parameterToScan->setConstant(false);
+
+        // Do a global fit to bkg-only toys
         RooFitResult *rb = loadAndFit(pdf);
+        // RooFitResult *rb = pdf->fitBkg(bkgOnlyToy);
         assert(rb);
         pdf->setMinNllScan(pdf->minNll);
         if (pdf->getFitStatus() != 0) {
             pdf->setFitStrategy(1);
             delete rb;
             rb = loadAndFit(pdf);
+            // rb = pdf->fitBkg(bkgOnlyToy);
             pdf->setMinNllScan(pdf->minNll);
             assert(rb);
 
@@ -723,6 +761,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                 pdf->setFitStrategy(2);
                 delete rb;
                 rb = loadAndFit(pdf);
+                // rb = pdf->fitBkg(bkgOnlyToy);
                 assert(rb);
             }
         }
@@ -735,9 +774,39 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         }
         pdf->setMinNllScan(pdf->minNll);
 
-        chi2minGlobalBkgToysStore.push_back( 2 * rb->minNll() );
-        scanbestBkgToysStore.push_back( ((RooRealVar*)w->set(pdf->getParName())->find(scanVar1))->getVal() );
+        // chi2minGlobalBkgToysStore.push_back( 2 * rb->minNll() );
+        chi2minGlobalBkgToysStore.push_back( 2 * pdf->getMinNll() );
+        if(rb->floatParsFinal().find(pdf->getParName())){
+            scanbestBkgToysStore.push_back( ((RooRealVar*)w->set(pdf->getParName())->find(scanVar1))->getVal() );    
+        }
+        // if the pdf does not depend on the signal parameter, set best fit value of signa l parameter for the bkg fit to 0
+        else scanbestBkgToysStore.push_back(0.0);
 
+        delete rb;
+        rb = pdf->fitBkg(bkgOnlyToy);
+        assert(rb);
+        pdf->setMinNllScan(pdf->minNll);
+        if (pdf->getFitStatus() != 0) {
+            pdf->setFitStrategy(1);
+            delete rb;
+            rb = pdf->fitBkg(bkgOnlyToy);
+            pdf->setMinNllScan(pdf->minNll);
+            assert(rb);
+
+            if (pdf->getFitStatus() != 0) {
+                pdf->setFitStrategy(2);
+                delete rb;
+                rb = pdf->fitBkg(bkgOnlyToy);
+                assert(rb);
+            }
+        }
+        // chi2minBkgBkgToysStore.push_back( 2 * rb->minNll() );
+        chi2minBkgBkgToysStore.push_back( 2 * pdf->getMinNllBkg() );
+        if(rb->floatParsFinal().find(pdf->getParName())){
+            scanbestBkgBkgToysStore.push_back( ((RooRealVar*)w->set(pdf->getParName())->find(scanVar1))->getVal() );    
+        }
+        // if the pdf does not depend on the signal parameter, set best fit value of signa l parameter for the bkg fit to 0
+        else scanbestBkgBkgToysStore.push_back(0.0);
         delete rb;
         pdf->deleteToys();
       }
@@ -882,7 +951,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             pdf->setMinNllScan(pdf->minNll);
 
 
-            toyTree.chi2minToy          = 2 * r->minNll(); // 2*r->minNll(); //2*r->minNll();
+            // toyTree.chi2minToy          = 2 * r->minNll(); // 2*r->minNll(); //2*r->minNll();
+            toyTree.chi2minToy          = 2 * pdf->getMinNll(); // 2*r->minNll(); //2*r->minNll();
             toyTree.chi2minToyPDF       = 2 * pdf->getMinNllScan();
             toyTree.covQualScan         = r->covQual();
             toyTree.statusScan          = r->status();
@@ -943,7 +1013,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             pdf->setMinNllScan(pdf->minNll);
 
 
-            toyTree.chi2minBkgToy          = 2 * rb->minNll(); // 2*r->minNll(); //2*r->minNll();
+            // toyTree.chi2minBkgToy          = 2 * rb->minNll(); // 2*r->minNll(); //2*r->minNll();
+            toyTree.chi2minBkgToy          = 2 * pdf->getMinNll(); // 2*r->minNll(); //2*r->minNll();
             toyTree.chi2minBkgToyPDF       = 2 * pdf->getMinNllScan();
 
             pdf->deleteNLL();
@@ -970,7 +1041,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             RooFitResult* r1  = this->loadAndFit(this->pdf);
             assert(r1);
             pdf->setMinNllFree(pdf->minNll);
-            toyTree.chi2minGlobalToy = 2 * r1->minNll();
+            // toyTree.chi2minGlobalToy = 2 * r1->minNll();
+            toyTree.chi2minGlobalToy = 2 * pdf->getMinNllFree();
 
             if (! std::isfinite(pdf->getMinNllFree())) {
                 cout << "----> nan/inf flag detected " << endl;
@@ -992,7 +1064,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                 r1  = this->loadAndFit(this->pdf);
                 assert(r1);
                 pdf->setMinNllFree(pdf->minNll);
-                toyTree.chi2minGlobalToy = 2 * r1->minNll();
+                // toyTree.chi2minGlobalToy = 2 * r1->minNll();
+                toyTree.chi2minGlobalToy = 2 * pdf->getMinNllFree();
                 if (! std::isfinite(pdf->getMinNllFree())) {
                     cout << "----> nan/inf flag detected " << endl;
                     cout << "----> fit status: " << pdf->getFitStatus() << endl;
@@ -1011,7 +1084,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                     r1  = this->loadAndFit(this->pdf);
                     assert(r1);
                     pdf->setMinNllFree(pdf->minNll);
-                    toyTree.chi2minGlobalToy = 2 * r1->minNll();
+                    // toyTree.chi2minGlobalToy = 2 * r1->minNll();
+                    toyTree.chi2minGlobalToy = 2 * pdf->getMinNllFree();
                     if (! std::isfinite(pdf->getMinNllFree())) {
                         cout << "----> nan/inf flag detected " << endl;
                         cout << "----> fit status: " << pdf->getFitStatus() << endl;
@@ -1058,7 +1132,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             // set the limit back again
             setLimit(w, scanVar1, "scan");
 
-            toyTree.chi2minGlobalToy    = 2 * r1->minNll(); //2*r1->minNll();
+            // toyTree.chi2minGlobalToy    = 2 * r1->minNll(); //2*r1->minNll();
+            toyTree.chi2minGlobalToy    = 2 * pdf->getMinNllFree(); //2*r1->minNll();
             toyTree.chi2minGlobalToyPDF = 2 * pdf->getMinNllFree(); //2*r1->minNll();
             toyTree.statusFreePDF       = pdf->getFitStatus(); //r1->status();
             toyTree.statusFree          = r1->status();
@@ -1073,11 +1148,15 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
               //scanbestBkgToysStore.push_back( toyTree.scanbest );
             //}
             //else {
-              assert( chi2minGlobalBkgToysStore.size() == nToys );
-              assert( scanbestBkgToysStore.size() == nToys );
-              //}
+            assert( chi2minGlobalBkgToysStore.size() == nToys );
+            assert( scanbestBkgToysStore.size() == nToys );
+            assert( chi2minBkgBkgToysStore.size() == nToys );
+            assert( scanbestBkgBkgToysStore.size() == nToys );
+            //}
             toyTree.chi2minGlobalBkgToy = chi2minGlobalBkgToysStore[j];
             toyTree.scanbestBkg      = scanbestBkgToysStore[j];
+            toyTree.chi2minBkgBkgToy = chi2minBkgBkgToysStore[j];
+            toyTree.scanbestBkgfitBkg      = scanbestBkgBkgToysStore[j];
 
             if (arg->debug) {
                 cout << "#### > Fit summary: " << endl;
