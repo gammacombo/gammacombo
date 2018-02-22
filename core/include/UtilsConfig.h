@@ -157,6 +157,7 @@ namespace Utils
     lumi3fb_estimate,
 		lumi5ab,
 		lumi5fb,
+		lumi5fbOld,
 		lumi9fb,
 		lumi50ab,
 		lumi50fb,
