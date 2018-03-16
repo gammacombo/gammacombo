@@ -451,12 +451,12 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         // sbTestStatVal = t.scanbest <= t.scanpoint ? sbTestStatVal : 0.; // if muhat < mu then q_mu = 0
         // sampledSBValues[hBin].push_back( sbTestStatVal );
 
-        // chi2minBkgToy is the best fit at scanpoint of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
+        // chi2minBkgBkgToy is the best fit of the bkg pdf of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
         double bkgTestStatVal = t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy;
-        std::cout << bkgTestStatVal << ": " << t.chi2minBkgBkgToy << " - " << t.chi2minGlobalBkgToy << std::endl;
         if(bkgTestStatVal < 0.) bkgTestStatVal = 0.;
         bkgTestStatVal = t.scanbestBkgfitBkg <= t.scanpoint ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
         sampledBValues[hBin].push_back( bkgTestStatVal );
+        // chi2minBkgToy is the best fit at scanpoint of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
         double sbTestStatVal = t.chi2minBkgToy - t.chi2minGlobalBkgToy;
         sbTestStatVal = t.scanbestBkg <= t.scanpoint ? sbTestStatVal : 0.; // if muhat < mu then q_mu = 0
         sampledSBValues[hBin].push_back( sbTestStatVal );
@@ -552,12 +552,6 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         // hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[0] / clb_vals[0] , 1.) );
         // hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[4] / clb_vals[4] , 1.) );
 
-        //// Titus wrongly transformed
-        // hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] , 1.) );
-        // hCLsErr1Up->SetBinContent( i, TMath::Min( clsb_vals[1] , 1.) );
-        // hCLsErr1Dn->SetBinContent( i, TMath::Min( clsb_vals[3] , 1.) );
-        // hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[0] , 1.) );
-        // hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[4] , 1.) );
         hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] , 1.) );
         hCLsErr1Up->SetBinContent( i, TMath::Min( clsb_vals[3] , 1.) );
         hCLsErr1Dn->SetBinContent( i, TMath::Min( clsb_vals[1] , 1.) );
