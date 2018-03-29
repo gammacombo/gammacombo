@@ -454,11 +454,11 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         // chi2minBkgBkgToy is the best fit of the bkg pdf of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
         double bkgTestStatVal = t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy;
         if(bkgTestStatVal < 0.) bkgTestStatVal = 0.;
-        bkgTestStatVal = t.scanbestBkgfitBkg <= t.scanpoint ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
+        // bkgTestStatVal = t.scanbestBkgfitBkg <= t.scanpoint ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
         sampledBValues[hBin].push_back( bkgTestStatVal );
         // chi2minBkgToy is the best fit at scanpoint of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
         double sbTestStatVal = t.chi2minBkgToy - t.chi2minGlobalBkgToy;
-        sbTestStatVal = t.scanbestBkg <= t.scanpoint ? sbTestStatVal : 0.; // if muhat < mu then q_mu = 0
+        // sbTestStatVal = t.scanbestBkg <= t.scanpoint ? sbTestStatVal : 0.; // if muhat < mu then q_mu = 0
         sampledSBValues[hBin].push_back( sbTestStatVal );
 
 
