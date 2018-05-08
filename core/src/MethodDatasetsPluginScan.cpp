@@ -420,6 +420,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         if ( valid && (t.chi2minToy - t.chi2minGlobalToy) >= (t.chi2min - this->chi2minBkg) ) { //t.chi2minGlobal ){
             h_better_cls->Fill(t.scanpoint);
         }
+
         if ( valid && (t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy) >= (chi2minBkg - chi2minGlobal) ) {
             h_better_clb->Fill(t.scanpoint);
         }
@@ -510,7 +511,10 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         // don't subtract background
         float p = nbetter / nall;
         float p_cls = nbetter_cls / nall;
-        float p_clb = nbetter_clb / nall;
+        // float p_clb = nbetter_clb / nall;
+        // std::cout << "p val. bkg. Prob: " << TMath::Prob(chi2minBkg - chi2minGlobal,1) << " Plugin: " << p_clb << " +/- " << sqrt(p_clb * (1. - p_clb) / nall) << std::endl;
+        float p_clb = TMath::Prob(chi2minBkg - chi2minGlobal,1); //Since the fitting of the global pdf is biased, use Prob to determine p_clb
+
         hCL->SetBinContent(i, p);
         hCL->SetBinError(i, sqrt(p * (1. - p) / nall));
         hCLs->SetBinContent(i, p_cls);
