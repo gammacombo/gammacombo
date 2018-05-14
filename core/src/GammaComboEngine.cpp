@@ -1742,6 +1742,23 @@ void GammaComboEngine::saveWorkspace( Combiner *c, int i )
 }
 
 ///
+/// run toys
+///
+void GammaComboEngine::runToys( Combiner *c ) 
+{
+  for ( int t=0; t<arg->ntoys; t++ ) {
+    cout << "RUNNING TOY " << t << " / " << arg->ntoys << endl;
+    c->setObservablesToToyValues();
+    cout << "Not implemented further" << endl;
+    //RooFitResult *fr = fitToMinBringBackAngles( c->getWorkspace()->pdf( "pdf_"+c->getPdfName() ), true, 1 );
+    //fr->floatParsFinal().Print("v");
+    //MethodProbScan *probscan = new MethodProbScan(c);
+    //make1dProbScan(probscan,0);
+
+  }
+}
+
+///
 /// scan engine
 ///
 void GammaComboEngine::scan()
@@ -1990,6 +2007,11 @@ void GammaComboEngine::scan()
       }
     }
 
+		// RUN TOYS
+    if (arg->isAction("runtoys")) runToys ( c );
+		/////////////////////////////////////////////////////
+
+    // SAVE WORKSPACE
     if (arg->save!="" && arg->saveAtMin) saveWorkspace( c, i );
 		/////////////////////////////////////////////////////
 

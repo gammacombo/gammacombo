@@ -124,6 +124,7 @@ class GammaComboEngine
     void      writebatchscripts();
     void      makeLatex( Combiner *c );
     void      saveWorkspace( Combiner *c, int i );
+    void      runToys( Combiner *c );
 
 		OptParser*			arg;
 		vector<Combiner*> 	cmb;
