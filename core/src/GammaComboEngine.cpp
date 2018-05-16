@@ -1756,18 +1756,65 @@ void GammaComboEngine::saveWorkspace( Combiner *c, int i )
 ///
 /// run toys
 ///
-void GammaComboEngine::runToys( Combiner *c ) 
+void GammaComboEngine::runToys( Combiner *c )
 {
-  for ( int t=0; t<arg->ntoys; t++ ) {
-    cout << "RUNNING TOY " << t << " / " << arg->ntoys << endl;
-    c->setObservablesToToyValues();
-    cout << "Not implemented further" << endl;
-    //RooFitResult *fr = fitToMinBringBackAngles( c->getWorkspace()->pdf( "pdf_"+c->getPdfName() ), true, 1 );
-    //fr->floatParsFinal().Print("v");
-    //MethodProbScan *probscan = new MethodProbScan(c);
-    //make1dProbScan(probscan,0);
+  // THIS IS A HACK FOR NOW
+  //
+  // base scan (overhead here)
+  MethodProbScan *probscan = new MethodProbScan(c);
+  make1dProbScan(probscan,0);
 
+  TString toydirname = TString("root/scan1dToys_")+probscan->getName()+TString("_")+probscan->getScanVar1Name();
+  TString toyfname = toydirname + TString("/scan1dToys_")+probscan->getName()+TString("_")+probscan->getScanVar1Name()+Form("_run%d.root",arg->nrun);
+
+  TTree *tree = new TTree("toys","toys");
+  map<TString,double> vals;
+  map<TString,double> errs;
+  double chi2val = probscan->solutions[0]->minNll();
+  int ntoy = -1;
+  tree->Branch("ntoy", &ntoy);
+  tree->Branch("chi2min", &chi2val);
+  RooArgList fitPars = probscan->solutions[0]->floatParsFinal();
+  TIterator *it = fitPars.createIterator();
+  while ( RooRealVar* p = (RooRealVar*)it->Next() ) {
+    cout << "YO:: " << p->GetName() << endl;
+    vals[p->GetName()] = p->getVal();
+    errs[p->GetName()] = p->getError();
+    tree->Branch( p->GetName()+TString("_val"), &vals[p->GetName()] );
+    tree->Branch( p->GetName()+TString("_err"), &errs[p->GetName()] );
   }
+  tree->Fill();
+  delete probscan;
+
+  for ( int i=0; i<arg->ntoys; i++ ) {
+    cout << "RUNNING TOY " << i << " / " << arg->ntoys << endl;
+    c->setObservablesToToyValues();
+    MethodProbScan *toyscan = new MethodProbScan(c);
+    make1dProbScan(toyscan,0);
+    if ( toyscan->solutions.size() == 0 ) continue;
+    toyscan->solutions[0]->Print();
+    //cout << "My stuff I want to save" << endl;
+    //cout << "chi2: " << toyscan->solutions[0]->minNll() << endl;
+
+    chi2val = toyscan->solutions[0]->minNll();
+    ntoy = i;
+    RooArgList toyFitPars = toyscan->solutions[0]->floatParsFinal();
+    TIterator *toyit = toyFitPars.createIterator();
+    while ( RooRealVar* p = (RooRealVar*)toyit->Next() ) {
+      //cout << p->GetName() << " " << p->getVal() << " " << p->getError() << endl;
+      vals[p->GetName()] = p->getVal();
+      errs[p->GetName()] = p->getError();
+    }
+    tree->Fill();
+    delete toyscan;
+  }
+  system("mkdir -p "+toydirname);
+  TFile *f = new TFile(toyfname,"recreate");
+  tree->Write();
+  f->Close();
+  delete tree;
+  delete f;
+
 }
 
 ///
