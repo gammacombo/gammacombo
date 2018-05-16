@@ -999,8 +999,14 @@ void GammaComboEngine::defineColors()
   }
   // sort out the fill color vector
   for ( int i=0; i<arg->combid.size(); i++ ) {
+    // if --fillcolor passed use this
     if ( i>= arg->fillcolor.size() ) fillColors.push_back( colorsLine[i] );
     else fillColors.push_back( arg->fillcolor[i] );
+    // if --color passed use this
+    if ( i < arg->color.size() ) {
+      if ( arg->color[i] < colorsLine.size() ) fillColors[i] = colorsLine[arg->color[i]];
+      else fillColors[i] = colorsLine[i];
+    }
   }
   // sort out the fill transparency vector
   for ( int i=0; i<arg->combid.size(); i++ ) {
@@ -1020,8 +1026,14 @@ void GammaComboEngine::defineColors()
   }
   // sort out the line color vector
   for ( int i=0; i<arg->combid.size(); i++ ) {
+    // if --linecolor passed use this
     if ( i>= arg->linecolor.size() ) lineColors.push_back( colorsLine[i] );
     else lineColors.push_back( arg->linecolor[i] );
+    // if --color passed use this
+    if ( i < arg->color.size() ) {
+      if ( arg->color[i] < colorsLine.size() ) lineColors[i] = colorsLine[arg->color[i]];
+      else lineColors[i] = colorsLine[i];
+    }
   }
 	// catch for datasets
 	if ( arg->combid.size()==0 ) {
