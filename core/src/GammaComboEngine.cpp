@@ -2,6 +2,7 @@
 #include "MethodDatasetsPluginScan.h"
 #include "MethodDatasetsProbScan.h"
 #include "PDF_Datasets.h"
+#include "TLatex.h"
 
 GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[]):
   runOnDataSet(false)
@@ -1754,6 +1755,109 @@ void GammaComboEngine::saveWorkspace( Combiner *c, int i )
 }
 
 ///
+/// compare combinations
+///
+void GammaComboEngine::compareCombinations( )
+{
+  for ( int i=0; i<comparisonScanners.size(); i++ ) {
+    for ( int j=i+1; j<comparisonScanners.size(); j++ ) {
+      TH2F *pull_corr = new TH2F(Form("c%d_vs_c%d_corr",i,j), Form("; Obs pulls for %s [#sigma]; Obs pulls %s [#sigma]",comparisonScanners[i]->getName().Data(),comparisonScanners[j]->getName().Data()), 10,-5,5,10,-5,5);
+      vector<double> pullVec1;
+      vector<double> pullVec2;
+      double total_pull = 0.;
+      int nmatch = 0;
+      comparisonScanners[i]->loadSolution(0);
+      comparisonScanners[j]->loadSolution(0);
+      const RooArgSet *sc1obs = comparisonScanners[i]->getObservables();
+      const RooArgSet *sc2obs = comparisonScanners[j]->getObservables();
+      TIterator *it1 = sc1obs->createIterator();
+      while ( RooRealVar *pObs1 = (RooRealVar*)it1->Next() ) {
+        TIterator *it2 = sc2obs->createIterator();
+        while ( RooRealVar *pObs2 = (RooRealVar*)it2->Next() ) {
+
+          // look for matches
+          TString pTh1Name = pObs1->GetName();
+          pTh1Name.ReplaceAll("obs", "th");
+          pTh1Name.ReplaceAll("UID",";");
+          pTh1Name = ((TObjString*)pTh1Name.Tokenize(";")->At(0))->GetString();
+          TString pTh2Name = pObs2->GetName();
+          pTh2Name.ReplaceAll("obs", "th");
+          pTh2Name.ReplaceAll("UID",";");
+          pTh2Name = ((TObjString*)pTh2Name.Tokenize(";")->At(0))->GetString();
+
+          if ( pTh1Name == pTh2Name ) {
+            nmatch += 1;
+            pTh1Name = pObs1->GetName();
+            pTh1Name.ReplaceAll("obs", "th");
+            pTh2Name = pObs2->GetName();
+            pTh2Name.ReplaceAll("obs", "th");
+            RooRealVar *pTh1 = (RooRealVar*)comparisonScanners[i]->getTheory()->find(pTh1Name);
+            RooRealVar *pTh2 = (RooRealVar*)comparisonScanners[j]->getTheory()->find(pTh2Name);
+            assert( pTh1 && pTh2 );
+            double pull = (pTh1->getVal() - pTh2->getVal() ) / pObs2->getError();
+            total_pull += pull*pull;
+            double pull1 = (pTh1->getVal() - pObs1->getVal()) / pObs1->getError();
+            double pull2 = (pTh2->getVal() - pObs2->getVal()) / pObs2->getError();
+            pull_corr->Fill( pull1, pull2 );
+            pullVec1.push_back( pull1 );
+            pullVec2.push_back( pull2 );
+          }
+        }
+      }
+      double chi21 = comparisonScanners[i]->getSolution(0)->minNll();
+      double chi22 = comparisonScanners[j]->getSolution(0)->minNll();
+      int    nObs1 = comparisonScanners[i]->getObservables()->getSize();
+      int    nObs2 = comparisonScanners[j]->getObservables()->getSize();
+      int    nPar1 = comparisonScanners[i]->getSolution(0)->floatParsFinal().getSize();
+      int    nPar2 = comparisonScanners[j]->getSolution(0)->floatParsFinal().getSize();
+      CLInterval cl1 = comparisonScanners[i]->getCLinterval(0,1);
+      CLInterval cl2 = comparisonScanners[j]->getCLinterval(0,1);
+      double diff = cl1.central - cl2.central;
+      double corr = Utils::getCorrelationFactor( pullVec1, pullVec2 );
+      double err = 99.;
+      if ( diff > 0 ) { // means value has moved down
+        err = sqrt( sq( cl1.central-cl1.min ) + sq( cl2.max-cl2.central) - 2.*corr*(cl1.central-cl1.min)*(cl2.max-cl2.central) );
+      }
+      else {
+        err = sqrt( sq(cl1.max-cl1.central) + sq( cl2.central-cl2.min)  - 2.*corr*(cl1.max-cl1.central)*(cl2.central-cl2.min));
+      }
+      cout << "Comparison   1): " << Form("%-20s",comparisonScanners[i]->getName().Data()) << " to 2): " << Form("%-20s",comparisonScanners[j]->getName().Data()) << endl;
+      cout << "        chi2:    " << Form("%-20.3f",chi21) << "        " << Form("%-20.3f",chi22) << endl;
+      cout << "        nObs:    " << Form("%-20d",nObs1) << "        " << Form("%-20d",nObs2) << endl;
+      cout << "        nPar:    " << Form("%-20d",nPar1) << "        " << Form("%-20d",nPar2) << endl;
+      cout << "        pval:    " << Form("%-20.2f",100.*TMath::Prob(chi21, nObs1-nPar1)) << "        " << Form("%-20.2f",100.*TMath::Prob(chi22,nObs2-nPar2)) << endl;
+      cout << "         val:    " << Form("%-6.3f",cl1.central) << " [" << Form("%6.3f",cl1.min) << "," << Form("%-6.3f",cl1.max) << "]" << "      " << Form("%-6.3f",cl2.central) << "[" << Form("%6.3f",cl2.min) << "," << Form("%-6.3f",cl2.max) << "]" << endl;
+      cout << "        dval:    " << diff << " +/- " << err << " (" << TMath::Abs(diff)/err << " sigma)" << endl;
+      cout << "PULL PER OBS:  " << total_pull << endl;
+      cout << "CORRELATION:   " << corr << endl;
+      cout << "COMPATIBILITY: " << TMath::Abs(diff)/err << " sigma" << endl;
+
+      TCanvas *canv = newNoWarnTCanvas("pull_corr"+getUniqueRootName());
+      pull_corr->SetMarkerStyle(kMultiply);
+      pull_corr->SetMarkerColor(kBlue+2);
+      pull_corr->GetXaxis()->SetTitleSize(0.045);
+      pull_corr->GetYaxis()->SetTitleSize(0.045);
+      pull_corr->GetXaxis()->SetLabelSize(0.045);
+      pull_corr->GetYaxis()->SetLabelSize(0.045);
+      pull_corr->Draw("scat");
+      TLine *line = new TLine();
+      line->DrawLine(-5,0,5,0);
+      line->DrawLine(0,-5,0,5);
+      pull_corr->Draw("scatsame");
+      TF1 *f1 = new TF1("f1","[0]*x",-5,5);
+      f1->SetParameter(0,corr);
+      f1->Draw("Lsame");
+      TLatex *lat = new TLatex();
+      lat->DrawLatex(3,4,Form("#rho = %3.1f",corr));
+      lat->DrawLatex(3,3,Form("#sigma = %3.1f",TMath::Abs(diff)/err));
+      Utils::savePlot(canv,Form("pull_corr_%s_%s",comparisonScanners[i]->getName().Data(),comparisonScanners[j]->getName().Data()));
+      total_pull = sqrt( total_pull )/nmatch;
+
+    }
+  }
+}
+
+///
 /// run toys
 ///
 void GammaComboEngine::runToys( Combiner *c )
@@ -1916,6 +2020,7 @@ void GammaComboEngine::scan()
 					make1dProbScan(scannerProb, i);
 				}
 				make1dProbPlot(scannerProb, i);
+        if ( arg->compare ) comparisonScanners.push_back(scannerProb);
 			}
 			// 2D SCANS
 			else if ( arg->var.size()==2 )
@@ -2221,6 +2326,7 @@ void GammaComboEngine::run()
 	customizeCombinerTitles();
 	setUpPlot();
 	scan(); // most thing gets done here
+  if ( arg->compare ) compareCombinations();
   if ( arg->info || arg->latex || (arg->save!="" && !arg->saveAtMin) ) return; // if only info is requested then we can go home
 	if (!arg->isAction("pluginbatch") && !arg->isAction("coveragebatch") && !arg->isAction("coverage") ) savePlot();
 	cout << endl;

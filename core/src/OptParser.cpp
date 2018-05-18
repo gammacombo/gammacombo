@@ -29,6 +29,7 @@ OptParser::OptParser():
 
 	// Initialize the variables.
 	// For more complex arguments these are also the default values.
+  compare     = false;
 	controlplot = false;
 	coverageCorrectionID = 0;
 	coverageCorrectionPoint = 0;
@@ -129,6 +130,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("CL");
 	availableOptions.push_back("cls");
 	availableOptions.push_back("combid");
+  availableOptions.push_back("compare");
 	availableOptions.push_back("color");
 	availableOptions.push_back("controlplots");
 	availableOptions.push_back("covCorrect");
@@ -458,6 +460,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 			" instead of the chi2min from the toy files to evaluate 1-CL of the plugin method.", false);
 	TCLAP::SwitchArg parevolArg("e", "evol", "Plots the parameter evolution of the profile likelihood.", false);
 	TCLAP::SwitchArg controlplotArg("", "controlplots", "Make controlplots analysing the generated toys.", false);
+	TCLAP::SwitchArg compareArg("", "compare", "Compare the different combinations by inspecting their pulls.", false);
 	TCLAP::SwitchArg plotmagneticArg("", "magnetic", "In 2d plots, enable magnetic plot borders which will "
 			"attract the 2sigma curves.", false);
 	TCLAP::SwitchArg verboseArg("v", "verbose", "Enables verbose output.", false);
@@ -765,6 +768,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "covCorrectPoint" ) ) cmd.add(coverageCorrectionPointArg);
 	if ( isIn<TString>(bookedOptions, "covCorrect" ) ) cmd.add(coverageCorrectionIDArg);
 	if ( isIn<TString>(bookedOptions, "controlplots" ) ) cmd.add(controlplotArg);
+  if ( isIn<TString>(bookedOptions, "compare" ) ) cmd.add(compareArg);
 	if ( isIn<TString>(bookedOptions, "combid" ) ) cmd.add(combidArg);
 	if ( isIn<TString>(bookedOptions, "color" ) ) cmd.add(colorArg);
 	if ( isIn<TString>(bookedOptions, "cls" ) ) cmd.add(clsArg);
@@ -914,6 +918,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 	// --asimovfile
 	tmp = asimovFileArg.getValue();
 	for ( int i = 0; i < tmp.size(); i++ ) asimovfile.push_back(tmp[i]);
+
+  // --compare
+  compare           = compareArg.getValue();
 
 	// --debug
 	debug = debugArg.getValue();
@@ -1245,7 +1252,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( var.size()>1 && CL.size()>0){
 		std::cout << "ERROR: User specific confidence levels are only available for 1D option." << std::endl;
 		exit(1);
-	}	
+	}
 }
 
 ///

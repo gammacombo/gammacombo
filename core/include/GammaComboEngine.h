@@ -86,6 +86,7 @@ class GammaComboEngine
 		void			checkCombinationArg();
 		void      configureAsimovCombinerNames(Combiner* c, int i);
 		bool			combinerExists(int id) const;
+    void      compareCombinations();
 		void			customizeCombinerTitles();
 		void			defineColors();
 		void			disableSystematics();
@@ -136,6 +137,7 @@ class GammaComboEngine
     vector<int>     lineColors;
     vector<int>     lineStyles;
     vector<int>     lineWidths;
+    vector<MethodProbScan*> comparisonScanners;
 		TString 			execname;
 		FileNameBuilder*	m_fnamebuilder;
     BatchScriptWriter* m_batchscriptwriter;
