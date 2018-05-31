@@ -827,8 +827,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         toyTree.scanpoint = scanpoint;
 
 				if ( i==0 && scanpoint != 0 ) {
-					cout << "ERROR: For CLs option the first point in the scan must be zero not: " << scanpoint << endl;
-					exit(1);
+					cout << "WARNING: For CLs option the first point in the scan should be zero, not: " << scanpoint << endl;
+					// exit(1);
 				}
 
         if (arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d_plugin() - scanpoint in step " << i << " : " << scanpoint << endl;
