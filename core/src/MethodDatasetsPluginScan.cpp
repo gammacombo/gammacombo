@@ -474,8 +474,9 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         double bkgTestStatVal = t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy;
         
         if( !BadBkgFit ){
-            bkg_pvals->Fill(TMath::Prob(bkgTestStatVal,1));
-
+            if(hBin==1){
+                bkg_pvals->Fill(TMath::Prob(bkgTestStatVal,1));
+            }
             // bkgTestStatVal = t.scanbestBkgfitBkg <= t.scanpoint ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
             sampledBValues[hBin].push_back( bkgTestStatVal );
             // chi2minBkgToy is the best fit at scanpoint of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
@@ -560,11 +561,6 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         // check
         if ( arg->debug ) {
           cout << i << endl;
-          if(i==1){
-            for(auto bchi2 : sampledBValues[i]){
-                std::cout << bchi2 << std::endl;
-            }
-          }
           cout << "Quants: ";
           for (int k=0; k<quantiles.size(); k++) cout << quantiles[k] << " , ";
           cout << endl;
@@ -635,8 +631,10 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
 
     if (arg->debug || drawPlots) {
         TCanvas *canvas1 = new TCanvas("canvas1", "canvas1", 1200, 1000);
+        bkg_pvals->SetLineWidth(2);
+        bkg_pvals->SetXTitle("bkg-only p value");
         bkg_pvals->Draw();
-        canvas1->SaveAs("bkg_only_pvalues.pdf");
+        savePlot(canvas1,"bkg_only_pvalues");
         TCanvas* can = new TCanvas("can", "can", 1024, 786);
         can->cd();
         gStyle->SetOptTitle(0);
