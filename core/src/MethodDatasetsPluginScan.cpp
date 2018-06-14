@@ -353,6 +353,8 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     // numbers for all toys
     TH1F *h_all           = (TH1F*)hCL->Clone("h_all");
     // numbers of toys failing the selection criteria
+    TH1F *h_all_bkg           = (TH1F*)hCL->Clone("h_all_bkg");
+    // numbers of toys failing the selection criteria
     TH1F *h_failed        = (TH1F*)hCL->Clone("h_failed");
     // numbers of toys which are not in the physical region dChi2<0
     TH1F *h_background    = (TH1F*)hCL->Clone("h_background");
@@ -364,6 +366,9 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     TH1F *h_tot           = (TH1F*)hCL->Clone("h_tot");
     // histogram illustrating the failure rate
     TH1F *h_fracGoodToys  = (TH1F*)hCL->Clone("h_fracGoodToys");
+
+    TH1F *bkg_pvals  = new TH1F("bkg_pvals", "bkg p values", 20, -0.1, 1.1);
+
     // map of vectors for CLb quantiles
     std::map<int,std::vector<double> > sampledBValues;
     std::map<int,std::vector<double> > sampledSBValues;
@@ -371,6 +376,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     Long64_t nentries     = t.GetEntries();
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : average number of toys per scanpoint: " << (double) nentries / (double)nPoints1d << endl;
     Long64_t nfailed      = 0;
+    Long64_t nfailedbkg      = 0;
     Long64_t nwrongrun    = 0;
     Long64_t n0better     = 0;
     Long64_t n0all        = 0;
@@ -397,15 +403,20 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         // criteria for GammaCombo
         bool convergedFits      = (t.statusFree == 0. && t.statusScan == 0.);
         bool tooHighLikelihood  = !( abs(t.chi2minToy) < 1e27 && abs(t.chi2minGlobalToy) < 1e27);
+        bool BadBkgFit          = t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy <= 0;
 
         // apply cuts
-        if ( tooHighLikelihood || !convergedFits  )
+        if ( tooHighLikelihood || !convergedFits )
         {
             h_failed->Fill(t.scanpoint);
             if (t.scanpoint == 0) n0failed++;
             valid = false;
             nfailed++;
             //continue;
+        }
+
+        if ( BadBkgFit){
+            nfailedbkg++;
         }
 
         // Check if toys are in physical region.
@@ -421,7 +432,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
             h_better_cls->Fill(t.scanpoint);
         }
 
-        if ( valid && (t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy) >= (chi2minBkg - chi2minGlobal) ) {
+        if ( valid && !BadBkgFit && (t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy) >= (chi2minBkg - chi2minGlobal) ) {
             h_better_clb->Fill(t.scanpoint);
         }
         if (t.scanpoint == 0.0) n0better++;
@@ -430,6 +441,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         if ( inPhysicalRegion && t.chi2minGlobalToy > this->chi2minGlobal ) { //t.chi2minGlobal ){
             h_gof->Fill(t.scanpoint);
         }
+
         // all toys
         if ( valid) { //inPhysicalRegion )
             // not efficient! TMath::Prob evaluated each toy, only needed once.
@@ -438,6 +450,12 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
             h_probPValues->SetBinContent(h_probPValues->FindBin(t.scanpoint), this->getPValueTTestStatistic(t.chi2min - this->chi2minGlobal)); //t.chi2minGlobal));
             if (t.scanpoint == 0.0) n0all++;
         }
+
+        // all background toys
+        if ( !BadBkgFit) { //inPhysicalRegion )
+            h_all_bkg->Fill(t.scanpoint);
+        }
+
         int hBin = h_all->FindBin(t.scanpoint);
         if ( sampledBValues.find(hBin) == sampledBValues.end() ) sampledBValues[hBin] = std::vector<double>();
         if ( sampledSBValues.find(hBin) == sampledSBValues.end() ) sampledSBValues[hBin] = std::vector<double>();
@@ -454,13 +472,17 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
 
         // chi2minBkgBkgToy is the best fit of the bkg pdf of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
         double bkgTestStatVal = t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy;
-        if(bkgTestStatVal < 0.) bkgTestStatVal = 0.;
-        // bkgTestStatVal = t.scanbestBkgfitBkg <= t.scanpoint ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
-        sampledBValues[hBin].push_back( bkgTestStatVal );
-        // chi2minBkgToy is the best fit at scanpoint of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
-        double sbTestStatVal = t.chi2minBkgToy - t.chi2minGlobalBkgToy;
-        // sbTestStatVal = t.scanbestBkg <= t.scanpoint ? sbTestStatVal : 0.; // if muhat < mu then q_mu = 0
-        sampledSBValues[hBin].push_back( sbTestStatVal );
+        
+        if( !BadBkgFit ){
+            bkg_pvals->Fill(TMath::Prob(bkgTestStatVal,1));
+
+            // bkgTestStatVal = t.scanbestBkgfitBkg <= t.scanpoint ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
+            sampledBValues[hBin].push_back( bkgTestStatVal );
+            // chi2minBkgToy is the best fit at scanpoint of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
+            double sbTestStatVal = t.chi2minBkgToy - t.chi2minGlobalBkgToy;
+            // sbTestStatVal = t.scanbestBkg <= t.scanpoint ? sbTestStatVal : 0.; // if muhat < mu then q_mu = 0
+            sampledSBValues[hBin].push_back( sbTestStatVal );
+        }
 
 
 
@@ -482,6 +504,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : reading done.           \n" << endl;
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : read an average of " << ((double)nentries - (double)nfailed) / (double)nPoints1d << " toys per scan point." << endl;
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of failed toys: " << (double)nfailed / (double)nentries * 100. << "%." << endl;
+    cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of failed background toys: " << (double)nfailedbkg / (double)nentries * 100. << "%." << endl;
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of background toys: " << h_background->GetEntries() / (double)nentries * 100. << "%." << endl;
     if ( nwrongrun > 0 ) {
         cout << "\nMethodDatasetsPluginScan::readScan1dTrees() : WARNING : Read toys that differ in global chi2min (wrong run) : "
@@ -493,6 +516,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         float nbetter_cls = h_better_cls->GetBinContent(i);
         float nbetter_clb = h_better_clb->GetBinContent(i);
         float nall = h_all->GetBinContent(i);
+        float nall_bkg = h_all_bkg->GetBinContent(i);
         // get number of background and failed toys
         float nbackground     = h_background->GetBinContent(i);
 
@@ -511,9 +535,9 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         // don't subtract background
         float p = nbetter / nall;
         float p_cls = nbetter_cls / nall;
-        // float p_clb = nbetter_clb / nall;
+        float p_clb = nbetter_clb / nall_bkg;
         // std::cout << "p val. bkg. Prob: " << TMath::Prob(chi2minBkg - chi2minGlobal,1) << " Plugin: " << p_clb << " +/- " << sqrt(p_clb * (1. - p_clb) / nall) << std::endl;
-        float p_clb = TMath::Prob(chi2minBkg - chi2minGlobal,1); //Since the fitting of the global pdf is biased, use Prob to determine p_clb
+        // float p_clb = TMath::Prob(chi2minBkg - chi2minGlobal,1); //Since the fitting of the global pdf is biased, use Prob to determine p_clb
 
         hCL->SetBinContent(i, p);
         hCL->SetBinError(i, sqrt(p * (1. - p) / nall));
@@ -536,6 +560,11 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         // check
         if ( arg->debug ) {
           cout << i << endl;
+          if(i==1){
+            for(auto bchi2 : sampledBValues[i]){
+                std::cout << bchi2 << std::endl;
+            }
+          }
           cout << "Quants: ";
           for (int k=0; k<quantiles.size(); k++) cout << quantiles[k] << " , ";
           cout << endl;
@@ -605,6 +634,9 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     if ( arg->controlplot ) makeControlPlots( sampledBValues, sampledSBValues );
 
     if (arg->debug || drawPlots) {
+        TCanvas *canvas1 = new TCanvas("canvas1", "canvas1", 1200, 1000);
+        bkg_pvals->Draw();
+        canvas1->SaveAs("bkg_only_pvalues.pdf");
         TCanvas* can = new TCanvas("can", "can", 1024, 786);
         can->cd();
         gStyle->SetOptTitle(0);
