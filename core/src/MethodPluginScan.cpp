@@ -824,22 +824,6 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
 	Long64_t nwrongrun = 0;
 	Long64_t ntoysid   = 0; // if id is not -1, this will count the number of toys with that id
 
-	delete hCLsExp;
-    hCLsExp = new TH1F("hCLsExp", "hCLs", t->getScanpointN(), t->getScanpointMin() - halfBinWidth, t->getScanpointMax() + halfBinWidth);
-    delete hCLsErr1Up;
-    hCLsErr1Up = new TH1F("hCLsErr1Up", "hCLs", t->getScanpointN(), t->getScanpointMin() - halfBinWidth, t->getScanpointMax() + halfBinWidth);
-    delete hCLsErr1Dn;
-    hCLsErr1Dn = new TH1F("hCLsErr1Dn", "hCLs", t->getScanpointN(), t->getScanpointMin() - halfBinWidth, t->getScanpointMax() + halfBinWidth);
-    delete hCLsErr2Up;
-    hCLsErr2Up = new TH1F("hCLsErr2Up", "hCLs", t->getScanpointN(), t->getScanpointMin() - halfBinWidth, t->getScanpointMax() + halfBinWidth);
-    delete hCLsErr2Dn;
-    hCLsErr2Dn = new TH1F("hCLsErr2Dn", "hCLs", t->getScanpointN(), t->getScanpointMin() - halfBinWidth, t->getScanpointMax() + halfBinWidth);
-
-    // map of vectors for CLb quantiles
-    std::map<int,std::vector<double> > sampledBValues;
-    std::map<int,std::vector<double> > sampledSBValues;
-
-
 	t->activateCoreBranchesOnly(); // speeds up the event loop
 	ProgressBar pb(arg, nentries);
 	if ( arg->debug ) cout << "MethodPluginScan::analyseToys() : ";
@@ -962,48 +946,6 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
 		float p_bkg = TMath::Min(p/hCL->GetBinContent(1), 1.);
 		hCLsFreq->SetBinContent(i, p_bkg);
 		hCLsFreq->SetBinError(i, sqrt(p_bkg * (1.-p_bkg)/nall));
-
-		        // the quantiles of the CLb distribution (for expected CLs)
-        std::vector<double> probs  = { TMath::Prob(4,1), TMath::Prob(1,1), 0.5, 1.-TMath::Prob(1,1), 1.-TMath::Prob(4,1) };
-        std::vector<double> clb_vals  = { 1.-TMath::Prob(4,1), 1.-TMath::Prob(1,1), 0.5, TMath::Prob(1,1), TMath::Prob(4,1) };
-        std::vector<double> quantiles = Quantile<double>( sampledBValues[i], probs );
-        std::vector<double> clsb_vals;
-        //for (int k=0; k<quantiles.size(); k++) clsb_vals.push_back( TMath::Prob( quantiles[k], 1 ) );
-        for (int k=0; k<quantiles.size(); k++ ){
-          // asymptotic as chi2
-          //clsb_vals.push_back( TMath::Prob( quantiles[k], 1 ) );
-          // from toys
-          clsb_vals.push_back( getVectorFracAboveValue( sampledSBValues[i], quantiles[k] ) );
-        }
-
-        // check
-        if ( arg->debug ) {
-          cout << i << endl;
-          cout << "Quants: ";
-          for (int k=0; k<quantiles.size(); k++) cout << quantiles[k] << " , ";
-          cout << endl;
-          cout << "CLb: ";
-          for (int k=0; k<clb_vals.size(); k++) cout << clb_vals[k] << " , ";
-          cout << endl;
-          cout << "CLsb: ";
-          for (int k=0; k<clsb_vals.size(); k++) cout << clsb_vals[k] << " , ";
-          cout << endl;
-          cout << "CLs: ";
-          for (int k=0; k<clsb_vals.size(); k++) cout << clsb_vals[k]/clb_vals[k] << " , ";
-          cout << endl;
-        }
-
-        // hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] / clb_vals[2] , 1.) );
-        // hCLsErr1Up->SetBinContent( i, TMath::Min( clsb_vals[1] / clb_vals[1] , 1.) );
-        // hCLsErr1Dn->SetBinContent( i, TMath::Min( clsb_vals[3] / clb_vals[3] , 1.) );
-        // hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[0] / clb_vals[0] , 1.) );
-        // hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[4] / clb_vals[4] , 1.) );
-        hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] , 1.) );
-        hCLsErr1Up->SetBinContent( i, TMath::Min( clsb_vals[1] , 1.) );
-        hCLsErr1Dn->SetBinContent( i, TMath::Min( clsb_vals[3] , 1.) );
-        hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[0] , 1.) );
-        hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[4] , 1.) );
-
 	}
 
 	// goodness-of-fit

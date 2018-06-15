@@ -1189,7 +1189,7 @@ void Utils::HFAGLabel(const TString& label, Double_t xpos, Double_t ypos, Double
 
   Double_t ysiz_pixel(25);
   Double_t ysiz(Double_t(ysiz_pixel)/Double_t(pad_height));
-  Double_t xsiz(4.2*ysiz*Double_t(pad_height)/Double_t(pad_width));
+  Double_t xsiz(4.8*ysiz*Double_t(pad_height)/Double_t(pad_width));
 
   Double_t x1, x2, y1, y2;
   xsiz = scale*xsiz;

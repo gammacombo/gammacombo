@@ -50,9 +50,11 @@ void ToyTree::initMembers(TChain* t){
 	chi2minGlobalToy    = 0.;
 	chi2minBkgToy       = 0.;
 	chi2minGlobalBkgToy = 0.;
+	chi2minBkgBkgToy 	= 0.;
 	scanbest            = 0.;
 	scanbesty           = 0.;
 	scanbestBkg         = 0.;
+	scanbestBkgfitBkg   = 0.;
 	nrun                = 0.;
 	ntoy                = 0.;
 	npoint              = 0.;
@@ -142,8 +144,9 @@ void ToyTree::init()
 	t->Branch("chi2minGlobal",       &chi2minGlobal,       "chi2minGlobal/F");
 	t->Branch("chi2minGlobalToy",    &chi2minGlobalToy,    "chi2minGlobalToy/F");
 	t->Branch("chi2minGlobalBkgToy", &chi2minGlobalBkgToy, "chi2minGlobalBkgToy/F");
-	t->Branch("chi2minBkg",    	     &chi2minBkg,		       "chi2minBkg/F");
-	t->Branch("chi2minBkgToy", 	     &chi2minBkgToy,     	 "chi2minBkgToy/F");
+	t->Branch("chi2minBkgBkgToy", 	 &chi2minBkgBkgToy,    "chi2minBkgBkgToy/F");
+	t->Branch("chi2minBkg",    	     &chi2minBkg,		   "chi2minBkg/F");
+	t->Branch("chi2minBkgToy", 	     &chi2minBkgToy,       "chi2minBkgToy/F");
 	t->Branch("covQualFree",         &covQualFree,         "covQualFree/F");
 	t->Branch("covQualScan",         &covQualScan,         "covQualScan/F");
 	t->Branch("covQualScanData",     &covQualScanData,     "covQualScanData/F");
@@ -156,6 +159,7 @@ void ToyTree::init()
 	t->Branch("scanbest",            &scanbest,            "scanbest/F");
 	t->Branch("scanbesty",           &scanbesty,           "scanbesty/F");
 	t->Branch("scanbestBkg",         &scanbestBkg,         "scanbestBkg/F");
+	t->Branch("scanbestBkgfitBkg",   &scanbestBkgfitBkg,   "scanbestBkgfitBkg/F");
 	t->Branch("scanpoint",           &scanpoint,           "scanpoint/F");
 	t->Branch("scanpointy",          &scanpointy,          "scanpointy/F");
 	t->Branch("statusFree",          &statusFree,          "statusFree/F");
@@ -223,6 +227,7 @@ void ToyTree::open()
 	if(branches->FindObject("chi2minGlobal"      )) t->SetBranchAddress("chi2minGlobal",      &chi2minGlobal);
 	if(branches->FindObject("chi2minGlobalToy"   )) t->SetBranchAddress("chi2minGlobalToy",   &chi2minGlobalToy);
 	if(branches->FindObject("chi2minGlobalBkgToy")) t->SetBranchAddress("chi2minGlobalBkgToy",&chi2minGlobalBkgToy);
+	if(branches->FindObject("chi2minBkgBkgToy"	 )) t->SetBranchAddress("chi2minBkgBkgToy",	  &chi2minBkgBkgToy);
 	if(branches->FindObject("chi2minBkg"      	 )) t->SetBranchAddress("chi2minBkg",      	  &chi2minBkg);
 	if(branches->FindObject("chi2minBkgToy"   	 )) t->SetBranchAddress("chi2minBkgToy",   	  &chi2minBkgToy);
 	if(branches->FindObject("covQualFree"        )) t->SetBranchAddress("covQualFree",        &covQualFree);
@@ -233,6 +238,7 @@ void ToyTree::open()
 	if(branches->FindObject("scanbest"           )) t->SetBranchAddress("scanbest",           &scanbest);
 	if(branches->FindObject("scanbesty"          )) t->SetBranchAddress("scanbesty",          &scanbesty);
 	if(branches->FindObject("scanbestBkg"        )) t->SetBranchAddress("scanbestBkg",        &scanbestBkg);
+	if(branches->FindObject("scanbestBkgfitBkg"  )) t->SetBranchAddress("scanbestBkgfitBkg",  &scanbestBkgfitBkg);
 	if(branches->FindObject("scanpoint"          )) t->SetBranchAddress("scanpoint",          &scanpoint);
 	if(branches->FindObject("scanpointy"         )) t->SetBranchAddress("scanpointy",         &scanpointy);
 	if(branches->FindObject("statusFree"         )) t->SetBranchAddress("statusFree",         &statusFree);
@@ -262,6 +268,7 @@ void ToyTree::activateCoreBranchesOnly()
 	if(branches->FindObject("chi2minGlobal"))         t->SetBranchStatus("chi2minGlobal",      1);
 	if(branches->FindObject("chi2minGlobalToy"))      t->SetBranchStatus("chi2minGlobalToy",   1);
 	if(branches->FindObject("chi2minGlobalBkgToy"))   t->SetBranchStatus("chi2minGlobalBkgToy",1);
+	if(branches->FindObject("chi2minBkgBkgToy"))   	  t->SetBranchStatus("chi2minBkgBkgToy",   1);
 	if(branches->FindObject("chi2minBkg"))         	  t->SetBranchStatus("chi2minBkg",         1);
 	if(branches->FindObject("chi2minBkgToy"))      	  t->SetBranchStatus("chi2minBkgToy",      1);
 	if(branches->FindObject("genericProbPValue"))     t->SetBranchStatus("genericProbPValue",  1);

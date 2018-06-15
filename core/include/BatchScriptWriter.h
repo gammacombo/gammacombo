@@ -11,6 +11,7 @@
 #include "OptParser.h"
 #include "Utils.h"
 #include "Combiner.h"
+#include "PDF_Abs.h"
 
 using namespace std;
 using namespace Utils;
@@ -23,6 +24,7 @@ class BatchScriptWriter
     ~BatchScriptWriter();
 
     void writeScripts(OptParser *arg, vector<Combiner*> *cmb);
+    void writeScripts_datasets(OptParser *arg, PDF_Abs* pdf);
     void writeScript(TString fname, TString outfloc, int jobn, OptParser *arg);
 
     string exec;
