@@ -150,6 +150,8 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
     if ( last && arg->isQuickhack(25) ) g->SetLineWidth(3);
 	}
 
+	if (CLsType>0) g->SetLineColor(s->getLineColor() - 1);
+
 	if ( plotPoints ){
 		g->SetLineWidth(1);
 		g->SetMarkerColor(color);
@@ -367,7 +369,10 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
   }
   m_mainCanvas->cd();
 
-  s->checkCLs();
+  if(!s->checkCLs()){
+  		std::cout << "OneMinusClPlot::scan1dCLsPlot() : Cannot plot." << std::endl;
+  		return;
+  }
 
   TH1F *hObs    = (TH1F*)s->getHCLsFreq()->Clone(getUniqueRootName());
   TH1F *hExp    = (TH1F*)s->getHCLsExp()->Clone(getUniqueRootName());

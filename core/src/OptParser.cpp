@@ -769,12 +769,32 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "color" ) ) cmd.add(colorArg);
 	if ( isIn<TString>(bookedOptions, "cls" ) ) cmd.add(clsArg);
 	if ( isIn<TString>(bookedOptions, "CL" ) ) cmd.add(CLArg);
-  if ( isIn<TString>(bookedOptions, "batchstartn" ) ) cmd.add( batchstartnArg );
-  if ( isIn<TString>(bookedOptions, "batcheos" ) ) cmd.add(batcheosArg);
+  	if ( isIn<TString>(bookedOptions, "batchstartn" ) ) cmd.add( batchstartnArg );
+  	if ( isIn<TString>(bookedOptions, "batcheos" ) ) cmd.add(batcheosArg);
 	if ( isIn<TString>(bookedOptions, "asimovfile" ) ) cmd.add( asimovFileArg );
 	if ( isIn<TString>(bookedOptions, "asimov") ) cmd.add(asimovArg);
 	if ( isIn<TString>(bookedOptions, "action") ) cmd.add(actionArg);
-	cmd.parse( argc, argv );
+
+
+	// check if the first argument is an integer. This will be discarded as a jobnumber.
+	const int num_of_args=argc-1;
+  	std::string jobnumber (argv[1]);
+  	std::stringstream str(jobnumber);
+  	int number;
+  	str >> number;
+  	if(str){
+	  	std::cout << "Use jobnumber " << number << std::endl;
+		char* args[num_of_args];
+
+	  	//remove jobnumber from cmdline string
+	  	for (int i = 0; i < argc; ++i)
+	    {
+	      if(i<1) args[i] = argv[i];
+	      if(i>1) args[i-1] = argv[i];
+	    }
+		cmd.parse( num_of_args, args );  		
+  	}
+	else cmd.parse( argc, argv );
 
 	//
 	// copy over parsed values into data members

@@ -926,6 +926,9 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
 		}
 		hCL->SetBinContent(i, p);
 		hCL->SetBinError(i, sqrt(p * (1.-p)/nall));
+		float p_bkg = TMath::Min(p/hCL->GetBinContent(1), 1.);
+		hCLsFreq->SetBinContent(i, p_bkg);
+		hCLsFreq->SetBinError(i, sqrt(p_bkg * (1.-p_bkg)/nall));
 	}
 
 	// goodness-of-fit

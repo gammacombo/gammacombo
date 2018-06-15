@@ -1691,8 +1691,13 @@ void GammaComboEngine::setObservablesFromFile(Combiner *c, int cId)
 ///
 void GammaComboEngine::writebatchscripts()
 {
-  m_batchscriptwriter->writeScripts(arg, &cmb);
-  exit(0);
+	if (runOnDataSet){
+		m_batchscriptwriter->writeScripts_datasets(arg, getPdf(0));
+	}
+	else{
+		m_batchscriptwriter->writeScripts(arg, &cmb);
+	}
+  	exit(0);
 }
 
 ///
