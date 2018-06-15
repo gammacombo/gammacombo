@@ -1040,6 +1040,9 @@ void GammaComboEngine::defineColors()
     	//sort out line color
     	if ( arg->linecolor.size()>0 ) lineColors.push_back( arg->linecolor[0] );
     	else lineColors.push_back(colorsLine[0]);
+    	//sort out fill transparency
+    	if ( arg->filltransparency.size()>0 ) fillTransparencies.push_back( arg->filltransparency[0] );
+    	else fillTransparencies.push_back(.0);
 	}
 }
 
@@ -1269,12 +1272,12 @@ void GammaComboEngine::make1dProbPlot(MethodProbScan *scanner, int cId)
 		if ( arg->color.size()>cId ) colorId = arg->color[cId];
 		//scanner->setLineColor(colorsLine[colorId]);
 		scanner->setTextColor(colorsText[colorId]);
-    scanner->setLineColor(lineColors[cId]);
-    scanner->setLineStyle(lineStyles[cId]);
-    scanner->setLineWidth(lineWidths[cId]);
-    scanner->setFillColor(fillColors[cId]);
-    scanner->setFillStyle(fillStyles[cId]);
-    scanner->setFillTransparency(fillTransparencies[cId]);
+	    scanner->setLineColor(lineColors[cId]);
+	    scanner->setLineStyle(lineStyles[cId]);
+	    scanner->setLineWidth(lineWidths[cId]);
+	    scanner->setFillColor(fillColors[cId]);
+	    scanner->setFillStyle(fillStyles[cId]);
+	    scanner->setFillTransparency(fillTransparencies[cId]);
 		plot->Draw();
 	}
 }
