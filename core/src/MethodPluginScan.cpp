@@ -886,23 +886,6 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
 		if ( !inPhysicalRegion ){
 			h_background->Fill(t->scanpoint);
 		}
-
-		// sample the distribution of the background test statistic as the test statistic in the lowest bin
-		int hBin = h_all->FindBin(t->scanpoint);
-		if (t->scanpoint==t->getScanpointMin()){
-			//// Note: The following expression is WRONG! bkgTestStatVal should be 
-			//// the chi2min of the fit at the given scanpoint to the bkg-only toy datasets
-			//// minus the chi2min of the free fit to the bkg-only toy datasets.
-        	double bkgTestStatVal = t->chi2minToy - t->chi2minGlobalToy;
-        	bkgTestStatVal = t->scanbest <= t->scanpoint ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
-        	sampledBValues[hBin].push_back( bkgTestStatVal );
-    	}
-    	else{
-    		sampledBValues[hBin].push_back(sampledBValues[1][i % h_all->GetNbinsX()]);
-    	}
-        double sbTestStatVal = t->chi2minToy - t->chi2minGlobalToy;
-        sbTestStatVal = t->scanbest <= t->scanpoint ? sbTestStatVal : 0.; // if muhat < mu then q_mu = 0
-        sampledSBValues[hBin].push_back( sbTestStatVal );		
 	}
 
 	if ( arg->debug ) cout << "MethodPluginScan::analyseToys() : ";
