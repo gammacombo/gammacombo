@@ -67,6 +67,8 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	if ( plotPoints ) g = new TGraphErrors(hCL->GetNbinsX());
 	else              g = new TGraph(hCL->GetNbinsX());
 	g->SetName(getUniqueRootName());
+
+
 	for ( int i=0; i<hCL->GetNbinsX(); i++ ){
 		g->SetPoint(i, hCL->GetBinCenter(i+1), hCL->GetBinContent(i+1));
 		if ( plotPoints ) ((TGraphErrors*)g)->SetPointError(i, 0.0, hCL->GetBinError(i+1));
@@ -92,6 +94,18 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	//   if ( plotPoints ) err0 = ((TGraphErrors*)g)->GetErrorY(0);
 	//   if ( plotPoints ) ((TGraphErrors*)g)->SetPointError(g->GetN()-1, 0.0, err0);
 	// }
+
+	// check whether a strong jump appears at the last point. That happens somehow for the CLs prob method when converting the histogram to TGraph
+	if ((g->GetY()[g->GetN()-1]-g->GetY()[g->GetN()-2])>0.5){
+		std::cout << "OneMinusClPlot::scan1dPlot() : Unexpected jump appears at the endpoint of graph. Removing it." << std::endl;
+		g->RemovePoint(g->GetN()-1);
+	}
+
+	// int nbins = g->GetN();
+	// for (int i=0; i<nbins; i++){
+	//    std::cout << g->GetY()[i] << std::endl;
+	// }
+
 
 	// add end points of scan range
 	if ( !plotPoints )

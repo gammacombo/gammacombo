@@ -719,6 +719,11 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 			float y = 1.- ConfidenceLevels[c];
 			float sol = getScanVar1Solution(iSol);
 			int sBin = histogramCL->FindBin(sol);
+			std::cout << "solution bin: " << sBin << std::endl;
+			if(histogramCL->IsBinOverflow(sBin)||histogramCL->IsBinUnderflow(sBin)){
+				std::cout << "MethodAbsScan::calcCLintervals(): WARNING: no solution in scanrange found, will use lowest bin!" << std::endl;
+				sBin=1;
+			}
 
 			// find lower interval bound
 			for ( int i=sBin; i>0; i-- ){
@@ -1493,6 +1498,7 @@ void MethodAbsScan::calcCLintervalsSimple(int CLsType)
   {
     histogramCL = this->hCLsFreq;
   }
+
   if(CLsType==0 || (this->hCLs && CLsType==1) || (this->hCLsFreq && CLsType==2))
   {
 	  for (int c=0;c<3;c++){
@@ -1555,10 +1561,9 @@ const std::pair<double, double> MethodAbsScan::getBorders(const TGraph& graph, c
   TSpline* splines = NULL;
   if(qubic) splines = new TSpline3();
 
-
   double min_edge = graph.GetX()[0];
   // will never return smaller edge than min_edge
-  double max_edge = graph.GetX()[graph.GetN()-1];
+  double max_edge = graph.GetX()[graph.GetN()-2];
   // will never return higher edge than max_edge
   int scan_steps = 1000;
   double lower_edge = min_edge;
