@@ -92,6 +92,12 @@ class ToyTree
 		float covQualFree;
 		float statusScan;
 		float covQualScan;
+		float statusFreeBkg;
+		float covQualFreeBkg;
+		float statusScanBkg;
+		float covQualScanBkg;
+		float statusBkgBkg;
+		float covQualBkgBkg;
 		float statusScanData;
 		float covQualScanData;
 		float nBergerBoos;
