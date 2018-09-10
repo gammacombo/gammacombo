@@ -228,6 +228,10 @@ int MethodProbScan::scan1d(bool fast, bool reverse)
 
 			double deltaChi2 = chi2minScan - chi2minGlobal;
 			double oneMinusCL = TMath::Prob(deltaChi2, 1);
+			double deltaChi2Bkg = TMath::Max(chi2minScan - hChi2min->GetBinContent(1), 0.0);
+			if(i==0) deltaChi2Bkg = 0.0;
+			double oneMinusCLBkg = TMath::Prob(deltaChi2Bkg, 1);
+			hCLs->SetBinContent(hCLs->FindBin(scanvalue), oneMinusCLBkg);
 
 			// Save the 1-CL value and the corresponding fit result.
 			// But only if better than before!
@@ -237,7 +241,6 @@ int MethodProbScan::scan1d(bool fast, bool reverse)
 				int iRes = hCL->FindBin(scanvalue)-1;
 				curveResults[iRes] = r;
 			}
-
 			nStep++;
 		}
 	}

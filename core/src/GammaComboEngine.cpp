@@ -1053,6 +1053,9 @@ void GammaComboEngine::defineColors()
     	//sort out line color
     	if ( arg->linecolor.size()>0 ) lineColors.push_back( arg->linecolor[0] );
     	else lineColors.push_back(colorsLine[0]);
+    	//sort out fill transparency
+    	if ( arg->filltransparency.size()>0 ) fillTransparencies.push_back( arg->filltransparency[0] );
+    	else fillTransparencies.push_back(.0);
 	}
 }
 
@@ -1282,12 +1285,12 @@ void GammaComboEngine::make1dProbPlot(MethodProbScan *scanner, int cId)
 		if ( arg->color.size()>cId ) colorId = arg->color[cId];
 		//scanner->setLineColor(colorsLine[colorId]);
 		scanner->setTextColor(colorsText[colorId]);
-    scanner->setLineColor(lineColors[cId]);
-    scanner->setLineStyle(lineStyles[cId]);
-    scanner->setLineWidth(lineWidths[cId]);
-    scanner->setFillColor(fillColors[cId]);
-    scanner->setFillStyle(fillStyles[cId]);
-    scanner->setFillTransparency(fillTransparencies[cId]);
+	    scanner->setLineColor(lineColors[cId]);
+	    scanner->setLineStyle(lineStyles[cId]);
+	    scanner->setLineWidth(lineWidths[cId]);
+	    scanner->setFillColor(fillColors[cId]);
+	    scanner->setFillStyle(fillStyles[cId]);
+	    scanner->setFillTransparency(fillTransparencies[cId]);
 		plot->Draw();
 	}
 }
@@ -1704,8 +1707,13 @@ void GammaComboEngine::setObservablesFromFile(Combiner *c, int cId)
 ///
 void GammaComboEngine::writebatchscripts()
 {
-  m_batchscriptwriter->writeScripts(arg, &cmb);
-  exit(0);
+	if (runOnDataSet){
+		m_batchscriptwriter->writeScripts_datasets(arg, getPdf(0));
+	}
+	else{
+		m_batchscriptwriter->writeScripts(arg, &cmb);
+	}
+  	exit(0);
 }
 
 ///
@@ -2238,7 +2246,18 @@ void GammaComboEngine::scanDataSet()
 		{
 				if ( arg->isAction("pluginbatch") ){
 					MethodDatasetsProbScan* scannerProb = new MethodDatasetsProbScan( (PDF_Datasets*) pdf[0], arg);
-					make1dProbScan( scannerProb, 0 );
+					if ( FileExists( m_fnamebuilder->getFileNameScanner(scannerProb)) ) {
+							scannerProb->initScan();
+							scannerProb->loadScanner( m_fnamebuilder->getFileNameScanner(scannerProb));
+					}
+					else{
+							cout << "\nWARNING : Couldn't load the Prob scanner, will rerun the Prob" << endl;
+							cout <<   "          scan now. You should have run the Prob scan locally" << endl;
+							cout <<   "          before running the Plugin scan." << endl;
+							cout <<   "          missing file: " << m_fnamebuilder->getFileNameScanner(scannerProb) << endl;
+							cout << endl;
+							make1dProbScan(scannerProb, 0);
+					}
 					MethodDatasetsPluginScan *scannerPlugin = new MethodDatasetsPluginScan( scannerProb, (PDF_Datasets*) pdf[0], arg);
 					make1dPluginScan(scannerPlugin, 0 );
 				}

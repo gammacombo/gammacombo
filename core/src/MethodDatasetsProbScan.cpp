@@ -74,12 +74,14 @@ void MethodDatasetsProbScan::initScan() {
     if ( !m_xrangeset && arg->scanrangeMin != arg->scanrangeMax ) {
 			setXscanRange(arg->scanrangeMin,arg->scanrangeMax);
 		}
-    setLimit(w, scanVar1, "scan");
+    // setLimit(w, scanVar1, "scan");
 
     if (hCL) delete hCL;
     // Titus: small change for consistency
-    float min1 = par1->getMin();
-    float max1 = par1->getMax();
+    // float min1 = par1->getMin();
+    // float max1 = par1->getMax();
+    float min1 = arg->scanrangeMin;
+    float max1 = arg->scanrangeMax;
 
     hCL = new TH1F("hCL" + getUniqueRootName(), "hCL" + pdf->getPdfName(), nPoints1d, min1, max1);
     if ( hChi2min ) delete hChi2min;
@@ -110,9 +112,12 @@ void MethodDatasetsProbScan::initScan() {
         if ( !m_yrangeset && arg->scanrangeyMin != arg->scanrangeyMax ){
             setYscanRange(arg->scanrangeyMin,arg->scanrangeyMax);
         }
-        setLimit(w, scanVar2, "scan");
-        float min2 = par2->getMin();
-        float max2 = par2->getMax();
+        // setLimit(w, scanVar2, "scan");
+        // float min2 = par2->getMin();
+        // float max2 = par2->getMax();
+        float min2 = arg->scanrangeyMin;
+        float max2 = arg->scanrangeyMax;
+
         hCL2d      = new TH2F("hCL2d"+getUniqueRootName(),      "hCL2d"+pdfName, nPoints2dx, min1, max1, nPoints2dy, min2, max2);
         hCLs2d      = new TH2F("hCLs2d"+getUniqueRootName(),      "hCLs2d"+pdfName, nPoints2dx, min1, max1, nPoints2dy, min2, max2);
         hChi2min2d = new TH2F("hChi2min2d"+getUniqueRootName(), "hChi2min",      nPoints2dx, min1, max1, nPoints2dy, min2, max2);

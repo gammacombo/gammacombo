@@ -185,13 +185,13 @@ void ConfidenceContours::computeContours(TH2F* hist, histogramType type, int id)
 		if ( m_arg->plot2dcl[id]>0 ){
       for ( int i=0;i <m_nMaxContours; i++ ) {
         int cLev = m_nMaxContours-1-i;
-        histb->SetContourLevel( cLev, offset - TMath::Prob( (i+1)*(i+1), 1) );
+        histb->SetContourLevel( cLev, TMath::Prob( (i+1)*(i+1), 1) );
       }
 		}
 		else{
       for ( int i=0;i <m_nMaxContours; i++ ) {
         int cLev = m_nMaxContours-1-i;
-        histb->SetContourLevel( cLev, 1.-TMath::Prob( (i+1)*(i+1), 2) );
+        histb->SetContourLevel( cLev, TMath::Prob( (i+1)*(i+1), 2) );
       }
 		}
 	}
