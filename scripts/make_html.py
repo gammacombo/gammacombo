@@ -12,15 +12,31 @@ parser.add_option("-T","--date", default=None,help="Filter only files modified a
 parser.add_option("-r","--regex",default=None, help='Each plot name must match this regex')
 parser.add_option("-d","--dir",default="plots",help='Directory with plots in')
 parser.add_option("-n","--newLoc",default=None, help='Copy plots and html file into a seperate location')
+parser.add_option("-s","--sort",default=None, help='Sort files by name (ascending=an,descending=dn) or time modified (ascending=at, descending=dt)')
+parser.add_option("-z","--zip",default=None, help='Make zip')
 (opts,args) = parser.parse_args()
 
 import os
+import sys
 import re
 import time
 import datetime
 regex=None
 if opts.regex:
 	regex = re.compile(opts.regex)
+
+sort_flag=0
+if opts.sort:
+  if opts.sort=='an':
+    sort_flag=1
+  elif opts.sort=='dn':
+    sort_flag=2
+  elif opts.sort=='at':
+    sort_flag=3
+  elif opts.sort=='dt':
+    sort_flag=4
+  else:
+    sort_flag=0
 
 def gatherDirectories(path):
 
@@ -108,10 +124,27 @@ def writeHtml( location, title, links, plots, isHome=False ):
     #html.write('</div>\n')
     #html.write('<br>\n')
 
+  # sorting if needed
+  skeys = []
+  for p in plots['png']:
+    skeys.append( [ p, os.path.getmtime(p) ] )
+
+  if sort_flag==1:
+    skeys.sort(key=lambda x: x[0])
+  elif sort_flag==2:
+    skeys.sort(key=lambda x: x[0], reverse=True)
+  elif sort_flag==3:
+    skeys.sort(key=lambda x: x[1])
+  elif sort_flag==4:
+    skeys.sort(key=lambda x: x[1], reverse=True)
+
+  keys = [ x[0] for x in skeys ]
+
   # contents
   html.write('<div onClick=\"openClose(\'contents\')\" style=\"cursor:hand; cursor:pointer\"><b><u><font color=\"blue\"> Contents: </font></u></b> (click to expand) </div> \n')
   html.write('<div id=\"contents\" class=\"texter\"> \n')
-  for png in plots['png']:
+
+  for png in keys:
     png_path = os.path.relpath( png, location )
     basename = os.path.basename(os.path.splitext(png_path)[0])
     if ( os.path.splitext(png_path)[1] != '.png' ): continue
@@ -121,7 +154,7 @@ def writeHtml( location, title, links, plots, isHome=False ):
 
   print 'The following thumbnails will be used:'
   # plots
-  for i, png in enumerate(plots['png']):
+  for i, png in enumerate(keys):
     png_path = os.path.relpath( png, location )
     basename = os.path.basename(os.path.splitext(png_path)[0])
 
@@ -149,7 +182,7 @@ def writeHtml( location, title, links, plots, isHome=False ):
     html.write('\t</center>\n')
     html.write('</div>\n')
 
-    if opts.plotsPerLine>1 and i%opts.plotsPerLine==0: html.write('<br>\n')
+    if opts.plotsPerLine>0 and (i+1)%opts.plotsPerLine==0: html.write('<br>\n')
 
     print '\t', png_path.split('png/')[1]
 
@@ -181,10 +214,10 @@ if opts.upload:
 
   current_loc = opts.newLoc if opts.newLoc else opts.dir
   if opts.lxplus:
-    exec_line = 'cp -r %s/* %s/'%(current_loc,opts.upload)
+    exec_line = 'cp -r %s %s/'%(current_loc,opts.upload)
   else:
     uname = raw_input('Enter username@lxplus.cern.ch\n')
-    exec_line = 'scp -r %s/* %s@lxplus.cern.ch:%s/'%(current_loc,uname,opts.upload)
+    exec_line = 'scp -r %s %s@lxplus.cern.ch:%s'%(current_loc,uname,opts.upload)
   print exec_line
 
   os.system( exec_line )
