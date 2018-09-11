@@ -21,6 +21,8 @@ import sys
 import re
 import time
 import datetime
+import zipfile
+
 regex=None
 if opts.regex:
 	regex = re.compile(opts.regex)
@@ -152,6 +154,16 @@ def writeHtml( location, title, links, plots, isHome=False ):
   html.write('</div>\n')
   html.write('<br>\n')
 
+  # make zip
+  if opts.zip:
+    zf = zipfile.ZipFile("plots/%s.zip"%opts.zip, mode="w")
+    for ext, paths in plots.iteritems():
+      for path in paths:
+        zf.write(path)
+    zf.close()
+    html.write('<div><b>Download all: <a href=%s.zip>%s.zip</a></b></div>\n'%(opts.zip,opts.zip))
+    html.write('<br>\n')
+
   print 'The following thumbnails will be used:'
   # plots
   for i, png in enumerate(keys):
@@ -199,6 +211,9 @@ def writeHtml( location, title, links, plots, isHome=False ):
         for f in files:
           os.system('cp %s %s/%s/'%(f,opts.newLoc,ext))
 
+    if opts.zip:
+      os.system('cp plots/%s.zip %s'%(opts.zip,opts.newLoc))
+
   # print message
   outloc = opts.newLoc if opts.newLoc else opts.dir
   print 'Page written to: \n\t%s/index.html'%outloc
@@ -217,6 +232,7 @@ if opts.upload:
     exec_line = 'cp -r %s %s/'%(current_loc,opts.upload)
   else:
     uname = raw_input('Enter username@lxplus.cern.ch\n')
+    exec_line = 'ssh %s@lxplus.cern.ch "rm -rf %s"'%(uname,opts.upload)
     exec_line = 'scp -r %s %s@lxplus.cern.ch:%s'%(current_loc,uname,opts.upload)
   print exec_line
 
