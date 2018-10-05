@@ -481,7 +481,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         if( !BadBkgFit ){
             // bkgTestStatVal = t.scanbestBkgfitBkg <= 0. ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
             if(hBin==2){
-                std::cout << bkgTestStatVal << std::endl;
+                // std::cout << bkgTestStatVal << std::endl;
                 bkg_pvals->Fill(TMath::Prob(bkgTestStatVal,1));
             }
             // bkgTestStatVal = t.scanbestBkgfitBkg <= t.scanpoint ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
@@ -579,7 +579,8 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
           for (int k=0; k<clsb_vals.size(); k++) cout << clsb_vals[k] << " , ";
           cout << endl;
           cout << "CLs: ";
-          for (int k=0; k<clsb_vals.size(); k++) cout << clsb_vals[k]/clb_vals[k] << " , ";
+          // for (int k=0; k<clsb_vals.size(); k++) cout << clsb_vals[k]/clb_vals[k] << " , ";
+          for (int k=0; k<clsb_vals.size(); k++) cout << clsb_vals[k]/probs[k] << " , ";
           cout << endl;
         }
         //// Matt's idea
@@ -589,11 +590,17 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         // hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[0] / clb_vals[0] , 1.) );
         // hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[4] / clb_vals[4] , 1.) );
 
-        hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] , 1.) );
-        hCLsErr1Up->SetBinContent( i, TMath::Min( clsb_vals[3] , 1.) );
-        hCLsErr1Dn->SetBinContent( i, TMath::Min( clsb_vals[1] , 1.) );
-        hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[4] , 1.) );
-        hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[0] , 1.) );
+        // hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] , 1.) );
+        // hCLsErr1Up->SetBinContent( i, TMath::Min( clsb_vals[3] , 1.) );
+        // hCLsErr1Dn->SetBinContent( i, TMath::Min( clsb_vals[1] , 1.) );
+        // hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[4] , 1.) );
+        // hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[0] , 1.) );
+
+        hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] / probs[2], 1.) );
+        hCLsErr1Up->SetBinContent( i, TMath::Min( clsb_vals[3] / probs[3], 1.) );
+        hCLsErr1Dn->SetBinContent( i, TMath::Min( clsb_vals[1] / probs[1], 1.) );
+        hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[4] / probs[4], 1.) );
+        hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[0] / probs[0], 1.) );
 
         //hCLsExp->SetBinContent   ( i, (float(nSBValsAboveBkg[2]) / sampledSBValues[i].size() ) / probs[2] );
         //hCLsErr1Up->SetBinContent( i, (float(nSBValsAboveBkg[1]) / sampledSBValues[i].size() ) / probs[1] );
@@ -775,7 +782,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         nActualToys = nToys*importance(plhPvalue);
     }
     for ( int j = 0; j < nActualToys; j++ ) {
-        std::cout << "Toy " << j << std::endl;
+        // std::cout << "Toy " << j << std::endl;
       if(pdf->getBkgPdf()){
         pdf->fitBkg(pdf->getData());     //Need to fit bkg first to get the proper parameters for the toy generation
         pdf->generateBkgToys();
