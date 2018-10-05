@@ -369,7 +369,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     // histogram illustrating the failure rate
     TH1F *h_fracGoodToys  = (TH1F*)hCL->Clone("h_fracGoodToys");
 
-    TH1F *bkg_pvals  = new TH1F("bkg_pvals", "bkg p values", 20, -0.0001, 1.0001);
+    TH1F *bkg_pvals  = new TH1F("bkg_pvals", "bkg p values", 20, -0.1, 1.1);
 
     // map of vectors for CLb quantiles
     std::map<int,std::vector<double> > sampledBValues;
@@ -405,7 +405,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         // criteria for GammaCombo
         bool convergedFits      = (t.statusFree == 0. && t.statusScan == 0.) && (t.covQualFree == 3 && t.covQualScan == 3);
         bool tooHighLikelihood  = !( abs(t.chi2minToy) < 1e27 && abs(t.chi2minGlobalToy) < 1e27);
-        bool BadBkgFit          = !(t.statusFreeBkg == 0 && t.statusBkgBkg == 0) && (t.covQualFreeBkg == 3 && t.covQualBkgBkg == 3);
+        bool BadBkgFit          = (!(t.statusFreeBkg == 0 && t.statusBkgBkg == 0) && (t.covQualFreeBkg == 3 && t.covQualBkgBkg == 3))||(std::isnan(t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy));
         // bool BadBkgFit          = false;
 
         // apply cuts
@@ -419,7 +419,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         }
 
         if ( BadBkgFit){
-            std::cout << "Failed because of "  << t.statusFreeBkg << t.statusBkgBkg << t.covQualFreeBkg << t.covQualBkgBkg << std::endl;
+            // std::cout << "Failed because of "  << t.statusFreeBkg << t.statusBkgBkg << t.covQualFreeBkg << t.covQualBkgBkg << std::endl;
             nfailedbkg++;
         }
 
@@ -476,10 +476,12 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
 
         // chi2minBkgBkgToy is the best fit of the bkg pdf of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
         double bkgTestStatVal = t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy;
+        if(bkgTestStatVal<0&&bkgTestStatVal>-1.e-4) bkgTestStatVal=0.0;
         
         if( !BadBkgFit ){
             // bkgTestStatVal = t.scanbestBkgfitBkg <= 0. ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
-            if(hBin==1){
+            if(hBin==2){
+                std::cout << bkgTestStatVal << std::endl;
                 bkg_pvals->Fill(TMath::Prob(bkgTestStatVal,1));
             }
             // bkgTestStatVal = t.scanbestBkgfitBkg <= t.scanpoint ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
@@ -506,6 +508,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
             n0all = 0;
         }
     }
+    // std::cout << "Overflow bkg: " << bkg_pvals->GetBinContent(0) << " underflow: " << bkg_pvals->GetBinContent(21) << std::endl;
     cout << std::fixed << std::setprecision(2);
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : reading done.           \n" << endl;
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : read an average of " << ((double)nentries - (double)nfailed) / (double)nPoints1d << " toys per scan point." << endl;
@@ -772,6 +775,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         nActualToys = nToys*importance(plhPvalue);
     }
     for ( int j = 0; j < nActualToys; j++ ) {
+        std::cout << "Toy " << j << std::endl;
       if(pdf->getBkgPdf()){
         pdf->fitBkg(pdf->getData());     //Need to fit bkg first to get the proper parameters for the toy generation
         pdf->generateBkgToys();
@@ -809,7 +813,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                   << "++++ > status: " << pdf->getFitStatus() << endl;
             pdf->setFitStatus(-99);
         }
-        if (rb->edm()>1.e-4) {
+        if (rb->edm()>1.e-3) {
             cout  << "++++ > Fit not converged: "  << endl
                   << "++++ > edm: " << rb->edm() << endl
                   << "++++ > status: " << -60 << endl;
@@ -845,7 +849,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                 assert(rb);
             }
         }
-        if (rb->edm()>1.e-4) {
+        if (rb->edm()>1.e-3) {
             cout  << "++++ > Bkg Fit not converged: "  << endl
                   << "++++ > edm: " << rb->edm() << endl
                   << "++++ > status: " << -60 << endl;
@@ -1147,7 +1151,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                         cout << "----> fit status: " << pdf->getFitStatus() << endl;
                         pdf->setFitStatus(-99);
                     }
-                    if (r1->edm()>1.e-4) {
+                    if (r1->edm()>1.e-3) {
                         cout << "----> too large edm " << endl;
                         cout << "----> edm: " << r1->edm() << endl;
                         pdf->setFitStatus(-60);
