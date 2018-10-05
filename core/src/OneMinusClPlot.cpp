@@ -545,7 +545,8 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
   else          gObs->Draw("LPsame");
   leg->Draw("same");
 
-  drawCLguideLine(0.1);
+  // drawCLguideLine(0.1);
+  drawCLguideLines();
 
   double yGroup = 0.83;
   if ( arg->plotprelim || arg->plotunoff ) yGroup = 0.8;
@@ -556,7 +557,29 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
   m_mainCanvas->Update();
   m_mainCanvas->Modified();
   m_mainCanvas->Show();
-  savePlot( m_mainCanvas, name+"_cls"+arg->plotext );
+  savePlot( m_mainCanvas, name+"_expected"+arg->plotext );
+
+  // Draw debug plots to check the smoothing
+  if(arg->debug){
+  	// make the colors a bit more red to make the histograms visible against smoothed curve
+	hErr2Dn->SetLineColor( TColor::GetColor("#6182bd") );
+	hErr2Dn->SetLineWidth(3);
+
+	hErr2Up->SetLineColor( TColor::GetColor("#6182bd") );
+	hErr2Up->SetLineWidth(3);
+
+	hErr1Dn->SetLineColor( TColor::GetColor("#cecae1") );
+	hErr1Dn->SetLineWidth(3);
+
+	hErr1Up->SetLineColor( TColor::GetColor("#cecae1") );
+	hErr1Up->SetLineWidth(3);
+
+  	hErr1Dn->Draw("SAME");
+  	hErr1Up->Draw("SAME");
+  	hErr2Dn->Draw("SAME");
+  	hErr2Up->Draw("SAME");
+  	savePlot( m_mainCanvas, name+"_expected_debug"+arg->plotext );
+  }
   m_mainCanvas->SetTicks(false);
 }
 
