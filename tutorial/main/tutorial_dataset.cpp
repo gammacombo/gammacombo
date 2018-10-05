@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
 	// You can make any changes to your workspace on the fly here
 	workspace->var("branchingRatio")->SetTitle("#font[32]{B}( B^{0}#rightarrow X )");
 	workspace->var("branchingRatio")->setVal(1.e-7);
-	workspace->var("branchingRatio")->setRange(0.,2.5e-6);
+	workspace->var("branchingRatio")->setRange(-1.e-6,2.5e-6);
 	workspace->var("Nbkg")->SetTitle("N_{bkg}");
 	workspace->var("Nbkg")->setVal(5000);
 	workspace->var("Nbkg")->setRange(4000,6000);
@@ -78,6 +78,8 @@ int main(int argc, char* argv[])
   pdf->addFitObs("mass");                         // this is not required but will make some sanity plots
   //pdf->unblind("mass","[4360:5260],[5460:6360]"); // have to be a bit careful about staying blind (this code isn't yet really blind friendly)
   pdf->unblind("mass", "[4360:6360]" );
+
+  // pdf->printParameters();
 
   // Start the Gammacombo Engine
   GammaComboEngine gc("tutorial_dataset", argc, argv);
