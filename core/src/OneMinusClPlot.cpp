@@ -164,7 +164,8 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
     if ( last && arg->isQuickhack(25) ) g->SetLineWidth(3);
 	}
 
-	if (CLsType>0) g->SetLineColor(s->getLineColor() - 1);
+	if (CLsType==1) g->SetLineColor(kBlue-7);
+	else if (CLsType==2) g->SetLineColor(kBlue+2);
 
 	if ( plotPoints ){
 		g->SetLineWidth(1);
