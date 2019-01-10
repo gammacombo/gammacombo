@@ -156,6 +156,7 @@ class OptParser
 		bool    smooth2d;
 		vector<TString> title;
     TString         toyFiles;
+    int             updateFreq;
 		bool            usage;
 		vector<TString> var;
 		bool		verbose;
