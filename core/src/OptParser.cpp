@@ -29,6 +29,7 @@ OptParser::OptParser():
 
 	// Initialize the variables.
 	// For more complex arguments these are also the default values.
+  compare     = false;
 	controlplot = false;
 	coverageCorrectionID = 0;
 	coverageCorrectionPoint = 0;
@@ -111,6 +112,7 @@ OptParser::OptParser():
   scalestaterr = -999.;
 	smooth2d = false;
   toyFiles = "";
+  updateFreq = 10;
 	usage = false;
 	verbose = false;
 }
@@ -129,6 +131,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("CL");
 	availableOptions.push_back("cls");
 	availableOptions.push_back("combid");
+  availableOptions.push_back("compare");
 	availableOptions.push_back("color");
 	availableOptions.push_back("controlplots");
 	availableOptions.push_back("covCorrect");
@@ -213,6 +216,7 @@ void OptParser::defineOptions()
   availableOptions.push_back("toyFiles");
 	availableOptions.push_back("title");
 	availableOptions.push_back("usage");
+  availableOptions.push_back("updateFreq");
 	availableOptions.push_back("unoff");
 	availableOptions.push_back("var");
 	availableOptions.push_back("verbose");
@@ -449,6 +453,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::ValueArg<string> jobdirArg("", "jobdir", "Give absolute job-directory if working on batch systems.", false, "default", "string");
   TCLAP::ValueArg<string> toyFilesArg("", "toyFiles", "Pass some different toy files, for example if you want 1D projection of 2D FC.", false, "default", "string" );
   TCLAP::ValueArg<string> saveArg("","save", "Save the workspace this file name", false, "", "string");
+  TCLAP::ValueArg<int> updateFreqArg("","updateFreq", "Frequency with which to update plots when running in interactive mode (higher number will be faster). Default: 10", false, 10, "int" );
 
 	// --------------- switch arguments
   TCLAP::SwitchArg batcheosArg("","batcheos", "When submitting batch jobs (for plugin) write the output to eos", false);
@@ -458,6 +463,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 			" instead of the chi2min from the toy files to evaluate 1-CL of the plugin method.", false);
 	TCLAP::SwitchArg parevolArg("e", "evol", "Plots the parameter evolution of the profile likelihood.", false);
 	TCLAP::SwitchArg controlplotArg("", "controlplots", "Make controlplots analysing the generated toys.", false);
+	TCLAP::SwitchArg compareArg("", "compare", "Compare the different combinations by inspecting their pulls.", false);
 	TCLAP::SwitchArg plotmagneticArg("", "magnetic", "In 2d plots, enable magnetic plot borders which will "
 			"attract the 2sigma curves.", false);
 	TCLAP::SwitchArg verboseArg("v", "verbose", "Enables verbose output.", false);
@@ -674,6 +680,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "verbose" ) ) cmd.add( verboseArg );
 	if ( isIn<TString>(bookedOptions, "var" ) ) cmd.add(varArg);
 	if ( isIn<TString>(bookedOptions, "usage" ) ) cmd.add( usageArg );
+  if ( isIn<TString>(bookedOptions, "updateFreq" ) ) cmd.add( updateFreqArg );
 	if ( isIn<TString>(bookedOptions, "unoff" ) ) cmd.add( plotunoffArg );
 	if ( isIn<TString>(bookedOptions, "title" ) ) cmd.add( titleArg );
   if ( isIn<TString>(bookedOptions, "toyFiles" ) ) cmd.add( toyFilesArg );
@@ -765,6 +772,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "covCorrectPoint" ) ) cmd.add(coverageCorrectionPointArg);
 	if ( isIn<TString>(bookedOptions, "covCorrect" ) ) cmd.add(coverageCorrectionIDArg);
 	if ( isIn<TString>(bookedOptions, "controlplots" ) ) cmd.add(controlplotArg);
+  if ( isIn<TString>(bookedOptions, "compare" ) ) cmd.add(compareArg);
 	if ( isIn<TString>(bookedOptions, "combid" ) ) cmd.add(combidArg);
 	if ( isIn<TString>(bookedOptions, "color" ) ) cmd.add(colorArg);
 	if ( isIn<TString>(bookedOptions, "cls" ) ) cmd.add(clsArg);
@@ -871,6 +879,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	smooth2d          = smooth2dArg.getValue();
   toyFiles          = toyFilesArg.getValue();
 	usage             = usageArg.getValue();
+  updateFreq        = updateFreqArg.getValue();
 	verbose           = verboseArg.getValue();
 
 	//
@@ -934,6 +943,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 	// --asimovfile
 	tmp = asimovFileArg.getValue();
 	for ( int i = 0; i < tmp.size(); i++ ) asimovfile.push_back(tmp[i]);
+
+  // --compare
+  compare           = compareArg.getValue();
 
 	// --debug
 	debug = debugArg.getValue();
@@ -1265,7 +1277,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( var.size()>1 && CL.size()>0){
 		std::cout << "ERROR: User specific confidence levels are only available for 1D option." << std::endl;
 		exit(1);
-	}	
+	}
 }
 
 ///

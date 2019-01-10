@@ -45,6 +45,7 @@ class OptParser
 		vector<int>		color;
 		vector<int>		combid;
 		vector<vector<int> >	combmodifications; // encodes requested modifications to the combiner ID through the -c 26:+12 syntax,format is [cmbid:[+pdf1,-pdf2,...]]
+    bool          compare;
     bool            confirmsols;
 		bool			controlplot;
 		int 			coverageCorrectionID;
@@ -155,6 +156,7 @@ class OptParser
 		bool    smooth2d;
 		vector<TString> title;
     TString         toyFiles;
+    int             updateFreq;
 		bool            usage;
 		vector<TString> var;
 		bool		verbose;

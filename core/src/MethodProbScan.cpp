@@ -4,7 +4,7 @@
  * Date: August 2012
  *
  */
-
+#include "TSystem.h"
 #include "MethodProbScan.h"
 
 	MethodProbScan::MethodProbScan(Combiner *comb)
@@ -541,14 +541,16 @@ int MethodProbScan::scan2d()
 					curveResults2d[i-1][j-1] = r;
 				}
 
-				// draw/update histograms - doing only every 10th update saves
-				// a lot of time for small combinations
-				if ( ( arg->interactive && ((int)nSteps % 10 == 0) ) || nSteps==nTotalSteps ){
+				// draw/update histograms - doing only every nth update
+        // depending on value of updateFreq
+        // saves a lot of time for small combinations
+				if ( ( arg->interactive && ((int)nSteps % arg->updateFreq == 0) ) || nSteps==nTotalSteps ){
 					hDbgChi2min2d->Draw("colz");
 					hDbgStart->Draw("boxsame");
 					startpointmark->Draw();
 					cDbg->Update();
           cDbg->Modified();
+          gSystem->ProcessEvents();
 				}
 				tScan.Stop();
 			}
