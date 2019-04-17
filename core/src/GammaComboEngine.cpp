@@ -98,6 +98,9 @@ void GammaComboEngine::setPdf( PDF_Abs* pdf )
 ///
 void GammaComboEngine::addPdf(int id, PDF_Abs* pdf, TString title)
 {
+  if (arg->debug) {
+    cout << "GammaComboEngine::addPdf() : INFO  : Adding pdf " << id << " = " << title << endl;
+  }
 	if ( pdf==0 ){
 		cout << "GammaComboEngine::addPdf() : ERROR : Trying to add zero pointer as the PDF. Exit." << endl;
 		exit(1);

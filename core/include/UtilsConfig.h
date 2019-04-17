@@ -194,6 +194,7 @@ namespace Utils
     pdg_excl_m2,
     run2,
 		sneha,
+    SM,
     SM_prediction,
     best_prediction,
     statonly,

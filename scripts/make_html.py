@@ -14,6 +14,7 @@ parser.add_option("-d","--dir",default="plots",help='Directory with plots in')
 parser.add_option("-n","--newLoc",default=None, help='Copy plots and html file into a seperate location')
 parser.add_option("-s","--sort",default=None, help='Sort files by name (ascending=an,descending=dn) or time modified (ascending=at, descending=dt)')
 parser.add_option("-z","--zip",default=None, help='Make zip')
+parser.add_option("-a","--add",default=None, help='Add additional html file at front')
 (opts,args) = parser.parse_args()
 
 import os
@@ -104,7 +105,7 @@ def writeHtml( location, title, links, plots, isHome=False ):
   html.write('<br>\n')
 
   # check for pngs
-  if 'png' not in plots.keys() and not isHome:
+  if 'png' not in list(plots.keys()) and not isHome:
     html.write('No png files found\n')
     html.close()
     return
@@ -157,14 +158,22 @@ def writeHtml( location, title, links, plots, isHome=False ):
   # make zip
   if opts.zip:
     zf = zipfile.ZipFile("plots/%s.zip"%opts.zip, mode="w")
-    for ext, paths in plots.iteritems():
+    for ext, paths in plots.items():
       for path in paths:
         zf.write(path)
     zf.close()
     html.write('<div><b>Download all: <a href=%s.zip>%s.zip</a></b></div>\n'%(opts.zip,opts.zip))
     html.write('<br>\n')
 
-  print 'The following thumbnails will be used:'
+  # additional material
+  if opts.add:
+    tf = open(opts.add)
+    for line in tf.readlines():
+      html.write(line)
+    html.write('<br>\n')
+    tf.close()
+
+  print('The following thumbnails will be used:')
   # plots
   for i, png in enumerate(keys):
     png_path = os.path.relpath( png, location )
@@ -175,7 +184,7 @@ def writeHtml( location, title, links, plots, isHome=False ):
 
     # if there's a pdf equivalent use this as the link path for the thumbnail png
     link_path = png_path
-    if 'pdf' in plots.keys():
+    if 'pdf' in list(plots.keys()):
       pdf_path = png_path.replace('png/','pdf/')
       pdf_path = pdf_path.replace('.png','.pdf')
       if os.path.join( location, pdf_path ) in plots['pdf']:
@@ -185,7 +194,7 @@ def writeHtml( location, title, links, plots, isHome=False ):
     html.write('\t<center>\n')
     html.write('\t\t<a id=\"'+basename+'\" href='+link_path+'><img width=\"'+str(opts.width)+'\" src=\"'+png_path+'\"></a><br>\n')
     html.write('\t\t<b>'+basename+'</b><br>\n')
-    for ext in plots.keys():
+    for ext in list(plots.keys()):
       ext_path = png_path.replace('png/',ext+'/')
       ext_path = ext_path.replace('.png','.'+ext)
       if os.path.join( location, ext_path ) in plots[ext]:
@@ -196,7 +205,7 @@ def writeHtml( location, title, links, plots, isHome=False ):
 
     if opts.plotsPerLine>0 and (i+1)%opts.plotsPerLine==0: html.write('<br>\n')
 
-    print '\t', png_path.split('png/')[1]
+    print('\t', png_path.split('png/')[1])
 
   html.close()
 
@@ -205,7 +214,7 @@ def writeHtml( location, title, links, plots, isHome=False ):
     os.system('mkdir -p %s'%opts.newLoc)
     os.system('cp %s %s/'%(html.name, opts.newLoc))
 
-    for ext, files in plots.iteritems():
+    for ext, files in plots.items():
       if len(files)>0:
         os.system('mkdir -p %s/%s'%(opts.newLoc,ext))
         for f in files:
@@ -216,7 +225,7 @@ def writeHtml( location, title, links, plots, isHome=False ):
 
   # print message
   outloc = opts.newLoc if opts.newLoc else opts.dir
-  print 'Page written to: \n\t%s/index.html'%outloc
+  print('Page written to: \n\t%s/index.html'%outloc)
 
 # __ main __
 
@@ -225,16 +234,16 @@ writeHtml( opts.dir, opts.title, [opts.dir], plots )
 
 if opts.upload:
 
-  print 'Will upload to the following afs location: \n\t%s '%opts.upload
+  print('Will upload to the following afs location: \n\t%s '%opts.upload)
 
   current_loc = opts.newLoc if opts.newLoc else opts.dir
   if opts.lxplus:
     exec_line = 'cp -r %s %s/'%(current_loc,opts.upload)
   else:
-    uname = raw_input('Enter username@lxplus.cern.ch\n')
+    uname = input('Enter username@lxplus.cern.ch\n')
     exec_line = 'ssh %s@lxplus.cern.ch "rm -rf %s"'%(uname,opts.upload)
     exec_line = 'scp -r %s %s@lxplus.cern.ch:%s'%(current_loc,uname,opts.upload)
-  print exec_line
+  print(exec_line)
 
   os.system( exec_line )
 
