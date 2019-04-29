@@ -372,6 +372,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     TH1F *bkg_pvals  = new TH1F("bkg_pvals", "bkg p values", 20, -0.1, 1.1);
 
     // map of vectors for CLb quantiles
+    std::map<int,std::vector<double> > sampledSchi2Values;
     std::map<int,std::vector<double> > sampledBValues;
     std::map<int,std::vector<double> > sampledSBValues;
     TH1F *h_pVals         = new TH1F("p", "p", 200, 0.0, 1e-2);
@@ -463,6 +464,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         int hBin = h_all->FindBin(t.scanpoint);
         if ( sampledBValues.find(hBin) == sampledBValues.end() ) sampledBValues[hBin] = std::vector<double>();
         if ( sampledSBValues.find(hBin) == sampledSBValues.end() ) sampledSBValues[hBin] = std::vector<double>();
+        if ( sampledSchi2Values.find(hBin) == sampledSchi2Values.end() ) sampledSchi2Values[hBin] = std::vector<double>();
 
         ////// comment Matt's part for the moment
         // // chi2minBkgToy is the best fit at scanpoint of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
@@ -473,6 +475,12 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         // double sbTestStatVal = t.chi2minToy - t.chi2minGlobalToy;
         // sbTestStatVal = t.scanbest <= t.scanpoint ? sbTestStatVal : 0.; // if muhat < mu then q_mu = 0
         // sampledSBValues[hBin].push_back( sbTestStatVal );
+
+        // chi2minToy is the best of the toy at scanpoint, chi2minGlobalToy is the best global fit of the toy 
+        if(valid){
+            sampledSchi2Values[hBin].push_back(t.chi2minToy - t.chi2minGlobalToy);
+        }
+
 
         // chi2minBkgBkgToy is the best fit of the bkg pdf of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
         double bkgTestStatVal = t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy;
@@ -553,60 +561,119 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         hCLs->SetBinContent(i, p_cls);
         hCLs->SetBinError(i, sqrt(p_cls * (1. - p_cls) / nall));
 
-        // the quantiles of the CLb distribution (for expected CLs)
-        std::vector<double> probs  = { TMath::Prob(4,1), TMath::Prob(1,1), 0.5, 1.-TMath::Prob(1,1), 1.-TMath::Prob(4,1) };
-        std::vector<double> clb_vals  = { 1.-TMath::Prob(4,1), 1.-TMath::Prob(1,1), 0.5, TMath::Prob(1,1), TMath::Prob(4,1) };
-        std::vector<double> quantiles = Quantile<double>( sampledBValues[i], probs );
+        // // the quantiles of the CLb distribution (for expected CLs)
+        // std::vector<double> probs  = { TMath::Prob(4,1), TMath::Prob(1,1), 0.5, 1.-TMath::Prob(1,1), 1.-TMath::Prob(4,1) };
+        // std::vector<double> clb_vals  = { 1.-TMath::Prob(4,1), 1.-TMath::Prob(1,1), 0.5, TMath::Prob(1,1), TMath::Prob(4,1) };
+        // std::vector<double> quantiles = Quantile<double>( sampledBValues[i], probs );
+        // std::vector<double> clsb_vals;
+        // //for (int k=0; k<quantiles.size(); k++) clsb_vals.push_back( TMath::Prob( quantiles[k], 1 ) );
+        // for (int k=0; k<quantiles.size(); k++ ){
+        //   // asymptotic as chi2
+        //   //clsb_vals.push_back( TMath::Prob( quantiles[k], 1 ) );
+        //   // from toys
+        //   clsb_vals.push_back(1.-getVectorFracAboveValue( sampledSBValues[i], quantiles[k] ) );
+        // }
+
+        // // check
+        // if ( arg->debug ) {
+        //   cout << i << endl;
+        //   cout << "Quants: ";
+        //   for (int k=0; k<quantiles.size(); k++) cout << quantiles[k] << " , ";
+        //   cout << endl;
+        //   cout << "CLb: ";
+        //   for (int k=0; k<clb_vals.size(); k++) cout << clb_vals[k] << " , ";
+        //   cout << endl;
+        //   cout << "CLsb: ";
+        //   for (int k=0; k<clsb_vals.size(); k++) cout << clsb_vals[k] << " , ";
+        //   cout << endl;
+        //   cout << "CLs: ";
+        //   // for (int k=0; k<clsb_vals.size(); k++) cout << clsb_vals[k]/clb_vals[k] << " , ";
+        //   for (int k=0; k<clsb_vals.size(); k++) cout << clsb_vals[k]/probs[k] << " , ";
+        //   cout << endl;
+        // }       
+
+        // // // Matt's idea
+        // // hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] / clb_vals[2] , 1.) );
+        // // hCLsErr1Up->SetBinContent( i, TMath::Min( clsb_vals[1] / clb_vals[1] , 1.) );
+        // // hCLsErr1Dn->SetBinContent( i, TMath::Min( clsb_vals[3] / clb_vals[3] , 1.) );
+        // // hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[0] / clb_vals[0] , 1.) );
+        // // hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[4] / clb_vals[4] , 1.) );
+
+        // // hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] , 1.) );
+        // // hCLsErr1Up->SetBinContent( i, TMath::Min( clsb_vals[3] , 1.) );
+        // // hCLsErr1Dn->SetBinContent( i, TMath::Min( clsb_vals[1] , 1.) );
+        // // hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[4] , 1.) );
+        // // hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[0] , 1.) );
+
+        // hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] / probs[2], 1.) );
+        // hCLsErr1Up->SetBinContent( i, TMath::Min( clsb_vals[3] / probs[3], 1.) );
+        // hCLsErr1Dn->SetBinContent( i, TMath::Min( clsb_vals[1] / probs[1], 1.) );
+        // hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[4] / probs[4], 1.) );
+        // hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[0] / probs[0], 1.) );
+
+        // // hCLsExp->SetBinContent   ( i, (float(nSBValsAboveBkg[2]) / sampledSBValues[i].size() ) / probs[2] );
+        // // hCLsErr1Up->SetBinContent( i, (float(nSBValsAboveBkg[1]) / sampledSBValues[i].size() ) / probs[1] );
+        // // hCLsErr1Dn->SetBinContent( i, (float(nSBValsAboveBkg[3]) / sampledSBValues[i].size() ) / probs[3] );
+        // // hCLsErr2Up->SetBinContent( i, (float(nSBValsAboveBkg[0]) / sampledSBValues[i].size() ) / probs[0] );
+        // // hCLsErr2Dn->SetBinContent( i, (float(nSBValsAboveBkg[4]) / sampledSBValues[i].size() ) / probs[4] );
+
+        // Redo from scratch:
+
         std::vector<double> clsb_vals;
-        //for (int k=0; k<quantiles.size(); k++) clsb_vals.push_back( TMath::Prob( quantiles[k], 1 ) );
-        for (int k=0; k<quantiles.size(); k++ ){
-          // asymptotic as chi2
-          //clsb_vals.push_back( TMath::Prob( quantiles[k], 1 ) );
-          // from toys
-          clsb_vals.push_back(1.-getVectorFracAboveValue( sampledSBValues[i], quantiles[k] ) );
+        std::vector<double> clb_vals;
+        std::vector<double> cls_vals;
+
+        if(sampledBValues[i].size()!=sampledSBValues[i].size()){
+            std::cout << "MethodDatasetsPluginScan::readScan1dTrees: Not the same number of entries in sampledBValues and sampledSBValues!" <<std::endl;
+            exit(EXIT_FAILURE);
         }
+        for(int j=0; j<sampledBValues[i].size(); j++){
+            double clsb_val = getVectorFracAboveValue( sampledSchi2Values[i], sampledSBValues[i][j]); // p_cls+b value for each bkg-only toy
+            double clb_val = getVectorFracAboveValue( sampledBValues[i], sampledBValues[i][j]); // p_clb value for each bkg-only toy CAUTION: duplicate use of sampledBValues
+            double cls_val = clsb_val/clb_val;
+
+            clsb_vals.push_back(clsb_val);
+            clb_vals.push_back(clb_val);
+            cls_vals.push_back(cls_val);
+        }
+
+        std::vector<double> probs  = {TMath::Prob(16,1), TMath::Prob(9,1), TMath::Prob(4,1), TMath::Prob(1,1), 0.5, 1.-TMath::Prob(1,1), 1.-TMath::Prob(4,1), 1.-TMath::Prob(9,1), 1.-TMath::Prob(16,1) };
+        std::vector<double> quantiles_clsb = Quantile<double>( clsb_vals, probs );
+        std::vector<double> quantiles_clb = Quantile<double>( clb_vals, probs );
+        std::vector<double> quantiles_cls = Quantile<double>( cls_vals, probs );
 
         // check
         if ( arg->debug ) {
           cout << i << endl;
           cout << "Quants: ";
-          for (int k=0; k<quantiles.size(); k++) cout << quantiles[k] << " , ";
+          for (int k=0; k<probs.size(); k++) cout << probs[k] << " , ";
           cout << endl;
           cout << "CLb: ";
-          for (int k=0; k<clb_vals.size(); k++) cout << clb_vals[k] << " , ";
+          for (int k=0; k<quantiles_clb.size(); k++) cout << quantiles_clb[k] << " , ";
           cout << endl;
           cout << "CLsb: ";
-          for (int k=0; k<clsb_vals.size(); k++) cout << clsb_vals[k] << " , ";
+          for (int k=0; k<quantiles_clsb.size(); k++) cout << quantiles_clsb[k] << " , ";
           cout << endl;
           cout << "CLs: ";
-          // for (int k=0; k<clsb_vals.size(); k++) cout << clsb_vals[k]/clb_vals[k] << " , ";
-          for (int k=0; k<clsb_vals.size(); k++) cout << clsb_vals[k]/probs[k] << " , ";
+          for (int k=0; k<quantiles_cls.size(); k++) cout << quantiles_clsb[k]/quantiles_clb[k] << " , ";
           cout << endl;
-        }
-        //// Matt's idea
-        // hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] / clb_vals[2] , 1.) );
-        // hCLsErr1Up->SetBinContent( i, TMath::Min( clsb_vals[1] / clb_vals[1] , 1.) );
-        // hCLsErr1Dn->SetBinContent( i, TMath::Min( clsb_vals[3] / clb_vals[3] , 1.) );
-        // hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[0] / clb_vals[0] , 1.) );
-        // hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[4] / clb_vals[4] , 1.) );
+        }       
 
-        // hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] , 1.) );
-        // hCLsErr1Up->SetBinContent( i, TMath::Min( clsb_vals[3] , 1.) );
-        // hCLsErr1Dn->SetBinContent( i, TMath::Min( clsb_vals[1] , 1.) );
-        // hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[4] , 1.) );
-        // hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[0] , 1.) );
+        //effective method -> works robustly, but is not perfect
+        hCLsExp->SetBinContent   ( i, TMath::Min( quantiles_clsb[4]/quantiles_clb[4] , 1.) );
+        hCLsErr1Up->SetBinContent( i, TMath::Min( quantiles_clsb[5]/quantiles_clb[5] , 1.) );
+        hCLsErr1Dn->SetBinContent( i, TMath::Min( quantiles_clsb[3]/quantiles_clb[3] , 1.) );
+        hCLsErr2Up->SetBinContent( i, TMath::Min( quantiles_clsb[6]/quantiles_clb[6] , 1.) );
+        hCLsErr2Dn->SetBinContent( i, TMath::Min( quantiles_clsb[2]/quantiles_clb[2] , 1.) );
 
-        hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] / probs[2], 1.) );
-        hCLsErr1Up->SetBinContent( i, TMath::Min( clsb_vals[3] / probs[3], 1.) );
-        hCLsErr1Dn->SetBinContent( i, TMath::Min( clsb_vals[1] / probs[1], 1.) );
-        hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[4] / probs[4], 1.) );
-        hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[0] / probs[0], 1.) );
+        // // //ideal method, but prone to fluctuations
+        // hCLsExp->SetBinContent   ( i, TMath::Min( quantiles_cls[2] , 1.) );
+        // hCLsErr1Up->SetBinContent( i, TMath::Min( quantiles_cls[3] , 1.) );
+        // hCLsErr1Dn->SetBinContent( i, TMath::Min( quantiles_cls[1] , 1.) );
+        // hCLsErr2Up->SetBinContent( i, TMath::Min( quantiles_cls[4] , 1.) );
+        // hCLsErr2Dn->SetBinContent( i, TMath::Min( quantiles_cls[0] , 1.) );
 
-        //hCLsExp->SetBinContent   ( i, (float(nSBValsAboveBkg[2]) / sampledSBValues[i].size() ) / probs[2] );
-        //hCLsErr1Up->SetBinContent( i, (float(nSBValsAboveBkg[1]) / sampledSBValues[i].size() ) / probs[1] );
-        //hCLsErr1Dn->SetBinContent( i, (float(nSBValsAboveBkg[3]) / sampledSBValues[i].size() ) / probs[3] );
-        //hCLsErr2Up->SetBinContent( i, (float(nSBValsAboveBkg[0]) / sampledSBValues[i].size() ) / probs[0] );
-        //hCLsErr2Dn->SetBinContent( i, (float(nSBValsAboveBkg[4]) / sampledSBValues[i].size() ) / probs[4] );
+
 
         // CLs values in data
         int nDataAboveBkgExp = 0;
