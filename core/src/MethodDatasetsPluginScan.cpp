@@ -406,7 +406,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         // criteria for GammaCombo
         bool convergedFits      = (t.statusFree == 0. && t.statusScan == 0.) && (t.covQualFree == 3 && t.covQualScan == 3);
         bool tooHighLikelihood  = !( abs(t.chi2minToy) < 1e27 && abs(t.chi2minGlobalToy) < 1e27);
-        bool BadBkgFit          = (!(t.statusFreeBkg == 0 && t.statusBkgBkg == 0) && (t.covQualFreeBkg == 3 && t.covQualBkgBkg == 3))||(std::isnan(t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy));
+        bool BadBkgFit          = (!(t.statusFreeBkg == 0 && t.statusBkgBkg == 0) && (t.covQualFreeBkg == 3 && t.covQualBkgBkg == 3))||(std::isnan(t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy)||(t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy<1.e-4)||(t.statusBkgBkg!=0)||(t.statusFreeBkg!=0));
         // bool BadBkgFit          = false;
 
         // apply cuts
@@ -627,6 +627,8 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
             std::cout << "MethodDatasetsPluginScan::readScan1dTrees: Not the same number of entries in sampledBValues and sampledSBValues!" <<std::endl;
             exit(EXIT_FAILURE);
         }
+
+        TH1F *bkg_pvals_cls  = new TH1F("bkg_clsvals", "bkg cls p values", 50, -0.1, 1.1);
         for(int j=0; j<sampledBValues[i].size(); j++){
             double clsb_val = getVectorFracAboveValue( sampledSchi2Values[i], sampledSBValues[i][j]); // p_cls+b value for each bkg-only toy
             double clb_val = getVectorFracAboveValue( sampledBValues[i], sampledBValues[i][j]); // p_clb value for each bkg-only toy CAUTION: duplicate use of sampledBValues
@@ -634,10 +636,19 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
 
             clsb_vals.push_back(clsb_val);
             clb_vals.push_back(clb_val);
-            cls_vals.push_back(cls_val);
+            // if(cls_val<=1.){
+        	cls_vals.push_back(cls_val);
+        	bkg_pvals_cls->Fill(TMath::Min( cls_val , 1.));
+            // }
         }
+        TCanvas *canvasdebug = new TCanvas("canvasdebug", "canvas1", 1200, 1000);
+        bkg_pvals_cls->Draw();
+        std::string pvalue_outstream;
+		pvalue_outstream ="p_values" + std::to_string(i) + ".pdf";
+        canvasdebug->SaveAs(pvalue_outstream.c_str());
 
-        std::vector<double> probs  = {TMath::Prob(16,1), TMath::Prob(9,1), TMath::Prob(4,1), TMath::Prob(1,1), 0.5, 1.-TMath::Prob(1,1), 1.-TMath::Prob(4,1), 1.-TMath::Prob(9,1), 1.-TMath::Prob(16,1) };
+
+        std::vector<double> probs  = {TMath::Prob(4,1), TMath::Prob(1,1), 0.5, 1.-TMath::Prob(1,1), 1.-TMath::Prob(4,1) };
         std::vector<double> quantiles_clsb = Quantile<double>( clsb_vals, probs );
         std::vector<double> quantiles_clb = Quantile<double>( clb_vals, probs );
         std::vector<double> quantiles_cls = Quantile<double>( cls_vals, probs );
@@ -655,23 +666,23 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
           for (int k=0; k<quantiles_clsb.size(); k++) cout << quantiles_clsb[k] << " , ";
           cout << endl;
           cout << "CLs: ";
-          for (int k=0; k<quantiles_cls.size(); k++) cout << quantiles_clsb[k]/quantiles_clb[k] << " , ";
+          for (int k=0; k<quantiles_cls.size(); k++) cout << quantiles_cls[k] << " , ";
           cout << endl;
         }       
 
-        //effective method -> works robustly, but is not perfect
-        hCLsExp->SetBinContent   ( i, TMath::Min( quantiles_clsb[4]/quantiles_clb[4] , 1.) );
-        hCLsErr1Up->SetBinContent( i, TMath::Min( quantiles_clsb[5]/quantiles_clb[5] , 1.) );
-        hCLsErr1Dn->SetBinContent( i, TMath::Min( quantiles_clsb[3]/quantiles_clb[3] , 1.) );
-        hCLsErr2Up->SetBinContent( i, TMath::Min( quantiles_clsb[6]/quantiles_clb[6] , 1.) );
-        hCLsErr2Dn->SetBinContent( i, TMath::Min( quantiles_clsb[2]/quantiles_clb[2] , 1.) );
+        // //effective method -> works robustly, but is not perfect
+        // hCLsExp->SetBinContent   ( i, TMath::Min( quantiles_clsb[2]/quantiles_clb[2] , 1.) );
+        // hCLsErr1Up->SetBinContent( i, TMath::Min( quantiles_clsb[3]/quantiles_clb[3] , 1.) );
+        // hCLsErr1Dn->SetBinContent( i, TMath::Min( quantiles_clsb[1]/quantiles_clb[1] , 1.) );
+        // hCLsErr2Up->SetBinContent( i, TMath::Min( quantiles_clsb[4]/quantiles_clb[4] , 1.) );
+        // hCLsErr2Dn->SetBinContent( i, TMath::Min( quantiles_clsb[0]/quantiles_clb[0] , 1.) );
 
-        // // //ideal method, but prone to fluctuations
-        // hCLsExp->SetBinContent   ( i, TMath::Min( quantiles_cls[2] , 1.) );
-        // hCLsErr1Up->SetBinContent( i, TMath::Min( quantiles_cls[3] , 1.) );
-        // hCLsErr1Dn->SetBinContent( i, TMath::Min( quantiles_cls[1] , 1.) );
-        // hCLsErr2Up->SetBinContent( i, TMath::Min( quantiles_cls[4] , 1.) );
-        // hCLsErr2Dn->SetBinContent( i, TMath::Min( quantiles_cls[0] , 1.) );
+        // //ideal method, but prone to fluctuations
+        hCLsExp->SetBinContent   ( i, TMath::Min( quantiles_cls[2] , 1.) );
+        hCLsErr1Up->SetBinContent( i, TMath::Min( quantiles_cls[3] , 1.) );
+        hCLsErr1Dn->SetBinContent( i, TMath::Min( quantiles_cls[1] , 1.) );
+        hCLsErr2Up->SetBinContent( i, TMath::Min( quantiles_cls[4] , 1.) );
+        hCLsErr2Dn->SetBinContent( i, TMath::Min( quantiles_cls[0] , 1.) );
 
 
 
