@@ -67,8 +67,6 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	if ( plotPoints ) g = new TGraphErrors(hCL->GetNbinsX());
 	else              g = new TGraph(hCL->GetNbinsX());
 	g->SetName(getUniqueRootName());
-
-
 	for ( int i=0; i<hCL->GetNbinsX(); i++ ){
 		g->SetPoint(i, hCL->GetBinCenter(i+1), hCL->GetBinContent(i+1));
 		if ( plotPoints ) ((TGraphErrors*)g)->SetPointError(i, 0.0, hCL->GetBinError(i+1));
@@ -94,18 +92,6 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	//   if ( plotPoints ) err0 = ((TGraphErrors*)g)->GetErrorY(0);
 	//   if ( plotPoints ) ((TGraphErrors*)g)->SetPointError(g->GetN()-1, 0.0, err0);
 	// }
-
-	// check whether a strong jump appears at the last point. That happens somehow for the CLs prob method when converting the histogram to TGraph
-	if ((g->GetY()[g->GetN()-1]-g->GetY()[g->GetN()-2])>0.5){
-		std::cout << "OneMinusClPlot::scan1dPlot() : Unexpected jump appears at the endpoint of graph. Removing it." << std::endl;
-		g->RemovePoint(g->GetN()-1);
-	}
-
-	// int nbins = g->GetN();
-	// for (int i=0; i<nbins; i++){
-	//    std::cout << g->GetY()[i] << std::endl;
-	// }
-
 
 	// add end points of scan range
 	if ( !plotPoints )
@@ -164,8 +150,7 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
     if ( last && arg->isQuickhack(25) ) g->SetLineWidth(3);
 	}
 
-	if (CLsType==1) g->SetLineColor(kBlue-7);
-	else if (CLsType==2) g->SetLineColor(kBlue+2);
+	if (CLsType>0) g->SetLineColor(s->getLineColor() - 1);
 
 	if ( plotPoints ){
 		g->SetLineWidth(1);
@@ -546,8 +531,12 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
   else          gObs->Draw("LPsame");
   leg->Draw("same");
 
-  // drawCLguideLine(0.1);
-  drawCLguideLines();
+  if(arg->CL.size()==0){
+  	drawCLguideLine(0.1);
+  }
+  else{
+  	drawCLguideLines();
+  }
 
   double yGroup = 0.83;
   if ( arg->plotprelim || arg->plotunoff ) yGroup = 0.8;
@@ -558,29 +547,7 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
   m_mainCanvas->Update();
   m_mainCanvas->Modified();
   m_mainCanvas->Show();
-  savePlot( m_mainCanvas, name+"_expected"+arg->plotext );
-
-  // Draw debug plots to check the smoothing
-  if(arg->debug){
-  	// make the colors a bit more red to make the histograms visible against smoothed curve
-	hErr2Dn->SetLineColor( TColor::GetColor("#6182bd") );
-	hErr2Dn->SetLineWidth(3);
-
-	hErr2Up->SetLineColor( TColor::GetColor("#6182bd") );
-	hErr2Up->SetLineWidth(3);
-
-	hErr1Dn->SetLineColor( TColor::GetColor("#cecae1") );
-	hErr1Dn->SetLineWidth(3);
-
-	hErr1Up->SetLineColor( TColor::GetColor("#cecae1") );
-	hErr1Up->SetLineWidth(3);
-
-  	hErr1Dn->Draw("SAME");
-  	hErr1Up->Draw("SAME");
-  	hErr2Dn->Draw("SAME");
-  	hErr2Up->Draw("SAME");
-  	savePlot( m_mainCanvas, name+"_expected_debug"+arg->plotext );
-  }
+  savePlot( m_mainCanvas, name+"_cls"+arg->plotext );
   m_mainCanvas->SetTicks(false);
 }
 
@@ -727,8 +694,19 @@ void OneMinusClPlot::drawCLguideLine(float pvalue)
 
 	float labelPos = xmin+(xmax-xmin)*0.10;
 	if ( arg->isQuickhack(2) ) labelPos = xmin+(xmax-xmin)*0.55;
-  if ( arg->isQuickhack(23) ) labelPos = xmin+(xmax-xmin)*0.8;
-  if ( arg->isQuickhack(31) ) labelPos = xmin+(xmax-xmin)*0.01;
+  	if ( arg->isQuickhack(23) ) labelPos = xmin+(xmax-xmin)*0.8;
+  	if ( arg->isQuickhack(31) ) labelPos = xmin+(xmax-xmin)*0.01;
+
+  	if (arg->CL.size()>1){
+  		std::sort(arg->CL.begin(),arg->CL.end());
+  		for ( int i =0; i<arg->CL.size(); i++){
+  			if(abs((1-pvalue) - arg->CL[i]/100.)<0.0001 && abs(arg->CL[i]-arg->CL[i-1])<8){
+  				if(!arg->isQuickhack(23)) labelPos= labelPos+(xmax-xmin)*0.15;
+  				else labelPos= labelPos-(xmax-xmin)*0.15;
+  			}
+  		}
+  	}
+
 	float labelPosYmin = 0;
 	float labelPosYmax = 0;
 
