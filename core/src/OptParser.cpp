@@ -112,6 +112,7 @@ OptParser::OptParser():
   scalestaterr = -999.;
 	smooth2d = false;
   toyFiles = "";
+  updateFreq = 10;
 	usage = false;
 	verbose = false;
 }
@@ -215,6 +216,7 @@ void OptParser::defineOptions()
   availableOptions.push_back("toyFiles");
 	availableOptions.push_back("title");
 	availableOptions.push_back("usage");
+  availableOptions.push_back("updateFreq");
 	availableOptions.push_back("unoff");
 	availableOptions.push_back("var");
 	availableOptions.push_back("verbose");
@@ -451,6 +453,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::ValueArg<string> jobdirArg("", "jobdir", "Give absolute job-directory if working on batch systems.", false, "default", "string");
   TCLAP::ValueArg<string> toyFilesArg("", "toyFiles", "Pass some different toy files, for example if you want 1D projection of 2D FC.", false, "default", "string" );
   TCLAP::ValueArg<string> saveArg("","save", "Save the workspace this file name", false, "", "string");
+  TCLAP::ValueArg<int> updateFreqArg("","updateFreq", "Frequency with which to update plots when running in interactive mode (higher number will be faster). Default: 10", false, 10, "int" );
 
 	// --------------- switch arguments
   TCLAP::SwitchArg batcheosArg("","batcheos", "When submitting batch jobs (for plugin) write the output to eos", false);
@@ -677,6 +680,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "verbose" ) ) cmd.add( verboseArg );
 	if ( isIn<TString>(bookedOptions, "var" ) ) cmd.add(varArg);
 	if ( isIn<TString>(bookedOptions, "usage" ) ) cmd.add( usageArg );
+  if ( isIn<TString>(bookedOptions, "updateFreq" ) ) cmd.add( updateFreqArg );
 	if ( isIn<TString>(bookedOptions, "unoff" ) ) cmd.add( plotunoffArg );
 	if ( isIn<TString>(bookedOptions, "title" ) ) cmd.add( titleArg );
   if ( isIn<TString>(bookedOptions, "toyFiles" ) ) cmd.add( toyFilesArg );
@@ -875,6 +879,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	smooth2d          = smooth2dArg.getValue();
   toyFiles          = toyFilesArg.getValue();
 	usage             = usageArg.getValue();
+  updateFreq        = updateFreqArg.getValue();
 	verbose           = verboseArg.getValue();
 
 	//

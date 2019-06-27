@@ -175,6 +175,7 @@ namespace Utils
 		lumi9fb,
 		lumi50ab,
 		lumi50fb,
+		lumi300fb,
 		lambda1_3fb,
 		lambdafree_3fb,
 		manual,
