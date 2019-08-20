@@ -73,6 +73,7 @@ void BatchScriptWriter::writeScripts(OptParser *arg, vector<Combiner*> *cmb){
       TString eos_path = Form("/eos/lhcb/user/m/mkenzie/gammacombo/%02d%02d%04d",day,month,year);
       // system(Form("/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select mkdir %s",eos_path.Data()));
       system(Form("/usr/bin/eos mkdir %s",eos_path.Data()));
+
       eos_path += Form("/%s",dirname.Data());
       // system(Form("/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select mkdir -p %s",eos_path.Data()));
       system(Form("/usr/bin/eos mkdir -p %s",eos_path.Data()));

@@ -16,6 +16,8 @@ TString Utils::ConfigToTString(config s)
 	if ( s == babar2012 )            return "babar2012";
 	if ( s == babar_dpi0 )           return "babar_dpi0";
 	if ( s == babar_dg )             return "babar_dg";
+  if ( s == belle )                return "belle";
+  if ( s == belle_md )             return "belle_md";
 	if ( s == belle2006 )            return "belle2006";
 	if ( s == belle2007 )            return "belle2007";
 	if ( s == belle2009 )            return "belle2009";
@@ -25,6 +27,7 @@ TString Utils::ConfigToTString(config s)
 	if ( s == belle2014 )            return "belle2014";
 	if ( s == belle_dpi0 )           return "belle_dpi0";
 	if ( s == belle_dg )             return "belle_dg";
+  if ( s == cdf )                  return "cdf";
 	if ( s == cdf2007 )              return "cdf2007";
 	if ( s == cdf2012 )              return "cdf2012";
 	if ( s == cdf2013 )              return "cdf2013";
@@ -33,6 +36,8 @@ TString Utils::ConfigToTString(config s)
 	if ( s == cleo2001 )             return "cleo2001";
 	if ( s == cleo2012 )             return "cleo2012";
 	if ( s == cleo2014 )             return "cleo2014";
+	if ( s == cleo2015 )             return "cleo2015";
+	if ( s == cleo2016 )             return "cleo2016";
 	if ( s == cleoFullDP )           return "cleoFullDP";
 	if ( s == combos2008 )           return "combos2008";
 	if ( s == default_config )       return "default_config";
@@ -42,6 +47,10 @@ TString Utils::ConfigToTString(config s)
 	if ( s == highrb )               return "highrb";
 	if ( s == highstattoy )          return "highstattoy";
 	if ( s == lhcb)                  return "lhcb";
+	if ( s == lhcb_kk)               return "lhcb_kk";
+	if ( s == lhcb_pipi)             return "lhcb_pipi";
+	if ( s == lhcb_md)               return "lhcb_md";
+	if ( s == lhcb_mi)               return "lhcb_mi";
 	if ( s == lhcb2011 )             return "lhcb2011";
 	if ( s == lhcb2012 )             return "lhcb2012";
 	if ( s == lhcb2013 )             return "lhcb2013";
@@ -73,7 +82,9 @@ TString Utils::ConfigToTString(config s)
 	if ( s == manual )               return "manual";
 	if ( s == none )                 return "none";
 	if ( s == nophicorr ) 					 return "nophicorr";
+	if ( s == run2 )                 return "run2";
 	if ( s == sneha )                return "sneha";
+	if ( s == SM )                   return "SM";
 	if ( s == toy )                  return "toy";
 	if ( s == truth )                return "truth";
 	if ( s == useBicubic )           return "useBicubic";
@@ -87,7 +98,7 @@ TString Utils::ConfigToTString(config s)
 	if ( s == year2014 )             return "year2014";
 	if ( s == zero )                 return "zero";
 
-	cout << "PDF_Abs::ConfigToTString() : ERROR : Config not found: " << s << endl;
+	cout << "Utils::ConfigToTString() : ERROR : Config not found: " << s << endl;
 	exit(1);
 }
 
@@ -97,6 +108,6 @@ Utils::config Utils::TStringToConfig(TString c)
 	if ( c == "truth"   )           return truth;
 	if ( c == "zero"    )           return zero;
 	if ( c == "manual"  )           return manual;
-	cout << "PDF_Abs::TStringToConfig() : ERROR : Config not found." << endl;
+	cout << "Utils::TStringToConfig() : ERROR : Config not found." << endl;
 	exit(1);
 }

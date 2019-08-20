@@ -85,7 +85,7 @@
 		if( opt->CL.size()>0 ){
 			for ( auto level: opt->CL ) {
 				ConfidenceLevels.push_back(level/100.);
-			} 
+			}
 		}
 		else{
 			ConfidenceLevels.push_back(0.6827);	// 1sigma
@@ -729,7 +729,7 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 			float y = 1.- ConfidenceLevels[c];
 			float sol = getScanVar1Solution(iSol);
 			int sBin = histogramCL->FindBin(sol);
-			std::cout << "solution bin: " << sBin << std::endl;
+			if (arg->debug) std::cout << "solution bin: " << sBin << std::endl;
 			if(histogramCL->IsBinOverflow(sBin)||histogramCL->IsBinUnderflow(sBin)){
 				std::cout << "MethodAbsScan::calcCLintervals(): WARNING: no solution in scanrange found, will use lowest bin!" << std::endl;
 				sBin=1;
@@ -875,6 +875,13 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 	}
 
 	cout << endl;
+
+  // Print fit chi2 etc.
+  double chi2 = this->getSolution(0)->minNll();
+  int nObs = combiner->getObservables()->getSize();
+  int nPar = combiner->getParameters()->getSize();
+  double prob = TMath::Prob(chi2,nObs-nPar);
+  cout << "Fit quality: chi2/(nObs-nPar) = " << Form("%.2f",chi2) << "/(" << nObs << "-" << nPar << "), P = " << Form("%4.1f%%",prob*100.) << endl; cout << endl;
 }
 
 ///

@@ -1269,3 +1269,18 @@ std::vector<double> Utils::computeNormalQuantiles( std::vector<double> &values, 
   }
   return quantiles;
 }
+
+double Utils::getCorrelationFactor( const vector<double> &a, const vector<double> &b) {
+
+  assert( a.size() == b.size() );
+
+  double mean_a = mean(a);
+  double mean_b = mean(b);
+
+  double s = 0.;
+  for (int i=0; i<a.size(); i++) {
+   s += (a[i] - mean_a)*(b[i] - mean_b);
+  }
+
+  return s / (a.size()*stddev(a)*stddev(b));
+}
