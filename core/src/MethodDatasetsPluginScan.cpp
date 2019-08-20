@@ -434,17 +434,17 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
 
         // build test statistic
         double sb_teststat_measured= t.chi2min - this->chi2minGlobal;
-        sb_teststat_measured = bestfitpoint <= t.scanpoint ? sb_teststat_measured : 0.; // if muhat < mu then q_mu = 0
+        // sb_teststat_measured = bestfitpoint <= t.scanpoint ? sb_teststat_measured : 0.; // if muhat < mu then q_mu = 0
 
         double sb_teststat_toy= t.chi2minToy - t.chi2minGlobalToy;
-        sb_teststat_toy = t.scanbest <= t.scanpoint ? sb_teststat_toy : 0.; // if muhat < mu then q_mu = 0
+        // sb_teststat_toy = t.scanbest <= t.scanpoint ? sb_teststat_toy : 0.; // if muhat < mu then q_mu = 0
 
 
         double b_teststat_measured= t.chi2minBkg - this->chi2minGlobal;
-        b_teststat_measured = bestfitpoint <= 0. ? b_teststat_measured : 0.; // if muhat < mu then q_mu = 0
+        // b_teststat_measured = bestfitpoint <= 0. ? b_teststat_measured : 0.; // if muhat < mu then q_mu = 0
 
         double b_teststat_toy = t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy;
-        b_teststat_toy = t.scanbestBkg <= 0. ? b_teststat_toy : 0.;  // if muhat < mu then q_mu = 0
+        // b_teststat_toy = t.scanbestBkg <= 0. ? b_teststat_toy : 0.;  // if muhat < mu then q_mu = 0
 
 
 
@@ -505,7 +505,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         if(valid && t.chi2minToy - t.chi2minGlobalToy>-1.e-6){
         	double sbTestStatVal_true = t.chi2minToy - t.chi2minGlobalToy;
             if(sbTestStatVal_true<0&&sbTestStatVal_true>-1.e-6) sbTestStatVal_true = 0.0;
-        	sbTestStatVal_true = t.scanbest <= t.scanpoint ? sbTestStatVal_true : 0.; // if muhat < mu then q_mu = 0
+        	// sbTestStatVal_true = t.scanbest <= t.scanpoint ? sbTestStatVal_true : 0.; // if muhat < mu then q_mu = 0
             sampledSchi2Values[hBin].push_back(sbTestStatVal_true);
         }
 
@@ -515,7 +515,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         if(bkgTestStatVal<0&&bkgTestStatVal>-1.e-6) bkgTestStatVal=0.0;
         
         if( !BadBkgFit ){
-            bkgTestStatVal = t.scanbestBkg <= 0. ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
+            // bkgTestStatVal = t.scanbestBkg <= 0. ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
             cout << "best bkg fit: " << t.scanbestBkg << std::endl;
             // bkgTestStatVal = t.scanbestBkgfitBkg <= 0. ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
             if(hBin==2){
@@ -526,7 +526,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
             // chi2minBkgToy is the best fit at scanpoint of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
             double sbTestStatVal = t.chi2minBkgToy - t.chi2minGlobalBkgToy;
             if(sbTestStatVal<0&&sbTestStatVal>-1.e-6) sbTestStatVal=0.0;
-            sbTestStatVal = t.scanbestBkg <= t.scanpoint ? sbTestStatVal : 0.; // if muhat < mu then q_mu = 0
+            // sbTestStatVal = t.scanbestBkg <= t.scanpoint ? sbTestStatVal : 0.; // if muhat < mu then q_mu = 0
             sampledSBValues[hBin].push_back( sbTestStatVal );
         }
 
