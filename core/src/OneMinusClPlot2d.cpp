@@ -48,8 +48,14 @@
   // otherwise use some defaults
 
   // 1st scanner
-  markerstyle.push_back(3);
-  markersize.push_back(1.6);
+  if ( arg->plotsolutions[0]==2 ) {
+    markerstyle.push_back(20);
+    markersize.push_back(1.1);
+  }
+  else {
+    markerstyle.push_back(3);
+    markersize.push_back(1.6);
+  }
   // 1 simga
   linecolor[0].push_back(TColor::GetColor(24,170,231));
   linestyle[0].push_back(kSolid);
@@ -781,7 +787,7 @@ void OneMinusClPlot2d::Draw()
   }
 
   if ( arg->isQuickhack(14) ){
-    m_mainCanvas->GetPad(0)->SetLeftMargin(0.14);
+    m_mainCanvas->GetPad(0)->SetLeftMargin(0.16);
   }
 
   TH2F *hCL = histos[0];
@@ -799,12 +805,6 @@ void OneMinusClPlot2d::Draw()
   haxes->GetXaxis()->SetTitleFont(font);
   haxes->GetYaxis()->SetTitleFont(font);
   haxes->GetXaxis()->SetTitleOffset(0.85);
-  if ( arg->isQuickhack(14) ){
-    haxes->GetYaxis()->SetTitleOffset(0.6);
-  }
-  else {
-    haxes->GetYaxis()->SetTitleOffset(0.95);
-  }
   haxes->GetXaxis()->SetLabelSize(labelsize);
   haxes->GetYaxis()->SetLabelSize(labelsize);
   haxes->GetXaxis()->SetTitleSize(titlesize);
@@ -952,7 +952,7 @@ void OneMinusClPlot2d::Draw()
     axisl->SetLabelFont(font);
     axisl->SetLabelSize(labelsize);
     axisl->SetTitle(xTitle!="" ? xTitle : (TString)scanners[0]->getScanVar2()->GetTitle() + TString(" [#circ]"));
-    axisl->SetTitleOffset(0.8);
+    axisl->SetTitleOffset(0.9);
     axisl->SetTitleSize(titlesize);
     axisl->SetTitleFont(font);
     axisl->Draw();
