@@ -131,7 +131,9 @@ void CLIntervalPrinter::savePython()
 				_method.Data());
 		previousCL = thisCL;
 	}
-	outf << "  ]" << endl;
+	if(previousCL!=-1){
+		outf << "  ]" << endl;
+	}
 	outf << "}" << endl;
 	outf.close();
 }
