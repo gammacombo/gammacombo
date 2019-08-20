@@ -453,8 +453,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         if ( valid && (sb_teststat_toy) >= (sb_teststat_measured) ) { //t.chi2minGlobal ){
             h_better->Fill(t.scanpoint);
         }
-        // if ( valid && (t.chi2minToy - t.chi2minGlobalToy) >= (t.chi2min - this->chi2minBkg) ) { //t.chi2minGlobal ){
-        if ( valid && (sb_teststat_toy) >= (b_teststat_measured) ) { //t.chi2minGlobal ){
+        if ( valid && (t.chi2minToy - t.chi2minGlobalToy) >= (t.chi2min - this->chi2minBkg) ) { //t.chi2minGlobal ){
         // if ( valid && (sb_teststat_toy) > (b_teststat_measured) ) { //t.chi2minGlobal ){
             h_better_cls->Fill(t.scanpoint);
         }
@@ -516,7 +515,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         
         if( !BadBkgFit ){
             // bkgTestStatVal = t.scanbestBkg <= 0. ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
-            cout << "best bkg fit: " << t.scanbestBkg << std::endl;
+            // cout << "best bkg fit: " << t.scanbestBkg << std::endl;
             // bkgTestStatVal = t.scanbestBkgfitBkg <= 0. ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
             if(hBin==2){
                 // std::cout << bkgTestStatVal << std::endl;
@@ -659,15 +658,6 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
             exit(EXIT_FAILURE);
         }
 
-        TH1F *bkg_pvals_cls  = new TH1F("bkg_clsvals", "bkg cls p values", 50, -0.1, 1.1);
-        bkg_pvals_cls->SetLineColor(1);
-        bkg_pvals_cls->SetLineWidth(3);
-        TH1F *bkg_pvals_clsb  = new TH1F("bkg_clsbvals", "bkg clsb p values", 50, -0.1, 1.1);
-        bkg_pvals_clsb->SetLineColor(2);
-        bkg_pvals_clsb->SetLineWidth(3);
-        TH1F *bkg_pvals_clb  = new TH1F("bkg_clbvals", "bkg clb p values", 50, -0.1, 1.1);
-        bkg_pvals_clb->SetLineColor(3);
-        bkg_pvals_clb->SetLineWidth(3);
         for(int j=0; j<sampledBValues[i].size(); j++){
             double clsb_val = getVectorFracAboveValue( sampledSchi2Values[i], sampledSBValues[i][j]); // p_cls+b value for each bkg-only toy
             double clb_val = getVectorFracAboveValue( sampledBValues[i], sampledBValues[i][j]); // p_clb value for each bkg-only toy CAUTION: duplicate use of sampledBValues
@@ -677,29 +667,43 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
             //     cls_val=0.;
             // }
 
-            if(clsb_val>0.5&& clb_val>0.5){
-                std::cout<<"large clsb val: " << clsb_val << "clb: " << clb_val << " for test statistic: " << sampledSBValues[i][j] << std::endl;
-                cls_val=1.0;
-            }
+            // if(clsb_val>0.5&& clb_val>0.5){
+            //     std::cout<<"large clsb val: " << clsb_val << "clb: " << clb_val << " for test statistic: " << sampledSBValues[i][j] << std::endl;
+            //     cls_val=1.0;
+            // }
 
 
             clsb_vals.push_back(clsb_val);
             clb_vals.push_back(clb_val);
             // if(cls_val<=1.){
         	cls_vals.push_back(cls_val);
-            bkg_pvals_cls->Fill(TMath::Min( cls_val , 1.));
-            bkg_pvals_clsb->Fill(TMath::Min( clsb_val , 1.));
-            bkg_pvals_clb->Fill(TMath::Min( clb_val , 1.));
             // }
         }
-        TCanvas *canvasdebug = new TCanvas("canvasdebug", "canvas1", 1200, 1000);
-        bkg_pvals_cls->Draw();
-        bkg_pvals_clsb->Draw("same");
-        bkg_pvals_clb->Draw("same");
-        std::string pvalue_outstream;
-		pvalue_outstream ="p_values" + std::to_string(i) + ".pdf";
-        canvasdebug->SaveAs(pvalue_outstream.c_str());
 
+        if (arg->debug ){
+            TH1F *bkg_pvals_cls  = new TH1F("bkg_clsvals", "bkg cls p values", 50, -0.1, 1.1);
+            bkg_pvals_cls->SetLineColor(1);
+            bkg_pvals_cls->SetLineWidth(3);
+            TH1F *bkg_pvals_clsb  = new TH1F("bkg_clsbvals", "bkg clsb p values", 50, -0.1, 1.1);
+            bkg_pvals_clsb->SetLineColor(2);
+            bkg_pvals_clsb->SetLineWidth(3);
+            TH1F *bkg_pvals_clb  = new TH1F("bkg_clbvals", "bkg clb p values", 50, -0.1, 1.1);
+            bkg_pvals_clb->SetLineColor(3);
+            bkg_pvals_clb->SetLineWidth(3);
+            for(int j=0; j<sampledBValues[i].size(); j++){
+                bkg_pvals_cls->Fill(TMath::Min( cls_vals[j] , 1.));
+                bkg_pvals_clsb->Fill(TMath::Min( clsb_vals[j] , 1.));
+                bkg_pvals_clb->Fill(TMath::Min( clb_vals[j] , 1.));                
+            }
+
+            TCanvas *canvasdebug = new TCanvas("canvasdebug", "canvas1", 1200, 1000);
+            bkg_pvals_cls->Draw();
+            bkg_pvals_clsb->Draw("same");
+            bkg_pvals_clb->Draw("same");
+            std::string pvalue_outstream;
+    		pvalue_outstream ="p_values" + std::to_string(i) + ".pdf";
+            canvasdebug->SaveAs(pvalue_outstream.c_str());
+        }
 
         std::vector<double> probs  = {TMath::Prob(4,1)/2., TMath::Prob(1,1)/2., 0.5, 1.-(TMath::Prob(1,1)/2.), 1.-(TMath::Prob(4,1)/2.) };
         std::vector<double> quantiles_clsb = Quantile<double>( clsb_vals, probs );
