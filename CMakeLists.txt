@@ -186,6 +186,7 @@ ADD_SHARED_LIBRARY( ${PROJECT_NAME}Components ${CORE_LIB_SOURCES} )
 add_dependencies( ${PROJECT_NAME}Components ${PROJECT_NAME}Dict )
 # add ROOT libraries to the linker command
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME}Components ${ROOT_LIBRARIES} )
+install( FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Dict_rdict.pcm DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/lib )
 
 ######################################
 #
