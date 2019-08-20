@@ -800,9 +800,6 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 	}
 	printCLintervals(CLsType);
 
-
-
-
 	//
 	// scan again from the histogram boundaries
 	//
@@ -876,7 +873,9 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 
 	cout << endl;
 
-  // Print fit chi2 etc.
+  // Print fit chi2 etc. (not done for datasets running)
+  if ( !combiner ) return;
+  if ( !combiner->isCombined() ) return;
   double chi2 = this->getSolution(0)->minNll();
   int nObs = combiner->getObservables()->getSize();
   int nPar = combiner->getParameters()->getSize();
