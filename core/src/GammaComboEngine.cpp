@@ -1150,7 +1150,7 @@ void GammaComboEngine::make1dProbScan(MethodProbScan *scanner, int cId)
 	cout << "\nResults:" << endl;
 	cout <<   "========\n" << endl;
 	scanner->printLocalMinima();
-  	scanner->saveLocalMinima(m_fnamebuilder->getFileNameSolution(scanner));
+  scanner->saveLocalMinima(m_fnamebuilder->getFileNameSolution(scanner));
 	scanner->calcCLintervals();
 	if (arg->cls.size()>0) scanner->calcCLintervals(1); // for prob method CLsType>1 doesn't exist
 	if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
@@ -1278,7 +1278,7 @@ void GammaComboEngine::make1dProbPlot(MethodProbScan *scanner, int cId)
 {
 
   	if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
-		scanner->setDrawSolution(arg->plotsolutions[cId]);
+		  scanner->setDrawSolution(arg->plotsolutions[cId]);
     	if ( arg->cls.size()>0 ) {
       		if ( runOnDataSet ) ((MethodDatasetsProbScan*)scanner)->plotFitRes(m_fnamebuilder->getFileNamePlot(cmb)+"_fit");
       		scanner->plotOn(plot, 1); // for prob ClsType>1 doesn't exist
@@ -2323,11 +2323,12 @@ void GammaComboEngine::runApplication()
 ///
 void GammaComboEngine::printBanner()
 {
-	const char* VTAG="0.9";
+	const char* VTAG="1.0";
 	cout << endl
-		<< "\033[1mGammaCombo v" << VTAG << " -- Developed by Till Moritz Karbach\033[0m " << endl
-		<< "                   Copyright (C) 2014, moritz.karbach@gmail.com" << endl
-		<< "                   All rights reserved under GPLv3, http://www.gnu.org/licenses/gpl.txt" << endl << endl ;
+		<< "\033[1mGammaCombo v" << VTAG << " \033[0m"
+    //<< "\033[1m-- Developed by Till Moritz Karbach\033[0m " << endl
+    //<< "                   Copyright (C) 2014, moritz.karbach@gmail.com" << endl
+		<< "-- All rights reserved under GPLv3, http://www.gnu.org/licenses/gpl.txt" << endl << endl ;
 }
 
 ///
