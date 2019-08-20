@@ -182,7 +182,6 @@ std::vector<T> Utils::Quantile(const std::vector<T>& inData, const std::vector<T
 
         T datLeft = data.at(left);
         T datRight = data.at(right);
-
         T quantile = Lerp<T>(datLeft, datRight, poi - left);
 
         quantiles.push_back(quantile);
@@ -197,6 +196,7 @@ double Utils::getVectorFracAboveValue(const std::vector<T>& vec, T val) {
   int nabove = 0;
   for (int i=0; i<vec.size(); i++) {
     if ( vec[i] >= val ) nabove++;
+    // if ( vec[i] > val ) nabove++;
   }
   return double(nabove)/vec.size();
 }
