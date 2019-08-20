@@ -72,6 +72,7 @@ class MethodPluginScan : public MethodAbsScan
 		void            readScan2dTrees(int runMin=1, int runMax=1);
 		int             getNtoys(){return nToys;};
 		double          getPvalue1d(RooSlimFitResult* plhScan, double chi2minGlobal, ToyTree* t=0, int id=0);
+		void			makeControlPlotsCLs(map<int, vector<double> > bVals, map<int, vector<double> > sbVals);
 
 	protected:
 		TH1F*           	analyseToys(ToyTree* t, int id=-1);
@@ -81,9 +82,12 @@ class MethodPluginScan : public MethodAbsScan
 		RooSlimFitResult*	getParevolPoint(float scanpoint);
 
 
-		int             nToys;              ///< number of toys to be generated at each scan point
-		MethodProbScan* profileLH;          ///< external scanner holding the profile likelihood: DeltaChi2 of the scan PDF on data
-		MethodProbScan* parevolPLH;         ///< external scanner defining the parameter evolution: set to profileLH unless for the Hybrid Plugin
+		int             		nToys;              ///< number of toys to be generated at each scan point
+		MethodProbScan* 		profileLH;          ///< external scanner holding the profile likelihood: DeltaChi2 of the scan PDF on data
+		MethodProbScan* 		parevolPLH;         ///< external scanner defining the parameter evolution: set to profileLH unless for the Hybrid Plugin
+		RooDataSet*				BkgToys;
+		std::vector<double>		chi2minBkgBkgToysvector;	///< saving the fits of the bkg-only pdf to the bkg-only toy
+		std::vector<double>		chi2minGlobalBkgToysvector; ///< saving the fits of the global pdf to the bkg-only toy
 };
 
 #endif

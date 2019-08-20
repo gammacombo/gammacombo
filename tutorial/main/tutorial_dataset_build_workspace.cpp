@@ -51,7 +51,7 @@ int main()
   RooGaussian norm_constant_constraint("norm_constant_constraint","norm_constant_constraint", norm_constant_obs, norm_constant, norm_constant_sigma);
 
   // Now we can build the mass model by adding the signal and background probability density functions
-  RooRealVar branchingRatio("branchingRatio", "branchingRatio", 1e-7, 0,  0.0001);  // this is the branching ratio, the parameter of interest
+  RooRealVar branchingRatio("branchingRatio", "branchingRatio", 1e-7, -1e-6,  0.0001);  // this is the branching ratio, the parameter of interest
   RooFormulaVar n_sig("Nsig", "branchingRatio/norm_constant", RooArgList(branchingRatio, norm_constant));
   RooExtendPdf extended_sig_model("extended_sig_model", "extended_sig_model", signal_model, n_sig);
 

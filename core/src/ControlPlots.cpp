@@ -116,7 +116,6 @@ void ControlPlots::ctrlPlotChi2()
 	t->Draw("chi2minToy", ctrlPlotCuts && "abs(chi2minToy)<1000");
 	float maxPlottedChi2 = ((TH1F*)(gPad->GetPrimitive("htemp")))->GetXaxis()->GetXmax();
 	maxPlottedChi2 = TMath::Min(maxPlottedChi2, (float)75.);
-
 	// plot 1: 2D plot of chi scan vs. chi2 global
 	pad = (TPad*)c2->cd(ip++);
 	t->Draw(Form("chi2minToy:chi2minGlobalToy>>htemp1(75,0,%f,75,0,%f)",
@@ -192,14 +191,15 @@ void ControlPlots::ctrlPlotChi2()
 	// possibly background
 	int nBkg = t->Draw("-(chi2minToy-chi2minGlobalToy)",
 			ctrlPlotCuts && Form("chi2minToy-chi2minGlobalToy<0 && chi2minToy<%f && chi2minGlobalToy<%f", maxPlottedChi2, maxPlottedChi2));
-	TH1F* h4bkg = (TH1F*)(gPad->GetPrimitive("htemp"))->Clone("h4bkg");
+	TH1F* h4bkg = (TH1F*) h4sig->Clone("h4bkg");
+	if (nBkg !=0) h4bkg = (TH1F*)(gPad->GetPrimitive("htemp"))->Clone("h4bkg");
 	if ( nBkg==0 ) h4bkg->Scale(0); // if no bkg events the htemp from the signal Draw gets cloned again!
 	h4sig->Draw();
 	h4sig->GetXaxis()->SetTitle("#Delta#chi^{2} scan-free");
 	h4sig->GetYaxis()->SetTitle("toys");
 	makePlotsNice("h4sig");
-	// h4bkg->SetLineColor(kRed);
-	// h4bkg->Draw("same");
+	h4bkg->SetLineColor(kRed);
+	h4bkg->Draw("same");
 	pad->SetLogy();
 	// move first stat box a little
 	gPad->Update(); //  needed else FindObject() returns a null pointer

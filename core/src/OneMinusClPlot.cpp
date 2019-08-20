@@ -67,8 +67,6 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	if ( plotPoints ) g = new TGraphErrors(hCL->GetNbinsX());
 	else              g = new TGraph(hCL->GetNbinsX());
 	g->SetName(getUniqueRootName());
-
-
 	for ( int i=0; i<hCL->GetNbinsX(); i++ ){
 		g->SetPoint(i, hCL->GetBinCenter(i+1), hCL->GetBinContent(i+1));
 		if ( plotPoints ) ((TGraphErrors*)g)->SetPointError(i, 0.0, hCL->GetBinError(i+1));
@@ -94,18 +92,6 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	//   if ( plotPoints ) err0 = ((TGraphErrors*)g)->GetErrorY(0);
 	//   if ( plotPoints ) ((TGraphErrors*)g)->SetPointError(g->GetN()-1, 0.0, err0);
 	// }
-
-	// check whether a strong jump appears at the last point. That happens somehow for the CLs prob method when converting the histogram to TGraph
-	if ((g->GetY()[g->GetN()-1]-g->GetY()[g->GetN()-2])>0.5){
-		std::cout << "OneMinusClPlot::scan1dPlot() : Unexpected jump appears at the endpoint of graph. Removing it." << std::endl;
-		g->RemovePoint(g->GetN()-1);
-	}
-
-	// int nbins = g->GetN();
-	// for (int i=0; i<nbins; i++){
-	//    std::cout << g->GetY()[i] << std::endl;
-	// }
-
 
 	// add end points of scan range
 	if ( !plotPoints )
@@ -427,6 +413,15 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
     gErr1Dn = (TGraph*)smoother->SmoothSuper( gErr1DnRaw )->Clone("gErr1Dn");
     gErr2Up = (TGraph*)smoother->SmoothSuper( gErr2UpRaw )->Clone("gErr2Up");
     gErr2Dn = (TGraph*)smoother->SmoothSuper( gErr2DnRaw )->Clone("gErr2Dn");
+
+    //alternative smoothing option, needs more fiddling
+    // gExp    = (TGraph*)smoother->SmoothKern( gExpRaw   ,"normal",0.07e-8)->Clone("gExp");
+    // gErr1Up = (TGraph*)smoother->SmoothKern( gErr1UpRaw,"normal",0.19e-8)->Clone("gErr1Up");
+    // gErr1Dn = (TGraph*)smoother->SmoothKern( gErr1DnRaw,"normal",0.19e-8)->Clone("gErr1Dn");
+    // gErr2Up = (TGraph*)smoother->SmoothKern( gErr2UpRaw,"normal",0.19e-8)->Clone("gErr2Up");
+    // gErr2Dn = (TGraph*)smoother->SmoothKern( gErr2DnRaw,"normal",0.19e-8)->Clone("gErr2Dn");
+
+
     if ( arg->debug ) cout << "OneMinusClPlot::scan1dCLsPlot() : done smoothing graphs" << endl;
   }
   else {
@@ -545,7 +540,12 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
   else          gObs->Draw("LPsame");
   leg->Draw("same");
 
-  drawCLguideLine(0.1);
+  if(arg->CL.size()==0){
+  	drawCLguideLine(0.1);
+  }
+  else{
+  	drawCLguideLines();
+  }
 
   double yGroup = 0.83;
   if ( arg->plotprelim || arg->plotunoff ) yGroup = 0.8;
@@ -703,8 +703,19 @@ void OneMinusClPlot::drawCLguideLine(float pvalue)
 
 	float labelPos = xmin+(xmax-xmin)*0.10;
 	if ( arg->isQuickhack(2) ) labelPos = xmin+(xmax-xmin)*0.55;
-  if ( arg->isQuickhack(23) ) labelPos = xmin+(xmax-xmin)*0.8;
-  if ( arg->isQuickhack(31) ) labelPos = xmin+(xmax-xmin)*0.01;
+  	if ( arg->isQuickhack(23) ) labelPos = xmin+(xmax-xmin)*0.8;
+  	if ( arg->isQuickhack(31) ) labelPos = xmin+(xmax-xmin)*0.01;
+
+  	if (arg->CL.size()>1){
+  		std::sort(arg->CL.begin(),arg->CL.end());
+  		for ( int i =0; i<arg->CL.size(); i++){
+  			if(abs((1-pvalue) - arg->CL[i]/100.)<0.0001 && abs(arg->CL[i]-arg->CL[i-1])<8){
+  				if(!arg->isQuickhack(23)) labelPos= labelPos+(xmax-xmin)*0.15;
+  				else labelPos= labelPos-(xmax-xmin)*0.15;
+  			}
+  		}
+  	}
+
 	float labelPosYmin = 0;
 	float labelPosYmax = 0;
 

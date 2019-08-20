@@ -248,6 +248,16 @@ void MethodAbsScan::initScan()
     hCLs = new TH1F("hCLs" + getUniqueRootName(), "hCLs" + pdfName, nPoints1d, min1, max1);
     if (hCLs) delete hCLsFreq;
     hCLsFreq = new TH1F("hCLsFreq" + getUniqueRootName(), "hCLsFreq" + pdfName, nPoints1d, min1, max1);
+    if (hCLsExp) delete hCLsExp;
+    hCLsExp = new TH1F("hCLsExp" + getUniqueRootName(), "hCLsExp" + pdfName, nPoints1d, min1, max1);
+    if (hCLsErr1Up) delete hCLsErr1Up;
+    hCLsErr1Up = new TH1F("hCLsErr1Up" + getUniqueRootName(), "hCLsErr1Up" + pdfName, nPoints1d, min1, max1);
+    if (hCLsErr1Dn) delete hCLsErr1Dn;
+    hCLsErr1Dn = new TH1F("hCLsErr1Dn" + getUniqueRootName(), "hCLsErr1Dn" + pdfName, nPoints1d, min1, max1);
+    if (hCLsErr2Up) delete hCLsErr2Up;
+    hCLsErr2Up = new TH1F("hCLsErr2Up" + getUniqueRootName(), "hCLsErr2Up" + pdfName, nPoints1d, min1, max1);
+    if (hCLsErr2Dn) delete hCLsErr2Dn;
+    hCLsErr2Dn = new TH1F("hCLsErr2Dn" + getUniqueRootName(), "hCLsErr2Dn" + pdfName, nPoints1d, min1, max1);
 
 
 	// fill the chi2 histogram with very unlikely values such
@@ -730,7 +740,7 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 				if ( histogramCL->GetBinContent(i) < y ){
 					if ( n>25 ){
 						bool check = interpolate(histogramCL, i, y, sol, false, CLlo[c], CLloErr[c]);
-            if(!check && (arg->verbose ||arg->debug)) cout << "Using linear interpolation." << endl;
+            if(!check && (arg->verbose ||arg->debug)) cout << "MethodAbsScan::calcCLintervals(): Using linear interpolation." << endl;
 						if ( !check || CLlo[c]!=CLlo[c] ) interpolateSimple(histogramCL, i, y, CLlo[c]);
 					}
 					else{
@@ -745,7 +755,7 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 				if ( histogramCL->GetBinContent(i) < y ){
 					if ( n>25 ){
 						bool check = interpolate(histogramCL, i-1, y, sol, true, CLhi[c], CLhiErr[c]);
-						if(!check && (arg->verbose ||arg->debug)) cout << "Using linear interpolation." << endl;
+						if(!check && (arg->verbose ||arg->debug)) cout << "MethodAbsScan::calcCLintervals(): Using linear interpolation." << endl;
 						if (!check || CLhi[c]!=CLhi[c] ) interpolateSimple(histogramCL, i-1, y, CLhi[c]);
 					}
 					else{
@@ -1504,7 +1514,6 @@ void MethodAbsScan::calcCLintervalsSimple(int CLsType)
   {
     histogramCL = this->hCLsFreq;
   }
-
   if(CLsType==0 || (this->hCLs && CLsType==1) || (this->hCLsFreq && CLsType==2))
   {
 	  for (int c=0;c<3;c++){
@@ -1567,9 +1576,10 @@ const std::pair<double, double> MethodAbsScan::getBorders(const TGraph& graph, c
   TSpline* splines = NULL;
   if(qubic) splines = new TSpline3();
 
+
   double min_edge = graph.GetX()[0];
   // will never return smaller edge than min_edge
-  double max_edge = graph.GetX()[graph.GetN()-2];
+  double max_edge = graph.GetX()[graph.GetN()-1];
   // will never return higher edge than max_edge
   int scan_steps = 1000;
   double lower_edge = min_edge;

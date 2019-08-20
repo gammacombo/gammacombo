@@ -29,14 +29,13 @@ MethodDatasetsProbScan::MethodDatasetsProbScan(PDF_Datasets* PDF, OptParser* opt
     //Titus: add these variable initializations for compatibility
     //scanDisableDragMode = false; //Titus: Not needed at the moment
     nScansDone              = 0;
-    parsName = pdf->getParName();
+    parsName = PDF->getParName();
     ////////////////////////////
 
     w = PDF->getWorkspace();
     title = PDF->getTitle();
     name =  PDF->getName();
-		pdfName = name;
-		parsName = "parameters";
+	pdfName = name;
 
     inputFiles.clear();
 
@@ -461,7 +460,13 @@ int MethodDatasetsProbScan::scan1d(bool fast, bool reverse)
 
         // also save the chi2 of the free data fit to the tree:
         this->probScanTree->chi2minGlobal = this->getChi2minGlobal();
+        probScanTree->covQualFree = dataFreeFitResult->covQual();
+        probScanTree->statusFree = dataFreeFitResult->status();        
         this->probScanTree->chi2minBkg = this->getChi2minBkg();
+        if(bkgOnlyFitResult){
+            probScanTree->statusFreeBkg = bkgOnlyFitResult->status();
+            probScanTree->covQualFreeBkg = bkgOnlyFitResult->covQual();
+        }
 
         this->probScanTree->genericProbPValue = this->getPValueTTestStatistic(this->probScanTree->chi2min - this->probScanTree->chi2minGlobal);
         this->probScanTree->fill();
