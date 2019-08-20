@@ -863,17 +863,14 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 
 	cout << endl;
 
-  // Print fit chi2 etc.
+  // Print fit chi2 etc. (not done for datasets running)
+  if ( !combiner ) return;
+  if ( !combiner->isCombined() ) return;
   double chi2 = this->getSolution(0)->minNll();
-  if ( combiner->isCombined() ) {
-    int nObs = combiner->getObservables()->getSize();
-    int nPar = combiner->getParameters()->getSize();
-    double prob = TMath::Prob(chi2,nObs-nPar);
-    cout << "Fit quality: chi2/(nObs-nPar) = " << Form("%.2f",chi2) << "/(" << nObs << "-" << nPar << "), P = " << Form("%4.1f%%",prob*100.) << endl; cout << endl;
-  }
-  else { // this must be a dataset fit
-    cout << "Fit quality chi2 = " << chi2 << endl; cout << endl;
-  }
+  int nObs = combiner->getObservables()->getSize();
+  int nPar = combiner->getParameters()->getSize();
+  double prob = TMath::Prob(chi2,nObs-nPar);
+  cout << "Fit quality: chi2/(nObs-nPar) = " << Form("%.2f",chi2) << "/(" << nObs << "-" << nPar << "), P = " << Form("%4.1f%%",prob*100.) << endl; cout << endl;
 }
 
 ///
