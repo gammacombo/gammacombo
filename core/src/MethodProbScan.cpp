@@ -233,6 +233,8 @@ int MethodProbScan::scan1d(bool fast, bool reverse)
 			double oneMinusCLBkg = TMath::Prob(deltaChi2Bkg, 1);
 			hCLs->SetBinContent(hCLs->FindBin(scanvalue), oneMinusCLBkg);
 
+			if(i==0) chi2minBkg = chi2minScan;
+
 			// Save the 1-CL value and the corresponding fit result.
 			// But only if better than before!
 			if ( hCL->GetBinContent(hCL->FindBin(scanvalue)) <= oneMinusCL ){
