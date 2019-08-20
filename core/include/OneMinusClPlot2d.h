@@ -48,8 +48,10 @@ class OneMinusClPlot2d : public OneMinusClPlotAbs
 		bool		contoursOnly;
 		vector<vector<int> > linecolor;   ///< defines colors of 1 sigma lines and solutions of different scanners
 		vector<vector<int> > fillcolor;   ///< defines colors of 1 sigma areas of different scanners
-		vector<vector<int> > linestyle;   ///< defines the style of 1 sigma line of different scanners
-		vector<vector<int> > fillstyle;
+		vector<vector<int> > linestyle;   ///< defines the line style of 1 sigma line of different scanners
+		vector<vector<int> > fillstyle;   ///< defines the fill style of
+    vector<vector<int> > linewidth;   ///< defines the line width
+    vector<vector<float> > filltransparency; ///< defines the fill transparency
 		vector<int>          markerstyle; ///< defines marker styles of the solutions of different scanners
 		vector<float>        markersize;
 
@@ -58,6 +60,7 @@ class OneMinusClPlot2d : public OneMinusClPlotAbs
 		void            drawLegend();
 		bool 		    hasHistoType(histogramType t);
 		void            makeNewPlotStyle(TString htmlColor, int ROOTColor=-1);
+		void            makeOneColorPlotStyle(TString htmlColor, int ROOTColor=-1);
 
 		vector<histogramType>       histosType; ///< defines if histogram is interpreted as p-value or chi2
 		vector<ConfidenceContours*> m_contours; ///< holds the contours for each scanner

@@ -118,8 +118,8 @@ def resetColors(canv):
     if 'Graph' in prim.GetName():
       if prim.GetFillColor()>1000:
         color = r.gROOT.GetColor(prim.GetFillColor())
-        color.SetAlpha(0.7)
-      if prim.GetLineColor()>1000:
+        if color: color.SetAlpha(0.7)
+      if prim.GetLineColor()!=1:
         line_colors.append(prim.GetLineColor())
 
   return line_colors

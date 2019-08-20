@@ -78,10 +78,12 @@ class ToyTree
 		float chi2minToy;       ///< the chi2 of the fit to the toy with var fixed to scan point
 		float chi2minGlobalToy; ///< the chi2 of the free fit to the toy
 		float chi2minBkgToy;	  ///< the chi2 of the fit of the hypothesis value to the bkg toy distribution (for CLs method)
-    float chi2minGlobalBkgToy; ///< the chi2 of the free fit to the bkg only toys
+    	float chi2minGlobalBkgToy; ///< the chi2 of the free fit to the bkg only toys
+    	float chi2minBkgBkgToy; ///< the chi2 of the bkg fit to the bkg only toys
 		float scanbest;         ///< an alias to the free fit value of the scan variable
 		float scanbesty;        ///< an alias to the free fit value of the scan y variable in 2D scans
-    float scanbestBkg;      ///< an alias to the free fit value of the scan variable on the bkg only toy (for CLs method)
+    	float scanbestBkg;      ///< an alias to the free fit value of the scan variable on the bkg only toy (for CLs method)
+    	float scanbestBkgfitBkg;      ///< an alias to the fit value of the scan variable of the bkg fit on the bkg only toy (for CLs method)
 		float nrun;             ///< an ID to distinguish different runs, i.e. batch jobs
 		float ntoy; 						///< an ID to distinguish different toys
 		float npoint; 				  ///< an ID to distinguish different scan point
@@ -90,6 +92,12 @@ class ToyTree
 		float covQualFree;
 		float statusScan;
 		float covQualScan;
+		float statusFreeBkg;
+		float covQualFreeBkg;
+		float statusScanBkg;
+		float covQualScanBkg;
+		float statusBkgBkg;
+		float covQualBkgBkg;
 		float statusScanData;
 		float covQualScanData;
 		float nBergerBoos;

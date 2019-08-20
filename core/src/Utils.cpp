@@ -1044,7 +1044,7 @@ std::vector<TString> Utils::getParsWithName(const TString& subString, const RooA
 	std::vector<TString>      _results;
 	boost::split(_names,vars,boost::is_any_of(","));
 	for( std::string str : _names){
-		std::size_t found = str.find(subString);
+		std::size_t found = str.find(subString.Data());
 		if(found != std::string::npos){
 			_results.push_back(TString(str));
 		}
@@ -1189,7 +1189,7 @@ void Utils::HFAGLabel(const TString& label, Double_t xpos, Double_t ypos, Double
 
   Double_t ysiz_pixel(25);
   Double_t ysiz(Double_t(ysiz_pixel)/Double_t(pad_height));
-  Double_t xsiz(4.2*ysiz*Double_t(pad_height)/Double_t(pad_width));
+  Double_t xsiz(4.8*ysiz*Double_t(pad_height)/Double_t(pad_width));
 
   Double_t x1, x2, y1, y2;
   xsiz = scale*xsiz;
@@ -1223,7 +1223,7 @@ void Utils::HFAGLabel(const TString& label, Double_t xpos, Double_t ypos, Double
   tbox1->SetTextFont(76);
   tbox1->SetTextSize(24*scale);
   tbox1->SetTextAlign(22); //center-adjusted and vertically centered
-  tbox1->AddText(TString("HFAG"));
+  tbox1->AddText(TString("HFLAV"));
   tbox1->Draw();
   //
   TPaveText *tbox2 = new TPaveText(x1, y1-0.9*ysiz, x2, y2-ysiz, "BRNDC");
@@ -1268,4 +1268,19 @@ std::vector<double> Utils::computeNormalQuantiles( std::vector<double> &values, 
     quantiles.push_back( quants[i] );
   }
   return quantiles;
+}
+
+double Utils::getCorrelationFactor( const vector<double> &a, const vector<double> &b) {
+
+  assert( a.size() == b.size() );
+
+  double mean_a = mean(a);
+  double mean_b = mean(b);
+
+  double s = 0.;
+  for (int i=0; i<a.size(); i++) {
+   s += (a[i] - mean_a)*(b[i] - mean_b);
+  }
+
+  return s / (a.size()*stddev(a)*stddev(b));
 }

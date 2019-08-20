@@ -71,9 +71,9 @@ void BatchScriptWriter::writeScripts(OptParser *arg, vector<Combiner*> *cmb){
       int year  = now->tm_year+1900;
 
       TString eos_path = Form("/eos/lhcb/user/m/mkenzie/gammacombo/%02d%02d%04d",day,month,year);
-      system(Form("/afs/cern.ch/project/eos/installation/0.3.84-aquamarine/bin/eos.select mkdir %s",eos_path.Data()));
+      system(Form("/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select mkdir %s",eos_path.Data()));
       eos_path += Form("/%s",dirname.Data());
-      system(Form("/afs/cern.ch/project/eos/installation/0.3.84-aquamarine/bin/eos.select mkdir -p %s",eos_path.Data()));
+      system(Form("/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select mkdir -p %s",eos_path.Data()));
       outf_dir = eos_path;
     }
     if ( arg->var.size()==2 ) {
@@ -90,6 +90,80 @@ void BatchScriptWriter::writeScripts(OptParser *arg, vector<Combiner*> *cmb){
     }
   }
 }
+
+// Copy the same submission script with minor differences for the datasets option
+// -> only difference is that the NLL is stored in the pdf already and does not have to be combined
+// -> no combiners for the datasets option
+void BatchScriptWriter::writeScripts_datasets(OptParser *arg, PDF_Abs* pdf){
+
+  if(!pdf){
+    std::cout<< "BatchScriptWriter::writeScripts_datasets(): ERROR: No PDF given " << std::endl;
+    exit(1);
+  }
+
+  TString methodname = "";
+  if ( arg->isAction("pluginbatch") ) {
+    methodname = "Plugin";
+  }
+  else if ( arg->isAction("coveragebatch") ) {
+    methodname = "Coverage";
+  }
+  else {
+    cout << "BatchScriptWriter::writeScripts() : ERROR : only need to write batch scripts for pluginbatch method" << endl;
+    exit(1);
+  }
+  if ( arg->isAction("uniform") ) methodname += "Uniform";
+  if ( arg->isAction("gaus") ) methodname += "Gaus";
+
+  cout << "Writing submission scripts for PDF " << pdf->getName() << endl;
+
+  TString dirname = "scan1dDatasets"+methodname+"_"+pdf->getName()+"_"+arg->var[0];
+  if ( arg->var.size()==2 ) {
+    dirname = "scan2dDatasets"+methodname+"_"+pdf->getName()+"_"+arg->var[0];
+  }
+  if ( arg->var.size()>1) {
+    dirname += "_"+arg->var[1];
+  }
+  if ( arg->isAction("coveragebatch") ) {
+    dirname += arg->id<0 ? "_id0" : Form("_id%d",arg->id);
+  }
+  TString scripts_dir_path = "sub/" + dirname;
+  TString outf_dir = "root/" + dirname;
+  system(Form("mkdir -p %s",scripts_dir_path.Data()));
+  TString scriptname = "scan1dDatasets"+methodname+"_"+pdf->getName()+"_"+arg->var[0];
+  if ( arg->isAction("coveragebatch") ) {
+    scriptname += arg->id<0 ? "_id0" : Form("_id%d",arg->id) ;
+  }
+  // if write to eos then make the directory
+  if ( arg->batcheos ) {
+    time_t t = time(0);
+    struct tm * now = localtime(&t);
+    int day = now->tm_mday;
+    int month = now->tm_mon+1;
+    int year  = now->tm_year+1900;
+
+    TString eos_path = Form("/eos/lhcb/user/m/mkenzie/gammacombo/%02d%02d%04d",day,month,year);
+    system(Form("/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select mkdir %s",eos_path.Data()));
+    eos_path += Form("/%s",dirname.Data());
+    system(Form("/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select mkdir -p %s",eos_path.Data()));
+    outf_dir = eos_path;
+  }
+  if ( arg->var.size()==2 ) {
+    scriptname = "scan2dDatasets"+methodname+"_"+pdf->getName()+"_"+arg->var[0];
+  }
+  if ( arg->var.size()>1) {
+    scriptname += "_"+arg->var[1];
+  }
+  scriptname = scripts_dir_path + "/" + scriptname;
+
+  for ( int job=arg->batchstartn; job<arg->batchstartn+arg->nbatchjobs; job++ ) {
+    TString fname = scriptname + Form("_run%d",job) + ".sh";
+    writeScript(fname, outf_dir, job, arg);
+  }
+  // }
+}
+
+
 
 void BatchScriptWriter::writeScript(TString fname, TString outfloc, int jobn, OptParser *arg) {
 
@@ -131,7 +205,7 @@ void BatchScriptWriter::writeScript(TString fname, TString outfloc, int jobn, Op
   TString basename = rootfilename;
   basename.Remove(0, rootfilename.Last('/')+1);
   TString copy_line = Form("cp %s %s/%s",rootfilename.Data(),outfloc.Data(),basename.Data());
-  if ( arg->batcheos ) copy_line = "/afs/cern.ch/project/eos/installation/0.3.84-aquamarine/bin/eos.select "+copy_line;
+  if ( arg->batcheos ) copy_line = "/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select "+copy_line;
   outfile << copy_line << endl;
 
   outfile.close();

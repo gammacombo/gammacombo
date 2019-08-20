@@ -29,6 +29,7 @@ OptParser::OptParser():
 
 	// Initialize the variables.
 	// For more complex arguments these are also the default values.
+  compare     = false;
 	controlplot = false;
 	coverageCorrectionID = 0;
 	coverageCorrectionPoint = 0;
@@ -73,6 +74,7 @@ OptParser::OptParser():
 	plotlegy = -99;
 	plotlegsizex = -99;
 	plotlegsizey = -99;
+  plotlegcols = 1;
 	plotgroupx = -99;
 	plotgroupy = -99;
   plotHFAGLabelPosX = 0;
@@ -84,7 +86,9 @@ OptParser::OptParser():
 	plotpluginonly = false;
 	plotprelim = false;
 	plotpulls = false;
-	plotunoff = false;
+  plotoriginx = -99.;
+  plotoriginy = -99.;
+  plotunoff = false;
   plotymin = -99.;
   plotymax = -99.;
 	pluginPlotRangeMax = -100;
@@ -104,8 +108,11 @@ OptParser::OptParser():
 	scanrangeMin = -101;
 	scanrangeyMax = -102;
 	scanrangeyMin = -102;
+  scaleerr = -999.;
+  scalestaterr = -999.;
 	smooth2d = false;
   toyFiles = "";
+  updateFreq = 10;
 	usage = false;
 	verbose = false;
 }
@@ -121,8 +128,10 @@ void OptParser::defineOptions()
 	availableOptions.push_back("asimovfile");
   availableOptions.push_back("batchstartn");
   availableOptions.push_back("batcheos");
+	availableOptions.push_back("CL");
 	availableOptions.push_back("cls");
 	availableOptions.push_back("combid");
+  availableOptions.push_back("compare");
 	availableOptions.push_back("color");
 	availableOptions.push_back("controlplots");
 	availableOptions.push_back("covCorrect");
@@ -132,6 +141,8 @@ void OptParser::defineOptions()
 	availableOptions.push_back("evol");
   availableOptions.push_back("filename");
   availableOptions.push_back("fillstyle");
+  availableOptions.push_back("filltransparency");
+  availableOptions.push_back("fillcolor");
 	availableOptions.push_back("fix");
 	availableOptions.push_back("ext");
   availableOptions.push_back("hfagLabel");
@@ -147,9 +158,13 @@ void OptParser::defineOptions()
 	availableOptions.push_back("leg");
 	availableOptions.push_back("legsize");
   availableOptions.push_back("legstyle");
+  availableOptions.push_back("legcols");
 	availableOptions.push_back("group");
 	availableOptions.push_back("grouppos");
 	availableOptions.push_back("lightfiles");
+  availableOptions.push_back("linewidth");
+  availableOptions.push_back("linestyle");
+  availableOptions.push_back("linecolor");
 	availableOptions.push_back("loadParamsFile");
 	availableOptions.push_back("log");
 	availableOptions.push_back("magnetic");
@@ -165,6 +180,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("nrun");
 	availableOptions.push_back("ntoys");
 	availableOptions.push_back("nsmooth");
+  availableOptions.push_back("origin");
 	//availableOptions.push_back("pevid");
 	availableOptions.push_back("pr");
 	availableOptions.push_back("physrange");
@@ -194,16 +210,20 @@ void OptParser::defineOptions()
 	availableOptions.push_back("scanforce");
 	availableOptions.push_back("scanrange");
 	availableOptions.push_back("scanrangey");
+  availableOptions.push_back("scaleerr");
+  availableOptions.push_back("scalestaterr");
 	availableOptions.push_back("smooth2d");
   availableOptions.push_back("toyFiles");
 	availableOptions.push_back("title");
 	availableOptions.push_back("usage");
+  availableOptions.push_back("updateFreq");
 	availableOptions.push_back("unoff");
 	availableOptions.push_back("var");
 	availableOptions.push_back("verbose");
 	//availableOptions.push_back("relation");
 	availableOptions.push_back("pluginplotrange");
 	availableOptions.push_back("plotnsigmacont");
+  availableOptions.push_back("plotcontourlabels");
 	availableOptions.push_back("plot2dcl");
 	availableOptions.push_back("ndiv");
 	availableOptions.push_back("ndivy");
@@ -237,6 +257,7 @@ void OptParser::bookPlottingOptions()
 	bookedOptions.push_back("ps");
   bookedOptions.push_back("plotsoln");
 	bookedOptions.push_back("plotnsigmacont");
+	bookedOptions.push_back("plotcontourlabels");
 	bookedOptions.push_back("plot2dcl");
 	bookedOptions.push_back("ndiv");
 	bookedOptions.push_back("ndivy");
@@ -353,6 +374,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::ValueArg<string> scanrangeyArg("", "scanrangey", "For 2D plots, restrict the scan range "
 			"of the y variable to a given range. "
 			"Format: --scanrangey min:max.", false, "default", "string");
+  TCLAP::ValueArg<float> scaleerrArg("", "scaleerr", "Scale the errors by this number", false, -999., "float");
+  TCLAP::ValueArg<float> scalestaterrArg("", "scalestaterr", "Scale the STAT only errors by this number", false, -999., "float");
+  TCLAP::ValueArg<string> plotoriginArg("", "origin", "Plot Origin on 2D plots. Default 0:0. Can move to another location. Format: --origin min:max", false, "default", "string");
   TCLAP::ValueArg<string> plotrangeyArg("", "plotrangey", "Plot range of the y-axis for 1D plots. Default 0:1. For log plots 1.e-3:1. "
       "Format: --plotrangey min:max.",false, "default", "string");
 	TCLAP::ValueArg<int> ndivArg("", "ndiv", "Set the number of axis divisions (x axis in 1d and 2d plots): "
@@ -383,9 +407,12 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"2d plots: set the size of the legend. "
 			"Format: --legsize xsize:ysize in normalized coordinates [0,1]. Default: 0.38:0.15", false, "default", "string");
   TCLAP::ValueArg<string> plotlegstyleArg("", "legstyle", "Change the legend style.", false, "default", "string");
+  TCLAP::ValueArg<int>    plotlegcolsArg("", "legcols", "Set the number of columns in the legend. Default: 1", false, 1, "int");
 	TCLAP::ValueArg<string> pluginplotrangeArg("", "pluginplotrange", "Restrict the Plugin plot to a given range to "
 			"rejcet low-statistics outliers. Format: --pluginplotrange min-max.", false, "default", "string");
 	TCLAP::ValueArg<int> plotnsigmacontArg("", "ncontours", "plot this many sigma contours in 2d plots (max 5)", false, 2, "int");
+	TCLAP::ValueArg<string> plotcontourlabelsArg("", "labelcontours", "Add labels for the contours. Pass in the format of cId:ncontours."
+      "e.g. if you want to label the 5th combiner (index 4) up to 4 sigma contours and the 2nd combiner (index 1) up to 3 sigma use --labelcontours 4:4,1:3", false, "", "string");
 	TCLAP::ValueArg<string> filenameadditionArg("","ext","Add this piece into the file name (in case you don't want files/plots to be overwritten", false, "", "string");
   TCLAP::ValueArg<string> filenamechangeArg("","filename", "Change filename to this name (after the basename of the executable)", false, "", "string");
   TCLAP::ValueArg<string> hfagLabelArg("", "hfagLabel", "Use the HFAG label with a name (e.g. ICHEP 2016). Passing \'default\' gives the HFAG label with no subname", false, "", "string");
@@ -426,6 +453,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::ValueArg<string> jobdirArg("", "jobdir", "Give absolute job-directory if working on batch systems.", false, "default", "string");
   TCLAP::ValueArg<string> toyFilesArg("", "toyFiles", "Pass some different toy files, for example if you want 1D projection of 2D FC.", false, "default", "string" );
   TCLAP::ValueArg<string> saveArg("","save", "Save the workspace this file name", false, "", "string");
+  TCLAP::ValueArg<int> updateFreqArg("","updateFreq", "Frequency with which to update plots when running in interactive mode (higher number will be faster). Default: 10", false, 10, "int" );
 
 	// --------------- switch arguments
   TCLAP::SwitchArg batcheosArg("","batcheos", "When submitting batch jobs (for plugin) write the output to eos", false);
@@ -435,6 +463,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 			" instead of the chi2min from the toy files to evaluate 1-CL of the plugin method.", false);
 	TCLAP::SwitchArg parevolArg("e", "evol", "Plots the parameter evolution of the profile likelihood.", false);
 	TCLAP::SwitchArg controlplotArg("", "controlplots", "Make controlplots analysing the generated toys.", false);
+	TCLAP::SwitchArg compareArg("", "compare", "Compare the different combinations by inspecting their pulls.", false);
 	TCLAP::SwitchArg plotmagneticArg("", "magnetic", "In 2d plots, enable magnetic plot borders which will "
 			"attract the 2sigma curves.", false);
 	TCLAP::SwitchArg verboseArg("v", "verbose", "Enables verbose output.", false);
@@ -500,12 +529,23 @@ void OptParser::parseArguments(int argc, char* argv[])
 			, false, "int");
 	TCLAP::MultiArg<int> colorArg("", "color", "ID of color to be used for the combination. "
 			"Default: 0 for first scanner, 1 for second, etc.", false, "int");
+	 TCLAP::MultiArg<float> CLArg("", "CL", "Confidence Levels to be computed and plotted in percent. This argument can be passed multiple times.\n"
+     "Default will print 1 & 2 (3) sigma confidence levels\n"
+     "Syntax: --CL 90  \n"
+     "alternative: -cl 95.45  \n"
+     , false, "float");
+
   TCLAP::MultiArg<int> clsArg("", "cls", "Types of CLs to be plotted.\n"
       "Default will not do anything\n"
       "1: Naive CLs (assuming CLb is obtained from the point at zero)\n"
       "2: Freq  CLs (sampling the full distribution for CLb)\n"
       , false, "int");
-  TCLAP::MultiArg<int> fillstyleArg("", "fillstyle", "Fill style of the 1D scan to be used for the combination. Default is 1001 (solid) for all.", false, "int");
+  TCLAP::MultiArg<float> filltransparencyArg("", "filltransparency", "Fill transparency of the 1D and 2D contours to be used for the combination. Default is 0 (solid) for all.", false, "float");
+  TCLAP::MultiArg<int> fillstyleArg("", "fillstyle", "Fill style of the 1D and 2D contours to be used for the combination. Default is 1001 (solid) for all.", false, "int");
+  TCLAP::MultiArg<int> fillcolorArg("", "fillcolor", "Fill color of the 1D and 2D contours to be used for the combination. Default is picked up from color vector", false, "int");
+  TCLAP::MultiArg<int> linewidthArg("", "linewidth", "Set line width of the 1D and 2D contours to be used for the combination. Default is 2 for all.", false, "int");
+  TCLAP::MultiArg<int> linecolorArg("", "linecolor", "Set line color of the 1D and 2D contours to be used for the combination. Default is picked up from color vector.", false, "int");
+  TCLAP::MultiArg<int> linestyleArg("", "linestyle", "Set line style of the 1D and 2D contours to be used for the combination. Default is a solid line for all.", false, "int");
   TCLAP::MultiArg<int> pevidArg("", "pevid", "ID of combination used for the profile likelihood"
 			"that determines the parameter evolution for the Plugin toy generation. If not given, "
 			"the --combid will be used. Use -u to get a list of possible choices.", false, "int");
@@ -537,6 +577,11 @@ void OptParser::parseArguments(int argc, char* argv[])
       "27: In 2D plots, do not draw any fill color (only the fill style).\n"
       "28: In 2D plots, make fill styles even more transparent.\n"
       "29: Remove method name from legend.\n"
+      "30: Do not increase the canvas right margin.\n"
+      "31: Move the CL labels in 1D plots to the very left.\n"
+      "32: Make the text for printed solutions on 1D plots larger.\n"
+      "33: Solid fill for 2D legends.\n"
+      "34: Remove CL guide lines.\n"
 			, false, "int");
   TCLAP::MultiArg<string> readfromfileArg("", "readfromfile", "Read the observables, uncertainties and correlations from a file - e.g. for reading in toys."
       "If 'default' is given, the default values are used."
@@ -635,6 +680,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "verbose" ) ) cmd.add( verboseArg );
 	if ( isIn<TString>(bookedOptions, "var" ) ) cmd.add(varArg);
 	if ( isIn<TString>(bookedOptions, "usage" ) ) cmd.add( usageArg );
+  if ( isIn<TString>(bookedOptions, "updateFreq" ) ) cmd.add( updateFreqArg );
 	if ( isIn<TString>(bookedOptions, "unoff" ) ) cmd.add( plotunoffArg );
 	if ( isIn<TString>(bookedOptions, "title" ) ) cmd.add( titleArg );
   if ( isIn<TString>(bookedOptions, "toyFiles" ) ) cmd.add( toyFilesArg );
@@ -644,6 +690,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "scanrangey" ) ) cmd.add( scanrangeyArg );
 	if ( isIn<TString>(bookedOptions, "scanrange" ) ) cmd.add( scanrangeArg );
 	if ( isIn<TString>(bookedOptions, "scanforce" ) ) cmd.add( scanforceArg );
+  if ( isIn<TString>(bookedOptions, "scaleerr" ) ) cmd.add( scaleerrArg );
+  if ( isIn<TString>(bookedOptions, "scalestaterr" ) ) cmd.add( scalestaterrArg );
   if ( isIn<TString>(bookedOptions, "save" ) ) cmd.add( saveArg );
   if ( isIn<TString>(bookedOptions, "saveAtMin" ) ) cmd.add( saveAtMinArg );
 	if ( isIn<TString>(bookedOptions, "relation" ) ) cmd.add(relationArg);
@@ -667,12 +715,14 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "intprob" ) ) cmd.add( intprobArg );
   if ( isIn<TString>(bookedOptions, "plotrangey" ) ) cmd.add( plotrangeyArg );
 	if ( isIn<TString>(bookedOptions, "plotnsigmacont" ) ) cmd.add(plotnsigmacontArg);
+  if ( isIn<TString>(bookedOptions, "plotcontourlabels" ) ) cmd.add(plotcontourlabelsArg);
 	if ( isIn<TString>(bookedOptions, "plotid" ) ) cmd.add(plotidArg);
   if ( isIn<TString>(bookedOptions, "plotext" ) ) cmd.add(plotextArg);
 	if ( isIn<TString>(bookedOptions, "plot2dcl" ) ) cmd.add( plot2dclArg );
 	if ( isIn<TString>(bookedOptions, "pr" ) ) cmd.add( prArg );
 	if ( isIn<TString>(bookedOptions, "physrange" ) ) cmd.add(physrangeArg);
 	if ( isIn<TString>(bookedOptions, "pevid" ) ) cmd.add( pevidArg );
+  if ( isIn<TString>(bookedOptions, "origin" ) ) cmd.add( plotoriginArg );
   if ( isIn<TString>(bookedOptions, "nsmooth" ) ) cmd.add(nsmoothArg);
 	if ( isIn<TString>(bookedOptions, "ntoys" ) ) cmd.add(ntoysArg);
 	if ( isIn<TString>(bookedOptions, "nrun" ) ) cmd.add(nrunArg);
@@ -690,9 +740,13 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "magnetic" ) ) cmd.add( plotmagneticArg );
 	if ( isIn<TString>(bookedOptions, "log" ) ) cmd.add( plotlogArg );
 	if ( isIn<TString>(bookedOptions, "loadParamsFile" ) ) cmd.add( loadParamsFileArg );
+  if ( isIn<TString>(bookedOptions, "linewidth" ) ) cmd.add( linewidthArg );
+  if ( isIn<TString>(bookedOptions, "linestyle" ) ) cmd.add( linestyleArg );
+  if ( isIn<TString>(bookedOptions, "linecolor" ) ) cmd.add( linecolorArg );
 	if ( isIn<TString>(bookedOptions, "lightfiles" ) ) cmd.add( lightfilesArg );
 	if ( isIn<TString>(bookedOptions, "legsize" ) ) cmd.add( plotlegsizeArg );
   if ( isIn<TString>(bookedOptions, "legstyle" ) ) cmd.add( plotlegstyleArg );
+  if ( isIn<TString>(bookedOptions, "legcols" ) ) cmd.add( plotlegcolsArg );
 	if ( isIn<TString>(bookedOptions, "leg" ) ) cmd.add( plotlegArg );
 	if ( isIn<TString>(bookedOptions, "largest" ) ) cmd.add( largestArg );
   if ( isIn<TString>(bookedOptions, "latex" ) ) cmd.add( latexArg );
@@ -707,7 +761,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "group" ) ) cmd.add( plotgroupArg );
 	if ( isIn<TString>(bookedOptions, "grouppos" ) ) cmd.add( plotgroupposArg );
 	if ( isIn<TString>(bookedOptions, "fix" ) ) cmd.add(fixArg);
+  if ( isIn<TString>(bookedOptions, "filltransparency" ) ) cmd.add( filltransparencyArg );
   if ( isIn<TString>(bookedOptions, "fillstyle" ) ) cmd.add( fillstyleArg );
+  if ( isIn<TString>(bookedOptions, "fillcolor" ) ) cmd.add( fillcolorArg );
 	if ( isIn<TString>(bookedOptions, "ext" ) ) cmd.add(filenameadditionArg);
     if ( isIn<TString>(bookedOptions, "filename" ) ) cmd.add( filenamechangeArg );
 	if ( isIn<TString>(bookedOptions, "evol" ) ) cmd.add(parevolArg);
@@ -716,21 +772,44 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "covCorrectPoint" ) ) cmd.add(coverageCorrectionPointArg);
 	if ( isIn<TString>(bookedOptions, "covCorrect" ) ) cmd.add(coverageCorrectionIDArg);
 	if ( isIn<TString>(bookedOptions, "controlplots" ) ) cmd.add(controlplotArg);
+  if ( isIn<TString>(bookedOptions, "compare" ) ) cmd.add(compareArg);
 	if ( isIn<TString>(bookedOptions, "combid" ) ) cmd.add(combidArg);
 	if ( isIn<TString>(bookedOptions, "color" ) ) cmd.add(colorArg);
 	if ( isIn<TString>(bookedOptions, "cls" ) ) cmd.add(clsArg);
-  if ( isIn<TString>(bookedOptions, "batchstartn" ) ) cmd.add( batchstartnArg );
-  if ( isIn<TString>(bookedOptions, "batcheos" ) ) cmd.add(batcheosArg);
+	if ( isIn<TString>(bookedOptions, "CL" ) ) cmd.add(CLArg);
+  	if ( isIn<TString>(bookedOptions, "batchstartn" ) ) cmd.add( batchstartnArg );
+  	if ( isIn<TString>(bookedOptions, "batcheos" ) ) cmd.add(batcheosArg);
 	if ( isIn<TString>(bookedOptions, "asimovfile" ) ) cmd.add( asimovFileArg );
 	if ( isIn<TString>(bookedOptions, "asimov") ) cmd.add(asimovArg);
 	if ( isIn<TString>(bookedOptions, "action") ) cmd.add(actionArg);
-	cmd.parse( argc, argv );
+
+
+	// check if the first argument is an integer. This will be discarded as a jobnumber.
+	const int num_of_args=argc-1;
+  	std::string jobnumber (argv[1]);
+  	std::stringstream str(jobnumber);
+  	int number;
+  	str >> number;
+  	if(str){
+	  	std::cout << "Use jobnumber " << number << std::endl;
+		char* args[num_of_args];
+
+	  	//remove jobnumber from cmdline string
+	  	for (int i = 0; i < argc; ++i)
+	    {
+	      if(i<1) args[i] = argv[i];
+	      if(i>1) args[i-1] = argv[i];
+	    }
+		cmd.parse( num_of_args, args );  		
+  	}
+	else cmd.parse( argc, argv );
 
 	//
 	// copy over parsed values into data members
 	//
 	asimov            = asimovArg.getValue();
 	cls 			  = clsArg.getValue();
+	CL 			  	  = CLArg.getValue();
 	color             = colorArg.getValue();
 	controlplot       = controlplotArg.getValue();
   confirmsols       = ! noconfsolsArg.getValue();
@@ -738,7 +817,12 @@ void OptParser::parseArguments(int argc, char* argv[])
 	enforcePhysRange  = prArg.getValue();
 	filenameaddition  = filenameadditionArg.getValue();
   filenamechange    = filenamechangeArg.getValue();
+  filltransparency  = filltransparencyArg.getValue();
   fillstyle         = fillstyleArg.getValue();
+  fillcolor         = fillcolorArg.getValue();
+  linewidth         = linewidthArg.getValue();
+  linestyle         = linestyleArg.getValue();
+  linecolor         = linecolorArg.getValue();
   hfagLabel         = hfagLabelArg.getValue();
 	group             = plotgroupArg.getValue();
 	id                = idArg.getValue();
@@ -770,11 +854,12 @@ void OptParser::parseArguments(int argc, char* argv[])
   plotext           = plotextArg.getValue();
 	plotid            = plotidArg.getValue();
 	plotlog           = plotlogArg.getValue();
+  plotlegcols       = plotlegcolsArg.getValue();
   plotlegstyle      = plotlegstyleArg.getValue();
 	plotmagnetic      = plotmagneticArg.getValue();
 	plotnsigmacont    = plotnsigmacontArg.getValue();
 	plotpluginonly    = plotpluginonlyArg.getValue();
-	plotprelim        = plotprelimArg.getValue();
+  plotprelim        = plotprelimArg.getValue();
 	plotpulls         = plotpullsArg.getValue();
 	plotunoff         = plotunoffArg.getValue();
 	printcor          = printcorArg.getValue();
@@ -785,6 +870,8 @@ void OptParser::parseArguments(int argc, char* argv[])
   probScanResult    = probScanResultArg.getValue();
 	qh                = qhArg.getValue();
   queue             = TString(queueArg.getValue());
+  scaleerr          = scaleerrArg.getValue();
+  scalestaterr      = scalestaterrArg.getValue();
   save              = saveArg.getValue();
   saveAtMin         = saveAtMinArg.getValue();
 	savenuisances1d   = snArg.getValue();
@@ -792,6 +879,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	smooth2d          = smooth2dArg.getValue();
   toyFiles          = toyFilesArg.getValue();
 	usage             = usageArg.getValue();
+  updateFreq        = updateFreqArg.getValue();
 	verbose           = verboseArg.getValue();
 
 	//
@@ -855,6 +943,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 	// --asimovfile
 	tmp = asimovFileArg.getValue();
 	for ( int i = 0; i < tmp.size(); i++ ) asimovfile.push_back(tmp[i]);
+
+  // --compare
+  compare           = compareArg.getValue();
 
 	// --debug
 	debug = debugArg.getValue();
@@ -968,6 +1059,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 	// --scanrange
 	parseRange(scanrangeArg.getValue(), scanrangeMin, scanrangeMax);
 	parseRange(scanrangeyArg.getValue(), scanrangeyMin, scanrangeyMax);
+
+  // --origin
+  parseRange(plotoriginArg.getValue(), plotoriginx, plotoriginy);
 
   // --plotrange
   parseRange(plotrangeyArg.getValue(), plotymin, plotymax );
@@ -1149,9 +1243,39 @@ void OptParser::parseArguments(int argc, char* argv[])
     }
   }
 
+  // --labelcontours
+  //
+  // another quite complicated one. split first by comma and then by colon
+	usage = "";
+	usage += "Required format: '--labelcontours cId=[a,b,c]:cId=[d,e,f]'\n";
+	usage += "  Examples:\n";
+	usage += "  --labelcontours 0=[1,2,3]           (0th combiner gets 1,2,3 sigma contours)\n";
+	usage += "  --labelcontours 0=[1,2,3]:6=[1,3,5] (as above and also 6th combiner gets 1,3,5 sigma contours)\n";
+	string val = plotcontourlabelsArg.getValue();
+  TObjArray *assignmentArray = TString(val).Tokenize(":"); // split string at ":"
+  for (int i=0; i<assignmentArray->GetEntries(); i++ ) {
+    TString assignmentString = ((TObjString*)assignmentArray->At(i))->GetString();
+    TObjArray *subAssignArray = assignmentString.Tokenize("="); // now split at "="
+    assert( subAssignArray->GetEntries() == 2 );
+    int relComb = convertToDigitWithCheck( ((TObjString*)subAssignArray->At(0))->GetString(), usage);
+    TString subAssignString = ((TObjString*)subAssignArray->At(1))->GetString();
+    subAssignString.ReplaceAll("[",""); // strip brackets
+    subAssignString.ReplaceAll("]","");
+    TObjArray *intAssignArray = subAssignString.Tokenize(","); // split at ","
+    for (int j=0; j<intAssignArray->GetEntries(); j++) {
+      contourlabels[ relComb ].push_back( convertToIntWithCheck( ((TObjString*)intAssignArray->At(j))->GetString(), usage ) );
+    }
+  }
+
 	// check --po argument
 	if ( plotpluginonly && !isAction("plugin") ){
 		cout << "ERROR : --po can only be given when -a plugin is set." << endl;
+		exit(1);
+	}
+
+	// check --CL argument
+	if ( var.size()>1 && CL.size()>0){
+		std::cout << "ERROR: User specific confidence levels are only available for 1D option." << std::endl;
 		exit(1);
 	}
 }

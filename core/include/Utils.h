@@ -108,6 +108,7 @@ namespace Utils
 	void setLimit(RooRealVar* v, TString limitname);
 	void setLimit(RooWorkspace* w, TString parname, TString limitname);
 	void setLimit(const RooAbsCollection* set, TString limitname);
+  double getCorrelationFactor( const vector<double> &a , const vector<double> &b );
 
 	void buildCorMatrix(TMatrixDSym &cor);
 	TMatrixDSym* buildCovMatrix(TMatrixDSym &cor, float *err);
@@ -135,6 +136,18 @@ namespace Utils
     static inline std::vector<T> Quantile(const std::vector<T>& inData, const std::vector<T>& probs);
   template<typename T>
     static inline double  getVectorFracAboveValue(const std::vector<T>& vec, T val);
+  template<typename T>
+    static inline void print(const std::vector<T>& vec);
+  template<typename T>
+    static inline void print(T val);
+  template<typename T>
+    static inline T sum(const std::vector<T>& vec);
+  template<typename T>
+    static inline T sqsum(const std::vector<T>& vec);
+  template<typename T>
+    static inline double mean(const std::vector<T>& vec);
+  template<typename T>
+    static inline double stddev(const std::vector<T>& vec);
 
 	void dump_vector(const std::vector<int>& l);
 	void dump_vector(const std::vector<float>& l);
@@ -195,6 +208,50 @@ double Utils::getVectorFracAboveValue(const std::vector<T>& vec, T val) {
     if ( vec[i] >= val ) nabove++;
   }
   return double(nabove)/vec.size();
+}
+
+template<typename T>
+void Utils::print(const std::vector<T>& vec){
+  cout << "[ (size=" << vec.size() << ") ";
+  for (int i=0; i<vec.size(); i++) {
+    print(vec[i]);
+    if ( i<vec.size()-1) cout << " , ";
+  }
+  cout << " ]";
+}
+
+template<typename T>
+void Utils::print(T val){
+  cout << val;
+}
+
+template<typename T>
+T Utils::sum(const std::vector<T> &vec){
+  T s=0;
+  for (int i=0; i<vec.size(); i++){
+    s += vec[i];
+  }
+  return s;
+}
+
+template<typename T>
+T Utils::sqsum(const std::vector<T> &vec){
+  T s=0;
+  for (int i=0; i<vec.size(); i++){
+    s += vec[i]*vec[i];
+  }
+  return s;
+}
+
+template<typename T>
+double Utils::mean(const std::vector<T> &vec){
+  return double( sum(vec) ) / vec.size();
+}
+
+template<typename T>
+double Utils::stddev(const std::vector<T> &vec){
+  double N = vec.size();
+  return pow( sqsum(vec) / N - pow(sum(vec)/N,2), 0.5);
 }
 
 #endif

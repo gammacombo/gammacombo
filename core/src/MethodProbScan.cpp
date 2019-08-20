@@ -4,7 +4,7 @@
  * Date: August 2012
  *
  */
-
+#include "TSystem.h"
 #include "MethodProbScan.h"
 
 	MethodProbScan::MethodProbScan(Combiner *comb)
@@ -228,6 +228,10 @@ int MethodProbScan::scan1d(bool fast, bool reverse)
 
 			double deltaChi2 = chi2minScan - chi2minGlobal;
 			double oneMinusCL = TMath::Prob(deltaChi2, 1);
+			double deltaChi2Bkg = TMath::Max(chi2minScan - hChi2min->GetBinContent(1), 0.0);
+			if(i==0) deltaChi2Bkg = 0.0;
+			double oneMinusCLBkg = TMath::Prob(deltaChi2Bkg, 1);
+			hCLs->SetBinContent(hCLs->FindBin(scanvalue), oneMinusCLBkg);
 
 			// Save the 1-CL value and the corresponding fit result.
 			// But only if better than before!
@@ -237,7 +241,6 @@ int MethodProbScan::scan1d(bool fast, bool reverse)
 				int iRes = hCL->FindBin(scanvalue)-1;
 				curveResults[iRes] = r;
 			}
-
 			nStep++;
 		}
 	}
@@ -419,7 +422,7 @@ int MethodProbScan::scan2d()
 	bool firstScanDone = hChi2min2dMin<1e5;
 	TH2F *hDbgChi2min2d = histHardCopy(hChi2min2d, firstScanDone);
 	hDbgChi2min2d->SetTitle(Form("#Delta#chi^{2} for scan %i, %s",nScansDone,title.Data()));
-	if ( firstScanDone ) hDbgChi2min2d->GetZaxis()->SetRangeUser(hChi2min2dMin,hChi2min2dMin+25);
+	if ( firstScanDone ) hDbgChi2min2d->GetZaxis()->SetRangeUser(hChi2min2dMin,hChi2min2dMin+81);
 	hDbgChi2min2d->GetXaxis()->SetTitle(par1->GetTitle());
 	hDbgChi2min2d->GetYaxis()->SetTitle(par2->GetTitle());
 	hDbgChi2min2d->GetZaxis()->SetTitle("#Delta#chi^{2}");
@@ -538,14 +541,16 @@ int MethodProbScan::scan2d()
 					curveResults2d[i-1][j-1] = r;
 				}
 
-				// draw/update histograms - doing only every 10th update saves
-				// a lot of time for small combinations
-				if ( ( arg->interactive && ((int)nSteps % 10 == 0) ) || nSteps==nTotalSteps ){
+				// draw/update histograms - doing only every nth update
+        // depending on value of updateFreq
+        // saves a lot of time for small combinations
+				if ( ( arg->interactive && ((int)nSteps % arg->updateFreq == 0) ) || nSteps==nTotalSteps ){
 					hDbgChi2min2d->Draw("colz");
 					hDbgStart->Draw("boxsame");
 					startpointmark->Draw();
 					cDbg->Update();
           cDbg->Modified();
+          gSystem->ProcessEvents();
 				}
 				tScan.Stop();
 			}
@@ -658,7 +663,7 @@ void MethodProbScan::saveSolutions2d()
 
 	// loop over chi2 histogram to locate local minima
 	for ( int i=2; i<hChi2min2d->GetNbinsX(); i++ )
-	{	
+	{
 		for ( int j=2; j<hChi2min2d->GetNbinsY(); j++ )
 		{
 			if ( !(hChi2min2d->GetBinContent(i-1,   j) > hChi2min2d->GetBinContent(i, j)
@@ -680,7 +685,7 @@ void MethodProbScan::saveSolutions2d()
 			if ( arg->debug ) cout << "MethodProbScan::saveSolutions2d() : saving solution of bin " << Form("(%i,%i)",i,j) << " ..." << endl;
 			solutions.push_back((RooSlimFitResult*)curveResults2d[i-1][j-1]->Clone());
 		}
-	}	
+	}
 
 	if ( solutions.size()==0 ){
 		cout << "MethodProbScan::saveSolutions2d() : WARNING : No solutions found in 2D scan!" << endl;

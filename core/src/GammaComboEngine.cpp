@@ -2,6 +2,7 @@
 #include "MethodDatasetsPluginScan.h"
 #include "MethodDatasetsProbScan.h"
 #include "PDF_Datasets.h"
+#include "TLatex.h"
 
 GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[]):
   runOnDataSet(false)
@@ -97,6 +98,9 @@ void GammaComboEngine::setPdf( PDF_Abs* pdf )
 ///
 void GammaComboEngine::addPdf(int id, PDF_Abs* pdf, TString title)
 {
+  if (arg->debug) {
+    cout << "GammaComboEngine::addPdf() : INFO  : Adding pdf " << id << " = " << title << endl;
+  }
 	if ( pdf==0 ){
 		cout << "GammaComboEngine::addPdf() : ERROR : Trying to add zero pointer as the PDF. Exit." << endl;
 		exit(1);
@@ -113,6 +117,167 @@ void GammaComboEngine::addPdf(int id, PDF_Abs* pdf, TString title)
 	this->pdf[id] = pdf;
 	if ( title!="" ) this->pdf[id]->setTitle(title);
 	this->pdf[id]->setGcId(id);
+}
+
+///
+/// Add a pdf with a subset of the observables to the GammaComboEngine
+///
+void GammaComboEngine::addSubsetPdf(int id, PDF_Abs* pdf, vector<int>& indices, TString title)
+{
+  if ( indices.size() > pdf->getObservables()->getSize() ) {
+    cout << "GammaComboEngine::addSubsetPdf() : ERROR - the subset size " << indices.size() << " is bigger than the observables size " << pdf->getObservables()->getSize() << endl;
+    exit(1);
+  }
+  for ( int i=0; i<indices.size(); i++ ) {
+    int index = indices[i];
+    if ( index > pdf->getObservables()->getSize()-1 || index<0) {
+      cout << "GammaComboEngine::addSubsetPdf() : ERROR - one of the subset index values " << index << " is larger than the total number of of observables " << pdf->getObservables()->getSize() << " or it's less than zero" << endl;
+      exit(1);
+    }
+  }
+  RooArgList *obsToRemove = new RooArgList();
+  RooArgList *theoryToRemove = new RooArgList();
+
+  // loop over all observables and remove the ones that aren't in indices
+  for ( int i=0; i<pdf->getObservables()->getSize(); i++ ) {
+    if ( std::find( indices.begin(), indices.end(), i) == indices.end() ) {
+      obsToRemove->add( *(pdf->getObservables()->at(i)) );
+      theoryToRemove->add( *(pdf->getTheory()->at(i)) );
+    }
+  }
+  pdf->getObservables()->remove( *obsToRemove );
+  pdf->getTheory()->remove( *theoryToRemove );
+  delete obsToRemove;
+  delete theoryToRemove;
+
+  // now sort out parameters
+  RooArgList *paramsToRemove = new RooArgList();
+  for ( int i=0; i<pdf->getParameters()->getSize(); i++ ) {
+    bool paramFoundInTheory = false;
+    for ( int j=0; j<pdf->getTheory()->getSize(); j++ ) {
+      if ( pdf->getTheory()->at(j)->dependsOn( *(pdf->getParameters()->at(i)) ) ) {
+        paramFoundInTheory = true;
+      }
+    }
+    if (!paramFoundInTheory) paramsToRemove->add( *(pdf->getParameters()->at(i)) );
+  }
+  pdf->getParameters()->remove( *paramsToRemove );
+  delete paramsToRemove;
+
+  // now sort out uncertainties
+  vector<double> oldStatErrs = pdf->StatErr;
+  vector<double> oldSystErrs = pdf->SystErr;
+  pdf->StatErr.clear();
+  pdf->SystErr.clear();
+  for (int i=0; i<indices.size(); i++ ) {
+    int index = indices[i];
+    pdf->StatErr.push_back( oldStatErrs[index] );
+    pdf->SystErr.push_back( oldSystErrs[index] );
+  }
+
+  pdf->setNObs( indices.size() );
+  TMatrixDSym newCorStatMatrix( indices.size() );
+  TMatrixDSym newCorSystMatrix( indices.size() );
+
+  pdf->getSubCorrelationStat( newCorStatMatrix, indices );
+  pdf->getSubCorrelationSyst( newCorSystMatrix, indices );
+
+  pdf->corStatMatrix.ResizeTo( indices.size(), indices.size() );
+  pdf->corSystMatrix.ResizeTo( indices.size(), indices.size() );
+  pdf->corMatrix.ResizeTo( indices.size(), indices.size() );
+  pdf->covMatrix.ResizeTo( indices.size(), indices.size() );
+
+  pdf->corStatMatrix = newCorStatMatrix;
+  pdf->corSystMatrix = newCorSystMatrix;
+
+  pdf->buildCov();
+  pdf->buildPdf();
+
+  addPdf(id, pdf, title);
+}
+
+void GammaComboEngine::addSubsetPdf( int id, PDF_Abs* pdf, int i1, TString title )
+{
+  vector<int> indices;
+  indices.push_back(i1);
+  addSubsetPdf(id, pdf, indices, title);
+}
+
+void GammaComboEngine::addSubsetPdf( int id, PDF_Abs* pdf, int i1, int i2, TString title )
+{
+  vector<int> indices;
+  indices.push_back(i1);
+  indices.push_back(i2);
+  addSubsetPdf(id, pdf, indices, title);
+}
+
+void GammaComboEngine::addSubsetPdf( int id, PDF_Abs* pdf, int i1, int i2, int i3, TString title )
+{
+  vector<int> indices;
+  indices.push_back(i1);
+  indices.push_back(i2);
+  indices.push_back(i3);
+  addSubsetPdf(id, pdf, indices, title);
+}
+
+void GammaComboEngine::addSubsetPdf( int id, PDF_Abs* pdf, int i1, int i2, int i3, int i4, TString title )
+{
+  vector<int> indices;
+  indices.push_back(i1);
+  indices.push_back(i2);
+  indices.push_back(i3);
+  indices.push_back(i4);
+  addSubsetPdf(id, pdf, indices, title);
+}
+
+void GammaComboEngine::addSubsetPdf( int id, PDF_Abs* pdf, int i1, int i2, int i3, int i4, int i5, TString title )
+{
+  vector<int> indices;
+  indices.push_back(i1);
+  indices.push_back(i2);
+  indices.push_back(i3);
+  indices.push_back(i4);
+  indices.push_back(i5);
+  addSubsetPdf(id, pdf, indices, title);
+}
+
+void GammaComboEngine::addSubsetPdf( int id, PDF_Abs* pdf, int i1, int i2, int i3, int i4, int i5, int i6, TString title )
+{
+  vector<int> indices;
+  indices.push_back(i1);
+  indices.push_back(i2);
+  indices.push_back(i3);
+  indices.push_back(i4);
+  indices.push_back(i5);
+  indices.push_back(i6);
+  addSubsetPdf(id, pdf, indices, title);
+}
+
+void GammaComboEngine::addSubsetPdf( int id, PDF_Abs* pdf, int i1, int i2, int i3, int i4, int i5, int i6, int i7, TString title )
+{
+  vector<int> indices;
+  indices.push_back(i1);
+  indices.push_back(i2);
+  indices.push_back(i3);
+  indices.push_back(i4);
+  indices.push_back(i5);
+  indices.push_back(i6);
+  indices.push_back(i7);
+  addSubsetPdf(id, pdf, indices, title);
+}
+
+void GammaComboEngine::addSubsetPdf( int id, PDF_Abs* pdf, int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8, TString title )
+{
+  vector<int> indices;
+  indices.push_back(i1);
+  indices.push_back(i2);
+  indices.push_back(i3);
+  indices.push_back(i4);
+  indices.push_back(i5);
+  indices.push_back(i6);
+  indices.push_back(i7);
+  indices.push_back(i8);
+  addSubsetPdf(id, pdf, indices, title);
 }
 
 ///
@@ -278,6 +443,40 @@ void GammaComboEngine::scaleDownErrors()
 
 	cout << endl;
 }
+
+///
+/// scale stat errors
+///
+void GammaComboEngine::scaleStatErrors()
+{
+  cout << "\nConfiguration: Scaling ALL STAT ERRORS by " << arg->scalestaterr << ".\n" << endl;
+  for ( int i=0; i<pdf.size(); i++ ){
+    if ( pdf[i]==0 ) continue;
+    for ( int iObs=0; iObs<pdf[i]->getNobs(); iObs++ ) {
+      pdf[i]->StatErr[iObs] *= arg->scalestaterr;
+    }
+    pdf[i]->buildCov();
+    pdf[i]->buildPdf();
+  }
+}
+
+///
+/// scale stat+syst errors
+///
+void GammaComboEngine::scaleStatAndSystErrors()
+{
+  cout << "\nConfiguration: Scaling ALL STAT AND SYST ERRORS by " << arg->scaleerr << ".\n" << endl;
+  for ( int i=0; i<pdf.size(); i++ ){
+    if ( pdf[i]==0 ) continue;
+    for ( int iObs=0; iObs<pdf[i]->getNobs(); iObs++ ) {
+      pdf[i]->StatErr[iObs] *= arg->scaleerr;
+      pdf[i]->StatErr[iObs] *= arg->scaleerr;
+    }
+    pdf[i]->buildCov();
+    pdf[i]->buildPdf();
+  }
+}
+
 
 ///
 /// disable systematics
@@ -797,14 +996,69 @@ void GammaComboEngine::defineColors()
 		colorsText.push_back(kBlue-2 + i);
 	}
 
+  // sort out the fill style vector
   for ( int i=0; i<arg->combid.size(); i++ ) {
     if ( i>= arg->fillstyle.size() ) fillStyles.push_back( 1001 );
     else fillStyles.push_back( arg->fillstyle[i] );
   }
+  // sort out the fill color vector
+  for ( int i=0; i<arg->combid.size(); i++ ) {
+    // if --fillcolor passed use this
+    if ( i>= arg->fillcolor.size() ) fillColors.push_back( colorsLine[i] );
+    else fillColors.push_back( arg->fillcolor[i] );
+    // if --color passed use this
+    if ( i < arg->color.size() ) {
+      if ( arg->color[i] < colorsLine.size() ) fillColors[i] = colorsLine[arg->color[i]];
+      else fillColors[i] = colorsLine[i];
+    }
+  }
+  // sort out the fill transparency vector
+  for ( int i=0; i<arg->combid.size(); i++ ) {
+    if ( i>= arg->filltransparency.size() ) fillTransparencies.push_back( 0. );
+    else fillTransparencies.push_back( arg->filltransparency[i] );
+  }
+
+  // sort out the line width vector
+  for ( int i=0; i<arg->combid.size(); i++ ) {
+    if ( i>= arg->linewidth.size() ) lineWidths.push_back( 2 );
+    else lineWidths.push_back( arg->linewidth[i] );
+  }
+  // sort out the line style vector
+  for ( int i=0; i<arg->combid.size(); i++ ) {
+    if ( i>= arg->linestyle.size() ) lineStyles.push_back( 1 );
+    else lineStyles.push_back( arg->linestyle[i] );
+  }
+  // sort out the line color vector
+  for ( int i=0; i<arg->combid.size(); i++ ) {
+    // if --linecolor passed use this
+    if ( i>= arg->linecolor.size() ) lineColors.push_back( colorsLine[i] );
+    else lineColors.push_back( arg->linecolor[i] );
+    // if --color passed use this
+    if ( i < arg->color.size() ) {
+      if ( arg->color[i] < colorsLine.size() ) lineColors[i] = colorsLine[arg->color[i]];
+      else lineColors[i] = colorsLine[i];
+    }
+  }
 	// catch for datasets
 	if ( arg->combid.size()==0 ) {
+		//sort out fill style
 		if ( arg->fillstyle.size()>0 ) fillStyles.push_back( arg->fillstyle[0] );
 		else fillStyles.push_back(1001);
+		//sort out fill color
+		if ( arg->fillcolor.size()>0 ) fillColors.push_back( arg->fillcolor[0] );
+		else fillColors.push_back(colorsLine[0]);
+		//sort out line width
+    	if ( arg->linewidth.size()>0 ) lineWidths.push_back( arg->linewidth[0] );
+    	else lineWidths.push_back(2);
+    	//sort out line style
+    	if ( arg->linestyle.size()>0 ) lineStyles.push_back( arg->linestyle[0] );
+    	else lineStyles.push_back(1);
+    	//sort out line color
+    	if ( arg->linecolor.size()>0 ) lineColors.push_back( arg->linecolor[0] );
+    	else lineColors.push_back(colorsLine[0]);
+    	//sort out fill transparency
+    	if ( arg->filltransparency.size()>0 ) fillTransparencies.push_back( arg->filltransparency[0] );
+    	else fillTransparencies.push_back(.0);
 	}
 }
 
@@ -1023,18 +1277,23 @@ void GammaComboEngine::make1dCoverageScan(MethodCoverageScan *scanner, int cId)
 void GammaComboEngine::make1dProbPlot(MethodProbScan *scanner, int cId)
 {
 
-  if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
+  	if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
 		scanner->setDrawSolution(arg->plotsolutions[cId]);
-    if ( arg->cls.size()>0 ) {
-      if ( runOnDataSet ) ((MethodDatasetsProbScan*)scanner)->plotFitRes(m_fnamebuilder->getFileNamePlot(cmb)+"_fit");
-      scanner->plotOn(plot, 1); // for prob ClsType>1 doesn't exist
-    }
+    	if ( arg->cls.size()>0 ) {
+      		if ( runOnDataSet ) ((MethodDatasetsProbScan*)scanner)->plotFitRes(m_fnamebuilder->getFileNamePlot(cmb)+"_fit");
+      		scanner->plotOn(plot, 1); // for prob ClsType>1 doesn't exist
+    	}
 		scanner->plotOn(plot);
 		int colorId = cId;
 		if ( arg->color.size()>cId ) colorId = arg->color[cId];
-		scanner->setLineColor(colorsLine[colorId]);
+		//scanner->setLineColor(colorsLine[colorId]);
 		scanner->setTextColor(colorsText[colorId]);
-    scanner->setFillStyle(fillStyles[cId]);
+	    scanner->setLineColor(lineColors[cId]);
+	    scanner->setLineStyle(lineStyles[cId]);
+	    scanner->setLineWidth(lineWidths[cId]);
+	    scanner->setFillColor(fillColors[cId]);
+	    scanner->setFillStyle(fillStyles[cId]);
+	    scanner->setFillTransparency(fillTransparencies[cId]);
 		plot->Draw();
 	}
 }
@@ -1124,7 +1383,13 @@ void GammaComboEngine::make2dPluginPlot(MethodPluginScan *sPlugin, MethodProbSca
 		sPlugin->setTitle(sPlugin->getTitle() + " (Plugin)");
 	}
 	sProb->setDrawSolution(arg->plotsolutions[cId]);
-	sProb->setLineColor(colorsLine[cId]);
+  //sProb->setLineColor(colorsLine[cId]);
+  sProb->setLineColor(lineColors[cId]);
+  sProb->setLineStyle(lineStyles[cId]);
+  sProb->setLineWidth(lineWidths[cId]);
+  sProb->setFillColor(fillColors[cId]);
+  sProb->setFillStyle(fillStyles[cId]);
+  sProb->setFillTransparency(fillTransparencies[cId]);
 	sPlugin->setDrawSolution(arg->plotsolutions[cId]);
 	if ( arg->isQuickhack(17) ) {
 		sPlugin->plotOn(plot);
@@ -1149,9 +1414,13 @@ void GammaComboEngine::make1dPluginOnlyPlot(MethodPluginScan *sPlugin, int cId)
 	((OneMinusClPlot*)plot)->setPluginMarkers(false);
 	int colorId = cId;
 	if ( arg->color.size()>cId ) colorId = arg->color[cId];
-	sPlugin->setLineColor(colorsLine[colorId]);
 	sPlugin->setTextColor(colorsText[colorId]);
+  sPlugin->setLineColor(lineColors[cId]);
+  sPlugin->setLineStyle(lineStyles[cId]);
+  sPlugin->setLineWidth(lineWidths[cId]);
+  sPlugin->setFillColor(fillColors[cId]);
   sPlugin->setFillStyle(fillStyles[cId]);
+  sPlugin->setFillTransparency(fillTransparencies[cId]);
 	sPlugin->setDrawSolution(arg->plotsolutions[cId]);
   for (int i=0; i<arg->cls.size(); i++) sPlugin->plotOn(plot, arg->cls[i]);
 	sPlugin->plotOn(plot);
@@ -1231,7 +1500,13 @@ void GammaComboEngine::make2dProbPlot(MethodProbScan *scanner, int cId)
   }
 	// contour plot
 	scanner->setDrawSolution(arg->plotsolutions[cId]);
-	scanner->setLineColor(colorsLine[cId]);
+  //scanner->setLineColor(colorsLine[cId]);
+  scanner->setLineColor(lineColors[cId]);
+  scanner->setLineStyle(lineStyles[cId]);
+  scanner->setLineWidth(lineWidths[cId]);
+  scanner->setFillColor(fillColors[cId]);
+  scanner->setFillStyle(fillStyles[cId]);
+  scanner->setFillTransparency(fillTransparencies[cId]);
 	if(arg->cls.size()>0) scanner->plotOn(plot, 1);
 	scanner->plotOn(plot, 0);
 	// only draw the plot once when multiple scanners are plotted,
@@ -1435,8 +1710,13 @@ void GammaComboEngine::setObservablesFromFile(Combiner *c, int cId)
 ///
 void GammaComboEngine::writebatchscripts()
 {
-  m_batchscriptwriter->writeScripts(arg, &cmb);
-  exit(0);
+	if (runOnDataSet){
+		m_batchscriptwriter->writeScripts_datasets(arg, getPdf(0));
+	}
+	else{
+		m_batchscriptwriter->writeScripts(arg, &cmb);
+	}
+  	exit(0);
 }
 
 ///
@@ -1483,6 +1763,173 @@ void GammaComboEngine::saveWorkspace( Combiner *c, int i )
     c->getWorkspace()->Write();
     tf->Close();
   }
+}
+
+///
+/// compare combinations
+///
+void GammaComboEngine::compareCombinations( )
+{
+  for ( int i=0; i<comparisonScanners.size(); i++ ) {
+    for ( int j=i+1; j<comparisonScanners.size(); j++ ) {
+      TH2F *pull_corr = new TH2F(Form("c%d_vs_c%d_corr",i,j), Form("; Obs pulls for %s [#sigma]; Obs pulls %s [#sigma]",comparisonScanners[i]->getName().Data(),comparisonScanners[j]->getName().Data()), 10,-5,5,10,-5,5);
+      vector<double> pullVec1;
+      vector<double> pullVec2;
+      double total_pull = 0.;
+      int nmatch = 0;
+      comparisonScanners[i]->loadSolution(0);
+      comparisonScanners[j]->loadSolution(0);
+      const RooArgSet *sc1obs = comparisonScanners[i]->getObservables();
+      const RooArgSet *sc2obs = comparisonScanners[j]->getObservables();
+      TIterator *it1 = sc1obs->createIterator();
+      while ( RooRealVar *pObs1 = (RooRealVar*)it1->Next() ) {
+        TIterator *it2 = sc2obs->createIterator();
+        while ( RooRealVar *pObs2 = (RooRealVar*)it2->Next() ) {
+
+          // look for matches
+          TString pTh1Name = pObs1->GetName();
+          pTh1Name.ReplaceAll("obs", "th");
+          pTh1Name.ReplaceAll("UID",";");
+          pTh1Name = ((TObjString*)pTh1Name.Tokenize(";")->At(0))->GetString();
+          TString pTh2Name = pObs2->GetName();
+          pTh2Name.ReplaceAll("obs", "th");
+          pTh2Name.ReplaceAll("UID",";");
+          pTh2Name = ((TObjString*)pTh2Name.Tokenize(";")->At(0))->GetString();
+
+          if ( pTh1Name == pTh2Name ) {
+            nmatch += 1;
+            pTh1Name = pObs1->GetName();
+            pTh1Name.ReplaceAll("obs", "th");
+            pTh2Name = pObs2->GetName();
+            pTh2Name.ReplaceAll("obs", "th");
+            RooRealVar *pTh1 = (RooRealVar*)comparisonScanners[i]->getTheory()->find(pTh1Name);
+            RooRealVar *pTh2 = (RooRealVar*)comparisonScanners[j]->getTheory()->find(pTh2Name);
+            assert( pTh1 && pTh2 );
+            double pull = (pTh1->getVal() - pTh2->getVal() ) / pObs2->getError();
+            total_pull += pull*pull;
+            double pull1 = (pTh1->getVal() - pObs1->getVal()) / pObs1->getError();
+            double pull2 = (pTh2->getVal() - pObs2->getVal()) / pObs2->getError();
+            pull_corr->Fill( pull1, pull2 );
+            pullVec1.push_back( pull1 );
+            pullVec2.push_back( pull2 );
+          }
+        }
+      }
+      double chi21 = comparisonScanners[i]->getSolution(0)->minNll();
+      double chi22 = comparisonScanners[j]->getSolution(0)->minNll();
+      int    nObs1 = comparisonScanners[i]->getObservables()->getSize();
+      int    nObs2 = comparisonScanners[j]->getObservables()->getSize();
+      int    nPar1 = comparisonScanners[i]->getSolution(0)->floatParsFinal().getSize();
+      int    nPar2 = comparisonScanners[j]->getSolution(0)->floatParsFinal().getSize();
+      CLInterval cl1 = comparisonScanners[i]->getCLinterval(0,1);
+      CLInterval cl2 = comparisonScanners[j]->getCLinterval(0,1);
+      double diff = cl1.central - cl2.central;
+      double corr = Utils::getCorrelationFactor( pullVec1, pullVec2 );
+      double err = 99.;
+      if ( diff > 0 ) { // means value has moved down
+        err = sqrt( sq( cl1.central-cl1.min ) + sq( cl2.max-cl2.central) - 2.*corr*(cl1.central-cl1.min)*(cl2.max-cl2.central) );
+      }
+      else {
+        err = sqrt( sq(cl1.max-cl1.central) + sq( cl2.central-cl2.min)  - 2.*corr*(cl1.max-cl1.central)*(cl2.central-cl2.min));
+      }
+      cout << "Comparison   1): " << Form("%-20s",comparisonScanners[i]->getName().Data()) << " to 2): " << Form("%-20s",comparisonScanners[j]->getName().Data()) << endl;
+      cout << "        chi2:    " << Form("%-20.3f",chi21) << "        " << Form("%-20.3f",chi22) << endl;
+      cout << "        nObs:    " << Form("%-20d",nObs1) << "        " << Form("%-20d",nObs2) << endl;
+      cout << "        nPar:    " << Form("%-20d",nPar1) << "        " << Form("%-20d",nPar2) << endl;
+      cout << "        pval:    " << Form("%-20.2f",100.*TMath::Prob(chi21, nObs1-nPar1)) << "        " << Form("%-20.2f",100.*TMath::Prob(chi22,nObs2-nPar2)) << endl;
+      cout << "         val:    " << Form("%-6.3f",cl1.central) << " [" << Form("%6.3f",cl1.min) << "," << Form("%-6.3f",cl1.max) << "]" << "      " << Form("%-6.3f",cl2.central) << "[" << Form("%6.3f",cl2.min) << "," << Form("%-6.3f",cl2.max) << "]" << endl;
+      cout << "        dval:    " << diff << " +/- " << err << " (" << TMath::Abs(diff)/err << " sigma)" << endl;
+      cout << "PULL PER OBS:  " << total_pull << endl;
+      cout << "CORRELATION:   " << corr << endl;
+      cout << "COMPATIBILITY: " << TMath::Abs(diff)/err << " sigma" << endl;
+
+      TCanvas *canv = newNoWarnTCanvas("pull_corr"+getUniqueRootName());
+      pull_corr->SetMarkerStyle(kMultiply);
+      pull_corr->SetMarkerColor(kBlue+2);
+      pull_corr->GetXaxis()->SetTitleSize(0.045);
+      pull_corr->GetYaxis()->SetTitleSize(0.045);
+      pull_corr->GetXaxis()->SetLabelSize(0.045);
+      pull_corr->GetYaxis()->SetLabelSize(0.045);
+      pull_corr->Draw("scat");
+      TLine *line = new TLine();
+      line->DrawLine(-5,0,5,0);
+      line->DrawLine(0,-5,0,5);
+      pull_corr->Draw("scatsame");
+      TF1 *f1 = new TF1("f1","[0]*x",-5,5);
+      f1->SetParameter(0,corr);
+      f1->Draw("Lsame");
+      TLatex *lat = new TLatex();
+      lat->DrawLatex(3,4,Form("#rho = %3.1f",corr));
+      lat->DrawLatex(3,3,Form("#sigma = %3.1f",TMath::Abs(diff)/err));
+      Utils::savePlot(canv,Form("pull_corr_%s_%s",comparisonScanners[i]->getName().Data(),comparisonScanners[j]->getName().Data()));
+      total_pull = sqrt( total_pull )/nmatch;
+
+    }
+  }
+}
+
+///
+/// run toys
+///
+void GammaComboEngine::runToys( Combiner *c )
+{
+  // THIS IS A HACK FOR NOW
+  //
+  // base scan (overhead here)
+  MethodProbScan *probscan = new MethodProbScan(c);
+  make1dProbScan(probscan,0);
+
+  TString toydirname = TString("root/scan1dToys_")+probscan->getName()+TString("_")+probscan->getScanVar1Name();
+  TString toyfname = toydirname + TString("/scan1dToys_")+probscan->getName()+TString("_")+probscan->getScanVar1Name()+Form("_run%d.root",arg->nrun);
+
+  TTree *tree = new TTree("toys","toys");
+  map<TString,double> vals;
+  map<TString,double> errs;
+  double chi2val = probscan->solutions[0]->minNll();
+  int ntoy = -1;
+  tree->Branch("ntoy", &ntoy);
+  tree->Branch("chi2min", &chi2val);
+  RooArgList fitPars = probscan->solutions[0]->floatParsFinal();
+  TIterator *it = fitPars.createIterator();
+  while ( RooRealVar* p = (RooRealVar*)it->Next() ) {
+    cout << "YO:: " << p->GetName() << endl;
+    vals[p->GetName()] = p->getVal();
+    errs[p->GetName()] = p->getError();
+    tree->Branch( p->GetName()+TString("_val"), &vals[p->GetName()] );
+    tree->Branch( p->GetName()+TString("_err"), &errs[p->GetName()] );
+  }
+  tree->Fill();
+  delete probscan;
+
+  for ( int i=0; i<arg->ntoys; i++ ) {
+    cout << "RUNNING TOY " << i << " / " << arg->ntoys << endl;
+    c->setObservablesToToyValues();
+    MethodProbScan *toyscan = new MethodProbScan(c);
+    make1dProbScan(toyscan,0);
+    if ( toyscan->solutions.size() == 0 ) continue;
+    toyscan->solutions[0]->Print();
+    //cout << "My stuff I want to save" << endl;
+    //cout << "chi2: " << toyscan->solutions[0]->minNll() << endl;
+
+    chi2val = toyscan->solutions[0]->minNll();
+    ntoy = i;
+    RooArgList toyFitPars = toyscan->solutions[0]->floatParsFinal();
+    TIterator *toyit = toyFitPars.createIterator();
+    while ( RooRealVar* p = (RooRealVar*)toyit->Next() ) {
+      //cout << p->GetName() << " " << p->getVal() << " " << p->getError() << endl;
+      vals[p->GetName()] = p->getVal();
+      errs[p->GetName()] = p->getError();
+    }
+    tree->Fill();
+    delete toyscan;
+  }
+  system("mkdir -p "+toydirname);
+  TFile *f = new TFile(toyfname,"recreate");
+  tree->Write();
+  f->Close();
+  delete tree;
+  delete f;
+
 }
 
 ///
@@ -1584,6 +2031,7 @@ void GammaComboEngine::scan()
 					make1dProbScan(scannerProb, i);
 				}
 				make1dProbPlot(scannerProb, i);
+        if ( arg->compare ) comparisonScanners.push_back(scannerProb);
 			}
 			// 2D SCANS
 			else if ( arg->var.size()==2 )
@@ -1734,6 +2182,11 @@ void GammaComboEngine::scan()
       }
     }
 
+		// RUN TOYS
+    if (arg->isAction("runtoys")) runToys ( c );
+		/////////////////////////////////////////////////////
+
+    // SAVE WORKSPACE
     if (arg->save!="" && arg->saveAtMin) saveWorkspace( c, i );
 		/////////////////////////////////////////////////////
 
@@ -1796,7 +2249,18 @@ void GammaComboEngine::scanDataSet()
 		{
 				if ( arg->isAction("pluginbatch") ){
 					MethodDatasetsProbScan* scannerProb = new MethodDatasetsProbScan( (PDF_Datasets*) pdf[0], arg);
-					make1dProbScan( scannerProb, 0 );
+					if ( FileExists( m_fnamebuilder->getFileNameScanner(scannerProb)) ) {
+							scannerProb->initScan();
+							scannerProb->loadScanner( m_fnamebuilder->getFileNameScanner(scannerProb));
+					}
+					else{
+							cout << "\nWARNING : Couldn't load the Prob scanner, will rerun the Prob" << endl;
+							cout <<   "          scan now. You should have run the Prob scan locally" << endl;
+							cout <<   "          before running the Plugin scan." << endl;
+							cout <<   "          missing file: " << m_fnamebuilder->getFileNameScanner(scannerProb) << endl;
+							cout << endl;
+							make1dProbScan(scannerProb, 0);
+					}
 					MethodDatasetsPluginScan *scannerPlugin = new MethodDatasetsPluginScan( scannerProb, (PDF_Datasets*) pdf[0], arg);
 					make1dPluginScan(scannerPlugin, 0 );
 				}
@@ -1876,12 +2340,15 @@ void GammaComboEngine::run()
 	checkCombinationArg();
 	checkColorArg();
 	checkAsimovArg();
+  if ( arg->scalestaterr > -99 ) scaleStatErrors();
+  if ( arg->scaleerr > -99 ) scaleStatAndSystErrors();
   if ( arg->nosyst ) disableSystematics();
   makeAddDelCombinations();
   if ( arg->nbatchjobs>0 ) writebatchscripts();
 	customizeCombinerTitles();
 	setUpPlot();
 	scan(); // most thing gets done here
+  if ( arg->compare ) compareCombinations();
   if ( arg->info || arg->latex || (arg->save!="" && !arg->saveAtMin) ) return; // if only info is requested then we can go home
 	if (!arg->isAction("pluginbatch") && !arg->isAction("coveragebatch") && !arg->isAction("coverage") ) savePlot();
 	cout << endl;

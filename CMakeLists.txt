@@ -91,7 +91,9 @@ ENDIF(DOXYGEN_FOUND)
 #ENDIF(NOT CMAKE_BUILD_TYPE)
 
 ## require proper c++, standard is C++03, flag reads: c++98
-##SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -ansi -pedantic -Wno-long-long -Wshadow -Werror=overloaded-virtual"   )
+#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -ansi -pedantic -Wno-long-long -Wshadow -Werror=overloaded-virtual -g3 -O3 -std=c++11"   )
+#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -ansi -pedantic -g3 -O3 -std=c++11"   )
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -O3 -std=c++11"   )
 SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -g3")
 SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3")
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS} -O3 -g3")
@@ -105,16 +107,26 @@ SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS} -O3 -g3")
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag(-std=c++11 HAS_CPP11)
 check_cxx_compiler_flag(-std=c++0x HAS_CPP11_ALTERNATIVE)
-if (HAS_CPP11)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-elseif (HAS_CPP11_ALTERNATIVE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+check_cxx_compiler_flag(-std=c++14 HAS_CPP14)
+check_cxx_compiler_flag(-std=c++1y HAS_CPP14_ALTERNATIVE)
+
+if (HAS_CPP14)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+elseif (HAS_CPP14_ALTERNATIVE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
 else()
-  message(FATAL_ERROR "No C++11 support.")
+	message(WARNING "No C++14 support.")
+	if (HAS_CPP11)
+  		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+	elseif (HAS_CPP11_ALTERNATIVE)
+  		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+	else()
+  		message(FATAL_ERROR "No C++11 support.")
+  	endif()
 endif()
 
 # set additional compiler flags
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++11-extensions -Wno-inconsistent-missing-override"   )
+#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++11-extensions -Wno-inconsistent-missing-override"   )
 
 ######################################
 #

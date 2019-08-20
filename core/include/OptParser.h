@@ -40,10 +40,12 @@ class OptParser
 		vector<int>		asimov;
 		vector<TString> asimovfile;
 		bool			cacheStartingValues;
+		vector<float>	CL;
 		vector<int>		cls;
 		vector<int>		color;
 		vector<int>		combid;
 		vector<vector<int> >	combmodifications; // encodes requested modifications to the combiner ID through the -c 26:+12 syntax,format is [cmbid:[+pdf1,-pdf2,...]]
+    bool          compare;
     bool            confirmsols;
 		bool			controlplot;
 		int 			coverageCorrectionID;
@@ -52,6 +54,11 @@ class OptParser
 		int		        digits;
 		bool            enforcePhysRange;
     vector<int>     fillstyle;
+    vector<int>     fillcolor;
+    vector<float>   filltransparency;
+    vector<int>     linewidth;
+    vector<int>     linecolor;
+    vector<int>     linestyle;
     TString         filenamechange;
 		TString         filenameaddition;
 		vector<vector<FixPar> >     fixParameters;
@@ -101,6 +108,7 @@ class OptParser
 		float           plotlegsizex;
 		float           plotlegsizey;
     TString         plotlegstyle;
+    int             plotlegcols;
 		float           plotgroupx;
 		float           plotgroupy;
     Double_t        plotHFAGLabelPosX;
@@ -108,9 +116,12 @@ class OptParser
     Double_t        plotHFAGLabelScale;
 		bool            plotmagnetic;
 		int             plotnsigmacont;
+    map<int,vector<int> > contourlabels;
 		bool            plotpluginonly;
 		bool            plotpulls;
 		bool            plotprelim;
+    float           plotoriginx;
+    float           plotoriginy;
 		vector<int>     plotsolutions;
     vector<int>     plotsoln;
 		bool            plotunoff;
@@ -140,9 +151,12 @@ class OptParser
 		float           scanrangeMax;
 		float           scanrangeyMin;
 		float           scanrangeyMax;
+    float           scaleerr;
+    float           scalestaterr;
 		bool    smooth2d;
 		vector<TString> title;
     TString         toyFiles;
+    int             updateFreq;
 		bool            usage;
 		vector<TString> var;
 		bool		verbose;
