@@ -150,10 +150,11 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
     if ( last && arg->isQuickhack(25) ) g->SetLineWidth(3);
 	}
 
-	if (CLsType>0) g->SetLineColor(s->getLineColor() - 1);
+	if (CLsType>0) g->SetLineColor(color);
 
 	if ( plotPoints ){
 		g->SetLineWidth(1);
+    g->SetLineColor(color);
 		g->SetMarkerColor(color);
 		g->SetMarkerStyle(8);
 		g->SetMarkerSize(0.6);
@@ -856,7 +857,7 @@ void OneMinusClPlot::Draw()
        }
 		}
 	}
-
+  
 	// lines only
 	if ( !plotSimple )
 	for ( int i = 0; i < scanners.size(); i++ )
