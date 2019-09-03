@@ -32,6 +32,7 @@ TString Utils::ConfigToTString(config s)
 	if ( s == cdf2012 )              return "cdf2012";
 	if ( s == cdf2013 )              return "cdf2013";
 	if ( s == ckm2014 )              return "ckm2014";
+  if ( s == check )                return "check";
 	if ( s == cleo )                 return "cleo";
 	if ( s == cleo2001 )             return "cleo2001";
 	if ( s == cleo2012 )             return "cleo2012";
@@ -77,6 +78,7 @@ TString Utils::ConfigToTString(config s)
 	if ( s == lumi3fbDKstz )         return "lumi3fbDKstz";
 	if ( s == lumi3fbFix )           return "lumi3fbFix";
 	if ( s == lumi3fbPaper )         return "lumi3fbPaper";
+	if ( s == lumi5fb )              return "lumi5fb";
 	if ( s == lumi50fb )             return "lumi50fb";
 	if ( s == lumi9fb )              return "lumi9fb";
 	if ( s == manual )               return "manual";
