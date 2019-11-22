@@ -371,6 +371,11 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
 
     TH1F *bkg_pvals  = new TH1F("bkg_pvals", "bkg p values", 20, -0.1, 1.1);
 
+    TH1F *h_sig_bkgtoys  = new TH1F("h_sig_bkgtoys", "signal distribution for bkg toys", 50, -5*(((RooRealVar*) dataFreeFitResult->floatParsFinal().find(scanVar1))->getError()), 5*(((RooRealVar*) dataFreeFitResult->floatParsFinal().find(scanVar1))->getError()));
+
+    // map of vectors for determining signal distributions per scan point
+    std::map<int,std::vector<double> > sampledBiasValues;
+
     // map of vectors for CLb quantiles
     std::map<int,std::vector<double> > sampledSchi2Values;
     std::map<int,std::vector<double> > sampledBValues;
@@ -379,7 +384,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     Long64_t nentries     = t.GetEntries();
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : average number of toys per scanpoint: " << (double) nentries / (double)nPoints1d << endl;
     Long64_t nfailed      = 0;
-    Long64_t nfailedbkg      = 0;
+    Long64_t nfailedbkg   = 0;
     Long64_t nwrongrun    = 0;
     Long64_t n0better     = 0;
     Long64_t n0all        = 0;
@@ -429,23 +434,31 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         // Don't enforce t.chi2min-t.chi2minGlobal>0, else it can be hard because due
         // to little fluctuaions the best fit point can be missing from the plugin plot...
 
+        // std::cout << "using scanvar: " << scanVar1 << std::endl;
+        // dataFreeFitResult->Print();
+
         double bestfitpoint = ((RooRealVar*) dataFreeFitResult->floatParsFinal().find(scanVar1))->getVal();
         bool inPhysicalRegion     = ((t.chi2minToy - t.chi2minGlobalToy) >= 0 );
 
         // build test statistic
         double sb_teststat_measured= t.chi2min - this->chi2minGlobal;
-        // sb_teststat_measured = bestfitpoint <= t.scanpoint ? sb_teststat_measured : 0.; // if muhat < mu then q_mu = 0
+        sb_teststat_measured = bestfitpoint <= t.scanpoint ? sb_teststat_measured : 0.; // if muhat < mu then q_mu = 0
 
         double sb_teststat_toy= t.chi2minToy - t.chi2minGlobalToy;
-        // sb_teststat_toy = t.scanbest <= t.scanpoint ? sb_teststat_toy : 0.; // if muhat < mu then q_mu = 0
+        sb_teststat_toy = t.scanbest <= t.scanpoint ? sb_teststat_toy : 0.; // if muhat < mu then q_mu = 0
 
 
         double b_teststat_measured= t.chi2minBkg - this->chi2minGlobal;
-        // b_teststat_measured = bestfitpoint <= 0. ? b_teststat_measured : 0.; // if muhat < mu then q_mu = 0
+        b_teststat_measured = bestfitpoint <= 0. ? b_teststat_measured : 0.; // if muhat < mu then q_mu = 0
 
         double b_teststat_toy = t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy;
-        // b_teststat_toy = t.scanbestBkg <= 0. ? b_teststat_toy : 0.;  // if muhat < mu then q_mu = 0
+        b_teststat_toy = t.scanbestBkg <= 0. ? b_teststat_toy : 0.;  // if muhat < mu then q_mu = 0
 
+        int hBin = h_all->FindBin(t.scanpoint);
+        if ( sampledBValues.find(hBin) == sampledBValues.end() ) sampledBValues[hBin] = std::vector<double>();
+        if ( sampledSBValues.find(hBin) == sampledSBValues.end() ) sampledSBValues[hBin] = std::vector<double>();
+        if ( sampledSchi2Values.find(hBin) == sampledSchi2Values.end() ) sampledSchi2Values[hBin] = std::vector<double>();
+        if ( sampledBiasValues.find(hBin) == sampledBiasValues.end() ) sampledBiasValues[hBin] = std::vector<double>();
 
 
         // if ( valid && (t.chi2minToy - t.chi2minGlobalToy) >= (t.chi2min - this->chi2minGlobal) ) { //t.chi2minGlobal ){
@@ -478,17 +491,13 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
             // h_probPValues->SetBinContent(h_probPValues->FindBin(t.scanpoint), this->getPValueTTestStatistic(t.chi2min - this->chi2minGlobal)); //t.chi2minGlobal));
             h_probPValues->SetBinContent(h_probPValues->FindBin(t.scanpoint), this->getPValueTTestStatistic(sb_teststat_measured)); //t.chi2minGlobal));
             if (t.scanpoint == 0.0) n0all++;
+            sampledBiasValues[hBin].push_back(t.scanbest - t.scanpoint);
         }
 
         // all background toys
         if ( !BadBkgFit) { //inPhysicalRegion )
             h_all_bkg->Fill(t.scanpoint);
         }
-
-        int hBin = h_all->FindBin(t.scanpoint);
-        if ( sampledBValues.find(hBin) == sampledBValues.end() ) sampledBValues[hBin] = std::vector<double>();
-        if ( sampledSBValues.find(hBin) == sampledSBValues.end() ) sampledSBValues[hBin] = std::vector<double>();
-        if ( sampledSchi2Values.find(hBin) == sampledSchi2Values.end() ) sampledSchi2Values[hBin] = std::vector<double>();
 
         ////// comment Matt's part for the moment
         // // chi2minBkgToy is the best fit at scanpoint of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
@@ -504,7 +513,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         if(valid && t.chi2minToy - t.chi2minGlobalToy>-1.e-6){
         	double sbTestStatVal_true = t.chi2minToy - t.chi2minGlobalToy;
             if(sbTestStatVal_true<0&&sbTestStatVal_true>-1.e-6) sbTestStatVal_true = 0.0;
-        	// sbTestStatVal_true = t.scanbest <= t.scanpoint ? sbTestStatVal_true : 0.; // if muhat < mu then q_mu = 0
+        	sbTestStatVal_true = t.scanbest <= t.scanpoint ? sbTestStatVal_true : 0.; // if muhat < mu then q_mu = 0
             sampledSchi2Values[hBin].push_back(sbTestStatVal_true);
         }
 
@@ -514,18 +523,18 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         if(bkgTestStatVal<0&&bkgTestStatVal>-1.e-6) bkgTestStatVal=0.0;
         
         if( !BadBkgFit ){
-            // bkgTestStatVal = t.scanbestBkg <= 0. ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
+            bkgTestStatVal = t.scanbestBkg <= 0. ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
             // cout << "best bkg fit: " << t.scanbestBkg << std::endl;
-            // bkgTestStatVal = t.scanbestBkgfitBkg <= 0. ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
             if(hBin==2){
                 // std::cout << bkgTestStatVal << std::endl;
                 bkg_pvals->Fill(TMath::Prob(bkgTestStatVal,1));
+                h_sig_bkgtoys->Fill(t.scanbestBkg);
             }
             sampledBValues[hBin].push_back( bkgTestStatVal );
             // chi2minBkgToy is the best fit at scanpoint of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
             double sbTestStatVal = t.chi2minBkgToy - t.chi2minGlobalBkgToy;
             if(sbTestStatVal<0&&sbTestStatVal>-1.e-6) sbTestStatVal=0.0;
-            // sbTestStatVal = t.scanbestBkg <= t.scanpoint ? sbTestStatVal : 0.; // if muhat < mu then q_mu = 0
+            sbTestStatVal = t.scanbestBkg <= t.scanpoint ? sbTestStatVal : 0.; // if muhat < mu then q_mu = 0
             sampledSBValues[hBin].push_back( sbTestStatVal );
         }
 
@@ -779,14 +788,39 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     }
 
     if ( arg->controlplot ) makeControlPlots( sampledBValues, sampledSBValues );
+    if ( arg->controlplot ) makeControlPlotsBias( sampledBiasValues );
+
+    if ( arg->controlplot ){
+        TCanvas *biascanv = newNoWarnTCanvas("biascanv", "biascanv");
+        biascanv->SetRightMargin(0.11);
+        h_sig_bkgtoys->GetXaxis()->SetTitle("POI residual for bkg-only toys");
+        h_sig_bkgtoys->GetYaxis()->SetTitle("Entries");
+        h_sig_bkgtoys->GetXaxis()->SetTitleSize(0.06);
+        h_sig_bkgtoys->GetYaxis()->SetTitleSize(0.06);
+        h_sig_bkgtoys->GetXaxis()->SetLabelSize(0.06);
+        h_sig_bkgtoys->GetYaxis()->SetLabelSize(0.06);
+        h_sig_bkgtoys->SetLineWidth(2);
+        h_sig_bkgtoys->SetFillColor(kBlue);
+        h_sig_bkgtoys->SetFillStyle(3003);
+        h_sig_bkgtoys->SetLineColor(kBlue);
+        h_sig_bkgtoys->Draw();
+        TLegend *leg = new TLegend(0.65,0.74,0.89,0.95);
+        leg->SetHeader("Bkg-only");
+        leg->SetFillColor(0);
+        leg->AddEntry(h_sig_bkgtoys,"POI residual","LF");
+        leg->AddEntry((TObject*)0,Form("#mu=%4.2g +/- %4.2g",h_sig_bkgtoys->GetMean(),h_sig_bkgtoys->GetMeanError()),"");
+        leg->AddEntry((TObject*)0,Form("#sigma=%4.2g +/- %4.2g",h_sig_bkgtoys->GetStdDev(),h_sig_bkgtoys->GetStdDevError()),"");
+        leg->Draw("same");
+        savePlot(biascanv, "bkg-only_toyfit");
+    }
 
     if (arg->debug || drawPlots) {
-        TCanvas *canvas1 = new TCanvas("canvas1", "canvas1", 1200, 1000);
+        TCanvas *canvas1 = newNoWarnTCanvas("canvas1", "canvas1");
         bkg_pvals->SetLineWidth(2);
         bkg_pvals->SetXTitle("bkg-only p value");
         bkg_pvals->Draw();
         savePlot(canvas1,"bkg_only_pvalues");
-        TCanvas* can = new TCanvas("can", "can", 1024, 786);
+        TCanvas* can = newNoWarnTCanvas("can", "can");
         can->cd();
         gStyle->SetOptTitle(0);
         //gStyle->SetOptStat(0);
@@ -799,7 +833,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         h_fracGoodToys->SetXTitle(scanVar1);
         h_fracGoodToys->SetYTitle("fraction of good toys");
         h_fracGoodToys->Draw();
-        TCanvas *canvas = new TCanvas("canvas", "canvas", 1200, 1000);
+        TCanvas *canvas = newNoWarnTCanvas("canvas", "canvas");
         canvas->Divide(2, 2);
         canvas->cd(1);
         h_all->SetXTitle("h_all");
@@ -1311,7 +1345,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                         cout << "+++++ > dChi2: " << toyTree.chi2minToy - toyTree.chi2minGlobalToy << endl;
                         cout << "+++++ > dChi2PDF: " << 2 * (pdf->getMinNllScan() - pdf->getMinNllFree()) << endl;
                         Utils::setParameters(this->pdf->getWorkspace(), pdf->getParName(), parsAfterScanFit->get(0));
-                        if (parameterToScan->getVal() < 1e-13) parameterToScan->setVal(0.67e-12);
+                        // if (parameterToScan->getVal() < 1e-13) parameterToScan->setVal(0.67e-12); //what do we gain from this?
                         parameterToScan->setConstant(false);
                         pdf->deleteNLL();
                         RooFitResult* r_tmp = this->loadAndFit(this->pdf);
@@ -1870,4 +1904,48 @@ void MethodDatasetsPluginScan::makeControlPlots(map<int, vector<double> > bVals,
 
   savePlot(c, "cls_ControlPlot");
 
+}
+
+void MethodDatasetsPluginScan::makeControlPlotsBias(map<int, vector<double> > biasVals)
+{ 
+  for ( int i=1; i<= hCLs->GetNbinsX(); i++ ) {
+
+    TCanvas *c = newNoWarnTCanvas( Form("q%d",i), Form("q%d",i));
+    c->SetRightMargin(0.11);
+    double max = *(std::max_element( biasVals[i].begin(), biasVals[i].end() ) );
+    double min = *(std::min_element( biasVals[i].begin(), biasVals[i].end() ) );
+    TH1F *hsig = new TH1F( Form("hsig%d",i), "hsig", 50,min, max );
+
+    for ( int j=0; j<biasVals[i].size(); j++ ) hsig->Fill( biasVals[i][j] );
+
+    hsig->GetXaxis()->SetTitle("POI residual #hat{#alpha} #minus #alpha_{0}");
+    hsig->GetYaxis()->SetTitle("Entries");
+    hsig->GetXaxis()->SetTitleSize(0.06);
+    hsig->GetYaxis()->SetTitleSize(0.06);
+    hsig->GetXaxis()->SetLabelSize(0.06);
+    hsig->GetYaxis()->SetLabelSize(0.06);
+    hsig->SetLineWidth(2);
+    hsig->SetFillColor(kBlue);
+    hsig->SetFillStyle(3003);
+    hsig->SetLineColor(kBlue);
+
+    //TGraph *gsb = Utils::smoothHist(hsig, 1);
+
+    //gsb->SetLineColor(kBlue+1);
+    //gsb->SetLineWidth(4);
+
+    hsig->Draw();
+    //gb->Draw("Lsame");
+    //gsb->Draw("Lsame");
+
+    TLegend *leg = new TLegend(0.65,0.74,0.89,0.95);
+    leg->SetHeader(Form("p=%4.2g",hCLs->GetBinCenter(i)));
+    leg->SetFillColor(0);
+    leg->AddEntry(hsig,"POI residual","LF");
+    leg->AddEntry((TObject*)0,Form("#mu=%4.2g +/- %4.2g",hsig->GetMean(),hsig->GetMeanError()),"");
+    leg->AddEntry((TObject*)0,Form("#sigma=%4.2g +/- %4.2g",hsig->GetStdDev(),hsig->GetStdDevError()),"");
+    leg->Draw("same");
+    savePlot(c,Form("BiasControlPlot_p%d",i) );
+  }
+return;
 }
