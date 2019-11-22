@@ -231,7 +231,7 @@ OptParser*   PDF_Datasets::getArg() {
     std::cout << "ERROR: getting the options parser from the pdf has been deprecated" << std::endl;
     std::cout << "(This is up for discussion of course)" << std::endl;
     exit(EXIT_FAILURE);
-}
+};
 
 void  PDF_Datasets::generateBkgToysGlobalObservables(int SeedShift) {
 
@@ -248,7 +248,7 @@ void  PDF_Datasets::generateBkgToysGlobalObservables(int SeedShift) {
 
     // take a snapshot of the global variables in the workspace so they can be loaded later
     wspc->saveSnapshot(globalObsToySnapshotName, *wspc->set(globalObsName));
-}
+};
 
 
 void  PDF_Datasets::generateToysGlobalObservables(int SeedShift) {
@@ -266,7 +266,7 @@ void  PDF_Datasets::generateToysGlobalObservables(int SeedShift) {
 
     // take a snapshot of the global variables in the workspace so they can be loaded later
     wspc->saveSnapshot(globalObsToySnapshotName, *wspc->set(globalObsName));
-}
+};
 
 
 RooFitResult* PDF_Datasets::fit(RooDataSet* dataToFit) {
@@ -296,6 +296,7 @@ RooFitResult* PDF_Datasets::fit(RooDataSet* dataToFit) {
     RooMsgService::instance().setGlobalKillBelow(INFO);
     this->fitStatus = result->status();
     RooAbsReal* nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE));
+    // RooAbsReal* nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
     this->minNll = nll->getVal();
     delete nll;
 
@@ -334,6 +335,7 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit) {
     RooMsgService::instance().setGlobalKillBelow(INFO);
     this->fitStatus = result->status();
     RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit, RooFit::Extended(kTRUE));
+    // RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
     this->minNllBkg = nll_bkg->getVal();
     delete nll_bkg;
 
@@ -351,7 +353,7 @@ void   PDF_Datasets::generateToys(int SeedShift) {
     // if(this->toyObservables) delete this->toyObservables;
     this->toyObservables  = toys;
     this->isToyDataSet    = kTRUE;
-}
+};
 
 void   PDF_Datasets::generateBkgToys(int SeedShift) {
 
@@ -365,7 +367,7 @@ void   PDF_Datasets::generateBkgToys(int SeedShift) {
         std::cerr << "Error in PDF_Datasets::generateBkgToys: No bkg pdf given." << std::endl;
         exit(EXIT_FAILURE);
     }
-}
+};
 
 /*! \brief Initializes the random generator
  *
@@ -390,7 +392,7 @@ void PDF_Datasets::initializeRandomGenerator(int seedShift) {
         }
         RooRandom::randomGenerator()->SetSeed(seedShift + (arg->nrun) * (arg->ntoys) * (arg->npoints1d));
     }
-}
+};
 
 void PDF_Datasets::unblind(TString var, TString unblindRegs) {
 
@@ -411,4 +413,4 @@ void PDF_Datasets::unblind(TString var, TString unblindRegs) {
     if (i < regs->GetEntries()-1) unblindString += ",";
   }
   unblindRegions[var] = unblindString;
-}
+};
