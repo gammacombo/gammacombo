@@ -211,6 +211,26 @@ RooFitResult* MethodDatasetsPluginScan::loadAndFit(PDF_Datasets* pdf) {
     return pdf->fit(pdf->getToyObservables());
 };
 
+
+///////////////////////////////////////////////////
+///
+/// Prepare environment for bkg-only toy fit
+///
+/// \param pdf      the pdf that is to be fitted.
+///
+////////////////////////////////////////////////////
+RooFitResult* MethodDatasetsPluginScan::loadAndFitBkg(PDF_Datasets* pdf) {
+    // we want to fit to the latest simulated toys
+    // first, try to simulated toy values of the global observables from a snapshot
+    if (!w->loadSnapshot(pdf->globalObsBkgToySnapshotName)) {
+        std::cout << "FATAL in MethodDatasetsPluginScan::loadAndFit() - No snapshot globalObsBkgToySnapshotName found!\n" << std::endl;
+        exit(EXIT_FAILURE);
+    };
+    // then, fit the pdf while passing it the simulated toy dataset
+    return pdf->fit(pdf->getBkgToyObservables());
+};
+
+
 ///
 /// load Parameter limits
 /// by default the "free" limit is loaded, can be changed to "phys" by command line argument
@@ -937,6 +957,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
     // there is a small overhead here but it's necessary because the bkg only hypothesis
     // might not necessarily be in the scan range (although often it will be the first point)
 	vector<RooDataSet*> cls_bkgOnlyToys;
+	vector<TString> bkgOnlyGlobObsSnaphots;
     vector<float> chi2minGlobalBkgToysStore;    // Global fit to bkg-only toys
     vector<float> chi2minBkgBkgToysStore;       // Bkg fit to bkg-only toys
     vector<float> scanbestBkgToysStore;         // best fit point of gloabl fit to bkg-only toys 
@@ -956,21 +977,22 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       if(pdf->getBkgPdf()){
         pdf->fitBkg(pdf->getData());     //Need to fit bkg first to get the proper parameters for the toy generation
         pdf->generateBkgToys();
-        pdf->generateToysGlobalObservables();
+        pdf->generateBkgToysGlobalObservables(0,j);
         RooDataSet* bkgOnlyToy = pdf->getBkgToyObservables();
         cls_bkgOnlyToys.push_back( (RooDataSet*)bkgOnlyToy->Clone() ); // clone required because of deleteToys() call at end of loop
+        bkgOnlyGlobObsSnaphots.push_back(pdf->globalObsBkgToySnapshotName);
         pdf->setToyData( bkgOnlyToy );
         parameterToScan->setConstant(false);
 
         // Do a global fit to bkg-only toys
-        RooFitResult *rb = loadAndFit(pdf);
+        RooFitResult *rb = loadAndFitBkg(pdf);
         // RooFitResult *rb = pdf->fitBkg(bkgOnlyToy);
         assert(rb);
         pdf->setMinNllScan(pdf->minNll);
         if (pdf->getFitStatus() != 0) {
             pdf->setFitStrategy(1);
             delete rb;
-            rb = loadAndFit(pdf);
+            rb = loadAndFitBkg(pdf);
             // rb = pdf->fitBkg(bkgOnlyToy);
             pdf->setMinNllScan(pdf->minNll);
             assert(rb);
@@ -978,7 +1000,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             if (pdf->getFitStatus() != 0) {
                 pdf->setFitStrategy(2);
                 delete rb;
-                rb = loadAndFit(pdf);
+                rb = loadAndFitBkg(pdf);
                 // rb = pdf->fitBkg(bkgOnlyToy);
                 assert(rb);
             }
@@ -1011,6 +1033,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         covQualFreeBkgToysStore.push_back(rb->covQual());
         StatusFreeBkgToysStore.push_back(pdf->getFitStatus());
 
+        // fit the bkg-only toys with the bkg-only hypothesis
         delete rb;
         rb = pdf->fitBkg(bkgOnlyToy);
         assert(rb);
@@ -1211,6 +1234,9 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             // set parameters to constrained data scan fit result again
             this->setParevolPointByIndex(i);
 
+            // load the global observables from the bkg-only toy generation -- TODO: rmove?
+            // pdf->loadGlobalObsFromSnapshot(pdf->globalObsBkgToySnapshotName);
+
             // fixed parameter of interest
             parameterToScan->setConstant(true);
             this->pdf->setFitStrategy(0);
@@ -1219,8 +1245,10 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             // now get our background only toy (to fit under this hypothesis)
             RooDataSet *bkgToy = (RooDataSet*)cls_bkgOnlyToys[j];
             if (arg->debug) cout << "Setting background toy as data " << bkgToy << endl;
-            this->pdf->setToyData( bkgToy );
-            RooFitResult* rb   = this->loadAndFit(this->pdf);
+            this->pdf->setBkgToyData( bkgToy );
+            this->pdf->setGlobalObsSnapshotBkgToy( bkgOnlyGlobObsSnaphots[j] );
+
+            RooFitResult* rb   = this->loadAndFitBkg(this->pdf);
             assert(rb);
             pdf->setMinNllScan(pdf->minNll);
 
@@ -1229,7 +1257,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             if (pdf->getFitStatus() != 0) {
                 pdf->setFitStrategy(1);
                 delete rb;
-                rb = this->loadAndFit(this->pdf);
+                rb = this->loadAndFitBkg(this->pdf);
                 pdf->setMinNllScan(pdf->minNll);
                 assert(rb);
 
@@ -1238,7 +1266,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                 if (pdf->getFitStatus() != 0) {
                     pdf->setFitStrategy(2);
                     delete rb;
-                    rb = this->loadAndFit(this->pdf);
+                    rb = this->loadAndFitBkg(this->pdf);
                     assert(rb);
                 }
             }
@@ -1268,14 +1296,17 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 
             this->setParevolPointByIndex(i);
 
+            // load the global observables from the fixed-to-scanpoint toy generation -- TODO:remove?
+            // pdf->loadGlobalObsFromSnapshot(pdf->globalObsToySnapshotName);
+
             // free parameter of interest
             parameterToScan->setConstant(false);
             //setLimit(w, scanVar1, "free");
             w->var(scanVar1)->removeRange();
 
-						// set dataset back
-						if (arg->debug) cout << "Setting toy back as data " << tempData << endl;
-						this->pdf->setToyData( tempData );
+			// set dataset back
+			if (arg->debug) cout << "Setting toy back as data " << tempData << endl;
+			this->pdf->setToyData( tempData );
 
             // Fit
             pdf->setFitStrategy(0);
