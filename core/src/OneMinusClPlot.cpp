@@ -408,18 +408,18 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
   TGraphSmooth *smoother = new TGraphSmooth();
   if (smooth) {
     if ( arg->debug ) cout << "OneMinusClPlot::scan1dCLsPlot() : smoothing graphs" << endl;
-    gExp    = (TGraph*)smoother->SmoothSuper( gExpRaw    )->Clone("gExp");
-    gErr1Up = (TGraph*)smoother->SmoothSuper( gErr1UpRaw )->Clone("gErr1Up");
-    gErr1Dn = (TGraph*)smoother->SmoothSuper( gErr1DnRaw )->Clone("gErr1Dn");
-    gErr2Up = (TGraph*)smoother->SmoothSuper( gErr2UpRaw )->Clone("gErr2Up");
-    gErr2Dn = (TGraph*)smoother->SmoothSuper( gErr2DnRaw )->Clone("gErr2Dn");
+    // gExp    = (TGraph*)smoother->SmoothSuper( gExpRaw    )->Clone("gExp");
+    // gErr1Up = (TGraph*)smoother->SmoothSuper( gErr1UpRaw )->Clone("gErr1Up");
+    // gErr1Dn = (TGraph*)smoother->SmoothSuper( gErr1DnRaw )->Clone("gErr1Dn");
+    // gErr2Up = (TGraph*)smoother->SmoothSuper( gErr2UpRaw )->Clone("gErr2Up");
+    // gErr2Dn = (TGraph*)smoother->SmoothSuper( gErr2DnRaw )->Clone("gErr2Dn");
 
     //alternative smoothing option, needs more fiddling
-    // gExp    = (TGraph*)smoother->SmoothKern( gExpRaw   ,"normal",0.07e-8)->Clone("gExp");
-    // gErr1Up = (TGraph*)smoother->SmoothKern( gErr1UpRaw,"normal",0.19e-8)->Clone("gErr1Up");
-    // gErr1Dn = (TGraph*)smoother->SmoothKern( gErr1DnRaw,"normal",0.19e-8)->Clone("gErr1Dn");
-    // gErr2Up = (TGraph*)smoother->SmoothKern( gErr2UpRaw,"normal",0.19e-8)->Clone("gErr2Up");
-    // gErr2Dn = (TGraph*)smoother->SmoothKern( gErr2DnRaw,"normal",0.19e-8)->Clone("gErr2Dn");
+    gExp    = (TGraph*)smoother->SmoothKern( gExpRaw   ,"normal",0.2e-9)->Clone("gExp");
+    gErr1Up = (TGraph*)smoother->SmoothKern( gErr1UpRaw,"normal",0.2e-9)->Clone("gErr1Up");
+    gErr1Dn = (TGraph*)smoother->SmoothKern( gErr1DnRaw,"normal",0.2e-9)->Clone("gErr1Dn");
+    gErr2Up = (TGraph*)smoother->SmoothKern( gErr2UpRaw,"normal",0.2e-9)->Clone("gErr2Up");
+    gErr2Dn = (TGraph*)smoother->SmoothKern( gErr2DnRaw,"normal",0.2e-9)->Clone("gErr2Dn");
 
 
     if ( arg->debug ) cout << "OneMinusClPlot::scan1dCLsPlot() : done smoothing graphs" << endl;
