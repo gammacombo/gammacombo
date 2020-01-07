@@ -1186,7 +1186,10 @@ void GammaComboEngine::make1dPluginScan(MethodPluginScan *scannerPlugin, int cId
 	else {
 		scannerPlugin->readScan1dTrees(arg->jmin[cId],arg->jmax[cId]);
 		scannerPlugin->calcCLintervals();
-		for (int i=0; i<arg->cls.size(); i++) scannerPlugin->calcCLintervals(arg->cls[i]);
+		for (int i=0; i<arg->cls.size(); i++){
+			scannerPlugin->calcCLintervals(arg->cls[i]);
+			if (arg->cls[i]==2) scannerPlugin->calcCLintervals(arg->cls[i], true); //calculate expected upper limit
+		}
 	}
 	if ( !arg->isAction("pluginbatch") ){
 		scannerPlugin->saveScanner(m_fnamebuilder->getFileNameScanner(scannerPlugin));
