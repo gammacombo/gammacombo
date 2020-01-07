@@ -476,15 +476,11 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         sb_teststat_toy = t.scanbest <= t.scanpoint ? sb_teststat_toy : 0.; // if mu < muhat then q_mu = 0
 
 
-        // double b_teststat_measured= t.chi2minBkg - this->chi2minGlobal;
-        double b_teststat_measured= t.chi2min - this->chi2minGlobal; //test: is this really what RooStats does?
-        // b_teststat_measured = bestfitpoint <= 0. ? b_teststat_measured : 0.; // if mu < muhat then q_mu = 0
-        b_teststat_measured = bestfitpoint <= t.scanpoint ? b_teststat_measured : 0.; // if mu < muhat then q_mu = 0 //test: is this really what RooStats does?
+        double b_teststat_measured= t.chi2min - this->chi2minGlobal; 
+        b_teststat_measured = bestfitpoint <= t.scanpoint ? b_teststat_measured : 0.; // if mu < muhat then q_mu = 0
 
-        // double b_teststat_toy = t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy;
-        double b_teststat_toy = t.chi2minBkgToy - t.chi2minGlobalBkgToy; //test: is this really what RooStats does?
-        // b_teststat_toy = t.scanbestBkg <= 0. ? b_teststat_toy : 0.;  // if mu < muhat then q_mu = 0
-        b_teststat_toy = t.scanbestBkg <= t.scanpoint ? b_teststat_toy : 0.;  // if mu < muhat then q_mu = 0 //test: is this really what RooStats does?
+        double b_teststat_toy = t.chi2minBkgToy - t.chi2minGlobalBkgToy;
+        b_teststat_toy = t.scanbestBkg <= t.scanpoint ? b_teststat_toy : 0.;  // if mu < muhat then q_mu = 0
 
         int hBin = h_all->FindBin(t.scanpoint);
         if ( sampledBValues.find(hBin) == sampledBValues.end() ) sampledBValues[hBin] = std::vector<double>();
@@ -492,9 +488,6 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         if ( sampledSchi2Values.find(hBin) == sampledSchi2Values.end() ) sampledSchi2Values[hBin] = std::vector<double>();
         if ( sampledBiasValues.find(hBin) == sampledBiasValues.end() ) sampledBiasValues[hBin] = std::vector<double>();
 
-
-        // if ( valid && (t.chi2minToy - t.chi2minGlobalToy) >= (t.chi2min - this->chi2minGlobal) ) { //t.chi2minGlobal ){
-        // if ( valid && (sb_teststat_toy) > (sb_teststat_measured) ) { //t.chi2minGlobal ){
         if ( valid && (sb_teststat_toy) >= (sb_teststat_measured) ) { //t.chi2minGlobal ){
             h_better->Fill(t.scanpoint);
         }
@@ -503,9 +496,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
             h_better_cls->Fill(t.scanpoint);
         }
 
-        // if ( valid && !BadBkgFit && (t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy) >= (chi2minBkg - chi2minGlobal) ) {
         if ( !BadBkgFit && (b_teststat_toy) >= (b_teststat_measured) ) {
-        // if ( !BadBkgFit && (b_teststat_toy) > (b_teststat_measured) ) {
             h_better_clb->Fill(t.scanpoint);
         }
         if (t.scanpoint == 0.0) n0better++;
@@ -531,16 +522,6 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
             h_all_bkg->Fill(t.scanpoint);
         }
 
-        ////// comment Matt's part for the moment
-        // // chi2minBkgToy is the best fit at scanpoint of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
-        // double bkgTestStatVal = t.chi2minBkgToy - t.chi2minGlobalBkgToy;
-        // std::cout << bkgTestStatVal << ": " << t.chi2minBkgToy << " - " << t.chi2minGlobalBkgToy << std::endl;
-        // bkgTestStatVal = t.scanbestBkg <= t.scanpoint ? bkgTestStatVal : 0.;  // if mu < muhat then q_mu = 0
-        // sampledBValues[hBin].push_back( bkgTestStatVal );
-        // double sbTestStatVal = t.chi2minToy - t.chi2minGlobalToy;
-        // sbTestStatVal = t.scanbest <= t.scanpoint ? sbTestStatVal : 0.; // if mu < muhat then q_mu = 0
-        // sampledSBValues[hBin].push_back( sbTestStatVal );
-
         // chi2minToy is the best of the toy at scanpoint, chi2minGlobalToy is the best global fit of the toy 
         if(valid && t.chi2minToy - t.chi2minGlobalToy>-1.e-6){
         	double sbTestStatVal_true = t.chi2minToy - t.chi2minGlobalToy;
@@ -551,13 +532,12 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
 
 
         // chi2minBkgBkgToy is the best fit of the bkg pdf of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
-        // double bkgTestStatVal = t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy;
-        double bkgTestStatVal = t.chi2minBkgToy - t.chi2minGlobalBkgToy; //test: is this really what RooStats does?
+        // chi2minBkgToy is the best fit at scanpoint of bkg-only toy
+        double bkgTestStatVal = t.chi2minBkgToy - t.chi2minGlobalBkgToy;
         if(bkgTestStatVal<0&&bkgTestStatVal>-1.e-6) bkgTestStatVal=0.0;
         
         if( !BadBkgFit ){
-            // bkgTestStatVal = t.scanbestBkg <= 0. ? bkgTestStatVal : 0.;  // if mu < muhat then q_mu = 0
-            bkgTestStatVal = t.scanbestBkg <= t.scanpoint ? bkgTestStatVal : 0.;  // if mu < muhat then q_mu = 0 //test: is this really what RooStats does?
+            bkgTestStatVal = t.scanbestBkg <= t.scanpoint ? bkgTestStatVal : 0.;  // if mu < muhat then q_mu = 0
             // cout << "best bkg fit: " << t.scanbestBkg << std::endl;
             if(hBin==2){
                 // std::cout << bkgTestStatVal << std::endl;
@@ -638,64 +618,6 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         hCLb->SetBinError(i, sqrt(p_clb * (1. - p_clb) / nall));
 
 
-        // // the quantiles of the CLb distribution (for expected CLs)
-        // std::vector<double> probs  = { TMath::Prob(4,1), TMath::Prob(1,1), 0.5, 1.-TMath::Prob(1,1), 1.-TMath::Prob(4,1) };
-        // std::vector<double> clb_vals  = { 1.-TMath::Prob(4,1), 1.-TMath::Prob(1,1), 0.5, TMath::Prob(1,1), TMath::Prob(4,1) };
-        // std::vector<double> quantiles = Quantile<double>( sampledBValues[i], probs );
-        // std::vector<double> clsb_vals;
-        // //for (int k=0; k<quantiles.size(); k++) clsb_vals.push_back( TMath::Prob( quantiles[k], 1 ) );
-        // for (int k=0; k<quantiles.size(); k++ ){
-        //   // asymptotic as chi2
-        //   //clsb_vals.push_back( TMath::Prob( quantiles[k], 1 ) );
-        //   // from toys
-        //   clsb_vals.push_back(1.-getVectorFracAboveValue( sampledSBValues[i], quantiles[k] ) );
-        // }
-
-        // // check
-        // if ( arg->debug ) {
-        //   cout << i << endl;
-        //   cout << "Quants: ";
-        //   for (int k=0; k<quantiles.size(); k++) cout << quantiles[k] << " , ";
-        //   cout << endl;
-        //   cout << "CLb: ";
-        //   for (int k=0; k<clb_vals.size(); k++) cout << clb_vals[k] << " , ";
-        //   cout << endl;
-        //   cout << "CLsb: ";
-        //   for (int k=0; k<clsb_vals.size(); k++) cout << clsb_vals[k] << " , ";
-        //   cout << endl;
-        //   cout << "CLs: ";
-        //   // for (int k=0; k<clsb_vals.size(); k++) cout << clsb_vals[k]/clb_vals[k] << " , ";
-        //   for (int k=0; k<clsb_vals.size(); k++) cout << clsb_vals[k]/probs[k] << " , ";
-        //   cout << endl;
-        // }       
-
-        // // // Matt's idea
-        // // hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] / clb_vals[2] , 1.) );
-        // // hCLsErr1Up->SetBinContent( i, TMath::Min( clsb_vals[1] / clb_vals[1] , 1.) );
-        // // hCLsErr1Dn->SetBinContent( i, TMath::Min( clsb_vals[3] / clb_vals[3] , 1.) );
-        // // hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[0] / clb_vals[0] , 1.) );
-        // // hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[4] / clb_vals[4] , 1.) );
-
-        // // hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] , 1.) );
-        // // hCLsErr1Up->SetBinContent( i, TMath::Min( clsb_vals[3] , 1.) );
-        // // hCLsErr1Dn->SetBinContent( i, TMath::Min( clsb_vals[1] , 1.) );
-        // // hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[4] , 1.) );
-        // // hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[0] , 1.) );
-
-        // hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] / probs[2], 1.) );
-        // hCLsErr1Up->SetBinContent( i, TMath::Min( clsb_vals[3] / probs[3], 1.) );
-        // hCLsErr1Dn->SetBinContent( i, TMath::Min( clsb_vals[1] / probs[1], 1.) );
-        // hCLsErr2Up->SetBinContent( i, TMath::Min( clsb_vals[4] / probs[4], 1.) );
-        // hCLsErr2Dn->SetBinContent( i, TMath::Min( clsb_vals[0] / probs[0], 1.) );
-
-        // // hCLsExp->SetBinContent   ( i, (float(nSBValsAboveBkg[2]) / sampledSBValues[i].size() ) / probs[2] );
-        // // hCLsErr1Up->SetBinContent( i, (float(nSBValsAboveBkg[1]) / sampledSBValues[i].size() ) / probs[1] );
-        // // hCLsErr1Dn->SetBinContent( i, (float(nSBValsAboveBkg[3]) / sampledSBValues[i].size() ) / probs[3] );
-        // // hCLsErr2Up->SetBinContent( i, (float(nSBValsAboveBkg[0]) / sampledSBValues[i].size() ) / probs[0] );
-        // // hCLsErr2Dn->SetBinContent( i, (float(nSBValsAboveBkg[4]) / sampledSBValues[i].size() ) / probs[4] );
-
-        // Redo from scratch:
-
         std::vector<double> clsb_vals;
         std::vector<double> clb_vals;
         std::vector<double> cls_vals;
@@ -707,24 +629,12 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
 
         for(int j=0; j<sampledBValues[i].size(); j++){
             double clsb_val = getVectorFracAboveValue( sampledSchi2Values[i], sampledSBValues[i][j]); // p_cls+b value for each bkg-only toy
-            double clb_val = getVectorFracAboveValue( sampledBValues[i], sampledSBValues[i][j]); // p_clb value for each bkg-only toy CAUTION: duplicate use of sampledBValues //test: is this really what RooStats does?
+            double clb_val = getVectorFracAboveValue( sampledBValues[i], sampledSBValues[i][j]); // p_clb value for each bkg-only toy CAUTION: duplicate use of sampledBValues
             double cls_val = clsb_val/clb_val;
-
-            // if(clsb_val==0. && clb_val==0.){
-            //     cls_val=0.;
-            // }
-
-            // if(clsb_val>0.5&& clb_val>0.5){
-            //     std::cout<<"large clsb val: " << clsb_val << "clb: " << clb_val << " for test statistic: " << sampledSBValues[i][j] << std::endl;
-            //     cls_val=1.0;
-            // }
-
 
             clsb_vals.push_back(clsb_val);
             clb_vals.push_back(clb_val);
-            // if(cls_val<=1.){
         	cls_vals.push_back(cls_val);
-            // }
         }
 
         if (arg->debug ){
@@ -801,10 +711,8 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         int nDataAboveBkgExp = 0;
         double dataTestStat = p>0 ? TMath::ChisquareQuantile(1.-p,1) : 1.e10;
         for (int j=0; j<sampledBValues[i].size(); j++ ) {
-          // if ( sampledBValues[i][j] >= dataTestStat ) nDataAboveBkgExp += 1;
           if ( sampledBValues[i][j] > dataTestStat ) nDataAboveBkgExp += 1;
         }
-        // float dataCLb    = float(nDataAboveBkgExp)/sampledBValues[i].size();
         float dataCLb    = p_clb;
         float dataCLbErr = sqrt( dataCLb * (1.-dataCLb) / sampledBValues[i].size() );
         if ( p/dataCLb >= 1. ) {
@@ -1013,14 +921,12 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         parameterToScan->setConstant(false);
         // Do a global fit to bkg-only toys
         RooFitResult *rb = loadAndFitBkg(pdf);
-        // RooFitResult *rb = pdf->fitBkg(bkgOnlyToy);
         assert(rb);
         pdf->setMinNllScan(pdf->minNll);
         if (pdf->getFitStatus() != 0) {
             pdf->setFitStrategy(1);
             delete rb;
             rb = loadAndFitBkg(pdf);
-            // rb = pdf->fitBkg(bkgOnlyToy);
             pdf->setMinNllScan(pdf->minNll);
             assert(rb);
 
@@ -1028,7 +934,6 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                 pdf->setFitStrategy(2);
                 delete rb;
                 rb = loadAndFitBkg(pdf);
-                // rb = pdf->fitBkg(bkgOnlyToy);
                 assert(rb);
             }
         }
@@ -1049,10 +954,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 
         // chi2minGlobalBkgToysStore.push_back( 2 * rb->minNll() );
         chi2minGlobalBkgToysStore.push_back( 2 * pdf->getMinNll() );
-        // rb->Print();
-        // std::cout << "found signal parameter with value " << ((RooRealVar*)w->set(pdf->getParName())->find(scanVar1))->getVal() << std::endl;
         if(rb->floatParsFinal().find(scanVar1)){
-        	// std::cout << "found signal parameter with value " << ((RooRealVar*)w->set(pdf->getParName())->find(scanVar1))->getVal() << std::endl;
             scanbestBkgToysStore.push_back( ((RooRealVar*)w->set(pdf->getParName())->find(scanVar1))->getVal() );    
         }
         // if the pdf does not depend on the signal parameter, set best fit value of signa l parameter for the bkg fit to 0
@@ -1178,25 +1080,6 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             this->pdf->generateToys(); // this is generating the toy dataset
             this->pdf->generateToysGlobalObservables(); // this is generating the toy global observables and saves globalObs in snapshot
 
-
-            // TODO - DELETE THE FOLLOWING SMALL BLOCK
-            // keep hold of the background only toys -- this part is broken somehow
-            //if(i==0){
-              //if(pdf->getBkgPdf()){
-                //pdf->generateBkgToys();
-                //cls_bkgOnlyToys.push_back( (RooDataSet*)this->pdf->getBkgToyObservables()->Clone() ); //surely not optimal
-              //}
-              //else {
-              //cls_bkgOnlyToys.push_back( (RooDataSet*)this->pdf->getToyObservables()->Clone() ); // clone required because of deleteToys() call at end of loop
-                //}
-            //}
-            //else {
-              //assert( cls_bkgOnlyToys.size() == nToys );
-            //}
-
-            // \todo: comment the following back in once I know what it does ...
-            //      t.storeParsGau( we need to pass a rooargset of the means of the global observables here);
-
             //
             // 2. Fit to toys with parameter of interest fixed to scanpoint
             //
@@ -1261,9 +1144,6 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             // set parameters to constrained data scan fit result again
             this->setParevolPointByIndex(i);
 
-            // load the global observables from the bkg-only toy generation -- TODO: rmove?
-            // pdf->loadGlobalObsFromSnapshot(pdf->globalObsBkgToySnapshotName);
-
             // fixed parameter of interest
             parameterToScan->setConstant(true);
             this->pdf->setFitStrategy(0);
@@ -1322,9 +1202,6 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             // Use parameters from the scanfit to data
 
             this->setParevolPointByIndex(i);
-
-            // load the global observables from the fixed-to-scanpoint toy generation -- TODO:remove?
-            // pdf->loadGlobalObsFromSnapshot(pdf->globalObsToySnapshotName);
 
             // free parameter of interest
             parameterToScan->setConstant(false);
@@ -1446,12 +1323,6 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             toyTree.storeParsFree();
             pdf->deleteNLL();
 
-            // now save the global min (and best fit val) for the background only toy for later (this just makes life easier even though we are duplicating a number in the tree)
-            //if ( i==0 ) {
-              //chi2minGlobalBkgToysStore.push_back( toyTree.chi2minGlobalToy );
-              //scanbestBkgToysStore.push_back( toyTree.scanbest );
-            //}
-            //else {
             assert( chi2minGlobalBkgToysStore.size() == nToys );
             assert( scanbestBkgToysStore.size() == nToys );
             assert( covQualFreeBkgToysStore.size() == nToys );
