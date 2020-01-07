@@ -223,7 +223,7 @@ void PDF_Datasets::printParameters() {
     int parcounter = 0;
     TIterator* it = this->parameters->createIterator();
     while ( RooRealVar* p = (RooRealVar*)it->Next() ) {
-        cout << p->GetName() << " ";
+        cout << p->GetName() << " " << p->getVal() << " ";
         parcounter += 1;
         if ( parcounter % 5 == 0 ) cout << endl << "  ";
     }
@@ -252,9 +252,10 @@ void  PDF_Datasets::generateBkgToysGlobalObservables(int SeedShift, int index) {
     while (RooRealVar* genVal = dynamic_cast<RooRealVar*>(it->Next())) {
         wspc->var(genVal->GetName())->setVal(genVal->getVal());
     }
-
+    TString index_string;
+    index_string.Form("globalObsBkgToySnapshotName%d",index);
     // take a snapshot of the global variables in the workspace so they can be loaded later
-    globalObsBkgToySnapshotName = "globalObsBkgToySnapshotName"+index;
+    globalObsBkgToySnapshotName = index_string;
     wspc->saveSnapshot(globalObsBkgToySnapshotName, *wspc->set(globalObsName));
 };
 
@@ -416,6 +417,7 @@ void PDF_Datasets::initializeRandomGenerator(int seedShift) {
             std::cerr << "You must pass the OptParser in the constructor in order to use this function." << std::endl;
             exit(EXIT_FAILURE);
         }
+        std::cout<<"random seed is not 0" <<std::endl;
         RooRandom::randomGenerator()->SetSeed(seedShift + (arg->nrun) * (arg->ntoys) * (arg->npoints1d));
     }
 };

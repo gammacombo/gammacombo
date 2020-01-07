@@ -70,6 +70,8 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
         cerr << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no '" + pdf->getParName() + "' set found in workspace" << endl;
         exit(EXIT_FAILURE);
     }
+    dataBkgFitResult = pdf->fitBkg(pdf->getData()); // get Bkg fit parameters
+    Utils::setParameters(w,dataFreeFitResult);  // reset fit parameters to the free fit
 }
 
 ///////////////////////////////////////////////
@@ -468,6 +470,8 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         double sb_teststat_measured= t.chi2min - this->chi2minGlobal;
         sb_teststat_measured = bestfitpoint <= t.scanpoint ? sb_teststat_measured : 0.; // if mu < muhat then q_mu = 0
 
+        hChi2min->SetBinContent(hChi2min->FindBin(t.scanpoint), sb_teststat_measured);
+
         double sb_teststat_toy= t.chi2minToy - t.chi2minGlobalToy;
         sb_teststat_toy = t.scanbest <= t.scanpoint ? sb_teststat_toy : 0.; // if mu < muhat then q_mu = 0
 
@@ -603,6 +607,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         float nbetter_clb = h_better_clb->GetBinContent(i);
         float nall = h_all->GetBinContent(i);
         float nall_bkg = h_all_bkg->GetBinContent(i);
+        std::cout<<nall_bkg << "\t" << nbetter_clb <<"\t"<< nbetter_clb / nall_bkg << std::endl;
         // get number of background and failed toys
         float nbackground     = h_background->GetBinContent(i);
 
@@ -852,7 +857,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         leg->AddEntry((TObject*)0,Form("#sigma=%4.2g +/- %4.2g",h_sig_bkgtoys->GetStdDev(),h_sig_bkgtoys->GetStdDevError()),"");
         leg->Draw("same");
         savePlot(biascanv, "bkg-only_toyfit");
-        hCLb-> Draw();
+        hCLb-> Draw("PE");
         savePlot(biascanv, "CLb_values");
     }
 
@@ -997,12 +1002,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
     for ( int j = 0; j < nActualToys; j++ ) {
         // std::cout << "Toy " << j << std::endl;
       if(pdf->getBkgPdf()){
-        pdf->fitBkg(pdf->getData());     //Need to fit bkg first to get the proper parameters for the toy generation
-        //// get parameters from free fit
-        // Utils::setParameters(w, dataFreeFitResult);
-        // RooArgList* parameterset = dataFreeFitResult->randomizePars();
-
-
+        Utils::setParameters(w,dataBkgFitResult); //set parameters to bkg fit so the generation always starts at the same value
+        // pdf->printParameters();
         pdf->generateBkgToys();
         pdf->generateBkgToysGlobalObservables(0,j);
         RooDataSet* bkgOnlyToy = pdf->getBkgToyObservables();
@@ -1010,7 +1011,6 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         bkgOnlyGlobObsSnaphots.push_back(pdf->globalObsBkgToySnapshotName);
         pdf->setToyData( bkgOnlyToy );
         parameterToScan->setConstant(false);
-
         // Do a global fit to bkg-only toys
         RooFitResult *rb = loadAndFitBkg(pdf);
         // RooFitResult *rb = pdf->fitBkg(bkgOnlyToy);
@@ -1052,7 +1052,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         // rb->Print();
         // std::cout << "found signal parameter with value " << ((RooRealVar*)w->set(pdf->getParName())->find(scanVar1))->getVal() << std::endl;
         if(rb->floatParsFinal().find(scanVar1)){
-        	std::cout << "found signal parameter with value " << ((RooRealVar*)w->set(pdf->getParName())->find(scanVar1))->getVal() << std::endl;
+        	// std::cout << "found signal parameter with value " << ((RooRealVar*)w->set(pdf->getParName())->find(scanVar1))->getVal() << std::endl;
             scanbestBkgToysStore.push_back( ((RooRealVar*)w->set(pdf->getParName())->find(scanVar1))->getVal() );    
         }
         // if the pdf does not depend on the signal parameter, set best fit value of signa l parameter for the bkg fit to 0
@@ -1091,7 +1091,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         	std::cout << "found signal parameter in bkg fit with value " << ((RooRealVar*)w->set(pdf->getParName())->find(scanVar1))->getVal() << std::endl;
             scanbestBkgBkgToysStore.push_back( ((RooRealVar*)w->set(pdf->getParName())->find(scanVar1))->getVal() );    
         }
-        // if the pdf does not depend on the signal parameter, set best fit value of signa l parameter for the bkg fit to 0
+        // if the pdf does not depend on the signal parameter, set best fit value of signal parameter for the bkg fit to 0
         else scanbestBkgBkgToysStore.push_back(0.0);
         covQualBkgBkgToysStore.push_back(rb->covQual());
         StatusBkgBkgToysStore.push_back(pdf->getFitStatus());
@@ -1102,7 +1102,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
     }
 
     // start scan
-    cout << "MethodDatasetsPluginScan::scan1d_plugin() : starting ... with " << nPoints1d << " scanpoints..." << endl;
+    std::cout << "MethodDatasetsPluginScan::scan1d_plugin() : starting ... with " << nPoints1d << " scanpoints..." << std::endl;
     ProgressBar progressBar(arg, nPoints1d);
     for ( int i = 0; i < nPoints1d; i++ )
     {
@@ -1854,7 +1854,9 @@ void MethodDatasetsPluginScan::makeControlPlots(map<int, vector<double> > bVals,
     for ( int j=0; j<bVals[i].size(); j++ ) hb->Fill( bVals[i][j] );
     for ( int j=0; j<sbVals[i].size(); j++ ) hsb->Fill( sbVals[i][j] );
 
-    double dataVal = TMath::ChisquareQuantile( 1.-hCL->GetBinContent(i),1 );
+    // double dataVal = TMath::ChisquareQuantile( 1.-hCL->GetBinContent(i),1 );
+    double dataVal = hChi2min->GetBinContent(i);
+    std::cout << "CLb alternative: " << getVectorFracAboveValue( bVals[i], dataVal) << std::endl;
     TArrow *lD = new TArrow( dataVal, 0.6*hsb->GetMaximum(), dataVal, 0., 0.15, "|>" );
 
     vector<TLine*> qLs;

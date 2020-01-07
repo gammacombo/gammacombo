@@ -42,6 +42,7 @@ public:
     std::vector<double>     bootstrapPVals;
     TChain*                 chain;
     RooFitResult*           dataFreeFitResult;
+    RooFitResult*           dataBkgFitResult;
 
 protected:
     RooSlimFitResult*   getParevolPoint(float scanpoint);
