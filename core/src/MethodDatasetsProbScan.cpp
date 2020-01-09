@@ -421,8 +421,8 @@ int MethodDatasetsProbScan::scan1d(bool fast, bool reverse)
         // don't scan in unphysical region
         // by default this means checking against "free" range
         if ( scanpoint < parameterToScan->getMin() || scanpoint > parameterToScan->getMax() + 2e-13 ) {
-            cout << "it seems we are scanning in an unphysical region: " << scanpoint << " < " << parameterToScan->getMin() << " or " << scanpoint << " > " << parameterToScan->getMax() + 2e-13 << endl;
-            exit(EXIT_FAILURE);
+          cout << "WARNING in MethodDatasetsProbScan::scan1d_prob() - it seems we are trying to scanning in an unphysical region: " << scanpoint << " < " << parameterToScan->getMin() << " or " << scanpoint << " > " << parameterToScan->getMax() + 2e-13 << endl;
+          continue;
         }
 
         // FIT TO REAL DATA WITH FIXED HYPOTHESIS(=SCANPOINT).

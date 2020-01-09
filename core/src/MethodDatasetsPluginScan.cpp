@@ -1043,8 +1043,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         // don't scan in unphysical region
         // by default this means checking against "free" range
         if ( scanpoint < parameterToScan->getMin() || scanpoint > parameterToScan->getMax() + 2e-13 ) {
-            cout << "not obvious: " << scanpoint << " < " << parameterToScan->getMin() << " and " << scanpoint << " > " << parameterToScan->getMax() + 2e-13 << endl;
-            continue;
+          cout << "WARNING in MethodDatasetsPluginScan::scan1d_prob() - it seems we are trying to scanning in an unphysical region: " << scanpoint << " < " << parameterToScan->getMin() << " or " << scanpoint << " > " << parameterToScan->getMax() + 2e-13 << endl;
+          continue;
         }
 
         // Load the parameter values (nuisance parameters and parameter of interest) from the fit to data with fixed parameter of interest.

@@ -1533,6 +1533,25 @@ void GammaComboEngine::fixParameters(Combiner *c, int cId)
 }
 
 ///
+/// Helper function for scan(). Fixes parameters, if requested
+/// (only possible before combining).
+///
+void GammaComboEngine::fixParameters()
+{
+	assert(runOnDataSet);
+  PDF_Datasets *dpdf = (PDF_Datasets*)pdf[0];
+  RooWorkspace *w = (RooWorkspace*)dpdf->getWorkspace();
+  if ( arg->fixParameters.size()>0 ){
+		for ( int j=0; j<arg->fixParameters[0].size(); j++ ){
+      if ( w->var( arg->fixParameters[0][j].name ) ){
+        w->var( arg->fixParameters[0][j].name )->setVal( arg->fixParameters[0][j].value );
+        w->var( arg->fixParameters[0][j].name )->setConstant();
+      }
+		}
+	}
+}
+
+///
 /// Helper function for scan(). Adjusts ranges, if requested
 /// (only possible before combining).
 ///
@@ -1556,6 +1575,33 @@ void GammaComboEngine::adjustRanges(Combiner *c, int cId)
 		c->adjustPhysRange( arg->removeRanges[cId][j], -999, -999 );
 	  }
 	}
+  }
+}
+
+///
+/// Helper function for scan(). Adjusts ranges, if requested
+/// (only possible before combining).
+///
+void GammaComboEngine::adjustRanges()
+{
+	assert(runOnDataSet);
+  PDF_Datasets *dpdf = (PDF_Datasets*)pdf[0];
+  RooWorkspace *w = (RooWorkspace*)dpdf->getWorkspace();
+  if ( arg->physRanges.size()>0 ){
+		for ( int j=0; j<arg->physRanges[0].size(); j++ ){
+      if ( w->var( arg->physRanges[0][j].name ) ){
+        w->var( arg->physRanges[0][j].name )->setMin( arg->physRanges[0][j].min );
+        w->var( arg->physRanges[0][j].name )->setMax( arg->physRanges[0][j].max );
+      }
+		}
+	}
+  if ( arg->removeRanges.size()>0 ){
+		for ( int j=0; j<arg->removeRanges[0].size(); j++ ){
+      if ( w->var( arg->removeRanges[0][j] ) ){
+        w->var( arg->removeRanges[0][j] )->setMin( -999. );
+        w->var( arg->removeRanges[0][j] )->setMax(  999. );
+      }
+		}
   }
 }
 
@@ -1940,6 +1986,8 @@ void GammaComboEngine::scan()
   // if we're running with the dataset option then we go off and do that somewhere else
   if ( runOnDataSet )
   {
+    fixParameters();
+    adjustRanges();
     scanDataSet();
     return;
   }
@@ -1956,6 +2004,9 @@ void GammaComboEngine::scan()
 		// work with a clone - this way we can easily make plots with the
 		// same combination in twice (once with asimov, for example)
 		c = c->Clone(c->getName(), c->getTitle());
+
+		// adjust ranges according to the command line - only possible before combining
+		adjustRanges(c, i);
 
 		// fix parameters according to the command line - only possible before combining
 		fixParameters(c, i);
@@ -1974,9 +2025,6 @@ void GammaComboEngine::scan()
 		// combine
 		c->combine();
 		if ( !c->isCombined() ) continue; // error during combining
-
-		// adjust ranges according to the command line - only possible before combining
-		adjustRanges(c, i);
 
     // set up parameter sets for the parameters to vary within the toys (if requested)
     setupToyVariationSets(c, i);

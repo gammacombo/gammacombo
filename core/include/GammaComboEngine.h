@@ -46,6 +46,7 @@ class GammaComboEngine
 		GammaComboEngine(TString name, int argc, char* argv[], bool _runOnDataSet);
 		~GammaComboEngine();
 
+		void            adjustRanges();
 		void            adjustRanges(Combiner *c, int cId);
     void            setupToyVariationSets(Combiner *c, int cId);
 		void			      addPdf(int id, PDF_Abs* pdf, TString title="");
@@ -90,6 +91,7 @@ class GammaComboEngine
 		void			customizeCombinerTitles();
 		void			defineColors();
 		void			disableSystematics();
+		void			fixParameters();
 		void			fixParameters(Combiner *c, int cId);
 		TString			getStartParFileName(int cId);
 		bool			isScanVarObservable(Combiner *c, TString scanVar);
