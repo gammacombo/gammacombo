@@ -111,6 +111,7 @@ OptParser::OptParser():
   scaleerr = -999.;
   scalestaterr = -999.;
 	smooth2d = false;
+  teststatistic = 2;
   toyFiles = "";
   updateFreq = 10;
 	usage = false;
@@ -213,6 +214,7 @@ void OptParser::defineOptions()
   availableOptions.push_back("scaleerr");
   availableOptions.push_back("scalestaterr");
 	availableOptions.push_back("smooth2d");
+  availableOptions.push_back("teststat");
   availableOptions.push_back("toyFiles");
 	availableOptions.push_back("title");
 	availableOptions.push_back("usage");
@@ -451,6 +453,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"Format (range):  -j min-max \n"
 			"Format (single): -j n", false, "string");
 	TCLAP::ValueArg<string> jobdirArg("", "jobdir", "Give absolute job-directory if working on batch systems.", false, "default", "string");
+  TCLAP::ValueArg<int> teststatArg("", "teststat", "Define the desired test statistic to determine confidence intervals/limits.\n"
+  										"1: use one-sided profile likelihood ratio q\n"
+  										"2: use classical profile likelihood ratio t (default)", false, 2, "int" );
   TCLAP::ValueArg<string> toyFilesArg("", "toyFiles", "Pass some different toy files, for example if you want 1D projection of 2D FC.", false, "default", "string" );
   TCLAP::ValueArg<string> saveArg("","save", "Save the workspace this file name", false, "", "string");
   TCLAP::ValueArg<int> updateFreqArg("","updateFreq", "Frequency with which to update plots when running in interactive mode (higher number will be faster). Default: 10", false, 10, "int" );
@@ -684,6 +689,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "unoff" ) ) cmd.add( plotunoffArg );
 	if ( isIn<TString>(bookedOptions, "title" ) ) cmd.add( titleArg );
   if ( isIn<TString>(bookedOptions, "toyFiles" ) ) cmd.add( toyFilesArg );
+  if ( isIn<TString>(bookedOptions, "teststat" ) ) cmd.add( teststatArg );
 	if ( isIn<TString>(bookedOptions, "sn2d" ) ) cmd.add(sn2dArg);
 	if ( isIn<TString>(bookedOptions, "sn" ) ) cmd.add(snArg);
 	if ( isIn<TString>(bookedOptions, "smooth2d" ) ) cmd.add( smooth2dArg );
@@ -878,6 +884,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	scanforce         = scanforceArg.getValue();
 	smooth2d          = smooth2dArg.getValue();
   toyFiles          = toyFilesArg.getValue();
+  teststatistic       = teststatArg.getValue();
 	usage             = usageArg.getValue();
   updateFreq        = updateFreqArg.getValue();
 	verbose           = verboseArg.getValue();
