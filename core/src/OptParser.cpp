@@ -800,7 +800,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	      if(i<1) args[i] = argv[i];
 	      if(i>1) args[i-1] = argv[i];
 	    }
-		cmd.parse( num_of_args, args );  		
+		cmd.parse( num_of_args, args );
   	}
 	else cmd.parse( argc, argv );
 
@@ -928,8 +928,23 @@ void OptParser::parseArguments(int argc, char* argv[])
 
   // --readfromfile
   tmp = readfromfileArg.getValue();
-  for ( int i=0; i < tmp.size(); i++ ) readfromfile.push_back(tmp[i]);
-  for ( int i=tmp.size(); i<combid.size(); i++ ) readfromfile.push_back("default");
+  // loop over instances passed
+  for ( int i=0; i < tmp.size(); i++ ) {
+    vector<TString> a;
+    // split at , and push back
+    TObjArray *assignmentArray = TString(tmp[i]).Tokenize(","); // split at ","
+    for (int j=0; j<assignmentArray->GetEntries(); j++) {
+      TString assignmentString = ((TObjString*)assignmentArray->At(j))->GetString();
+      a.push_back(assignmentString);
+    }
+    readfromfile.push_back(a);
+  }
+  // fill the remaining with default
+  for ( int i=tmp.size(); i<combid.size(); i++ ) {
+    vector<TString> a;
+    a.push_back("default");
+    readfromfile.push_back(a);
+  }
 
 	// --title
 	tmp = titleArg.getValue();
