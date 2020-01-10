@@ -944,6 +944,40 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                 assert(rb);
             }
         }
+        // implement physical range a la Feldman Cousins
+        if ( arg->physRanges.size()>0 ){
+            for ( int j=0; j<arg->physRanges[0].size(); j++ ){
+                if ( w->var( arg->physRanges[0][j].name ) ){
+                    if(w->var( arg->physRanges[0][j].name )->getVal()<arg->physRanges[0][j].min){
+                        w->var( arg->physRanges[0][j].name )->setVal(arg->physRanges[0][j].min);
+                        w->var( arg->physRanges[0][j].name )->setConstant(true);
+                    }
+                    else if (w->var( arg->physRanges[0][j].name )->getVal() > arg->physRanges[0][j].max){
+                        w->var( arg->physRanges[0][j].name )->setVal(arg->physRanges[0][j].max);
+                        w->var( arg->physRanges[0][j].name )->setConstant(true);                        
+                    }
+                }
+            }
+        }
+        // refit after having set parameters accordingly
+        rb = loadAndFitBkg(pdf);
+        assert(rb);
+        pdf->setMinNllScan(pdf->minNll);
+        if (pdf->getFitStatus() != 0) {
+            pdf->setFitStrategy(1);
+            delete rb;
+            rb = loadAndFitBkg(pdf);
+            pdf->setMinNllScan(pdf->minNll);
+            assert(rb);
+
+            if (pdf->getFitStatus() != 0) {
+                pdf->setFitStrategy(2);
+                delete rb;
+                rb = loadAndFitBkg(pdf);
+                assert(rb);
+            }
+        }
+
 
         if (std::isinf(pdf->minNll) || std::isnan(pdf->minNll)) {
             cout  << "++++ > second and a half fit gives inf/nan: "  << endl
@@ -968,6 +1002,15 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         else scanbestBkgToysStore.push_back(0.0);
         covQualFreeBkgToysStore.push_back(rb->covQual());
         StatusFreeBkgToysStore.push_back(pdf->getFitStatus());
+
+        //reset parameters free from the Feldman Cousins behaviour
+        if ( arg->physRanges.size()>0){
+            for ( int j=0; j<arg->physRanges[0].size(); j++ ){
+                if ( w->var( arg->physRanges[0][j].name ) && w->set(pdf->getParName())->find(arg->physRanges[0][j].name)){  //if somebody wants to modify a constant parameter make sure the parameter doesn't accidentally become floating...
+                    w->var( arg->physRanges[0][j].name )->setConstant(false);
+                }
+            }
+        }
 
         // fit the bkg-only toys with the bkg-only hypothesis
         delete rb;
@@ -1317,6 +1360,131 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                     }
                 }
             }
+
+            // implement physical range a la Feldman Cousins
+            if ( arg->physRanges.size()>0 ){
+                for ( int j=0; j<arg->physRanges[0].size(); j++ ){
+                    if ( w->var( arg->physRanges[0][j].name ) ){
+                        if(w->var( arg->physRanges[0][j].name )->getVal()<arg->physRanges[0][j].min){
+                            w->var( arg->physRanges[0][j].name )->setVal(arg->physRanges[0][j].min);
+                            w->var( arg->physRanges[0][j].name )->setConstant(true);
+                        }
+                        else if (w->var( arg->physRanges[0][j].name )->getVal() > arg->physRanges[0][j].max){
+                            w->var( arg->physRanges[0][j].name )->setVal(arg->physRanges[0][j].max);
+                            w->var( arg->physRanges[0][j].name )->setConstant(true);                        
+                        }
+                    }
+                }
+            }
+            // refit after having set parameters accordingly
+            //Fit
+            pdf->setFitStrategy(0);
+            r1  = this->loadAndFit(this->pdf);
+            assert(r1);
+            pdf->setMinNllFree(pdf->minNll);
+            // toyTree.chi2minGlobalToy = 2 * r1->minNll();
+            toyTree.chi2minGlobalToy = 2 * pdf->getMinNllFree();
+
+            if (! std::isfinite(pdf->getMinNllFree())) {
+                cout << "----> nan/inf flag detected " << endl;
+                cout << "----> fit status: " << pdf->getFitStatus() << endl;
+                pdf->setFitStatus(-99);
+            }
+
+            negTestStat = toyTree.chi2minToy - toyTree.chi2minGlobalToy < 0;
+
+            this->setAndPrintFitStatusConstrainedToys(toyTree);
+
+
+            if (pdf->getFitStatus() != 0 || negTestStat ) {
+
+                pdf->setFitStrategy(1);
+
+                if (arg->verbose) cout << "----> refit with strategy: 1" << endl;
+                delete r1;
+                r1  = this->loadAndFit(this->pdf);
+                assert(r1);
+                pdf->setMinNllFree(pdf->minNll);
+                // toyTree.chi2minGlobalToy = 2 * r1->minNll();
+                toyTree.chi2minGlobalToy = 2 * pdf->getMinNllFree();
+                if (! std::isfinite(pdf->getMinNllFree())) {
+                    cout << "----> nan/inf flag detected " << endl;
+                    cout << "----> fit status: " << pdf->getFitStatus() << endl;
+                    pdf->setFitStatus(-99);
+                }
+                negTestStat = toyTree.chi2minToy - toyTree.chi2minGlobalToy < 0;
+
+                this->setAndPrintFitStatusConstrainedToys(toyTree);
+
+                if (pdf->getFitStatus() != 0 || negTestStat ) {
+
+                    pdf->setFitStrategy(2);
+
+                    if (arg->verbose) cout << "----> refit with strategy: 2" << endl;
+                    delete r1;
+                    r1  = this->loadAndFit(this->pdf);
+                    assert(r1);
+                    pdf->setMinNllFree(pdf->minNll);
+                    // toyTree.chi2minGlobalToy = 2 * r1->minNll();
+                    toyTree.chi2minGlobalToy = 2 * pdf->getMinNllFree();
+                    if (! std::isfinite(pdf->getMinNllFree())) {
+                        cout << "----> nan/inf flag detected " << endl;
+                        cout << "----> fit status: " << pdf->getFitStatus() << endl;
+                        pdf->setFitStatus(-99);
+                    }
+                    if (r1->edm()>1.e-3) {
+                        cout << "----> too large edm " << endl;
+                        cout << "----> edm: " << r1->edm() << endl;
+                        pdf->setFitStatus(-60);
+                    }
+                    this->setAndPrintFitStatusConstrainedToys(toyTree);
+
+                    if ( (toyTree.chi2minToy - toyTree.chi2minGlobalToy) < 0) {
+                        cout << "+++++ > still negative test statistic after whole procedure!! " << endl;
+                        cout << "+++++ > try to fit with different starting values" << endl;
+                        cout << "+++++ > dChi2: " << toyTree.chi2minToy - toyTree.chi2minGlobalToy << endl;
+                        cout << "+++++ > dChi2PDF: " << 2 * (pdf->getMinNllScan() - pdf->getMinNllFree()) << endl;
+                        Utils::setParameters(this->pdf->getWorkspace(), pdf->getParName(), parsAfterScanFit->get(0));
+                        // if (parameterToScan->getVal() < 1e-13) parameterToScan->setVal(0.67e-12); //what do we gain from this?
+                        parameterToScan->setConstant(false);
+                        pdf->deleteNLL();
+                        RooFitResult* r_tmp = this->loadAndFit(this->pdf);
+                        assert(r_tmp);
+                        if (r_tmp->status() == 0 && r_tmp->minNll() < r1->minNll() && r_tmp->minNll() > -1e27) {
+                            pdf->setMinNllFree(pdf->minNll);
+                            cout << "+++++ > Improvement found in extra fit: Nll before: " << r1->minNll()
+                                 << " after: " << r_tmp->minNll() << endl;
+                            delete r1;
+                            r1 = r_tmp;
+                            cout << "+++++ > new minNll value: " << r1->minNll() << endl;
+                        }
+                        else {
+                            // set back parameter value to last fit value
+                            cout << "+++++ > no Improvement found, reset ws par value to last fit result" << endl;
+                            parameterToScan->setVal(static_cast<RooRealVar*>(r1->floatParsFinal().find(parameterToScan->GetName()))->getVal());
+                            delete r_tmp;
+                        }
+                        delete parsAfterScanFit;
+                    };
+                    if (arg->debug) {
+                        cout  << "===== > compare free fit result with pdf parameters: " << endl;
+                        cout  << "===== > minNLL for fitResult: " << r1->minNll() << endl
+                              << "===== > minNLL for pdfResult: " << pdf->getMinNllFree() << endl
+                              << "===== > status for pdfResult: " << pdf->getFitStatus() << endl
+                              << "===== > status for fitResult: " << r1->status() << endl;
+                    }
+                }
+            }
+
+            //reset parameters free from the Feldman Cousins behaviour
+            if ( arg->physRanges.size()>0){
+                for ( int j=0; j<arg->physRanges[0].size(); j++ ){
+                    if ( w->var( arg->physRanges[0][j].name ) && w->set(pdf->getParName())->find(arg->physRanges[0][j].name)){  //if somebody wants to modify a constant parameter make sure the parameter doesn't accidentally become floating...
+                        w->var( arg->physRanges[0][j].name )->setConstant(false);
+                    }
+                }
+            }
+
             // set the limit back again
             // setLimit(w, scanVar1, "scan");
 
