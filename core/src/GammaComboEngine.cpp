@@ -32,6 +32,11 @@ GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[]):
 
 	// initialize members
 	plot = 0;
+
+  // reconfigure RooFormulaVar output
+  RooMsgService::instance().getStream(1).removeTopic(InputArguments);
+  RooMsgService::instance().getStream(0).addTopic(InputArguments);
+
 }
 
 GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[], bool _runOnDataSet)
@@ -1637,17 +1642,27 @@ void GammaComboEngine::setObservablesFromFile(Combiner *c, int cId)
 {
 
   if ( cId>=arg->readfromfile.size() ) return;
-  if ( arg->readfromfile[cId]==TString("default") ) return;
-  if ( arg->readfromfile[cId]=="" ) return;
+  if ( arg->readfromfile[cId].size()==0 ) return;
+  if ( arg->readfromfile[cId].size()==1 && arg->readfromfile[cId][0]==TString("default") ) return;
+  if ( arg->readfromfile[cId].size()==1 && arg->readfromfile[cId][0]==TString("") ) return;
 
   vector<PDF_Abs*> pdfs = c->getPdfs();
+
+  if ( pdfs.size() != arg->readfromfile[cId].size() ) {
+    cout << "ERROR -- I think you are trying to read values from a file but you haven't specified one for each PDF in the combination" << endl;
+    cout << "      -- Pass like this: -c 0:+1,+2,+3 --readfromfile default,<path_to_pdf2_vals.dat>,<path_to_pdf3_vals.dat>" << endl;
+    exit(1);
+  }
 
   for ( int i=0; i<pdfs.size(); i++ ) {
 
     // read from the file for this pdf
-    ifstream infile( arg->readfromfile[cId].Data() );
+    if ( arg->readfromfile[cId][i]==TString("default") ) continue;
+
+    //
+    ifstream infile( arg->readfromfile[cId][i].Data() );
     if ( ! infile.is_open() ) {
-      cerr << "No such read file found: " << arg->readfromfile[cId] << endl;
+      cerr << "No such read file found: " << arg->readfromfile[cId][i] << endl;
       exit(1);
     }
     string line;
@@ -1670,14 +1685,14 @@ void GammaComboEngine::setObservablesFromFile(Combiner *c, int cId)
           TString name = els[1];
           double val = boost::lexical_cast<double>(els[2]);
           pdfs[i]->setObservable( name, val );
-          pdfs[i]->obsValSource = "Read from file " + arg->readfromfile[i];
+          pdfs[i]->obsValSource = "Read from file " + arg->readfromfile[cId][i];
         }
         else if ( typ=="err:" ) {
           TString name = els[1];
           double stat = boost::lexical_cast<double>(els[2]);
           double syst = boost::lexical_cast<double>(els[3]);
           pdfs[i]->setUncertainty( name, stat, syst );
-          pdfs[i]->obsErrSource = "Read from file " + arg->readfromfile[i];
+          pdfs[i]->obsErrSource = "Read from file " + arg->readfromfile[cId][i];
         }
         else if ( typ=="cor:" ) {
           int mi = boost::lexical_cast<int>(els[1]);
@@ -1688,7 +1703,7 @@ void GammaComboEngine::setObservablesFromFile(Combiner *c, int cId)
           pdfs[i]->corSystMatrix[mi][mj] = corSyst;
           pdfs[i]->corStatMatrix[mj][mi] = corStat;
           pdfs[i]->corSystMatrix[mj][mi] = corSyst;
-          pdfs[i]->corSource = "Read from file " + arg->readfromfile[i];
+          pdfs[i]->corSource = "Read from file " + arg->readfromfile[cId][i];
         }
       }
     }
@@ -1699,7 +1714,7 @@ void GammaComboEngine::setObservablesFromFile(Combiner *c, int cId)
       pdfs[i]->buildPdf();
     }
     else {
-      cout << "WARNING - did not find any pdf named: " << pdfs[i]->getBaseName() << " in file: " << arg->readfromfile[i] << endl;
+      cout << "WARNING - did not find any pdf named: " << pdfs[i]->getBaseName() << " in file: " << arg->readfromfile[cId][i] << endl;
     }
   }
 
