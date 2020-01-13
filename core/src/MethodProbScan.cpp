@@ -276,8 +276,11 @@ int MethodProbScan::scan1d(bool fast, bool reverse)
 ///\return status 0 ->potentially can encode debug information here
 ///
 int MethodProbScan::computeCLvalues(){
-		float bestfitpoint = ((RooRealVar*)getSolution()->floatParsFinal().find(scanVar1))->getVal();
-		float bestfitpointerr = ((RooRealVar*)getSolution()->floatParsFinal().find(scanVar1))->getError();
+    std::cout << "Computing CL values based on test statistic decision" << std::endl;
+    std::cout << "Using "<< arg->teststatistic <<"-sided test statistic" << std::endl;
+
+	float bestfitpoint = ((RooRealVar*)getSolution()->floatParsFinal().find(scanVar1))->getVal();
+	float bestfitpointerr = ((RooRealVar*)getSolution()->floatParsFinal().find(scanVar1))->getError();
 
 	for (int k=1; k<=hCL->GetNbinsX(); k++){
 		float scanvalue=hChi2min->GetBinCenter( k );
