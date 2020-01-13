@@ -466,21 +466,37 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         double bestfitpoint = ((RooRealVar*) dataFreeFitResult->floatParsFinal().find(scanVar1))->getVal();
         bool inPhysicalRegion     = ((t.chi2minToy - t.chi2minGlobalToy) >= 0 );
 
-        // build test statistic
-        double sb_teststat_measured= t.chi2min - this->chi2minGlobal;
-        sb_teststat_measured = bestfitpoint <= t.scanpoint ? sb_teststat_measured : 0.; // if mu < muhat then q_mu = 0
+        // // build test statistic
+        // double sb_teststat_measured= t.chi2min - this->chi2minGlobal;
+        // sb_teststat_measured = bestfitpoint <= t.scanpoint ? sb_teststat_measured : 0.; // if mu < muhat then q_mu = 0
 
-        hChi2min->SetBinContent(hChi2min->FindBin(t.scanpoint), sb_teststat_measured);
+        // hChi2min->SetBinContent(hChi2min->FindBin(t.scanpoint), sb_teststat_measured);
 
+        // double sb_teststat_toy= t.chi2minToy - t.chi2minGlobalToy;
+        // sb_teststat_toy = t.scanbest <= t.scanpoint ? sb_teststat_toy : 0.; // if mu < muhat then q_mu = 0
+
+
+        // double b_teststat_measured= t.chi2min - this->chi2minGlobal; 
+        // b_teststat_measured = bestfitpoint <= t.scanpoint ? b_teststat_measured : 0.; // if mu < muhat then q_mu = 0
+
+        // double b_teststat_toy = t.chi2minBkgToy - t.chi2minGlobalBkgToy;
+        // b_teststat_toy = t.scanbestBkg <= t.scanpoint ? b_teststat_toy : 0.;  // if mu < muhat then q_mu = 0
+
+        // build test statistics
+        // chi2minBkgBkgToy is the best fit of the bkg pdf of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
+        // chi2minBkgToy is the best fit at scanpoint of bkg-only toy
+        double teststat_measured = t.chi2min - t.chi2minGlobal;
+        hChi2min->SetBinContent(hChi2min->FindBin(t.scanpoint), teststat_measured);        
         double sb_teststat_toy= t.chi2minToy - t.chi2minGlobalToy;
-        sb_teststat_toy = t.scanbest <= t.scanpoint ? sb_teststat_toy : 0.; // if mu < muhat then q_mu = 0
-
-
-        double b_teststat_measured= t.chi2min - this->chi2minGlobal; 
-        b_teststat_measured = bestfitpoint <= t.scanpoint ? b_teststat_measured : 0.; // if mu < muhat then q_mu = 0
-
         double b_teststat_toy = t.chi2minBkgToy - t.chi2minGlobalBkgToy;
-        b_teststat_toy = t.scanbestBkg <= t.scanpoint ? b_teststat_toy : 0.;  // if mu < muhat then q_mu = 0
+        if (arg->teststatistic ==1){ // use one-sided test statistic
+            teststat_measured = bestfitpoint <= t.scanpoint ? teststat_measured : 0.; // if mu < muhat then q_mu = 0
+            sb_teststat_toy = t.scanbest <= t.scanpoint ? sb_teststat_toy : 0.; // if mu < muhat then q_mu = 0
+            b_teststat_toy = t.scanbestBkg <= t.scanpoint ? b_teststat_toy : 0.;  // if mu < muhat then q_mu = 0
+        }
+        // the usage of the two-sided test statistic is default
+
+
 
         int hBin = h_all->FindBin(t.scanpoint);
         if ( sampledBValues.find(hBin) == sampledBValues.end() ) sampledBValues[hBin] = std::vector<double>();
@@ -488,15 +504,15 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         if ( sampledSchi2Values.find(hBin) == sampledSchi2Values.end() ) sampledSchi2Values[hBin] = std::vector<double>();
         if ( sampledBiasValues.find(hBin) == sampledBiasValues.end() ) sampledBiasValues[hBin] = std::vector<double>();
 
-        if ( valid && (sb_teststat_toy) >= (sb_teststat_measured) ) { //t.chi2minGlobal ){
+        if ( valid && (sb_teststat_toy) >= (teststat_measured) ) { //t.chi2minGlobal ){
             h_better->Fill(t.scanpoint);
         }
-        if ( valid && (t.chi2minToy - t.chi2minGlobalToy) >= (t.chi2min - this->chi2minBkg) ) { //t.chi2minGlobal ){
+        if ( valid && (sb_teststat_toy) >= (t.chi2min - this->chi2minBkg) ) { //t.chi2minGlobal ){
         // if ( valid && (sb_teststat_toy) > (b_teststat_measured) ) { //t.chi2minGlobal ){
             h_better_cls->Fill(t.scanpoint);
         }
 
-        if ( !BadBkgFit && (b_teststat_toy) >= (b_teststat_measured) ) {
+        if ( !BadBkgFit && (b_teststat_toy) >= (teststat_measured) ) {
             h_better_clb->Fill(t.scanpoint);
         }
         if (t.scanpoint == 0.0) n0better++;
@@ -512,7 +528,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
             // come up with smarter way
             h_all->Fill(t.scanpoint);
             // h_probPValues->SetBinContent(h_probPValues->FindBin(t.scanpoint), this->getPValueTTestStatistic(t.chi2min - this->chi2minGlobal)); //t.chi2minGlobal));
-            h_probPValues->SetBinContent(h_probPValues->FindBin(t.scanpoint), this->getPValueTTestStatistic(sb_teststat_measured)); //t.chi2minGlobal));
+            h_probPValues->SetBinContent(h_probPValues->FindBin(t.scanpoint), this->getPValueTTestStatistic(teststat_measured)); //t.chi2minGlobal));
             if (t.scanpoint == 0.0) n0all++;
             sampledBiasValues[hBin].push_back(t.scanbest - t.scanpoint);
         }
@@ -523,33 +539,24 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         }
 
         // chi2minToy is the best of the toy at scanpoint, chi2minGlobalToy is the best global fit of the toy 
-        if(valid && t.chi2minToy - t.chi2minGlobalToy>-1.e-6){
-        	double sbTestStatVal_true = t.chi2minToy - t.chi2minGlobalToy;
-            if(sbTestStatVal_true<0&&sbTestStatVal_true>-1.e-6) sbTestStatVal_true = 0.0;
-        	sbTestStatVal_true = t.scanbest <= t.scanpoint ? sbTestStatVal_true : 0.; // if mu < muhat then q_mu = 0
-            sampledSchi2Values[hBin].push_back(sbTestStatVal_true);
+        if(valid && sb_teststat_toy>-1.e-6){
+            if(sb_teststat_toy<0&&sb_teststat_toy>-1.e-6) sb_teststat_toy = 0.0;
+            sampledSchi2Values[hBin].push_back(sb_teststat_toy);
         }
 
 
         // chi2minBkgBkgToy is the best fit of the bkg pdf of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
         // chi2minBkgToy is the best fit at scanpoint of bkg-only toy
-        double bkgTestStatVal = t.chi2minBkgToy - t.chi2minGlobalBkgToy;
-        if(bkgTestStatVal<0&&bkgTestStatVal>-1.e-6) bkgTestStatVal=0.0;
+        if(b_teststat_toy<0&&b_teststat_toy>-1.e-6) b_teststat_toy=0.0;
         
         if( !BadBkgFit ){
-            bkgTestStatVal = t.scanbestBkg <= t.scanpoint ? bkgTestStatVal : 0.;  // if mu < muhat then q_mu = 0
-            // cout << "best bkg fit: " << t.scanbestBkg << std::endl;
             if(hBin==2){
                 // std::cout << bkgTestStatVal << std::endl;
-                bkg_pvals->Fill(TMath::Prob(bkgTestStatVal,1));
+                bkg_pvals->Fill(TMath::Prob(b_teststat_toy,1));
                 h_sig_bkgtoys->Fill(t.scanbestBkg);
             }
-            sampledBValues[hBin].push_back( bkgTestStatVal );
-            // chi2minBkgToy is the best fit at scanpoint of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
-            double sbTestStatVal = t.chi2minBkgToy - t.chi2minGlobalBkgToy;
-            if(sbTestStatVal<0&&sbTestStatVal>-1.e-6) sbTestStatVal=0.0;
-            sbTestStatVal = t.scanbestBkg <= t.scanpoint ? sbTestStatVal : 0.; // if mu < muhat then q_mu = 0
-            sampledSBValues[hBin].push_back( sbTestStatVal );
+            sampledBValues[hBin].push_back( b_teststat_toy );
+            sampledSBValues[hBin].push_back( b_teststat_toy );
         }
 
 
@@ -937,6 +944,40 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                 assert(rb);
             }
         }
+        // implement physical range a la Feldman Cousins
+        if ( arg->physRanges.size()>0 ){
+            for ( int j=0; j<arg->physRanges[0].size(); j++ ){
+                if ( w->var( arg->physRanges[0][j].name ) ){
+                    if(w->var( arg->physRanges[0][j].name )->getVal()<arg->physRanges[0][j].min){
+                        w->var( arg->physRanges[0][j].name )->setVal(arg->physRanges[0][j].min);
+                        w->var( arg->physRanges[0][j].name )->setConstant(true);
+                    }
+                    else if (w->var( arg->physRanges[0][j].name )->getVal() > arg->physRanges[0][j].max){
+                        w->var( arg->physRanges[0][j].name )->setVal(arg->physRanges[0][j].max);
+                        w->var( arg->physRanges[0][j].name )->setConstant(true);                        
+                    }
+                }
+            }
+        }
+        // refit after having set parameters accordingly
+        rb = loadAndFitBkg(pdf);
+        assert(rb);
+        pdf->setMinNllScan(pdf->minNll);
+        if (pdf->getFitStatus() != 0) {
+            pdf->setFitStrategy(1);
+            delete rb;
+            rb = loadAndFitBkg(pdf);
+            pdf->setMinNllScan(pdf->minNll);
+            assert(rb);
+
+            if (pdf->getFitStatus() != 0) {
+                pdf->setFitStrategy(2);
+                delete rb;
+                rb = loadAndFitBkg(pdf);
+                assert(rb);
+            }
+        }
+
 
         if (std::isinf(pdf->minNll) || std::isnan(pdf->minNll)) {
             cout  << "++++ > second and a half fit gives inf/nan: "  << endl
@@ -961,6 +1002,15 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         else scanbestBkgToysStore.push_back(0.0);
         covQualFreeBkgToysStore.push_back(rb->covQual());
         StatusFreeBkgToysStore.push_back(pdf->getFitStatus());
+
+        //reset parameters free from the Feldman Cousins behaviour
+        if ( arg->physRanges.size()>0){
+            for ( int j=0; j<arg->physRanges[0].size(); j++ ){
+                if ( w->var( arg->physRanges[0][j].name ) && w->set(pdf->getParName())->find(arg->physRanges[0][j].name)){  //if somebody wants to modify a constant parameter make sure the parameter doesn't accidentally become floating...
+                    w->var( arg->physRanges[0][j].name )->setConstant(false);
+                }
+            }
+        }
 
         // fit the bkg-only toys with the bkg-only hypothesis
         delete rb;
@@ -1310,6 +1360,131 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                     }
                 }
             }
+
+            // implement physical range a la Feldman Cousins
+            if ( arg->physRanges.size()>0 ){
+                for ( int j=0; j<arg->physRanges[0].size(); j++ ){
+                    if ( w->var( arg->physRanges[0][j].name ) ){
+                        if(w->var( arg->physRanges[0][j].name )->getVal()<arg->physRanges[0][j].min){
+                            w->var( arg->physRanges[0][j].name )->setVal(arg->physRanges[0][j].min);
+                            w->var( arg->physRanges[0][j].name )->setConstant(true);
+                        }
+                        else if (w->var( arg->physRanges[0][j].name )->getVal() > arg->physRanges[0][j].max){
+                            w->var( arg->physRanges[0][j].name )->setVal(arg->physRanges[0][j].max);
+                            w->var( arg->physRanges[0][j].name )->setConstant(true);                        
+                        }
+                    }
+                }
+            }
+            // refit after having set parameters accordingly
+            //Fit
+            pdf->setFitStrategy(0);
+            r1  = this->loadAndFit(this->pdf);
+            assert(r1);
+            pdf->setMinNllFree(pdf->minNll);
+            // toyTree.chi2minGlobalToy = 2 * r1->minNll();
+            toyTree.chi2minGlobalToy = 2 * pdf->getMinNllFree();
+
+            if (! std::isfinite(pdf->getMinNllFree())) {
+                cout << "----> nan/inf flag detected " << endl;
+                cout << "----> fit status: " << pdf->getFitStatus() << endl;
+                pdf->setFitStatus(-99);
+            }
+
+            negTestStat = toyTree.chi2minToy - toyTree.chi2minGlobalToy < 0;
+
+            this->setAndPrintFitStatusConstrainedToys(toyTree);
+
+
+            if (pdf->getFitStatus() != 0 || negTestStat ) {
+
+                pdf->setFitStrategy(1);
+
+                if (arg->verbose) cout << "----> refit with strategy: 1" << endl;
+                delete r1;
+                r1  = this->loadAndFit(this->pdf);
+                assert(r1);
+                pdf->setMinNllFree(pdf->minNll);
+                // toyTree.chi2minGlobalToy = 2 * r1->minNll();
+                toyTree.chi2minGlobalToy = 2 * pdf->getMinNllFree();
+                if (! std::isfinite(pdf->getMinNllFree())) {
+                    cout << "----> nan/inf flag detected " << endl;
+                    cout << "----> fit status: " << pdf->getFitStatus() << endl;
+                    pdf->setFitStatus(-99);
+                }
+                negTestStat = toyTree.chi2minToy - toyTree.chi2minGlobalToy < 0;
+
+                this->setAndPrintFitStatusConstrainedToys(toyTree);
+
+                if (pdf->getFitStatus() != 0 || negTestStat ) {
+
+                    pdf->setFitStrategy(2);
+
+                    if (arg->verbose) cout << "----> refit with strategy: 2" << endl;
+                    delete r1;
+                    r1  = this->loadAndFit(this->pdf);
+                    assert(r1);
+                    pdf->setMinNllFree(pdf->minNll);
+                    // toyTree.chi2minGlobalToy = 2 * r1->minNll();
+                    toyTree.chi2minGlobalToy = 2 * pdf->getMinNllFree();
+                    if (! std::isfinite(pdf->getMinNllFree())) {
+                        cout << "----> nan/inf flag detected " << endl;
+                        cout << "----> fit status: " << pdf->getFitStatus() << endl;
+                        pdf->setFitStatus(-99);
+                    }
+                    if (r1->edm()>1.e-3) {
+                        cout << "----> too large edm " << endl;
+                        cout << "----> edm: " << r1->edm() << endl;
+                        pdf->setFitStatus(-60);
+                    }
+                    this->setAndPrintFitStatusConstrainedToys(toyTree);
+
+                    if ( (toyTree.chi2minToy - toyTree.chi2minGlobalToy) < 0) {
+                        cout << "+++++ > still negative test statistic after whole procedure!! " << endl;
+                        cout << "+++++ > try to fit with different starting values" << endl;
+                        cout << "+++++ > dChi2: " << toyTree.chi2minToy - toyTree.chi2minGlobalToy << endl;
+                        cout << "+++++ > dChi2PDF: " << 2 * (pdf->getMinNllScan() - pdf->getMinNllFree()) << endl;
+                        Utils::setParameters(this->pdf->getWorkspace(), pdf->getParName(), parsAfterScanFit->get(0));
+                        // if (parameterToScan->getVal() < 1e-13) parameterToScan->setVal(0.67e-12); //what do we gain from this?
+                        parameterToScan->setConstant(false);
+                        pdf->deleteNLL();
+                        RooFitResult* r_tmp = this->loadAndFit(this->pdf);
+                        assert(r_tmp);
+                        if (r_tmp->status() == 0 && r_tmp->minNll() < r1->minNll() && r_tmp->minNll() > -1e27) {
+                            pdf->setMinNllFree(pdf->minNll);
+                            cout << "+++++ > Improvement found in extra fit: Nll before: " << r1->minNll()
+                                 << " after: " << r_tmp->minNll() << endl;
+                            delete r1;
+                            r1 = r_tmp;
+                            cout << "+++++ > new minNll value: " << r1->minNll() << endl;
+                        }
+                        else {
+                            // set back parameter value to last fit value
+                            cout << "+++++ > no Improvement found, reset ws par value to last fit result" << endl;
+                            parameterToScan->setVal(static_cast<RooRealVar*>(r1->floatParsFinal().find(parameterToScan->GetName()))->getVal());
+                            delete r_tmp;
+                        }
+                        delete parsAfterScanFit;
+                    };
+                    if (arg->debug) {
+                        cout  << "===== > compare free fit result with pdf parameters: " << endl;
+                        cout  << "===== > minNLL for fitResult: " << r1->minNll() << endl
+                              << "===== > minNLL for pdfResult: " << pdf->getMinNllFree() << endl
+                              << "===== > status for pdfResult: " << pdf->getFitStatus() << endl
+                              << "===== > status for fitResult: " << r1->status() << endl;
+                    }
+                }
+            }
+
+            //reset parameters free from the Feldman Cousins behaviour
+            if ( arg->physRanges.size()>0){
+                for ( int j=0; j<arg->physRanges[0].size(); j++ ){
+                    if ( w->var( arg->physRanges[0][j].name ) && w->set(pdf->getParName())->find(arg->physRanges[0][j].name)){  //if somebody wants to modify a constant parameter make sure the parameter doesn't accidentally become floating...
+                        w->var( arg->physRanges[0][j].name )->setConstant(false);
+                    }
+                }
+            }
+
             // set the limit back again
             // setLimit(w, scanVar1, "scan");
 
