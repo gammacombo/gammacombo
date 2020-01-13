@@ -390,6 +390,7 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
 
   // convert obs to graph
   TGraph *gObs = convertTH1ToTGraph(hObs,obsError);
+  float xCentral = s->getScanVar1Solution();
 
   // convert others to raw graphs
   TGraph *gExpRaw    = convertTH1ToTGraph(hExp);
@@ -413,14 +414,75 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
     // gErr1Dn = (TGraph*)smoother->SmoothSuper( gErr1DnRaw )->Clone("gErr1Dn");
     // gErr2Up = (TGraph*)smoother->SmoothSuper( gErr2UpRaw )->Clone("gErr2Up");
     // gErr2Dn = (TGraph*)smoother->SmoothSuper( gErr2DnRaw )->Clone("gErr2Dn");
+    gExp    = (TGraph*)smoother->SmoothSuper( gExpRaw   )->Clone("gExp");
+    // gErr1Up = (TGraph*)smoother->SmoothSuper( gErr1UpRaw )->Clone("gErr1Up");
+    gErr1Dn = (TGraph*)smoother->SmoothSuper( gErr1DnRaw )->Clone("gErr1Dn");
+    // gErr2Up = (TGraph*)smoother->SmoothSuper( gErr2UpRaw )->Clone("gErr2Up");
+    gErr2Dn = (TGraph*)smoother->SmoothSuper( gErr2DnRaw )->Clone("gErr2Dn");
 
     //alternative smoothing option, needs more fiddling
-    gExp    = (TGraph*)smoother->SmoothKern( gExpRaw   ,"normal",hExp->GetBinWidth(1)*2)->Clone("gExp");
+    // gExp    = (TGraph*)smoother->SmoothKern( gExpRaw   ,"normal",hExp->GetBinWidth(1)*4)->Clone("gExp");
     gErr1Up = (TGraph*)smoother->SmoothKern( gErr1UpRaw,"normal",hErr1Up->GetBinWidth(1)*2)->Clone("gErr1Up");
-    gErr1Dn = (TGraph*)smoother->SmoothKern( gErr1DnRaw,"normal",hErr1Dn->GetBinWidth(1)*2)->Clone("gErr1Dn");
+    // gErr1Dn = (TGraph*)smoother->SmoothKern( gErr1DnRaw,"normal",hErr1Dn->GetBinWidth(1)*4)->Clone("gErr1Dn");
     gErr2Up = (TGraph*)smoother->SmoothKern( gErr2UpRaw,"normal",hErr2Up->GetBinWidth(1)*2)->Clone("gErr2Up");
-    gErr2Dn = (TGraph*)smoother->SmoothKern( gErr2DnRaw,"normal",hErr2Dn->GetBinWidth(1)*2)->Clone("gErr2Dn");
+    // gErr2Dn = (TGraph*)smoother->SmoothKern( gErr2DnRaw,"normal",hErr2Dn->GetBinWidth(1)*4)->Clone("gErr2Dn");
 
+    // //make sure the CLs=1 points do NOT get smoothed away
+
+    // double *xvals = gExp->GetX();
+    // double *xvalsRaw = gExpRaw->GetX();
+    // double *yvalsRawExp = gExpRaw->GetY();
+    // double *yvalsRawExpErr1Up = gErr1UpRaw->GetY();
+    // double *yvalsRawExpErr2Up = gErr2UpRaw->GetY();
+
+    // for (int i=0; i<gExp->GetN(); i++){
+    // 	std::cout << xvalsRaw[i] << "\t" <<xvals[i] << std::endl;
+    // 	if(yvalsRawExp[i]>0.99){
+    // 		gExp->SetPoint(i,xvals[i], 1.0);
+    // 	}
+    // 	if(yvalsRawExpErr1Up[i]>0.99){
+    // 		gErr1Up->SetPoint(i,xvals[i], 1.0);
+    // 	}
+    // 	if(yvalsRawExpErr2Up[i]>0.99){
+    // 		gErr2Up->SetPoint(i,xvals[i], 1.0);
+    // 	}
+    // }
+
+    // fix point 0 to CLs=1 for all expected curves
+
+    gExp->SetPoint(0,0.,1.);
+    gErr1Up->SetPoint(0,0.,1.);
+    gErr1Dn->SetPoint(0,0.,1.);
+    gErr2Up->SetPoint(0,0.,1.);
+    gErr2Dn->SetPoint(0,0.,1.);
+
+
+    // remove all observed lines with x<xmeas
+    std::cout << "Solution x is "<< xCentral << std::endl;
+    double* xvalsobs = gObs->GetX();
+    double* yvalsobs = gObs->GetY();
+    int valabove = gObs->GetN();
+    int nentries = gObs->GetN();
+    for (int i=0; i<gObs->GetN(); i++){
+    	if (xvalsobs[i]<(xCentral+(hObs->GetBinWidth(1)/2.))) valabove--;
+    }  
+    // std::cout << "Found entries for obs " << valabove << "\t" << nentries << std::endl;
+
+    TGraph* gObs_new = new TGraph(valabove);
+    int k=0;
+    for (int i=0; i < nentries; i++){
+    	if(xvalsobs[i]<(xCentral+(hObs->GetBinWidth(1)/2.))){
+    		// std::cout << "Ignoring " << xvalsobs[i] << "\t" << yvalsobs[i] << std::endl;
+    		continue;
+    	}
+    	else {
+    		// std::cout << "SetPoint " << k << "\t" << xvalsobs[i] << "\t" << yvalsobs[i] << std::endl;
+    		gObs_new->SetPoint(k, xvalsobs[i],yvalsobs[i]);
+    		k++;
+    	}
+    }
+    delete gObs;
+    gObs = gObs_new;
 
     if ( arg->debug ) cout << "OneMinusClPlot::scan1dCLsPlot() : done smoothing graphs" << endl;
   }
@@ -546,6 +608,9 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
   else{
   	drawCLguideLines();
   }
+
+  // draw the solution
+  drawVerticalLine(xCentral, kBlack, kDashed);
 
   double yGroup = 0.83;
   if ( arg->plotprelim || arg->plotunoff ) yGroup = 0.8;
