@@ -610,7 +610,7 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
   }
 
   // draw the solution
-  drawVerticalLine(xCentral, kBlack, kDashed);
+  if(arg->plotsolutions.size()>0 && arg->plotsolutions[0]!=0) drawVerticalLine(xCentral, kBlack, kDashed);
 
   double yGroup = 0.83;
   if ( arg->plotprelim || arg->plotunoff ) yGroup = 0.8;
