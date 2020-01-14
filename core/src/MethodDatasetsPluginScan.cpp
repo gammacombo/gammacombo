@@ -594,7 +594,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         float nbetter_clb = h_better_clb->GetBinContent(i);
         float nall = h_all->GetBinContent(i);
         float nall_bkg = h_all_bkg->GetBinContent(i);
-        std::cout<<nall_bkg << "\t" << nbetter_clb <<"\t"<< nbetter_clb / nall_bkg << std::endl;
+        // std::cout<<nall_bkg << "\t" << nbetter_clb <<"\t"<< nbetter_clb / nall_bkg << std::endl;
         // get number of background and failed toys
         float nbackground     = h_background->GetBinContent(i);
 
@@ -949,10 +949,12 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             for ( int j=0; j<arg->physRanges[0].size(); j++ ){
                 if ( w->var( arg->physRanges[0][j].name ) ){
                     if(w->var( arg->physRanges[0][j].name )->getVal()<arg->physRanges[0][j].min){
+                        if(arg->debug) std::cout << "MethodDatasetsPluginScan::scan1d()::fit " << arg->physRanges[0][j].name <<"=" << w->var( arg->physRanges[0][j].name )->getVal() <<" out of physics range, fixing to " << arg->physRanges[0][j].min << std::endl;
                         w->var( arg->physRanges[0][j].name )->setVal(arg->physRanges[0][j].min);
                         w->var( arg->physRanges[0][j].name )->setConstant(true);
                     }
                     else if (w->var( arg->physRanges[0][j].name )->getVal() > arg->physRanges[0][j].max){
+                        if(arg->debug) std::cout << "MethodDatasetsPluginScan::scan1d()::fit " << arg->physRanges[0][j].name <<"=" << w->var( arg->physRanges[0][j].name )->getVal() <<" out of physics range, fixing to " << arg->physRanges[0][j].max << std::endl;
                         w->var( arg->physRanges[0][j].name )->setVal(arg->physRanges[0][j].max);
                         w->var( arg->physRanges[0][j].name )->setConstant(true);                        
                     }
@@ -1366,10 +1368,12 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                 for ( int j=0; j<arg->physRanges[0].size(); j++ ){
                     if ( w->var( arg->physRanges[0][j].name ) ){
                         if(w->var( arg->physRanges[0][j].name )->getVal()<arg->physRanges[0][j].min){
+                            if(arg->debug) std::cout << "MethodDatasetsPluginScan::scan1d()::fit " << arg->physRanges[0][j].name <<"=" << w->var( arg->physRanges[0][j].name )->getVal() <<" out of physics range, fixing to " << arg->physRanges[0][j].min << std::endl;
                             w->var( arg->physRanges[0][j].name )->setVal(arg->physRanges[0][j].min);
                             w->var( arg->physRanges[0][j].name )->setConstant(true);
                         }
                         else if (w->var( arg->physRanges[0][j].name )->getVal() > arg->physRanges[0][j].max){
+                            if(arg->debug) std::cout << "MethodDatasetsPluginScan::scan1d()::fit " << arg->physRanges[0][j].name <<"=" << w->var( arg->physRanges[0][j].name )->getVal() <<" out of physics range, fixing to " << arg->physRanges[0][j].max << std::endl;
                             w->var( arg->physRanges[0][j].name )->setVal(arg->physRanges[0][j].max);
                             w->var( arg->physRanges[0][j].name )->setConstant(true);                        
                         }

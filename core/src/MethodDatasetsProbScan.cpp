@@ -499,7 +499,8 @@ int MethodDatasetsProbScan::scan1d(bool fast, bool reverse)
 
 
 int MethodDatasetsProbScan::computeCLvalues(){
-    std::cout << "Computing CL values based on test statostic decision" << std::endl;
+    std::cout << "Computing CL values based on test statistic decision" << std::endl;
+    std::cout << "Using "<< arg->teststatistic <<"-sided test statistic" << std::endl;
     float bestfitpoint = ((RooRealVar*) dataFreeFitResult->floatParsFinal().find(scanVar1))->getVal();
     float bestfitpointerr = ((RooRealVar*) dataFreeFitResult->floatParsFinal().find(scanVar1))->getError();
 
