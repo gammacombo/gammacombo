@@ -52,6 +52,44 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
     chi2minGlobal = probScan->getChi2minGlobal();
     std::cout << "=============== Global Minimum (2*-Log(Likelihood)) is: 2*" << dataFreeFitResult->minNll() << " = " << chi2minGlobal << endl;
 
+    // implement physical range a la Feldman Cousins
+    bool refit_necessary = false;
+    if ( arg->physRanges.size()>0 ){
+        for ( int j=0; j<arg->physRanges[0].size(); j++ ){
+            if ( w->var( arg->physRanges[0][j].name ) ){
+                if(w->var( arg->physRanges[0][j].name )->getVal()<arg->physRanges[0][j].min){
+                    if(arg->debug) std::cout << "MethodDatasetsPluginScan::scan1d()::fit " << arg->physRanges[0][j].name <<"=" << w->var( arg->physRanges[0][j].name )->getVal() <<" out of physics range, fixing to " << arg->physRanges[0][j].min << std::endl;
+                    w->var( arg->physRanges[0][j].name )->setVal(arg->physRanges[0][j].min);
+                    w->var( arg->physRanges[0][j].name )->setConstant(true);
+                    refit_necessary = true;
+                }
+                else if (w->var( arg->physRanges[0][j].name )->getVal() > arg->physRanges[0][j].max){
+                    if(arg->debug) std::cout << "MethodDatasetsPluginScan::scan1d()::fit " << arg->physRanges[0][j].name <<"=" << w->var( arg->physRanges[0][j].name )->getVal() <<" out of physics range, fixing to " << arg->physRanges[0][j].max << std::endl;
+                    w->var( arg->physRanges[0][j].name )->setVal(arg->physRanges[0][j].max);
+                    w->var( arg->physRanges[0][j].name )->setConstant(true);
+                    refit_necessary = true;                        
+                }
+            }
+        }
+    }
+
+    if(refit_necessary){
+        std::cout << "!!!!!!!!!!! Global Minimum outside physical range, refitting ..." << std::endl;
+        dataFreeFitResult = pdf->fit(pdf->getData());
+        chi2minGlobal = pdf->getMinNll();
+        std::cout << "=============== NEW Global Minimum (2*-Log(Likelihood)) is: 2*" << chi2minGlobal << endl;
+    }
+
+    //reset parameters free from the Feldman Cousins behaviour
+    if ( arg->physRanges.size()>0){
+        for ( int j=0; j<arg->physRanges[0].size(); j++ ){
+            if ( w->var( arg->physRanges[0][j].name ) && w->set(pdf->getParName())->find(arg->physRanges[0][j].name)){  //if somebody wants to modify a constant parameter make sure the parameter doesn't accidentally become floating...
+                w->var( arg->physRanges[0][j].name )->setConstant(false);
+            }
+        }
+    }
+
+
     chi2minBkg = probScan->getChi2minBkg();
     std::cout << "=============== Bkg minimum (2*-Log(Likelihood)) is: " << chi2minBkg << endl;
     if (chi2minBkg<chi2minGlobal)
