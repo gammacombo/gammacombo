@@ -1699,7 +1699,7 @@ void GammaComboEngine::setObservablesFromFile(Combiner *c, int cId)
       pdfs[i]->buildPdf();
     }
     else {
-      cout << "WARNING - did not find any pdf named: " << pdfs[i]->getBaseName() << " in file: " << arg->readfromfile[i] << endl;
+      cout << "WARNING - did not find any pdf named: " << pdfs[i]->getBaseName() << " in file: " << arg->readfromfile[cId] << endl;
     }
   }
 
@@ -1975,7 +1975,7 @@ void GammaComboEngine::scan()
 		c->combine();
 		if ( !c->isCombined() ) continue; // error during combining
 
-		// adjust ranges according to the command line - only possible before combining
+		// adjust ranges according to the command line - only possible after combining
 		adjustRanges(c, i);
 
     // set up parameter sets for the parameters to vary within the toys (if requested)
