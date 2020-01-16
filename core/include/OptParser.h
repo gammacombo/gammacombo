@@ -62,6 +62,7 @@ class OptParser
     TString         filenamechange;
 		TString         filenameaddition;
 		vector<vector<FixPar> >     fixParameters;
+		vector<vector<StartPar> >   startVals;
 		vector<vector<RangePar> >   physRanges;
     vector<vector<TString> >    removeRanges;
     vector<vector<TString> >    randomizeToyVars;

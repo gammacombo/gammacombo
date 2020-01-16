@@ -213,6 +213,7 @@ void OptParser::defineOptions()
   availableOptions.push_back("scaleerr");
   availableOptions.push_back("scalestaterr");
 	availableOptions.push_back("smooth2d");
+	availableOptions.push_back("start");
   availableOptions.push_back("toyFiles");
 	availableOptions.push_back("title");
 	availableOptions.push_back("usage");
@@ -323,6 +324,7 @@ void OptParser::bookFlowcontrolOptions()
 	bookedOptions.push_back("action");
 	bookedOptions.push_back("combid");
 	bookedOptions.push_back("fix");
+	bookedOptions.push_back("start");
 	//bookedOptions.push_back("jobdir");
 	bookedOptions.push_back("nosyst");
 }
@@ -618,6 +620,15 @@ void OptParser::parseArguments(int argc, char* argv[])
       "If 'all' is given, all parameter ranges are removed"
       "Can also use regex matching"
       , false, "string");
+	TCLAP::MultiArg<string> startArg("", "start", "Set starting values of one or more parameters in a combination. "
+			"If 'none' is given, and no --parfile is passed it will use the defaults in the ParametersAbs class (default). "
+			"If given multiple times, the first --start argument refers to the first combination, "
+			"the second one to the second and so on. "
+			"If given a single time, it is applied to all combinations. \n"
+			"Example: --start 'g=1.7,r_dk=-0.09' \n"
+			"To set just the start values in the second combination, do\n"
+			"Example: --start none --start 'g=1.7,r_dk=0.09' \n"
+			, false, "string");
 	TCLAP::MultiArg<float> snArg("", "sn", "--sn x. Save nuisances to parameter cache file at certain points after a "
 			"1d scan was performed. This can be used to set these as starting points "
 			"for further scans. "
@@ -686,6 +697,7 @@ void OptParser::parseArguments(int argc, char* argv[])
   if ( isIn<TString>(bookedOptions, "toyFiles" ) ) cmd.add( toyFilesArg );
 	if ( isIn<TString>(bookedOptions, "sn2d" ) ) cmd.add(sn2dArg);
 	if ( isIn<TString>(bookedOptions, "sn" ) ) cmd.add(snArg);
+	if ( isIn<TString>(bookedOptions, "start" ) ) cmd.add(startArg);
 	if ( isIn<TString>(bookedOptions, "smooth2d" ) ) cmd.add( smooth2dArg );
 	if ( isIn<TString>(bookedOptions, "scanrangey" ) ) cmd.add( scanrangeyArg );
 	if ( isIn<TString>(bookedOptions, "scanrange" ) ) cmd.add( scanrangeArg );
@@ -1161,14 +1173,30 @@ void OptParser::parseArguments(int argc, char* argv[])
 		}
 		fixParameters.push_back(assignments);
 	}
-	// // test code for --fix
-	// for ( int i = 0; i < fixParameters.size(); i++ ){
-	// 	cout << "combination " << i << endl;
-	// 	for ( int j = 0; j < fixParameters[i].size(); j++ ){
-	// 		cout << fixParameters[i][j].name << " = " << fixParameters[i][j].value << endl;
-	// 	}
-	// }
-	// exit(0);
+
+	// --start
+	tmp = startArg.getValue();
+	for ( int i = 0; i < tmp.size(); i++ ){ // loop over instances of --start
+		vector<StartPar> assignments;
+		// parse 'none' default string
+		if ( TString(tmp[i])==TString("none") ){
+			startVals.push_back(assignments);
+			continue;
+		}
+		// parse list of starting values: "foopar=5,barpar=7"
+		TObjArray *assignmentArray = TString(tmp[i]).Tokenize(","); // split string at ","
+		for ( int j=0; j<assignmentArray->GetEntries(); j++ ){ // loop over assignments
+			TString assignmentString = ((TObjString*)assignmentArray->At(j))->GetString();
+			StartPar p;
+			if ( parseAssignment(assignmentString, p.name, p.value) ){
+				assignments.push_back(p);
+			}
+			else{
+				cout << "ERROR : parse error in --fix argument: " << assignmentString << endl << endl;
+			}
+		}
+		startVals.push_back(assignments);
+	}
 
 	// --ps
 	// If --ps is only given once, apply the given setting to all

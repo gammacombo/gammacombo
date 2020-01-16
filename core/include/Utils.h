@@ -43,8 +43,16 @@ namespace Utils
 	extern int countFitBringBackAngle;      ///< counts how many times an angle needed to be brought back
 	extern int countAllFitBringBackAngle;   ///< counts how many times fitBringBackAngle() was called
 
-	// used to fix parameters in the combination, see e.g. Combiner::combine()
+	// used to fix parameters in the combination, see e.g. Combiner::fixParameter()
 	struct FixPar
+	{
+		TString name;
+		float value;
+		bool useValue;
+	};
+
+	// used to set starting values in the combination, see e.g. Combiner::setValue()
+	struct StartPar
 	{
 		TString name;
 		float value;
