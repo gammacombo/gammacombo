@@ -692,7 +692,7 @@ void MethodAbsScan::calcCLintervals(int CLsType, bool calc_expected)
 		TString unit = w->var(scanVar1)->getUnit();
 		CLIntervalPrinter clp(arg, name, scanVar1, unit, methodName);
 		if(calc_expected){
-			clp = CLIntervalPrinter(arg, name, scanVar1, unit, methodName+TString("_expected"));
+			clp = CLIntervalPrinter(arg, name, scanVar1, unit, methodName+TString("_expected_defaultCLs"));
 		}
 		clp.setDegrees(isAngle(w->var(scanVar1)));
 		clp.addIntervals(clm.getClintervals1sigma());
@@ -867,8 +867,8 @@ void MethodAbsScan::calcCLintervals(int CLsType, bool calc_expected)
 
 			int pErr = 2;
 			if ( arg && arg->digits>0 ) pErr = arg->digits;
-			if (CLsType==1 && this->getHCLs()) cout << "CL_s: ";
-			if (CLsType==2 && this->getHCLsFreq()) cout << "CL_s Freq: ";
+			if (CLsType==1 && this->getHCLs()) cout << "Simplified CL_s: ";
+			if (CLsType==2 && this->getHCLsFreq()) cout << "Default CL_s: ";
 			printf("\n%s = [%7.*f, %7.*f] @%3.2fCL",
 					par->GetName(),
 					pErr, CLlo[c], pErr, CLhi[c],
@@ -899,7 +899,7 @@ void MethodAbsScan::printCLintervals(int CLsType, bool calc_expected)
 	TString unit = w->var(scanVar1)->getUnit();
 	CLIntervalPrinter clp(arg, name, scanVar1, unit, methodName, CLsType);
 	if(calc_expected){
-		clp = CLIntervalPrinter(arg, name, scanVar1, unit, methodName+TString("_expected"));
+		clp = CLIntervalPrinter(arg, name, scanVar1, unit, methodName+TString("_expected_defaultCLs"));
 	}
 	clp.setDegrees(isAngle(w->var(scanVar1)));
 	clp.addIntervals(clintervals1sigma);
@@ -1541,8 +1541,8 @@ void MethodAbsScan::calcCLintervalsSimple(int CLsType, bool calc_expected)
 	    if ( c==0 ) clintervals1sigma.push_back(cli);
 	    if ( c==1 ) clintervals2sigma.push_back(cli);
 	    if ( c==2 ) clintervalsuser.push_back(cli);
-	    if (CLsType==1) std::cout << "CL_s ";
-	    if (CLsType==2) std::cout << "CL_s Freq";
+	    if (CLsType==1) std::cout << "Simplified CL_s ";
+	    if (CLsType==2) std::cout << "Default CL_s";
 	    std::cout<<"borders at "<<ConfidenceLevels[c]<<"  [ "<<borders.first<<" : "<<borders.second<<"]";
 		cout << ", " << methodName << " (simple boundary scan)" << endl;
 	  }

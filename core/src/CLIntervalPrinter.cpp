@@ -66,8 +66,8 @@ void CLIntervalPrinter::print()
 			// to the CLIntervalMaker mechanism to get more useful information
 			// on the CL intervals
 			cout << ", " << _method;
-			if (_clstype==1) cout << " CL_s";
-			if (_clstype==2) cout << " CL_s Freq";
+			if (_clstype==1) cout << " Simplified CL_s";
+			if (_clstype==2) cout << " Default CL_s";
 
 			if ( _arg->isQuickhack(8) ){
 				if ( _arg->verbose ){
