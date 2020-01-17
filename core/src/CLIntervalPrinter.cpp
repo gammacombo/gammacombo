@@ -67,7 +67,7 @@ void CLIntervalPrinter::print()
 			// on the CL intervals
 			cout << ", " << _method;
 			if (_clstype==1) cout << " Simplified CL_s";
-			if (_clstype==2) cout << " Default CL_s";
+			if (_clstype==2) cout << " Standard CL_s";
 
 			if ( _arg->isQuickhack(8) ){
 				if ( _arg->verbose ){

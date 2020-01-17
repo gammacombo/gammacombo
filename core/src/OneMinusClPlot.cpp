@@ -897,7 +897,7 @@ void OneMinusClPlot::Draw()
       if ( scanners[i]->getMethodName().Contains("Plugin") ) {
         if ( do_CLs[i]==0 ) legTitle    = "Plugin";
         else if (do_CLs[i]==1) legTitle = "Simplified CLs";
-        else if (do_CLs[i]==2) legTitle = "Default CLs";
+        else if (do_CLs[i]==2) legTitle = "Standard CLs";
       }
     }
     else if ( !arg->isQuickhack(29) ) {
@@ -905,7 +905,7 @@ void OneMinusClPlot::Draw()
       if ( scanners[i]->getMethodName().Contains("Plugin") ) {
         if ( do_CLs[i]==0 )    legTitle += " (Plugin)";
         else if (do_CLs[i]==1) legTitle += " (Simplified CLs)";
-        else if (do_CLs[i]==2) legTitle += " (Default CLs)";
+        else if (do_CLs[i]==2) legTitle += " (Standard CLs)";
       }
     }
     legTitles.push_back(legTitle);
