@@ -72,12 +72,14 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 		if ( plotPoints ) ((TGraphErrors*)g)->SetPointError(i, 0.0, hCL->GetBinError(i+1));
 	}
 
-	// add solution
-	if ( ! s->getSolutions().empty() ){
-		TGraphTools t;
-		TGraph *gNew = t.addPointToGraphAtFirstMatchingX(g, s->getScanVar1Solution(0), 1.0);
-		delete g;
-		g = gNew;
+	// add solution -- this does not make sense for the one-sided test statistic, which only gives non-default values for mu > muhat
+	if(! arg->teststatistic==1){
+		if ( ! s->getSolutions().empty() ){
+			TGraphTools t;
+			TGraph *gNew = t.addPointToGraphAtFirstMatchingX(g, s->getScanVar1Solution(0), 1.0);
+			delete g;
+			g = gNew;
+		}
 	}
 
 	// // set last point to the same p-value as first point by hand
@@ -150,7 +152,8 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
     if ( last && arg->isQuickhack(25) ) g->SetLineWidth(3);
 	}
 
-	if (CLsType>0) g->SetLineColor(s->getLineColor() - 1);
+	if (CLsType>0) g->SetLineColor(color);
+	// if (CLsType>0) g->SetLineColor(s->getLineColor() - 1);
 
 	if ( plotPoints ){
 		g->SetLineWidth(1);
@@ -893,16 +896,16 @@ void OneMinusClPlot::Draw()
       if ( scanners[i]->getMethodName().Contains("Prob") ) legTitle = do_CLs[i] ? "Prob CLs" : "Prob";
       if ( scanners[i]->getMethodName().Contains("Plugin") ) {
         if ( do_CLs[i]==0 ) legTitle    = "Plugin";
-        else if (do_CLs[i]==1) legTitle = "Plugin CLs";
-        else if (do_CLs[i]==2) legTitle = "Mixed CLs";
+        else if (do_CLs[i]==1) legTitle = "Simplified CLs";
+        else if (do_CLs[i]==2) legTitle = "Default CLs";
       }
     }
     else if ( !arg->isQuickhack(29) ) {
       if ( scanners[i]->getMethodName().Contains("Prob") ) legTitle += do_CLs[i] ? " (Prob CLs)" : " (Prob)";
       if ( scanners[i]->getMethodName().Contains("Plugin") ) {
         if ( do_CLs[i]==0 )    legTitle += " (Plugin)";
-        else if (do_CLs[i]==1) legTitle += " (Plugin CLs)";
-        else if (do_CLs[i]==2) legTitle += " (Mixed CLs)";
+        else if (do_CLs[i]==1) legTitle += " (Simplified CLs)";
+        else if (do_CLs[i]==2) legTitle += " (Default CLs)";
       }
     }
     legTitles.push_back(legTitle);
