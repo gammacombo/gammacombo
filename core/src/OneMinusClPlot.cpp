@@ -459,33 +459,34 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
     gErr2Up->SetPoint(0,0.,1.);
     gErr2Dn->SetPoint(0,0.,1.);
 
+    if(arg->teststatistic ==1){
+	    // remove all observed lines with x<xmeas
+	    if(arg->debug) std::cout<< "OneMinusClPlot::scan1dCLsPlot() : remove all observed lines with mu<muhat in CLs plot" <<std::endl;
+	    double* xvalsobs = gObs->GetX();
+	    double* yvalsobs = gObs->GetY();
+	    int valabove = gObs->GetN();
+	    int nentries = gObs->GetN();
+	    for (int i=0; i<gObs->GetN(); i++){
+	    	if (xvalsobs[i]<(xCentral+(hObs->GetBinWidth(1)/2.))) valabove--;
+	    }  
+	    // std::cout << "Found entries for obs " << valabove << "\t" << nentries << std::endl;
 
-    // remove all observed lines with x<xmeas
-    std::cout << "Solution x is "<< xCentral << std::endl;
-    double* xvalsobs = gObs->GetX();
-    double* yvalsobs = gObs->GetY();
-    int valabove = gObs->GetN();
-    int nentries = gObs->GetN();
-    for (int i=0; i<gObs->GetN(); i++){
-    	if (xvalsobs[i]<(xCentral+(hObs->GetBinWidth(1)/2.))) valabove--;
-    }  
-    // std::cout << "Found entries for obs " << valabove << "\t" << nentries << std::endl;
-
-    TGraph* gObs_new = new TGraph(valabove);
-    int k=0;
-    for (int i=0; i < nentries; i++){
-    	if(xvalsobs[i]<(xCentral+(hObs->GetBinWidth(1)/2.))){
-    		// std::cout << "Ignoring " << xvalsobs[i] << "\t" << yvalsobs[i] << std::endl;
-    		continue;
-    	}
-    	else {
-    		// std::cout << "SetPoint " << k << "\t" << xvalsobs[i] << "\t" << yvalsobs[i] << std::endl;
-    		gObs_new->SetPoint(k, xvalsobs[i],yvalsobs[i]);
-    		k++;
-    	}
-    }
-    delete gObs;
-    gObs = gObs_new;
+	    TGraph* gObs_new = new TGraph(valabove);
+	    int k=0;
+	    for (int i=0; i < nentries; i++){
+	    	if(xvalsobs[i]<(xCentral+(hObs->GetBinWidth(1)/2.))){
+	    		// std::cout << "Ignoring " << xvalsobs[i] << "\t" << yvalsobs[i] << std::endl;
+	    		continue;
+	    	}
+	    	else {
+	    		// std::cout << "SetPoint " << k << "\t" << xvalsobs[i] << "\t" << yvalsobs[i] << std::endl;
+	    		gObs_new->SetPoint(k, xvalsobs[i],yvalsobs[i]);
+	    		k++;
+	    	}
+	    }
+	    delete gObs;
+	    gObs = gObs_new;
+	}
 
     if ( arg->debug ) cout << "OneMinusClPlot::scan1dCLsPlot() : done smoothing graphs" << endl;
   }
