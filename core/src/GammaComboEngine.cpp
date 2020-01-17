@@ -1362,7 +1362,8 @@ void GammaComboEngine::make1dPluginPlot(MethodPluginScan *sPlugin, MethodProbSca
 		make1dProbPlot(sProb, cId);
 		sPlugin->setLineColor(kBlack);
 		sPlugin->setDrawSolution(arg->plotsolutions[cId]);
-		for (int i=0; i<arg->cls.size(); i++) sPlugin->plotOn(plot, arg->cls[i]);
+		if(std::count(arg->cls.begin(),arg->cls.end(),1)) sPlugin->plotOn(plot, 1);
+		if(std::count(arg->cls.begin(),arg->cls.end(),2)) sPlugin->plotOn(plot, 2);
 		sPlugin->plotOn(plot);
 	}
 	plot->Draw();
