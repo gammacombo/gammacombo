@@ -125,12 +125,12 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 
 	int color = s->getLineColor();
 	if(CLsType>0 && s->getMethodName().Contains("Plugin") && !arg->plotpluginonly) {
-    	if (CLsType==1) color = kBlue-7;
-    	else if (CLsType==2) color = kBlue+2;
+    	if (CLsType==1) color = kBlue-8;
+    	else if (CLsType==2) color = kBlue-2;
   	}
 	else if(CLsType>0) {
-    	if (CLsType==1) color = s->getLineColor() - 5;
-    	if (CLsType==2) color = s->getLineColor() - 4;
+    	if (CLsType==1) color = s->getLineColor() + 1;
+    	if (CLsType==2) color = s->getLineColor() + 1;
   	}
 	g->SetLineColor(color);
 

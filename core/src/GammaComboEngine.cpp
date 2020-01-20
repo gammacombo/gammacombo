@@ -958,7 +958,7 @@ void GammaComboEngine::defineColors()
 	//if ( arg->color.size()==0 )
 	//{
 		// define line colors for 1-CL curves
-		colorsLine.push_back(arg->combid.size()==1 ? kBlue-8 : kBlue-5);
+		colorsLine.push_back(arg->combid.size()<=1 ? kBlue-8 : kBlue-5);
 		colorsLine.push_back(kGreen-8);
 		colorsLine.push_back(kOrange-8);
 		colorsLine.push_back(kMagenta-6);
@@ -1064,6 +1064,9 @@ void GammaComboEngine::defineColors()
     	//sort out fill transparency
     	if ( arg->filltransparency.size()>0 ) fillTransparencies.push_back( arg->filltransparency[0] );
     	else fillTransparencies.push_back(.0);
+		//sort out total color if not line and fill color defined before
+		if ( arg->color.size()>0 && arg->color[0] < colorsLine.size() && arg-> linecolor.size()==0) lineColors[0]=colorsLine[arg->color[0]];
+		if ( arg->color.size()>0 && arg->color[0] < colorsLine.size() && arg-> fillcolor.size()==0) fillColors[0]=colorsLine[arg->color[0]];
 	}
 }
 
