@@ -958,7 +958,7 @@ void GammaComboEngine::defineColors()
 	//if ( arg->color.size()==0 )
 	//{
 		// define line colors for 1-CL curves
-		colorsLine.push_back(arg->combid.size()==1 ? kBlue-8 : kBlue-5);
+		colorsLine.push_back(arg->combid.size()<=1 ? kBlue-8 : kBlue-5);
 		colorsLine.push_back(kGreen-8);
 		colorsLine.push_back(kOrange-8);
 		colorsLine.push_back(kMagenta-6);
@@ -1064,6 +1064,9 @@ void GammaComboEngine::defineColors()
     	//sort out fill transparency
     	if ( arg->filltransparency.size()>0 ) fillTransparencies.push_back( arg->filltransparency[0] );
     	else fillTransparencies.push_back(.0);
+		//sort out total color if not line and fill color defined before
+		if ( arg->color.size()>0 && arg->color[0] < colorsLine.size() && arg-> linecolor.size()==0) lineColors[0]=colorsLine[arg->color[0]];
+		if ( arg->color.size()>0 && arg->color[0] < colorsLine.size() && arg-> fillcolor.size()==0) fillColors[0]=colorsLine[arg->color[0]];
 	}
 }
 
@@ -1155,7 +1158,8 @@ void GammaComboEngine::make1dProbScan(MethodProbScan *scanner, int cId)
 	cout << "\nResults:" << endl;
 	cout <<   "========\n" << endl;
 	scanner->printLocalMinima();
-  scanner->saveLocalMinima(m_fnamebuilder->getFileNameSolution(scanner));
+  	scanner->saveLocalMinima(m_fnamebuilder->getFileNameSolution(scanner));
+	scanner->computeCLvalues();
 	scanner->calcCLintervals();
 	if (arg->cls.size()>0) scanner->calcCLintervals(1); // for prob method CLsType>1 doesn't exist
 	if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
@@ -1191,7 +1195,10 @@ void GammaComboEngine::make1dPluginScan(MethodPluginScan *scannerPlugin, int cId
 	else {
 		scannerPlugin->readScan1dTrees(arg->jmin[cId],arg->jmax[cId]);
 		scannerPlugin->calcCLintervals();
-		for (int i=0; i<arg->cls.size(); i++) scannerPlugin->calcCLintervals(arg->cls[i]);
+		for (int i=0; i<arg->cls.size(); i++){
+			scannerPlugin->calcCLintervals(arg->cls[i]);
+			if (arg->cls[i]==2) scannerPlugin->calcCLintervals(arg->cls[i], true); //calculate expected upper limit
+		}
 	}
 	if ( !arg->isAction("pluginbatch") ){
 		scannerPlugin->saveScanner(m_fnamebuilder->getFileNameScanner(scannerPlugin));
@@ -1283,7 +1290,8 @@ void GammaComboEngine::make1dProbPlot(MethodProbScan *scanner, int cId)
 {
 
   	if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
-		  scanner->setDrawSolution(arg->plotsolutions[cId]);
+		scanner->setDrawSolution(arg->plotsolutions[cId]);
+		if(arg->isAction("plugin")||arg->isAction("plot")) scanner->computeCLvalues();	// compute new CL values depending on test stat, even if not a rescan is wished
     	if ( arg->cls.size()>0 ) {
       		if ( runOnDataSet ) ((MethodDatasetsProbScan*)scanner)->plotFitRes(m_fnamebuilder->getFileNamePlot(cmb)+"_fit");
       		scanner->plotOn(plot, 1); // for prob ClsType>1 doesn't exist
@@ -1362,7 +1370,8 @@ void GammaComboEngine::make1dPluginPlot(MethodPluginScan *sPlugin, MethodProbSca
 		make1dProbPlot(sProb, cId);
 		sPlugin->setLineColor(kBlack);
 		sPlugin->setDrawSolution(arg->plotsolutions[cId]);
-		for (int i=0; i<arg->cls.size(); i++) sPlugin->plotOn(plot, arg->cls[i]);
+		if(std::count(arg->cls.begin(),arg->cls.end(),1)) sPlugin->plotOn(plot, 1);
+		if(std::count(arg->cls.begin(),arg->cls.end(),2)) sPlugin->plotOn(plot, 2);
 		sPlugin->plotOn(plot);
 	}
 	plot->Draw();

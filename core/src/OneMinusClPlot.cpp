@@ -72,12 +72,14 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 		if ( plotPoints ) ((TGraphErrors*)g)->SetPointError(i, 0.0, hCL->GetBinError(i+1));
 	}
 
-	// add solution
-	if ( ! s->getSolutions().empty() ){
-		TGraphTools t;
-		TGraph *gNew = t.addPointToGraphAtFirstMatchingX(g, s->getScanVar1Solution(0), 1.0);
-		delete g;
-		g = gNew;
+	// add solution -- this does not make sense for the one-sided test statistic, which only gives non-default values for mu > muhat
+	if(! arg->teststatistic==1){
+		if ( ! s->getSolutions().empty() ){
+			TGraphTools t;
+			TGraph *gNew = t.addPointToGraphAtFirstMatchingX(g, s->getScanVar1Solution(0), 1.0);
+			delete g;
+			g = gNew;
+		}
 	}
 
 	// // set last point to the same p-value as first point by hand
@@ -123,12 +125,12 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 
 	int color = s->getLineColor();
 	if(CLsType>0 && s->getMethodName().Contains("Plugin") && !arg->plotpluginonly) {
-    	if (CLsType==1) color = kBlue-7;
-    	else if (CLsType==2) color = kBlue+2;
+    	if (CLsType==1) color = kBlue-8;
+    	else if (CLsType==2) color = kBlue-2;
   	}
 	else if(CLsType>0) {
-    	if (CLsType==1) color = s->getLineColor() - 5;
-    	if (CLsType==2) color = s->getLineColor() - 4;
+    	if (CLsType==1) color = s->getLineColor() + 1;
+    	if (CLsType==2) color = s->getLineColor() + 1;
   	}
 	g->SetLineColor(color);
 
@@ -391,6 +393,7 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
 
   // convert obs to graph
   TGraph *gObs = convertTH1ToTGraph(hObs,obsError);
+  float xCentral = s->getScanVar1Solution();
 
   // convert others to raw graphs
   TGraph *gExpRaw    = convertTH1ToTGraph(hExp);
@@ -409,19 +412,81 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
   TGraphSmooth *smoother = new TGraphSmooth();
   if (smooth) {
     if ( arg->debug ) cout << "OneMinusClPlot::scan1dCLsPlot() : smoothing graphs" << endl;
-    gExp    = (TGraph*)smoother->SmoothSuper( gExpRaw    )->Clone("gExp");
-    gErr1Up = (TGraph*)smoother->SmoothSuper( gErr1UpRaw )->Clone("gErr1Up");
+    // gExp    = (TGraph*)smoother->SmoothSuper( gExpRaw    )->Clone("gExp");
+    // gErr1Up = (TGraph*)smoother->SmoothSuper( gErr1UpRaw )->Clone("gErr1Up");
+    // gErr1Dn = (TGraph*)smoother->SmoothSuper( gErr1DnRaw )->Clone("gErr1Dn");
+    // gErr2Up = (TGraph*)smoother->SmoothSuper( gErr2UpRaw )->Clone("gErr2Up");
+    // gErr2Dn = (TGraph*)smoother->SmoothSuper( gErr2DnRaw )->Clone("gErr2Dn");
+    gExp    = (TGraph*)smoother->SmoothSuper( gExpRaw   )->Clone("gExp");
+    // gErr1Up = (TGraph*)smoother->SmoothSuper( gErr1UpRaw )->Clone("gErr1Up");
     gErr1Dn = (TGraph*)smoother->SmoothSuper( gErr1DnRaw )->Clone("gErr1Dn");
-    gErr2Up = (TGraph*)smoother->SmoothSuper( gErr2UpRaw )->Clone("gErr2Up");
+    // gErr2Up = (TGraph*)smoother->SmoothSuper( gErr2UpRaw )->Clone("gErr2Up");
     gErr2Dn = (TGraph*)smoother->SmoothSuper( gErr2DnRaw )->Clone("gErr2Dn");
 
     //alternative smoothing option, needs more fiddling
-    // gExp    = (TGraph*)smoother->SmoothKern( gExpRaw   ,"normal",0.07e-8)->Clone("gExp");
-    // gErr1Up = (TGraph*)smoother->SmoothKern( gErr1UpRaw,"normal",0.19e-8)->Clone("gErr1Up");
-    // gErr1Dn = (TGraph*)smoother->SmoothKern( gErr1DnRaw,"normal",0.19e-8)->Clone("gErr1Dn");
-    // gErr2Up = (TGraph*)smoother->SmoothKern( gErr2UpRaw,"normal",0.19e-8)->Clone("gErr2Up");
-    // gErr2Dn = (TGraph*)smoother->SmoothKern( gErr2DnRaw,"normal",0.19e-8)->Clone("gErr2Dn");
+    // gExp    = (TGraph*)smoother->SmoothKern( gExpRaw   ,"normal",hExp->GetBinWidth(1)*4)->Clone("gExp");
+    gErr1Up = (TGraph*)smoother->SmoothKern( gErr1UpRaw,"normal",hErr1Up->GetBinWidth(1)*2)->Clone("gErr1Up");
+    // gErr1Dn = (TGraph*)smoother->SmoothKern( gErr1DnRaw,"normal",hErr1Dn->GetBinWidth(1)*4)->Clone("gErr1Dn");
+    gErr2Up = (TGraph*)smoother->SmoothKern( gErr2UpRaw,"normal",hErr2Up->GetBinWidth(1)*2)->Clone("gErr2Up");
+    // gErr2Dn = (TGraph*)smoother->SmoothKern( gErr2DnRaw,"normal",hErr2Dn->GetBinWidth(1)*4)->Clone("gErr2Dn");
 
+    // //make sure the CLs=1 points do NOT get smoothed away
+
+    // double *xvals = gExp->GetX();
+    // double *xvalsRaw = gExpRaw->GetX();
+    // double *yvalsRawExp = gExpRaw->GetY();
+    // double *yvalsRawExpErr1Up = gErr1UpRaw->GetY();
+    // double *yvalsRawExpErr2Up = gErr2UpRaw->GetY();
+
+    // for (int i=0; i<gExp->GetN(); i++){
+    // 	std::cout << xvalsRaw[i] << "\t" <<xvals[i] << std::endl;
+    // 	if(yvalsRawExp[i]>0.99){
+    // 		gExp->SetPoint(i,xvals[i], 1.0);
+    // 	}
+    // 	if(yvalsRawExpErr1Up[i]>0.99){
+    // 		gErr1Up->SetPoint(i,xvals[i], 1.0);
+    // 	}
+    // 	if(yvalsRawExpErr2Up[i]>0.99){
+    // 		gErr2Up->SetPoint(i,xvals[i], 1.0);
+    // 	}
+    // }
+
+    // fix point 0 to CLs=1 for all expected curves
+
+    gExp->SetPoint(0,0.,1.);
+    gErr1Up->SetPoint(0,0.,1.);
+    gErr1Dn->SetPoint(0,0.,1.);
+    gErr2Up->SetPoint(0,0.,1.);
+    gErr2Dn->SetPoint(0,0.,1.);
+
+    if(arg->teststatistic ==1){
+	    // remove all observed lines with x<xmeas
+	    if(arg->debug) std::cout<< "OneMinusClPlot::scan1dCLsPlot() : remove all observed lines with mu<muhat in CLs plot" <<std::endl;
+	    double* xvalsobs = gObs->GetX();
+	    double* yvalsobs = gObs->GetY();
+	    int valabove = gObs->GetN();
+	    int nentries = gObs->GetN();
+	    for (int i=0; i<gObs->GetN(); i++){
+	    	if (xvalsobs[i]<(xCentral+(hObs->GetBinWidth(1)/2.))) valabove--;
+	    }  
+	    // std::cout << "Found entries for obs " << valabove << "\t" << nentries << std::endl;
+
+	    TGraph* gObs_new = new TGraph(valabove);
+	    int k=0;
+	    for (int i=0; i < nentries; i++){
+	    	if(xvalsobs[i]<(xCentral+(hObs->GetBinWidth(1)/2.))){
+	    		// std::cout << "Ignoring " << xvalsobs[i] << "\t" << yvalsobs[i] << std::endl;
+	    		continue;
+	    	}
+	    	else {
+	    		// std::cout << "SetPoint " << k << "\t" << xvalsobs[i] << "\t" << yvalsobs[i] << std::endl;
+	    		gObs_new->SetPoint(k, xvalsobs[i],yvalsobs[i]);
+	    		k++;
+	    	}
+	    }
+	    delete gObs;
+	    gObs = gObs_new;
+	}
 
     if ( arg->debug ) cout << "OneMinusClPlot::scan1dCLsPlot() : done smoothing graphs" << endl;
   }
@@ -547,6 +612,9 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
   else{
   	drawCLguideLines();
   }
+
+  // draw the solution
+  if(arg->plotsolutions.size()>0 && arg->plotsolutions[0]!=0) drawVerticalLine(xCentral, kBlack, kDashed);
 
   double yGroup = 0.83;
   if ( arg->plotprelim || arg->plotunoff ) yGroup = 0.8;
@@ -829,16 +897,16 @@ void OneMinusClPlot::Draw()
       if ( scanners[i]->getMethodName().Contains("Prob") ) legTitle = do_CLs[i] ? "Prob CLs" : "Prob";
       if ( scanners[i]->getMethodName().Contains("Plugin") ) {
         if ( do_CLs[i]==0 ) legTitle    = "Plugin";
-        else if (do_CLs[i]==1) legTitle = "Plugin CLs";
-        else if (do_CLs[i]==2) legTitle = "Mixed CLs";
+        else if (do_CLs[i]==1) legTitle = "Simplified CLs";
+        else if (do_CLs[i]==2) legTitle = "Standard CLs";
       }
     }
     else if ( !arg->isQuickhack(29) ) {
       if ( scanners[i]->getMethodName().Contains("Prob") ) legTitle += do_CLs[i] ? " (Prob CLs)" : " (Prob)";
       if ( scanners[i]->getMethodName().Contains("Plugin") ) {
         if ( do_CLs[i]==0 )    legTitle += " (Plugin)";
-        else if (do_CLs[i]==1) legTitle += " (Plugin CLs)";
-        else if (do_CLs[i]==2) legTitle += " (Mixed CLs)";
+        else if (do_CLs[i]==1) legTitle += " (Simplified CLs)";
+        else if (do_CLs[i]==2) legTitle += " (Standard CLs)";
       }
     }
     legTitles.push_back(legTitle);

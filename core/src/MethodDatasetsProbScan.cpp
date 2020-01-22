@@ -285,17 +285,17 @@ void MethodDatasetsProbScan::sethCLFromProbScanTree() {
       chi2minBkg    = probScanTree->chi2minBkg;
     }
 
-		// put in best fit value
-		hCL->SetBinContent(hCL->FindBin( probScanTree->scanbest ),1.);
-		hChi2min->SetBinContent(hCL->FindBin( probScanTree->scanbest),chi2minGlobal);
+	// put in best fit value
+	hCL->SetBinContent(hCL->FindBin( probScanTree->scanbest ),1.);
+	hChi2min->SetBinContent(hCL->FindBin( probScanTree->scanbest),chi2minGlobal);
     hCLs->SetBinContent(hCLs->FindBin( probScanTree->scanbest ), 1.);
 
-		cout << "Best fit at: scanVar  = " << probScanTree->scanbest << " with Chi2Min: " << chi2minGlobal << endl;
+	cout << "Best fit at: scanVar  = " << probScanTree->scanbest << " with Chi2Min: " << chi2minGlobal << endl;
 
-		sortSolutions();
-		//saveSolutions();
-    // this->probScanTree->activateAllBranches(); //< Very important!
-    //
+	sortSolutions();
+	//saveSolutions();
+// this->probScanTree->activateAllBranches(); //< Very important!
+//
 }
 
 
@@ -496,6 +496,31 @@ int MethodDatasetsProbScan::scan1d(bool fast, bool reverse)
 
     return 0;
 }
+
+
+int MethodDatasetsProbScan::computeCLvalues(){
+    std::cout << "Computing CL values based on test statistic decision" << std::endl;
+    std::cout << "Using "<< arg->teststatistic <<"-sided test statistic" << std::endl;
+    float bestfitpoint = ((RooRealVar*) dataFreeFitResult->floatParsFinal().find(scanVar1))->getVal();
+    float bestfitpointerr = ((RooRealVar*) dataFreeFitResult->floatParsFinal().find(scanVar1))->getError();
+
+    for (int k=1; k<=hCL->GetNbinsX(); k++){
+        float scanvalue=hChi2min->GetBinCenter( k);
+        float teststat_measured = hChi2min->GetBinContent(k) - chi2minGlobal;
+        float CLb = 1. - (normal_cdf(TMath::Sqrt(teststat_measured) + ((scanvalue - 0.)/bestfitpointerr)) + normal_cdf(TMath::Sqrt(teststat_measured) - ((scanvalue - 0.)/bestfitpointerr)) - 1.);
+        if (arg->teststatistic ==1){ // use one-sided test statistic
+            teststat_measured = bestfitpoint <= scanvalue ? teststat_measured : 0.; // if mu < muhat then q_mu = 0
+            hCL->SetBinContent(k,1. - normal_cdf(TMath::Sqrt(teststat_measured)));
+            // if (scanvalue < bestfitpoint) hCL->SetBinContent(k,1.0);    // should not be here, but looks ugly if solution is drawn as p=1
+            CLb = 1. - normal_cdf(TMath::Sqrt(teststat_measured) - ((scanvalue - 0.)/bestfitpointerr));
+        }
+        hCLs->SetBinContent(k,min(1.,hCL->GetBinContent(k)/CLb));
+    }
+    return 0;
+}
+
+
+
 
 // sanity Checks for 2D scan \TODO: Idea: enlargen this function to be used for all scans
 void MethodDatasetsProbScan::sanityChecks()

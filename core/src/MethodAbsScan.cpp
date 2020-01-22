@@ -655,7 +655,7 @@ bool MethodAbsScan::interpolate(TH1F* h, int i, float y, float central, bool upp
 /// Use a fit-based interpolation (interpolate()) if we have more than 25 bins,
 /// else revert to a straight line interpolation (interpolateSimple()).
 ///
-void MethodAbsScan::calcCLintervals(int CLsType)
+void MethodAbsScan::calcCLintervals(int CLsType, bool calc_expected)
 {
 	TH1F *histogramCL = this->getHCL();
 	// calc CL intervals with CLs method
@@ -666,6 +666,11 @@ void MethodAbsScan::calcCLintervals(int CLsType)
   	else if (CLsType==2 && this->getHCLsFreq())
   	{
     	histogramCL = this->getHCLsFreq();
+  	}
+  	if (CLsType==2 && calc_expected && hCLsExp)
+  	{
+    	histogramCL = hCLsExp;
+    	std::cout << "Determine expected upper limit:" << std::endl;
   	}
 
   	if(CLsType!=0){
@@ -686,6 +691,9 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 		// print
 		TString unit = w->var(scanVar1)->getUnit();
 		CLIntervalPrinter clp(arg, name, scanVar1, unit, methodName);
+		if(calc_expected){
+			clp = CLIntervalPrinter(arg, name, scanVar1, unit, methodName+TString("_expected_standardCLs"));
+		}
 		clp.setDegrees(isAngle(w->var(scanVar1)));
 		clp.addIntervals(clm.getClintervals1sigma());
 		clp.addIntervals(clm.getClintervals2sigma());
@@ -696,12 +704,12 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 	if(solutions.empty()){
 	 cout 	<< "MethodAbsScan::calcCLintervals() : Solutions vector empty. "
 								<<"Using simple method with  linear splines."<<endl;
- 		this->calcCLintervalsSimple(CLsType);
+ 		this->calcCLintervalsSimple(CLsType, calc_expected);
 		return;
 	}
 	else if((CLsType==1||CLsType==2) && !this->getHCLs()) {
 		cout<<"Using simple method with  linear splines."<<endl;
-		this->calcCLintervalsSimple(CLsType);
+		this->calcCLintervalsSimple(CLsType, calc_expected);
 	}
 
   if ( arg->debug ) cout << "MethodAbsScan::calcCLintervals() : ";
@@ -798,7 +806,7 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 			clintervals1sigma.push_back(i);
 		}
 	}
-	printCLintervals(CLsType);
+	printCLintervals(CLsType, calc_expected);
 
 	//
 	// scan again from the histogram boundaries
@@ -859,8 +867,8 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 
 			int pErr = 2;
 			if ( arg && arg->digits>0 ) pErr = arg->digits;
-			if (CLsType==1 && this->getHCLs()) cout << "CL_s: ";
-			if (CLsType==2 && this->getHCLsFreq()) cout << "CL_s Freq: ";
+			if (CLsType==1 && this->getHCLs()) cout << "Simplified CL_s: ";
+			if (CLsType==2 && this->getHCLsFreq()) cout << "Standard CL_s: ";
 			printf("\n%s = [%7.*f, %7.*f] @%3.2fCL",
 					par->GetName(),
 					pErr, CLlo[c], pErr, CLhi[c],
@@ -886,10 +894,13 @@ void MethodAbsScan::calcCLintervals(int CLsType)
 ///
 /// Print CL intervals.
 ///
-void MethodAbsScan::printCLintervals(int CLsType)
+void MethodAbsScan::printCLintervals(int CLsType, bool calc_expected)
 {
 	TString unit = w->var(scanVar1)->getUnit();
 	CLIntervalPrinter clp(arg, name, scanVar1, unit, methodName, CLsType);
+	if(calc_expected){
+		clp = CLIntervalPrinter(arg, name, scanVar1, unit, methodName+TString("_expected_standardCLs"));
+	}
 	clp.setDegrees(isAngle(w->var(scanVar1)));
 	clp.addIntervals(clintervals1sigma);
 	clp.addIntervals(clintervals2sigma);
@@ -1498,7 +1509,7 @@ void MethodAbsScan::setYscanRange(float min, float max)
 
 
 
-void MethodAbsScan::calcCLintervalsSimple(int CLsType)
+void MethodAbsScan::calcCLintervalsSimple(int CLsType, bool calc_expected)
 {
   clintervals1sigma.clear();
   clintervals2sigma.clear();
@@ -1514,6 +1525,10 @@ void MethodAbsScan::calcCLintervalsSimple(int CLsType)
   {
     histogramCL = this->hCLsFreq;
   }
+  if (CLsType==2 && calc_expected && hCLsExp)
+  {
+	histogramCL = hCLsExp;
+  }
   if(CLsType==0 || (this->hCLs && CLsType==1) || (this->hCLsFreq && CLsType==2))
   {
 	  for (int c=0;c<3;c++){
@@ -1526,8 +1541,8 @@ void MethodAbsScan::calcCLintervalsSimple(int CLsType)
 	    if ( c==0 ) clintervals1sigma.push_back(cli);
 	    if ( c==1 ) clintervals2sigma.push_back(cli);
 	    if ( c==2 ) clintervalsuser.push_back(cli);
-	    if (CLsType==1) std::cout << "CL_s ";
-	    if (CLsType==2) std::cout << "CL_s Freq";
+	    if (CLsType==1) std::cout << "Simplified CL_s ";
+	    if (CLsType==2) std::cout << "Standard CL_s";
 	    std::cout<<"borders at "<<ConfidenceLevels[c]<<"  [ "<<borders.first<<" : "<<borders.second<<"]";
 		cout << ", " << methodName << " (simple boundary scan)" << endl;
 	  }
