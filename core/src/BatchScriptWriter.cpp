@@ -72,11 +72,8 @@ void BatchScriptWriter::writeScripts(OptParser *arg, vector<Combiner*> *cmb){
 
       TString eos_path = Form("/eos/lhcb/user/m/mkenzie/gammacombo/%02d%02d%04d",day,month,year);
       // system(Form("/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select mkdir %s",eos_path.Data()));
-      system(Form("/usr/bin/eos mkdir %s",eos_path.Data()));
-
       eos_path += Form("/%s",dirname.Data());
       // system(Form("/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select mkdir -p %s",eos_path.Data()));
-      system(Form("/usr/bin/eos mkdir -p %s",eos_path.Data()));
       outf_dir = eos_path;
     }
     if ( arg->var.size()==2 ) {
@@ -146,11 +143,11 @@ void BatchScriptWriter::writeScripts_datasets(OptParser *arg, PDF_Abs* pdf){
     int year  = now->tm_year+1900;
 
     TString eos_path = Form("/eos/lhcb/user/m/mkenzie/gammacombo/%02d%02d%04d",day,month,year);
-    // system(Form("/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select mkdir %s",eos_path.Data()));
-    system(Form("/usr/bin/eos mkdir %s",eos_path.Data()));
+    //system(Form("/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select mkdir %s",eos_path.Data()));
+    // system(Form("mkdir %s",eos_path.Data()));
     eos_path += Form("/%s",dirname.Data());
-    // system(Form("/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select mkdir -p %s",eos_path.Data()));
-    system(Form("/usr/bin/eos mkdir -p %s",eos_path.Data()));
+    //system(Form("/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select mkdir -p %s",eos_path.Data()));
+    // system(Form("mkdir -p %s",eos_path.Data()));
     outf_dir = eos_path;
   }
   if ( arg->var.size()==2 ) {
@@ -241,10 +238,8 @@ void BatchScriptWriter::writeScript(TString fname, TString outfloc, int jobn, Op
   outfile << "fi" << endl;
   TString basename = rootfilename;
   basename.Remove(0, rootfilename.Last('/')+1);
-  // TString copy_line = Form("cp %s %s/%s",rootfilename.Data(),outfloc.Data(),basename.Data());
-  TString copy_line = Form("xrdcp %s root://eoslhcb.cern.ch/%s/%s",rootfilename.Data(),outfloc.Data(),basename.Data());
-  // if ( arg->batcheos ) copy_line = "/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select "+copy_line;
-  // if ( arg->batcheos ) copy_line = "/usr/bin/eos "+copy_line;
+  TString copy_line = Form("xrdcp -p %s %s/%s",rootfilename.Data(),outfloc.Data(),basename.Data());
+  if ( arg->batcheos ) copy_line = Form("xrdcp -p %s root://eoslhcb.cern.ch/%s/%s",rootfilename.Data(),outfloc.Data(),basename.Data());;
   outfile << copy_line << endl;
 
   outfile.close();
