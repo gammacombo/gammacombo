@@ -542,7 +542,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 
   TCLAP::MultiArg<int> clsArg("", "cls", "Types of CLs to be plotted.\n"
       "Default will not do anything\n"
-      "1: Simplified CLs (deprecated version, always overcovering)\n"
+      "1: Simplified CLs (deprecated version, using CLb=CLs+b(s=0). Almost always larger intervals than Standard CLs)\n"
       "2: Standard  CLs (sampling the full distribution for CLb)\n"
       , false, "int");
   TCLAP::MultiArg<float> filltransparencyArg("", "filltransparency", "Fill transparency of the 1D and 2D contours to be used for the combination. Default is 0 (solid) for all.", false, "float");
