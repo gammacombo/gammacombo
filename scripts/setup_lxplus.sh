@@ -1,9 +1,5 @@
-echo "#####################################################"
-echo "###   Please fun the following commands in order  ###"
-echo "###   (note that the second one will load it's    ###"
-echo "###    own environment so you cannot just source  ###"
-echo "###    this script in bash)                       ###"
-echo "#####################################################"
-echo '    LbLogin -c x86_64-slc6-gcc49-opt'
-echo '    lb-run DaVinci/v42r8p3 bash'
-echo '    source $(dirname $(dirname `which gcc`))/setup.sh'
+source /cvmfs/sft.cern.ch/lcg/releases/LCG_88/ROOT/6.08.06/x86_64-slc6-gcc62-opt/ROOT-env.sh
+source /cvmfs/sft.cern.ch/lcg/releases/LCG_88/gcc/6.2.0/x86_64-slc6/setup.sh
+export LD_LIBRARY_PATH=$PWD/build:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$PWD/build/gammacombo:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$PWD/build/biggammacombo:$LD_LIBRARY_PATH
