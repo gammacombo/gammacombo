@@ -44,10 +44,10 @@ for root, dirs, files in os.walk(opts.dir):
       dsecs = (d-datetime.datetime(1970,1,1)).total_seconds()
       if os.path.getmtime(root) < dsecs:
         include = False
-    
+
     # if it passes then include it
     if include:
-      job_dirs.append(root) 
+      job_dirs.append(root)
 
 # totals
 total_done = []
@@ -95,20 +95,28 @@ for job_dir in job_dirs:
         resubmits += fail
       if opts.resubmit=='Running' or opts.resubmit=='All':
         resubmits += run
-    
+
     if opts.resubmit:
       print 'Will resubmit %d jobs:'%len(resubmits)
+      subfname = os.path.join(job_dir,os.path.basename(job_dir))+'_sublist.txt'
+      subf = open(subfname,'w')
       for job in resubmits:
         full_path = '%s/%s/%s'%(os.getcwd(),job_dir,job.split('.sh')[0]+'.sh')
+        scriptpath = os.path.join(job_dir,os.path.basename( full_path ) )
+        subf.write( scriptpath+'\n' )
         if opts.queue:
           # should clean up old files if we resubmit
           os.system('rm -f %s.fail'%full_path)
           os.system('rm -f %s.done'%full_path)
           os.system('rm -f %s.run'%full_path)
-          line = 'bsub -q %s -o %s.log %s'%(opts.queue,full_path,full_path)
-          os.system(line)
+          #line = 'bsub -q %s -o %s.log %s'%(opts.queue,full_path,full_path)
+          #os.system(line)
         else:
-          print '\t', os.path.basename( full_path ) 
+          print '\t', scriptpath
+      subf.close()
+      if opts.queue:
+        line = 'condor_submit %s'%(subfname.replace('_sublist.txt','.sub'))
+        os.system(line)
 
 # print total
 print "TOTAL"

@@ -1999,7 +1999,7 @@ void GammaComboEngine::scan()
 		c->combine();
 		if ( !c->isCombined() ) continue; // error during combining
 
-		// adjust ranges according to the command line - only possible before combining
+		// adjust ranges according to the command line - only possible after combining
 		adjustRanges(c, i);
 
     // set up parameter sets for the parameters to vary within the toys (if requested)
