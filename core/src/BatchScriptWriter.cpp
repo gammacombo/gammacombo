@@ -253,7 +253,7 @@ void BatchScriptWriter::writeScript(TString fname, TString outfloc, int jobn, Op
   basename.Remove(0, rootfilename.Last('/')+1);
   system(Form("mkdir -p %s/%s",cwd,outfloc.Data()));
   TString copy_line = Form("cp %s %s/%s/%s",rootfilename.Data(),cwd,outfloc.Data(),basename.Data());
-  if ( arg->batcheos ) copy_line = Form("xrdcp %s root://eoslhcb.cern.ch/%s/%s",rootfilename.Data(),outfloc.Data(),basename.Data());
+  if ( arg->batcheos ) copy_line = Form("xrdcp -p %s root://eoslhcb.cern.ch/%s/%s",rootfilename.Data(),outfloc.Data(),basename.Data());
   outfile << copy_line << endl;
 
   outfile.close();
