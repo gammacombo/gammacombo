@@ -2347,11 +2347,9 @@ void GammaComboEngine::runApplication()
 ///
 void GammaComboEngine::printBanner()
 {
-	const char* VTAG="1.0";
+	const char* VTAG="1.2";
 	cout << endl
 		<< "\033[1mGammaCombo v" << VTAG << " \033[0m"
-    //<< "\033[1m-- Developed by Till Moritz Karbach\033[0m " << endl
-    //<< "                   Copyright (C) 2014, moritz.karbach@gmail.com" << endl
 		<< "-- All rights reserved under GPLv3, http://www.gnu.org/licenses/gpl.txt" << endl << endl ;
 }
 
