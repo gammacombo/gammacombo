@@ -155,6 +155,7 @@ class OptParser
     float           scaleerr;
     float           scalestaterr;
 		bool    smooth2d;
+		int    teststatistic;
 		vector<TString> title;
     TString         toyFiles;
     int             updateFreq;

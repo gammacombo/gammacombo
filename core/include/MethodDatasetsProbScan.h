@@ -32,6 +32,7 @@ public:
     inline  void        setInputFile(TString name) {inputFiles.push_back(name); explicitInputFile = true;};
     inline  void        addFile(TString name) {inputFiles.push_back(name);};
     void                plotFitRes(TString fName);
+    int                 computeCLvalues();
 
     PDF_Datasets*           pdf;
     TH1F*                   probPValues;
