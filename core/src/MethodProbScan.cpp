@@ -7,7 +7,7 @@
 #include "TSystem.h"
 #include "MethodProbScan.h"
 
-	MethodProbScan::MethodProbScan(Combiner *comb)
+MethodProbScan::MethodProbScan(Combiner *comb)
 : MethodAbsScan(comb)
 {
 	methodName = "Prob";
@@ -270,6 +270,35 @@ int MethodProbScan::scan1d(bool fast, bool reverse)
 	if ( (bestMinFoundInScan-bestMinOld)/bestMinOld > 0.01 ) return 1;
 	return 0;
 }
+
+///
+/// Modify the CL histograms according to the defined test statistics
+///\return status 0 ->potentially can encode debug information here
+///
+int MethodProbScan::computeCLvalues(){
+    std::cout << "Computing CL values based on test statistic decision" << std::endl;
+    std::cout << "Using "<< arg->teststatistic <<"-sided test statistic" << std::endl;
+
+	float bestfitpoint = ((RooRealVar*)getSolution()->floatParsFinal().find(scanVar1))->getVal();
+	float bestfitpointerr = ((RooRealVar*)getSolution()->floatParsFinal().find(scanVar1))->getError();
+
+	for (int k=1; k<=hCL->GetNbinsX(); k++){
+		float scanvalue=hChi2min->GetBinCenter( k );
+		float teststat_measured = hChi2min->GetBinContent( k ) - chi2minGlobal;
+		float CLb = 1. - (normal_cdf(TMath::Sqrt(teststat_measured) + ((scanvalue - 0.)/bestfitpointerr)) + normal_cdf(TMath::Sqrt(teststat_measured) - ((scanvalue - 0.)/bestfitpointerr)) - 1.);
+        if (arg->teststatistic ==1){ // use one-sided test statistic
+            teststat_measured = bestfitpoint <= scanvalue ? teststat_measured : 0.; // if mu < muhat then q_mu = 0
+            hCL->SetBinContent(k,1. - normal_cdf(TMath::Sqrt(teststat_measured)));
+            // if (scanvalue < bestfitpoint) hCL->SetBinContent(k,1.0);    // should not be here, but looks ugly if solution is drawn as p=1
+            CLb = 1. - normal_cdf(TMath::Sqrt(teststat_measured) - ((scanvalue - 0.)/bestfitpointerr));
+        }
+        hCLs->SetBinContent(k,min(1.,hCL->GetBinContent(k)/CLb));
+        // std::cout << "MethodProbScan::" << k << "\t" << hCL->GetBinContent(k) << "\t" << CLb << "\t" << hCLs->GetBinContent(k) <<std::endl;
+
+	}
+	return 0;
+}
+
 
 ///
 /// Delete a pointer if it is not included in

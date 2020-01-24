@@ -54,6 +54,7 @@ public:
   MethodProbScan();
   ~MethodProbScan();
 
+  virtual int     computeCLvalues();  // compute CL histograms depending on desired test statistic
   float           getChi2min(float scanpoint);
   inline TH1F*    getHChi2min(){return hChi2min;};
   void            saveSolutions();

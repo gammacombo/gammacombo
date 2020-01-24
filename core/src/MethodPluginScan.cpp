@@ -933,13 +933,32 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
         // Don't enforce t.chi2min-t.chi2minGlobal>0, else it can be hard because due
         // to little fluctuaions the best fit point can be missing from the plugin plot...
         bool inPhysicalRegion = t->chi2minToy - t->chi2minGlobalToy>0; //&& t.chi2min-t.chi2minGlobal>0
+        int iBinBestFit = hCL->GetMaximumBin();
+        float bestfitpoint = hCL->GetBinCenter(iBinBestFit);
+        if(getSolution()){
+            bestfitpoint= ((RooRealVar*) getSolution()->floatParsFinal().find(scanVar1))->getVal();
+        }
+        else std::cout << "WARNING: No solution found, will approximate to the best scan point" << std::endl;
 
-        // build test statistic
-        if ( inPhysicalRegion && t->chi2minToy-t->chi2minGlobalToy > t->chi2min-t->chi2minGlobal ){
+        // build test statistics
+        // chi2minBkgBkgToy is the best fit of the bkg pdf of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
+        // chi2minBkgToy is the best fit at scanpoint of bkg-only toy
+        double teststat_measured = t->chi2min - t->chi2minGlobal;
+        double sb_teststat_toy= t->chi2minToy - t->chi2minGlobalToy;
+        double b_teststat_toy = t->chi2minBkgToy - t->chi2minGlobalBkgToy;
+        if (arg->teststatistic ==1){ // use one-sided test statistic
+            teststat_measured = bestfitpoint <= t->scanpoint ? teststat_measured : 0.; // if mu < muhat then q_mu = 0
+            sb_teststat_toy = t->scanbest <= t->scanpoint ? sb_teststat_toy : 0.; // if mu < muhat then q_mu = 0
+            b_teststat_toy = t->scanbestBkg <= t->scanpoint ? b_teststat_toy : 0.;  // if mu < muhat then q_mu = 0
+        }
+        // the usage of the two-sided test statistic is default
+
+
+        if ( inPhysicalRegion && sb_teststat_toy > teststat_measured ){
             h_better->Fill(t->scanpoint);
         }
 
-        if ( inPhysicalRegion && (t->chi2minBkgBkgToy - t->chi2minGlobalBkgToy) > (t->chi2minBkg - t->chi2minGlobal) ) {
+        if ( inPhysicalRegion && b_teststat_toy > teststat_measured ) {
             h_better_clb->Fill(t->scanpoint);
         }
 
@@ -970,13 +989,10 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
         if ( sampledSchi2Values.find(hBin) == sampledSchi2Values.end() ) sampledSchi2Values[hBin] = std::vector<double>();
 
         if(inPhysicalRegion){
-            sampledSchi2Values[hBin].push_back(t->chi2minToy - t->chi2minGlobalToy);
+            sampledSchi2Values[hBin].push_back(sb_teststat_toy);
         }
 
-
-        // chi2minBkgBkgToy is the best fit of the bkg pdf of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
-        double bkgTestStatVal = t->chi2minBkgBkgToy - t->chi2minGlobalBkgToy;
-        if(bkgTestStatVal<0&&bkgTestStatVal>-1.e-4) bkgTestStatVal=0.0;
+        if(b_teststat_toy<0&&b_teststat_toy>-1.e-4) b_teststat_toy=0.0;
 
         if( inPhysicalRegion ){
             // bkgTestStatVal = t->scanbestBkgfitBkg <= 0. ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
@@ -985,11 +1001,10 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
             //     bkg_pvals->Fill(TMath::Prob(bkgTestStatVal,1));
             // }
             // bkgTestStatVal = t->scanbestBkgfitBkg <= t->scanpoint ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
-            sampledBValues[hBin].push_back( bkgTestStatVal );
+            sampledBValues[hBin].push_back( b_teststat_toy );
             // chi2minBkgToy is the best fit at scanpoint of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
-            double sbTestStatVal = t->chi2minBkgToy - t->chi2minGlobalBkgToy;
             // sbTestStatVal = t->scanbestBkg <= t->scanpoint ? sbTestStatVal : 0.; // if muhat < mu then q_mu = 0
-            sampledSBValues[hBin].push_back( sbTestStatVal );
+            sampledSBValues[hBin].push_back( b_teststat_toy );
         }
 
     }
@@ -1137,7 +1152,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
 
         for(int j=0; j<sampledBValues[i].size(); j++){
             double clsb_val = getVectorFracAboveValue( sampledSchi2Values[i], sampledSBValues[i][j]); // p_cls+b value for each bkg-only toy
-            double clb_val = getVectorFracAboveValue( sampledBValues[i], sampledBValues[i][j]); // p_clb value for each bkg-only toy CAUTION: duplicate use of sampledBValues
+            double clb_val = getVectorFracAboveValue( sampledBValues[i], sampledSBValues[i][j]); // p_clb value for each bkg-only toy CAUTION: duplicate use of sampledBValues
             double cls_val = clsb_val/clb_val;
 
             clsb_vals.push_back(clsb_val);
@@ -1179,11 +1194,11 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
           cout << "CLs: ";
           for (int k=0; k<quantiles_cls.size(); k++) cout << quantiles_cls[k] << " , ";
           cout << endl;
-          for (int k=0; k<quantiles_cls.size(); k++) cout << quantiles_clsb[k]/quantiles_clb[k] << " , ";
-          cout << endl;
+          // for (int k=0; k<quantiles_cls.size(); k++) cout << quantiles_clsb[k]/quantiles_clb[k] << " , ";
+          // cout << endl;
         }       
 
-        // //effective method -> works robustly, but is not perfect
+        // //effective method -> works robustly (cf. TLimit class), but is actually wrong
         // hCLsExp->SetBinContent   ( i, TMath::Min( quantiles_clsb[2]/quantiles_clb[2] , 1.) );
         // hCLsErr1Up->SetBinContent( i, TMath::Min( quantiles_clsb[3]/quantiles_clb[3] , 1.) );
         // hCLsErr1Dn->SetBinContent( i, TMath::Min( quantiles_clsb[1]/quantiles_clb[1] , 1.) );
@@ -1199,7 +1214,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
 
     }
 
-    if ( arg->controlplot && arg->cls.size()>0) makeControlPlotsCLs( sampledBValues, sampledSBValues );
+    if ( arg->controlplot && arg->cls.size()>0) makeControlPlotsCLs( sampledBValues, sampledSchi2Values );
 
     // goodness-of-fit
     if ( id==-1 ){

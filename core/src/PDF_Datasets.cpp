@@ -202,6 +202,12 @@ void PDF_Datasets::setToyData(RooDataSet* ds) {
     return;
 };
 
+void PDF_Datasets::setBkgToyData(RooDataSet* ds) {
+    toyBkgObservables  = ds;
+    return;
+};
+
+
 void PDF_Datasets::print() {
     if (isPdfSet) {
         std::cout << "PDF:\t" << this->getPdfName() << std::endl;
@@ -217,7 +223,7 @@ void PDF_Datasets::printParameters() {
     int parcounter = 0;
     TIterator* it = this->parameters->createIterator();
     while ( RooRealVar* p = (RooRealVar*)it->Next() ) {
-        cout << p->GetName() << " ";
+        cout << p->GetName() << " " << p->getVal() << " ";
         parcounter += 1;
         if ( parcounter % 5 == 0 ) cout << endl << "  ";
     }
@@ -231,24 +237,27 @@ OptParser*   PDF_Datasets::getArg() {
     std::cout << "ERROR: getting the options parser from the pdf has been deprecated" << std::endl;
     std::cout << "(This is up for discussion of course)" << std::endl;
     exit(EXIT_FAILURE);
-}
+};
 
-void  PDF_Datasets::generateBkgToysGlobalObservables(int SeedShift) {
+void  PDF_Datasets::generateBkgToysGlobalObservables(int SeedShift, int index) {
 
     initializeRandomGenerator(SeedShift);
 
     // generate the global observables into a RooArgSet
-    const RooArgSet* set = pdfBkg->generate(*(wspc->set(globalObsName)), 1)->get(0);
+    // const RooArgSet* set = pdfBkg->generate(*(wspc->set(globalObsName)), 1)->get(0);
+    const RooArgSet* set = _constraintPdf->generate(*(wspc->set(globalObsName)), 1)->get(0);
     // iterate over the generated values and use them to update the actual global observables in the workspace
 
     TIterator* it =  set->createIterator();
     while (RooRealVar* genVal = dynamic_cast<RooRealVar*>(it->Next())) {
         wspc->var(genVal->GetName())->setVal(genVal->getVal());
     }
-
+    TString index_string;
+    index_string.Form("globalObsBkgToySnapshotName%d",index);
     // take a snapshot of the global variables in the workspace so they can be loaded later
-    wspc->saveSnapshot(globalObsToySnapshotName, *wspc->set(globalObsName));
-}
+    globalObsBkgToySnapshotName = index_string;
+    wspc->saveSnapshot(globalObsBkgToySnapshotName, *wspc->set(globalObsName));
+};
 
 
 void  PDF_Datasets::generateToysGlobalObservables(int SeedShift) {
@@ -266,7 +275,7 @@ void  PDF_Datasets::generateToysGlobalObservables(int SeedShift) {
 
     // take a snapshot of the global variables in the workspace so they can be loaded later
     wspc->saveSnapshot(globalObsToySnapshotName, *wspc->set(globalObsName));
-}
+};
 
 
 RooFitResult* PDF_Datasets::fit(RooDataSet* dataToFit) {
@@ -295,7 +304,8 @@ RooFitResult* PDF_Datasets::fit(RooDataSet* dataToFit) {
     RooMsgService::instance().setSilentMode(kFALSE);
     RooMsgService::instance().setGlobalKillBelow(INFO);
     this->fitStatus = result->status();
-    RooAbsReal* nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE));
+    // RooAbsReal* nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE));
+    RooAbsReal* nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
     this->minNll = nll->getVal();
     delete nll;
 
@@ -321,6 +331,10 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit) {
         std::cout << "ERROR in PDF_Datasets::fitBkg -- No background PDF given!" << std::endl;
         exit(EXIT_FAILURE);
     }
+    double parvalue = getWorkspace()->var("branchingRatio")->getVal();
+    bool isconst = getWorkspace()->var("branchingRatio")->isConstant();
+    getWorkspace()->var("branchingRatio")->setVal(0.0);
+    getWorkspace()->var("branchingRatio")->setConstant(true);
 
     // Turn off RooMsg
     RooMsgService::instance().setGlobalKillBelow(ERROR);
@@ -329,12 +343,20 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit) {
 
     // unfortunately Minuit2 does not initialize the status of the roofitresult, if all parameters are constant. Therefore need to stay with standard Minuit fitting.
     // RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Minimizer("Minuit2", "Migrad"));
-    RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
+
+    RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
+    // RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
     RooMsgService::instance().setSilentMode(kFALSE);
     RooMsgService::instance().setGlobalKillBelow(INFO);
     this->fitStatus = result->status();
-    RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit, RooFit::Extended(kTRUE));
+    // RooAbsReal* nll_bkg = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE));
+    // RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit, RooFit::Extended(kTRUE));
+    RooAbsReal* nll_bkg = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
+    // RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
     this->minNllBkg = nll_bkg->getVal();
+
+    getWorkspace()->var("branchingRatio")->setVal(parvalue);
+    getWorkspace()->var("branchingRatio")->setConstant(isconst);    
     delete nll_bkg;
 
     return result;
@@ -351,21 +373,28 @@ void   PDF_Datasets::generateToys(int SeedShift) {
     // if(this->toyObservables) delete this->toyObservables;
     this->toyObservables  = toys;
     this->isToyDataSet    = kTRUE;
-}
+};
 
 void   PDF_Datasets::generateBkgToys(int SeedShift) {
 
     initializeRandomGenerator(SeedShift);
 
     if(isBkgPdfSet){
-        RooDataSet* toys = pdfBkg->generate(*observables, RooFit::NumEvents(wspc->data(dataName)->numEntries()), RooFit::Extended(kTRUE));
+        double parvalue = getWorkspace()->var("branchingRatio")->getVal();
+        bool isconst = getWorkspace()->var("branchingRatio")->isConstant();
+        getWorkspace()->var("branchingRatio")->setVal(0.0);
+        getWorkspace()->var("branchingRatio")->setConstant(true);
+        // RooDataSet* toys = pdfBkg->generate(*observables, RooFit::NumEvents(wspc->data(dataName)->numEntries()), RooFit::Extended(kTRUE));
+        RooDataSet* toys = pdf->generate(*observables, RooFit::NumEvents(wspc->data(dataName)->numEntries()), RooFit::Extended(kTRUE));
+        getWorkspace()->var("branchingRatio")->setVal(parvalue);
+        getWorkspace()->var("branchingRatio")->setConstant(isconst);    
         this->toyBkgObservables  = toys;
     }
     else{
         std::cerr << "Error in PDF_Datasets::generateBkgToys: No bkg pdf given." << std::endl;
         exit(EXIT_FAILURE);
     }
-}
+};
 
 /*! \brief Initializes the random generator
  *
@@ -388,9 +417,10 @@ void PDF_Datasets::initializeRandomGenerator(int seedShift) {
             std::cerr << "You must pass the OptParser in the constructor in order to use this function." << std::endl;
             exit(EXIT_FAILURE);
         }
+        std::cout<<"random seed is not 0" <<std::endl;
         RooRandom::randomGenerator()->SetSeed(seedShift + (arg->nrun) * (arg->ntoys) * (arg->npoints1d));
     }
-}
+};
 
 void PDF_Datasets::unblind(TString var, TString unblindRegs) {
 
@@ -411,4 +441,4 @@ void PDF_Datasets::unblind(TString var, TString unblindRegs) {
     if (i < regs->GetEntries()-1) unblindString += ",";
   }
   unblindRegions[var] = unblindString;
-}
+};

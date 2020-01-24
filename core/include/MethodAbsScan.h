@@ -49,7 +49,7 @@ class MethodAbsScan
 		MethodAbsScan(OptParser* opt);
 		~MethodAbsScan();
 
-		virtual void                    calcCLintervals(int CLsType = 0);
+		virtual void                    calcCLintervals(int CLsType = 0, bool calc_expected=false);
 		void                            confirmSolutions();
 		void                            doInitialFit(bool force=false);
 		inline OptParser*               getArg(){return arg;};
@@ -112,7 +112,7 @@ class MethodAbsScan
 		void                            plotOn(OneMinusClPlotAbs *plot, int CLsType=0); // CLsType: 0 (off), 1 (naive CLs t_s+b - t_b), 2 (freq CLs)
 		void                            plotPulls(int nSolution=0);
 		virtual void                    print();
-		void                            printCLintervals(int CLsType);
+		void                            printCLintervals(int CLsType, bool calc_expected=false);
 		void                            printLocalMinima();
     void                            saveLocalMinima(TString fName="");
 		void                            saveScanner(TString fName="");
@@ -141,7 +141,7 @@ class MethodAbsScan
 	inline void                     setHchisq( TH1F *h ) { hChi2min = h; };
 		void 							setXscanRange(float min, float max);
 		void 							setYscanRange(float min, float max);
-		void							calcCLintervalsSimple(int CLsType=0);
+		void							calcCLintervalsSimple(int CLsType=0, bool calc_expected=false);
 		const std::pair<double, double> getBorders(const TGraph& graph, const double confidence_level, bool qubic=false);
 		const std::pair<double, double> getBorders_CLs(const TGraph& graph, const double confidence_level, bool qubic=false);
     virtual bool                    checkCLs();

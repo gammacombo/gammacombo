@@ -42,6 +42,7 @@ public:
     std::vector<double>     bootstrapPVals;
     TChain*                 chain;
     RooFitResult*           dataFreeFitResult;
+    RooFitResult*           dataBkgFitResult;
 
 protected:
     RooSlimFitResult*   getParevolPoint(float scanpoint);
@@ -49,11 +50,13 @@ protected:
 
 private:
     RooFitResult*       loadAndFit(PDF_Datasets* pdf); // in this Plugin class, this fits to toy!!
+    RooFitResult*       loadAndFitBkg(PDF_Datasets* pdf); // in this Plugin class, this fits to bkg-only toy!!
     double              getPValueTTestStatistic(double test_statistic_value);
     void                setAndPrintFitStatusConstrainedToys(const ToyTree& ToyTree);
     void                setAndPrintFitStatusFreeToys(const ToyTree& ToyTree);
     void                checkExtProfileLH();
     void                makeControlPlots( std::map<int, std::vector<double> > bVals, std::map<int, std::vector<double> > sbVals );
+    void                makeControlPlotsBias( std::map<int, std::vector<double> > biasVals);
 };
 
 #endif

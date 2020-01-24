@@ -157,6 +157,8 @@ namespace Utils
   template<typename T>
     static inline double stddev(const std::vector<T>& vec);
 
+    static inline double normal_cdf (double x);
+
 	void dump_vector(const std::vector<int>& l);
 	void dump_vector(const std::vector<float>& l);
 	void dump_map(const std::map<int, std::vector<int> >& map);
@@ -261,5 +263,7 @@ double Utils::stddev(const std::vector<T> &vec){
   double N = vec.size();
   return pow( sqsum(vec) / N - pow(sum(vec)/N,2), 0.5);
 }
+
+double 		Utils::normal_cdf(double x) { return 0.5*(1.+TMath::Erf(x/TMath::Sqrt(2)));}
 
 #endif
