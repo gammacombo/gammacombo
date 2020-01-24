@@ -62,6 +62,7 @@ class OptParser
     TString         filenamechange;
 		TString         filenameaddition;
 		vector<vector<FixPar> >     fixParameters;
+		vector<vector<StartPar> >   startVals;
 		vector<vector<RangePar> >   physRanges;
     vector<vector<TString> >    removeRanges;
     vector<vector<TString> >    randomizeToyVars;
@@ -138,7 +139,7 @@ class OptParser
     float           printSolY;
 		vector<int>   	qh;
     TString         queue;
-    vector<TString> readfromfile;
+    vector<vector<TString> > readfromfile;
 		vector<TString> relation;
 		bool 						runCLs;
     TString         save;
@@ -154,6 +155,7 @@ class OptParser
     float           scaleerr;
     float           scalestaterr;
 		bool    smooth2d;
+		int    teststatistic;
 		vector<TString> title;
     TString         toyFiles;
     int             updateFreq;

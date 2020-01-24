@@ -43,8 +43,16 @@ namespace Utils
 	extern int countFitBringBackAngle;      ///< counts how many times an angle needed to be brought back
 	extern int countAllFitBringBackAngle;   ///< counts how many times fitBringBackAngle() was called
 
-	// used to fix parameters in the combination, see e.g. Combiner::combine()
+	// used to fix parameters in the combination, see e.g. Combiner::fixParameter()
 	struct FixPar
+	{
+		TString name;
+		float value;
+		bool useValue;
+	};
+
+	// used to set starting values in the combination, see e.g. Combiner::setValue()
+	struct StartPar
 	{
 		TString name;
 		float value;
@@ -148,6 +156,8 @@ namespace Utils
     static inline double mean(const std::vector<T>& vec);
   template<typename T>
     static inline double stddev(const std::vector<T>& vec);
+
+    static inline double normal_cdf (double x);
 
 	void dump_vector(const std::vector<int>& l);
 	void dump_vector(const std::vector<float>& l);
@@ -253,5 +263,7 @@ double Utils::stddev(const std::vector<T> &vec){
   double N = vec.size();
   return pow( sqsum(vec) / N - pow(sum(vec)/N,2), 0.5);
 }
+
+double 		Utils::normal_cdf(double x) { return 0.5*(1.+TMath::Erf(x/TMath::Sqrt(2)));}
 
 #endif

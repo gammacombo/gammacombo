@@ -32,6 +32,11 @@ GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[]):
 
 	// initialize members
 	plot = 0;
+
+  // reconfigure RooFormulaVar output
+  RooMsgService::instance().getStream(1).removeTopic(InputArguments);
+  RooMsgService::instance().getStream(0).addTopic(InputArguments);
+
 }
 
 GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[], bool _runOnDataSet)
@@ -953,7 +958,7 @@ void GammaComboEngine::defineColors()
 	//if ( arg->color.size()==0 )
 	//{
 		// define line colors for 1-CL curves
-		colorsLine.push_back(arg->combid.size()==1 ? kBlue-8 : kBlue-5);
+		colorsLine.push_back(arg->combid.size()<=1 ? kBlue-8 : kBlue-5);
 		colorsLine.push_back(kGreen-8);
 		colorsLine.push_back(kOrange-8);
 		colorsLine.push_back(kMagenta-6);
@@ -1059,6 +1064,9 @@ void GammaComboEngine::defineColors()
     	//sort out fill transparency
     	if ( arg->filltransparency.size()>0 ) fillTransparencies.push_back( arg->filltransparency[0] );
     	else fillTransparencies.push_back(.0);
+		//sort out total color if not line and fill color defined before
+		if ( arg->color.size()>0 && arg->color[0] < colorsLine.size() && arg-> linecolor.size()==0) lineColors[0]=colorsLine[arg->color[0]];
+		if ( arg->color.size()>0 && arg->color[0] < colorsLine.size() && arg-> fillcolor.size()==0) fillColors[0]=colorsLine[arg->color[0]];
 	}
 }
 
@@ -1150,7 +1158,8 @@ void GammaComboEngine::make1dProbScan(MethodProbScan *scanner, int cId)
 	cout << "\nResults:" << endl;
 	cout <<   "========\n" << endl;
 	scanner->printLocalMinima();
-  scanner->saveLocalMinima(m_fnamebuilder->getFileNameSolution(scanner));
+  	scanner->saveLocalMinima(m_fnamebuilder->getFileNameSolution(scanner));
+	scanner->computeCLvalues();
 	scanner->calcCLintervals();
 	if (arg->cls.size()>0) scanner->calcCLintervals(1); // for prob method CLsType>1 doesn't exist
 	if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
@@ -1186,7 +1195,10 @@ void GammaComboEngine::make1dPluginScan(MethodPluginScan *scannerPlugin, int cId
 	else {
 		scannerPlugin->readScan1dTrees(arg->jmin[cId],arg->jmax[cId]);
 		scannerPlugin->calcCLintervals();
-		for (int i=0; i<arg->cls.size(); i++) scannerPlugin->calcCLintervals(arg->cls[i]);
+		for (int i=0; i<arg->cls.size(); i++){
+			scannerPlugin->calcCLintervals(arg->cls[i]);
+			if (arg->cls[i]==2) scannerPlugin->calcCLintervals(arg->cls[i], true); //calculate expected upper limit
+		}
 	}
 	if ( !arg->isAction("pluginbatch") ){
 		scannerPlugin->saveScanner(m_fnamebuilder->getFileNameScanner(scannerPlugin));
@@ -1278,7 +1290,8 @@ void GammaComboEngine::make1dProbPlot(MethodProbScan *scanner, int cId)
 {
 
   	if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
-		  scanner->setDrawSolution(arg->plotsolutions[cId]);
+		scanner->setDrawSolution(arg->plotsolutions[cId]);
+		if(arg->isAction("plugin")||arg->isAction("plot")) scanner->computeCLvalues();	// compute new CL values depending on test stat, even if not a rescan is wished
     	if ( arg->cls.size()>0 ) {
       		if ( runOnDataSet ) ((MethodDatasetsProbScan*)scanner)->plotFitRes(m_fnamebuilder->getFileNamePlot(cmb)+"_fit");
       		scanner->plotOn(plot, 1); // for prob ClsType>1 doesn't exist
@@ -1357,7 +1370,8 @@ void GammaComboEngine::make1dPluginPlot(MethodPluginScan *sPlugin, MethodProbSca
 		make1dProbPlot(sProb, cId);
 		sPlugin->setLineColor(kBlack);
 		sPlugin->setDrawSolution(arg->plotsolutions[cId]);
-		for (int i=0; i<arg->cls.size(); i++) sPlugin->plotOn(plot, arg->cls[i]);
+		if(std::count(arg->cls.begin(),arg->cls.end(),1)) sPlugin->plotOn(plot, 1);
+		if(std::count(arg->cls.begin(),arg->cls.end(),2)) sPlugin->plotOn(plot, 2);
 		sPlugin->plotOn(plot);
 	}
 	plot->Draw();
@@ -1637,17 +1651,27 @@ void GammaComboEngine::setObservablesFromFile(Combiner *c, int cId)
 {
 
   if ( cId>=arg->readfromfile.size() ) return;
-  if ( arg->readfromfile[cId]==TString("default") ) return;
-  if ( arg->readfromfile[cId]=="" ) return;
+  if ( arg->readfromfile[cId].size()==0 ) return;
+  if ( arg->readfromfile[cId].size()==1 && arg->readfromfile[cId][0]==TString("default") ) return;
+  if ( arg->readfromfile[cId].size()==1 && arg->readfromfile[cId][0]==TString("") ) return;
 
   vector<PDF_Abs*> pdfs = c->getPdfs();
+
+  if ( pdfs.size() != arg->readfromfile[cId].size() ) {
+    cout << "ERROR -- I think you are trying to read values from a file but you haven't specified one for each PDF in the combination" << endl;
+    cout << "      -- Pass like this: -c 0:+1,+2,+3 --readfromfile default,<path_to_pdf2_vals.dat>,<path_to_pdf3_vals.dat>" << endl;
+    exit(1);
+  }
 
   for ( int i=0; i<pdfs.size(); i++ ) {
 
     // read from the file for this pdf
-    ifstream infile( arg->readfromfile[cId].Data() );
+    if ( arg->readfromfile[cId][i]==TString("default") ) continue;
+
+    //
+    ifstream infile( arg->readfromfile[cId][i].Data() );
     if ( ! infile.is_open() ) {
-      cerr << "No such read file found: " << arg->readfromfile[cId] << endl;
+      cerr << "No such read file found: " << arg->readfromfile[cId][i] << endl;
       exit(1);
     }
     string line;
@@ -1670,14 +1694,14 @@ void GammaComboEngine::setObservablesFromFile(Combiner *c, int cId)
           TString name = els[1];
           double val = boost::lexical_cast<double>(els[2]);
           pdfs[i]->setObservable( name, val );
-          pdfs[i]->obsValSource = "Read from file " + arg->readfromfile[i];
+          pdfs[i]->obsValSource = "Read from file " + arg->readfromfile[cId][i];
         }
         else if ( typ=="err:" ) {
           TString name = els[1];
           double stat = boost::lexical_cast<double>(els[2]);
           double syst = boost::lexical_cast<double>(els[3]);
           pdfs[i]->setUncertainty( name, stat, syst );
-          pdfs[i]->obsErrSource = "Read from file " + arg->readfromfile[i];
+          pdfs[i]->obsErrSource = "Read from file " + arg->readfromfile[cId][i];
         }
         else if ( typ=="cor:" ) {
           int mi = boost::lexical_cast<int>(els[1]);
@@ -1688,7 +1712,7 @@ void GammaComboEngine::setObservablesFromFile(Combiner *c, int cId)
           pdfs[i]->corSystMatrix[mi][mj] = corSyst;
           pdfs[i]->corStatMatrix[mj][mi] = corStat;
           pdfs[i]->corSystMatrix[mj][mi] = corSyst;
-          pdfs[i]->corSource = "Read from file " + arg->readfromfile[i];
+          pdfs[i]->corSource = "Read from file " + arg->readfromfile[cId][i];
         }
       }
     }
@@ -1699,7 +1723,7 @@ void GammaComboEngine::setObservablesFromFile(Combiner *c, int cId)
       pdfs[i]->buildPdf();
     }
     else {
-      cout << "WARNING - did not find any pdf named: " << pdfs[i]->getBaseName() << " in file: " << arg->readfromfile[i] << endl;
+      cout << "WARNING - did not find any pdf named: " << pdfs[i]->getBaseName() << " in file: " << arg->readfromfile[cId][i] << endl;
     }
   }
 
@@ -1975,7 +1999,7 @@ void GammaComboEngine::scan()
 		c->combine();
 		if ( !c->isCombined() ) continue; // error during combining
 
-		// adjust ranges according to the command line - only possible before combining
+		// adjust ranges according to the command line - only possible after combining
 		adjustRanges(c, i);
 
     // set up parameter sets for the parameters to vary within the toys (if requested)
@@ -2323,11 +2347,9 @@ void GammaComboEngine::runApplication()
 ///
 void GammaComboEngine::printBanner()
 {
-	const char* VTAG="1.0";
+	const char* VTAG="1.2";
 	cout << endl
 		<< "\033[1mGammaCombo v" << VTAG << " \033[0m"
-    //<< "\033[1m-- Developed by Till Moritz Karbach\033[0m " << endl
-    //<< "                   Copyright (C) 2014, moritz.karbach@gmail.com" << endl
 		<< "-- All rights reserved under GPLv3, http://www.gnu.org/licenses/gpl.txt" << endl << endl ;
 }
 

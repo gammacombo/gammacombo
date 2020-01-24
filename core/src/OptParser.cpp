@@ -111,6 +111,7 @@ OptParser::OptParser():
   scaleerr = -999.;
   scalestaterr = -999.;
 	smooth2d = false;
+  teststatistic = 2;
   toyFiles = "";
   updateFreq = 10;
 	usage = false;
@@ -213,6 +214,8 @@ void OptParser::defineOptions()
   availableOptions.push_back("scaleerr");
   availableOptions.push_back("scalestaterr");
 	availableOptions.push_back("smooth2d");
+	availableOptions.push_back("start");
+  availableOptions.push_back("teststat");
   availableOptions.push_back("toyFiles");
 	availableOptions.push_back("title");
 	availableOptions.push_back("usage");
@@ -323,6 +326,7 @@ void OptParser::bookFlowcontrolOptions()
 	bookedOptions.push_back("action");
 	bookedOptions.push_back("combid");
 	bookedOptions.push_back("fix");
+	bookedOptions.push_back("start");
 	//bookedOptions.push_back("jobdir");
 	bookedOptions.push_back("nosyst");
 }
@@ -451,6 +455,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"Format (range):  -j min-max \n"
 			"Format (single): -j n", false, "string");
 	TCLAP::ValueArg<string> jobdirArg("", "jobdir", "Give absolute job-directory if working on batch systems.", false, "default", "string");
+  TCLAP::ValueArg<int> teststatArg("", "teststat", "Define the desired test statistic to determine confidence intervals/limits.\n"
+  										"1: use one-sided profile likelihood ratio q\n"
+  										"2: use classical profile likelihood ratio t (default)", false, 2, "int" );
   TCLAP::ValueArg<string> toyFilesArg("", "toyFiles", "Pass some different toy files, for example if you want 1D projection of 2D FC.", false, "default", "string" );
   TCLAP::ValueArg<string> saveArg("","save", "Save the workspace this file name", false, "", "string");
   TCLAP::ValueArg<int> updateFreqArg("","updateFreq", "Frequency with which to update plots when running in interactive mode (higher number will be faster). Default: 10", false, 10, "int" );
@@ -537,8 +544,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 
   TCLAP::MultiArg<int> clsArg("", "cls", "Types of CLs to be plotted.\n"
       "Default will not do anything\n"
-      "1: Naive CLs (assuming CLb is obtained from the point at zero)\n"
-      "2: Freq  CLs (sampling the full distribution for CLb)\n"
+      "1: Simplified CLs (deprecated version, using CLb=CLs+b(s=0). Almost always larger intervals than Standard CLs)\n"
+      "2: Standard  CLs (sampling the full distribution for CLb)\n"
       , false, "int");
   TCLAP::MultiArg<float> filltransparencyArg("", "filltransparency", "Fill transparency of the 1D and 2D contours to be used for the combination. Default is 0 (solid) for all.", false, "float");
   TCLAP::MultiArg<int> fillstyleArg("", "fillstyle", "Fill style of the 1D and 2D contours to be used for the combination. Default is 1001 (solid) for all.", false, "int");
@@ -618,6 +625,15 @@ void OptParser::parseArguments(int argc, char* argv[])
       "If 'all' is given, all parameter ranges are removed"
       "Can also use regex matching"
       , false, "string");
+	TCLAP::MultiArg<string> startArg("", "start", "Set starting values of one or more parameters in a combination. "
+			"If 'none' is given, and no --parfile is passed it will use the defaults in the ParametersAbs class (default). "
+			"If given multiple times, the first --start argument refers to the first combination, "
+			"the second one to the second and so on. "
+			"If given a single time, it is applied to all combinations. \n"
+			"Example: --start 'g=1.7,r_dk=-0.09' \n"
+			"To set just the start values in the second combination, do\n"
+			"Example: --start none --start 'g=1.7,r_dk=0.09' \n"
+			, false, "string");
 	TCLAP::MultiArg<float> snArg("", "sn", "--sn x. Save nuisances to parameter cache file at certain points after a "
 			"1d scan was performed. This can be used to set these as starting points "
 			"for further scans. "
@@ -684,8 +700,10 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "unoff" ) ) cmd.add( plotunoffArg );
 	if ( isIn<TString>(bookedOptions, "title" ) ) cmd.add( titleArg );
   if ( isIn<TString>(bookedOptions, "toyFiles" ) ) cmd.add( toyFilesArg );
+  if ( isIn<TString>(bookedOptions, "teststat" ) ) cmd.add( teststatArg );
 	if ( isIn<TString>(bookedOptions, "sn2d" ) ) cmd.add(sn2dArg);
 	if ( isIn<TString>(bookedOptions, "sn" ) ) cmd.add(snArg);
+	if ( isIn<TString>(bookedOptions, "start" ) ) cmd.add(startArg);
 	if ( isIn<TString>(bookedOptions, "smooth2d" ) ) cmd.add( smooth2dArg );
 	if ( isIn<TString>(bookedOptions, "scanrangey" ) ) cmd.add( scanrangeyArg );
 	if ( isIn<TString>(bookedOptions, "scanrange" ) ) cmd.add( scanrangeArg );
@@ -800,7 +818,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	      if(i<1) args[i] = argv[i];
 	      if(i>1) args[i-1] = argv[i];
 	    }
-		cmd.parse( num_of_args, args );  		
+		cmd.parse( num_of_args, args );
   	}
 	else cmd.parse( argc, argv );
 
@@ -878,6 +896,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	scanforce         = scanforceArg.getValue();
 	smooth2d          = smooth2dArg.getValue();
   toyFiles          = toyFilesArg.getValue();
+  teststatistic       = teststatArg.getValue();
 	usage             = usageArg.getValue();
   updateFreq        = updateFreqArg.getValue();
 	verbose           = verboseArg.getValue();
@@ -928,8 +947,23 @@ void OptParser::parseArguments(int argc, char* argv[])
 
   // --readfromfile
   tmp = readfromfileArg.getValue();
-  for ( int i=0; i < tmp.size(); i++ ) readfromfile.push_back(tmp[i]);
-  for ( int i=tmp.size(); i<combid.size(); i++ ) readfromfile.push_back("default");
+  // loop over instances passed
+  for ( int i=0; i < tmp.size(); i++ ) {
+    vector<TString> a;
+    // split at , and push back
+    TObjArray *assignmentArray = TString(tmp[i]).Tokenize(","); // split at ","
+    for (int j=0; j<assignmentArray->GetEntries(); j++) {
+      TString assignmentString = ((TObjString*)assignmentArray->At(j))->GetString();
+      a.push_back(assignmentString);
+    }
+    readfromfile.push_back(a);
+  }
+  // fill the remaining with default
+  for ( int i=tmp.size(); i<combid.size(); i++ ) {
+    vector<TString> a;
+    a.push_back("default");
+    readfromfile.push_back(a);
+  }
 
 	// --title
 	tmp = titleArg.getValue();
@@ -1146,14 +1180,30 @@ void OptParser::parseArguments(int argc, char* argv[])
 		}
 		fixParameters.push_back(assignments);
 	}
-	// // test code for --fix
-	// for ( int i = 0; i < fixParameters.size(); i++ ){
-	// 	cout << "combination " << i << endl;
-	// 	for ( int j = 0; j < fixParameters[i].size(); j++ ){
-	// 		cout << fixParameters[i][j].name << " = " << fixParameters[i][j].value << endl;
-	// 	}
-	// }
-	// exit(0);
+
+	// --start
+	tmp = startArg.getValue();
+	for ( int i = 0; i < tmp.size(); i++ ){ // loop over instances of --start
+		vector<StartPar> assignments;
+		// parse 'none' default string
+		if ( TString(tmp[i])==TString("none") ){
+			startVals.push_back(assignments);
+			continue;
+		}
+		// parse list of starting values: "foopar=5,barpar=7"
+		TObjArray *assignmentArray = TString(tmp[i]).Tokenize(","); // split string at ","
+		for ( int j=0; j<assignmentArray->GetEntries(); j++ ){ // loop over assignments
+			TString assignmentString = ((TObjString*)assignmentArray->At(j))->GetString();
+			StartPar p;
+			if ( parseAssignment(assignmentString, p.name, p.value) ){
+				assignments.push_back(p);
+			}
+			else{
+				cout << "ERROR : parse error in --fix argument: " << assignmentString << endl << endl;
+			}
+		}
+		startVals.push_back(assignments);
+	}
 
 	// --ps
 	// If --ps is only given once, apply the given setting to all

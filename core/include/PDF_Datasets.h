@@ -32,7 +32,7 @@ public:
     virtual void          generateToys(int SeedShift = 0);
     virtual void          generateToysGlobalObservables(int SeedShift = 0);
     virtual void          generateBkgToys(int SeedShift = 0);
-    virtual void          generateBkgToysGlobalObservables(int SeedShift = 0);
+    virtual void          generateBkgToysGlobalObservables(int SeedShift = 0, int index = 0);
 
     void                  initConstraints(const TString& setName);
     void                  initData(const TString& name);
@@ -76,6 +76,9 @@ public:
     void                  setVarRange(const TString &varName, const TString &rangeName,
                                       const double &rangeMin, const double &rangeMax);
     void                  setToyData(RooDataSet* ds);
+    void                  setBkgToyData(RooDataSet* ds);
+    
+    void                  setGlobalObsSnapshotBkgToy(TString snapshotname) {globalObsBkgToySnapshotName = snapshotname;};
 
     void                  unblind(TString var, TString unblindRegs);
     void                  print();
@@ -94,6 +97,8 @@ public:
     //> name of a snapshot that stores the values of the global observables in data
     const TString         globalObsToySnapshotName = "globalObsToySnapshotName";
     //> name of a snapshot that stores the latest simulated values for the global observables
+   TString         globalObsBkgToySnapshotName = "globalObsBkgToySnapshotName";
+    //> name of a snapshot that stores the latest simulated values for the global observables of the bkg-only toy
 
 protected:
     void initializeRandomGenerator(int seedShift);
