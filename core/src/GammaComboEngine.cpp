@@ -2347,7 +2347,7 @@ void GammaComboEngine::runApplication()
 ///
 void GammaComboEngine::printBanner()
 {
-	const char* VTAG="1.2";
+	const char* VTAG="1.3";
 	cout << endl
 		<< "\033[1mGammaCombo v" << VTAG << " \033[0m"
 		<< "-- All rights reserved under GPLv3, http://www.gnu.org/licenses/gpl.txt" << endl << endl ;
