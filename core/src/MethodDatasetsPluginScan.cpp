@@ -810,7 +810,14 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         leg->AddEntry((TObject*)0,Form("#sigma=%4.2g +/- %4.2g",h_sig_bkgtoys->GetStdDev(),h_sig_bkgtoys->GetStdDevError()),"");
         leg->Draw("same");
         savePlot(biascanv, "bkg-only_toyfit");
-        hCLb-> Draw("PE");
+        hCLb->Draw("PE");
+        hCLb->GetXaxis()->SetTitle("POI value");
+        hCLb->GetYaxis()->SetTitle("CL_{b}");
+        hCLb->GetXaxis()->SetTitleSize(0.06);
+        hCLb->GetYaxis()->SetTitleSize(0.06);
+        hCLb->GetXaxis()->SetLabelSize(0.06);
+        hCLb->GetYaxis()->SetLabelSize(0.06);
+        hCLb->SetLineWidth(2);
         savePlot(biascanv, "CLb_values");
     }
 
@@ -1944,7 +1951,7 @@ void MethodDatasetsPluginScan::makeControlPlots(map<int, vector<double> > bVals,
 
     // double dataVal = TMath::ChisquareQuantile( 1.-hCL->GetBinContent(i),1 );
     double dataVal = hChi2min->GetBinContent(i);
-    std::cout << "CLb alternative: " << getVectorFracAboveValue( bVals[i], dataVal) << std::endl;
+    // std::cout << "CLb alternative: " << getVectorFracAboveValue( bVals[i], dataVal) << std::endl;
     TArrow *lD = new TArrow( dataVal, 0.6*hsb->GetMaximum(), dataVal, 0., 0.15, "|>" );
 
     vector<TLine*> qLs;
