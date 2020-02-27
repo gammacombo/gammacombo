@@ -108,7 +108,7 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
         cerr << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no '" + pdf->getParName() + "' set found in workspace" << endl;
         exit(EXIT_FAILURE);
     }
-    dataBkgFitResult = pdf->fitBkg(pdf->getData()); // get Bkg fit parameters
+    dataBkgFitResult = pdf->fitBkg(pdf->getData(), arg->var[0]); // get Bkg fit parameters
     Utils::setParameters(w,dataFreeFitResult);  // reset fit parameters to the free fit
 }
 
@@ -964,7 +964,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       if(pdf->getBkgPdf()){
         Utils::setParameters(w,dataBkgFitResult); //set parameters to bkg fit so the generation always starts at the same value
         // pdf->printParameters();
-        pdf->generateBkgToys();
+        pdf->generateBkgToys(0,arg->var[0]);
         pdf->generateBkgToysGlobalObservables(0,j);
         RooDataSet* bkgOnlyToy = pdf->getBkgToyObservables();
         cls_bkgOnlyToys.push_back( (RooDataSet*)bkgOnlyToy->Clone() ); // clone required because of deleteToys() call at end of loop
@@ -1061,20 +1061,20 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 
         // fit the bkg-only toys with the bkg-only hypothesis
         delete rb;
-        rb = pdf->fitBkg(bkgOnlyToy);
+        rb = pdf->fitBkg(bkgOnlyToy, arg->var[0]);
         assert(rb);
         pdf->setMinNllScan(pdf->minNll);
         if (pdf->getFitStatus() != 0) {
             pdf->setFitStrategy(1);
             delete rb;
-            rb = pdf->fitBkg(bkgOnlyToy);
+            rb = pdf->fitBkg(bkgOnlyToy, arg->var[0]);
             pdf->setMinNllScan(pdf->minNll);
             assert(rb);
 
             if (pdf->getFitStatus() != 0) {
                 pdf->setFitStrategy(2);
                 delete rb;
-                rb = pdf->fitBkg(bkgOnlyToy);
+                rb = pdf->fitBkg(bkgOnlyToy, arg->var[0]);
                 assert(rb);
             }
         }
@@ -1945,6 +1945,9 @@ void MethodDatasetsPluginScan::makeControlPlots(map<int, vector<double> > bVals,
     double max = *(std::max_element( bVals[i].begin(), bVals[i].end() ) );
     TH1F *hb = new TH1F( Form("hb%d",i), "hbq", 50,0, max );
     TH1F *hsb = new TH1F( Form("hsb%d",i), "hsbq", 50,0, max );
+    // fixing the range for teststat plots for private plots (DONT COMMIT THIS UNCOMMENTED)
+    // TH1F *hb = new TH1F( Form("hb%d",i), "hbq", 50,0, 5 );
+    // TH1F *hsb = new TH1F( Form("hsb%d",i), "hsbq", 50,0, 5 );
 
     for ( int j=0; j<bVals[i].size(); j++ ) hb->Fill( bVals[i][j] );
     for ( int j=0; j<sbVals[i].size(); j++ ) hsb->Fill( sbVals[i][j] );

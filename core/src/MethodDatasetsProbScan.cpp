@@ -163,7 +163,7 @@ void MethodDatasetsProbScan::initScan() {
     // background only
     if ( pdf->getBkgPdf() )
     {
-      bkgOnlyFitResult = pdf->fitBkg(pdf->getData()); // fit on data w/ bkg only hypoth
+      bkgOnlyFitResult = pdf->fitBkg(pdf->getData(), arg->var[0]); // fit on data w/ bkg only hypoth
       assert(bkgOnlyFitResult);
       bkgOnlyFitResult->SetName("bkgOnlyFitResult");
       // chi2minBkg = 2 * bkgOnlyFitResult->minNll();
