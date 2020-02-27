@@ -73,7 +73,7 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	}
 
 	// add solution -- this does not make sense for the one-sided test statistic, which only gives non-default values for mu > muhat
-	if(! arg->teststatistic==1){
+	if(arg->teststatistic!=1){
 		if ( ! s->getSolutions().empty() ){
 			TGraphTools t;
 			TGraph *gNew = t.addPointToGraphAtFirstMatchingX(g, s->getScanVar1Solution(0), 1.0);
