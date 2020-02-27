@@ -1999,7 +1999,7 @@ void GammaComboEngine::scan()
 		c->combine();
 		if ( !c->isCombined() ) continue; // error during combining
 
-		// adjust ranges according to the command line - only possible before combining
+		// adjust ranges according to the command line - only possible after combining
 		adjustRanges(c, i);
 
     // set up parameter sets for the parameters to vary within the toys (if requested)
@@ -2347,11 +2347,9 @@ void GammaComboEngine::runApplication()
 ///
 void GammaComboEngine::printBanner()
 {
-	const char* VTAG="1.0";
+	const char* VTAG="1.3";
 	cout << endl
 		<< "\033[1mGammaCombo v" << VTAG << " \033[0m"
-    //<< "\033[1m-- Developed by Till Moritz Karbach\033[0m " << endl
-    //<< "                   Copyright (C) 2014, moritz.karbach@gmail.com" << endl
 		<< "-- All rights reserved under GPLv3, http://www.gnu.org/licenses/gpl.txt" << endl << endl ;
 }
 

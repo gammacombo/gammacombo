@@ -57,7 +57,7 @@ class PDF_Abs
 		virtual             ~PDF_Abs();
 		virtual void				build();
 		virtual void        buildPdf();
-		void                buildCov();
+		virtual void        buildCov();
 		bool                bkgpdfset(){return isBkgPdfSet;};
 		virtual bool        checkConsistency();
 		void                deleteToys(){delete toyObservables;};
