@@ -297,7 +297,7 @@ int MethodProbScan::computeCLvalues(){
             // if (scanvalue < bestfitpoint) hCL->SetBinContent(k,1.0);    // should not be here, but looks ugly if solution is drawn as p=1
             CLb = 1. - normal_cdf(TMath::Sqrt(teststat_measured) - ((scanvalue - 0.)/bestfitpointerr));
         }
-        hCLs->SetBinContent(k,min(1.,hCL->GetBinContent(k)/CLb));
+        if ( arg->cls.size()>0) hCLs->SetBinContent(k,min(1.,hCL->GetBinContent(k)/CLb));
         // std::cout << "MethodProbScan::" << k << "\t" << hCL->GetBinContent(k) << "\t" << CLb << "\t" << hCLs->GetBinContent(k) <<std::endl;
 
 	}
