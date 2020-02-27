@@ -51,7 +51,6 @@ void  PDF_Datasets::initConstraints(const TString& setName) {
         std::cout << "ERROR in PDF_B_MuMu::initConstraints - constraint pdf not initialized." << endl;
         exit(EXIT_FAILURE);
     }
-    if(data && pdf) minNll = pdf->createNLL(*data, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)))->getVal();
 };
 
 void PDF_Datasets::initData(const TString& name) {
@@ -68,7 +67,7 @@ void PDF_Datasets::initData(const TString& name) {
         std::cout << "FATAL in PDF_Datasets::initData -- Data: " << dataName << " not found in workspace" << std::endl;
         exit(EXIT_FAILURE);
     }
-    if(pdf && getWorkspace()->obj(constraintName)) minNll = pdf->createNLL(*data, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)))->getVal();
+    if(pdf) this->minNll = pdf->createNLL(*data)->getVal();
     std::cout << "INFO in PDF_Datasets::initData -- Data initialized" << std::endl;
     return;
 };
@@ -156,7 +155,7 @@ void PDF_Datasets::initPDF(const TString& name) {
     }
 
     std::cout << "INFO in PDF_Datasets::initPDF -- PDF initialized" << std::endl;
-    if(data && getWorkspace()->obj(constraintName)) minNll = pdf->createNLL(*data, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)))->getVal();
+    if(data) this->minNll = pdf->createNLL(*data)->getVal();
     return;
 };
 
@@ -300,14 +299,14 @@ RooFitResult* PDF_Datasets::fit(RooDataSet* dataToFit) {
 
     // unfortunately Minuit2 does not initialize the status of the roofitresult, if all parameters are constant. Therefore need to stay with standard Minuit fitting.
     // RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Minimizer("Minuit2", "Migrad"));
-    RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
+    RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
 
     RooMsgService::instance().setSilentMode(kFALSE);
     RooMsgService::instance().setGlobalKillBelow(INFO);
-    fitStatus = result->status();
+    this->fitStatus = result->status();
     // RooAbsReal* nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE));
-    RooAbsReal* nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)));
-    minNll = nll->getVal();
+    RooAbsReal* nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
+    this->minNll = nll->getVal();
     delete nll;
 
     return result;
@@ -345,14 +344,14 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit) {
     // unfortunately Minuit2 does not initialize the status of the roofitresult, if all parameters are constant. Therefore need to stay with standard Minuit fitting.
     // RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Minimizer("Minuit2", "Migrad"));
 
-    RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
+    RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
     // RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
     RooMsgService::instance().setSilentMode(kFALSE);
     RooMsgService::instance().setGlobalKillBelow(INFO);
     this->fitStatus = result->status();
     // RooAbsReal* nll_bkg = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE));
     // RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit, RooFit::Extended(kTRUE));
-    RooAbsReal* nll_bkg = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)));
+    RooAbsReal* nll_bkg = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
     // RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
     this->minNllBkg = nll_bkg->getVal();
 
