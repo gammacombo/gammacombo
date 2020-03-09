@@ -760,6 +760,11 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         }
         float dataCLb    = p_clb;
         float dataCLbErr = sqrt( dataCLb * (1.-dataCLb) / sampledBValues[i].size() );
+        if(dataCLb==0){
+            std::cout << "!!!!!! ERROR: CL_b=0: this should only happen for really few toys! Setting to a small value." << std::endl;
+            dataCLb=1e-9;
+            dataCLbErr=1.;
+        }
         if ( p/dataCLb >= 1. ) {
           hCLsFreq->SetBinContent(i, 1.);
           hCLsFreq->SetBinError  (i, 0.);
@@ -1303,7 +1308,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             // free parameter of interest
             parameterToScan->setConstant(false);
             //setLimit(w, scanVar1, "free");
-            w->var(scanVar1)->removeRange();
+            // w->var(scanVar1)->removeRange();
 
 			// set dataset back
 			if (arg->debug) cout << "Setting toy back as data " << tempData << endl;
