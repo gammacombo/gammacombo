@@ -761,7 +761,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         float dataCLb    = p_clb;
         float dataCLbErr = sqrt( dataCLb * (1.-dataCLb) / sampledBValues[i].size() );
         if(dataCLb==0){
-            std::cout << "!!!!!! ERROR: CL_b=0: this should only happen for really few toys! Setting to a small value." << std::endl;
+            std::cout << "!!!!!! ERROR: CL_b=0: this should only happen for really few toys! Setting to a small value. Please run more toys to get a reliable result." << std::endl;
             dataCLb=1e-9;
             dataCLbErr=1.;
         }
