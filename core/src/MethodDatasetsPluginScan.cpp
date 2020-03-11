@@ -30,8 +30,7 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
     MethodPluginScan(probScan, PDF, opt),
     pdf                 (PDF),
     drawPlots           (false),
-    explicitInputFile   (false),
-    dataFreeFitResult   (NULL)
+    explicitInputFile   (false)
 {
     chi2minGlobalFound = true; // the free fit to data must be done and must be saved to the workspace before gammacombo is even called
     methodName = "DatasetsPlugin";
@@ -47,10 +46,12 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
         cerr << "ERROR: The workspace must contain the fit result of the fit to data. The name of the fit result must be 'data_fit_result'. " << endl;
         exit(EXIT_FAILURE);
     }
-    dataFreeFitResult = (RooFitResult*) w->obj("data_fit_result");
-    // chi2minGlobal = 2 * dataFreeFitResult->minNll();
+    globalMin = probScan->globalMin;
+    bestfitpoint = ((RooRealVar*) globalMin->floatParsFinal().find(scanVar1))->getVal();
+    // globalMin = (RooFitResult*) w->obj("data_fit_result");
+    // chi2minGlobal = 2 * globalMin->minNll();
     chi2minGlobal = probScan->getChi2minGlobal();
-    std::cout << "=============== Global Minimum (2*-Log(Likelihood)) is: 2*" << dataFreeFitResult->minNll() << " = " << chi2minGlobal << endl;
+    std::cout << "=============== Global Minimum (2*-Log(Likelihood)) is: 2*" << globalMin->minNll() << " = " << chi2minGlobal << endl;
 
     // implement physical range a la Feldman Cousins
     bool refit_necessary = false;
@@ -75,8 +76,12 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
 
     if(refit_necessary){
         std::cout << "!!!!!!!!!!! Global Minimum outside physical range, refitting ..." << std::endl;
-        dataFreeFitResult = pdf->fit(pdf->getData());
-        chi2minGlobal = pdf->getMinNll();
+        globalMin = pdf->fit(pdf->getData());
+        chi2minGlobal = 2*pdf->getMinNll();
+        if(!globalMin->floatParsFinal().find(scanVar1)){
+            bestfitpoint = w->var(scanVar1)->getVal();
+            std::cout << "=============== NEW Best Fit Point is: " << bestfitpoint << endl;
+        }
         std::cout << "=============== NEW Global Minimum (2*-Log(Likelihood)) is: 2*" << chi2minGlobal << endl;
     }
 
@@ -109,7 +114,7 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
         exit(EXIT_FAILURE);
     }
     dataBkgFitResult = pdf->fitBkg(pdf->getData(), arg->var[0]); // get Bkg fit parameters
-    Utils::setParameters(w,dataFreeFitResult);  // reset fit parameters to the free fit
+    Utils::setParameters(w,globalMin);  // reset fit parameters to the free fit
 }
 
 ///////////////////////////////////////////////
@@ -435,7 +440,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
 
     TH1F *bkg_pvals  = new TH1F("bkg_pvals", "bkg p values", 20, -0.1, 1.1);
 
-    TH1F *h_sig_bkgtoys  = new TH1F("h_sig_bkgtoys", "signal distribution for bkg toys", 50, -5*(((RooRealVar*) dataFreeFitResult->floatParsFinal().find(scanVar1))->getError()), 5*(((RooRealVar*) dataFreeFitResult->floatParsFinal().find(scanVar1))->getError()));
+    TH1F *h_sig_bkgtoys  = new TH1F("h_sig_bkgtoys", "signal distribution for bkg toys", 50, -5*(w->var(scanVar1)->getError()), 5*(w->var(scanVar1)->getError()));
 
     // map of vectors for determining signal distributions per scan point
     std::map<int,std::vector<double> > sampledBiasValues;
@@ -499,9 +504,9 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         // to little fluctuaions the best fit point can be missing from the plugin plot...
 
         // std::cout << "using scanvar: " << scanVar1 << std::endl;
-        // dataFreeFitResult->Print();
+        // globalMin->Print();
 
-        double bestfitpoint = ((RooRealVar*) dataFreeFitResult->floatParsFinal().find(scanVar1))->getVal();
+        // best fit point is a class variable and define in constructor
         bool inPhysicalRegion     = ((t.chi2minToy - t.chi2minGlobalToy) >= 0 );
 
         // // build test statistic
@@ -528,7 +533,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         double sb_teststat_toy= t.chi2minToy - t.chi2minGlobalToy;
         double b_teststat_toy = t.chi2minBkgToy - t.chi2minGlobalBkgToy;
         if (arg->teststatistic ==1){ // use one-sided test statistic
-            teststat_measured = bestfitpoint <= t.scanpoint ? teststat_measured : 0.; // if mu < muhat then q_mu = 0
+            teststat_measured = bestfitpoint <= t.scanpoint ? teststat_measured : 0.; // if mu < muhat then q_mu = 0 //best fit point defined in constructor
             sb_teststat_toy = t.scanbest <= t.scanpoint ? sb_teststat_toy : 0.; // if mu < muhat then q_mu = 0
             b_teststat_toy = t.scanbestBkg <= t.scanpoint ? b_teststat_toy : 0.;  // if mu < muhat then q_mu = 0
         }
