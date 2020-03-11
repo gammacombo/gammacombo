@@ -82,6 +82,10 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
             bestfitpoint = w->var(scanVar1)->getVal();
             std::cout << "=============== NEW Best Fit Point is: " << bestfitpoint << endl;
         }
+        else{
+            bestfitpoint = ((RooRealVar*) globalMin->floatParsFinal().find(scanVar1))->getVal();
+            std::cout << "=============== NEW Best Fit Point is: " << bestfitpoint << endl;
+        }
         std::cout << "=============== NEW Global Minimum (2*-Log(Likelihood)) is: 2*" << chi2minGlobal << endl;
     }
 
