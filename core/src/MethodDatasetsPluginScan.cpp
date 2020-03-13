@@ -1410,7 +1410,6 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                             parameterToScan->setVal(static_cast<RooRealVar*>(r1->floatParsFinal().find(parameterToScan->GetName()))->getVal());
                             delete r_tmp;
                         }
-                        delete parsAfterScanFit;
                     };
                     if (arg->debug) {
                         cout  << "===== > compare free fit result with pdf parameters: " << endl;
@@ -1527,7 +1526,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                             parameterToScan->setVal(static_cast<RooRealVar*>(r1->floatParsFinal().find(parameterToScan->GetName()))->getVal());
                             delete r_tmp;
                         }
-                        delete parsAfterScanFit;
+                        // delete parsAfterScanFit;
                     };
                     if (arg->debug) {
                         cout  << "===== > compare free fit result with pdf parameters: " << endl;
@@ -1613,6 +1612,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 
             toyTree.fill();
             //remove dataset and pointers
+            delete parsAfterScanFit;
             delete r;
             delete r1;
             delete rb;
