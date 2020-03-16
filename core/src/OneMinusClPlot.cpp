@@ -464,6 +464,8 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
 	    if(arg->debug) std::cout<< "OneMinusClPlot::scan1dCLsPlot() : remove all observed lines with mu<muhat in CLs plot" <<std::endl;
 	    double* xvalsobs = gObs->GetX();
 	    double* yvalsobs = gObs->GetY();
+	    double* xerrsobs = gObs->GetEX();
+	    double* yerrsobs = gObs->GetEY();
 	    int valabove = gObs->GetN();
 	    int nentries = gObs->GetN();
 	    for (int i=0; i<gObs->GetN(); i++){
@@ -471,7 +473,7 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
 	    }
 	    // std::cout << "Found entries for obs " << valabove << "\t" << nentries << std::endl;
 
-	    TGraph* gObs_new = new TGraph(valabove);
+	    TGraph* gObs_new = new TGraphErrors(valabove);
 	    int k=0;
 	    for (int i=0; i < nentries; i++){
 	    	if(xvalsobs[i]<(xCentral+(hObs->GetBinWidth(1)/2.))){
@@ -481,6 +483,7 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
 	    	else {
 	    		// std::cout << "SetPoint " << k << "\t" << xvalsobs[i] << "\t" << yvalsobs[i] << std::endl;
 	    		gObs_new->SetPoint(k, xvalsobs[i],yvalsobs[i]);
+	    		gObs_new->SetPointError(k, xerrsobs[i],yerrsobs[i]);
 	    		k++;
 	    	}
 	    }
