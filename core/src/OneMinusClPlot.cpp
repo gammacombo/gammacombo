@@ -473,7 +473,7 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
 	    }
 	    // std::cout << "Found entries for obs " << valabove << "\t" << nentries << std::endl;
 
-	    TGraph* gObs_new = new TGraphErrors(valabove);
+	    TGraphErrors* gObs_new = new TGraphErrors(valabove);
 	    int k=0;
 	    for (int i=0; i < nentries; i++){
 	    	if(xvalsobs[i]<(xCentral+(hObs->GetBinWidth(1)/2.))){
