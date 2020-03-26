@@ -71,7 +71,7 @@ void MethodDatasetsProbScan::initScan() {
     }
     if ( !m_xrangeset && arg->scanrangeMin != arg->scanrangeMax ) {
 			setXscanRange(arg->scanrangeMin,arg->scanrangeMax);
-		}
+	}
     // setLimit(w, scanVar1, "scan");
 
     if (hCL) delete hCL;
@@ -80,6 +80,12 @@ void MethodDatasetsProbScan::initScan() {
     // float max1 = par1->getMax();
     float min1 = arg->scanrangeMin;
     float max1 = arg->scanrangeMax;
+
+    if(scanVar1==scanVar2){
+        if(arg->debug) std::cout << "DEBUG: MethodDatasetsProbScan::initScan() : scanning y range" << std::endl;
+        min1 = arg->scanrangeyMin;
+        max1 = arg->scanrangeyMax;        
+    }
 
     hCL = new TH1F("hCL" + getUniqueRootName(), "hCL" + pdf->getPdfName(), nPoints1d, min1, max1);
     if ( hChi2min ) delete hChi2min;
