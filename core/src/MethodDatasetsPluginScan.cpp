@@ -719,8 +719,8 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
             leg->AddEntry(bkg_pvals_clb,"CLb","L");
             leg->Draw("same");
             std::string pvalue_outstream;
-    		pvalue_outstream ="p_values" + std::to_string(i) + ".pdf";
-            canvasdebug->SaveAs(pvalue_outstream.c_str());
+    		pvalue_outstream ="p_values" + std::to_string(i);
+            savePlot(canvasdebug, pvalue_outstream.c_str());
         }
 
         std::vector<double> probs  = {TMath::Prob(4,1)/2., TMath::Prob(1,1)/2., 0.5, 1.-(TMath::Prob(1,1)/2.), 1.-(TMath::Prob(4,1)/2.) };
@@ -1322,6 +1322,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 			// set dataset back
 			if (arg->debug) cout << "Setting toy back as data " << tempData << endl;
 			this->pdf->setToyData( tempData );
+            // restore MinNllScan to value from 2. (not take from 2.5) for more correct error messages
+            pdf->setMinNllScan(toyTree.chi2minToy/2.);
 
             // Fit
             pdf->setFitStrategy(0);
