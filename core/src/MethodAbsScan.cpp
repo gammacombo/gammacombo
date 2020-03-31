@@ -1493,6 +1493,7 @@ void MethodAbsScan::setXscanRange(float min, float max)
 	RooMsgService::instance().setGlobalKillBelow(ERROR);
 	par1->setRange("scan", min, max);
 	RooMsgService::instance().setGlobalKillBelow(INFO);
+	if(arg->debug) std::cout << "DEBUG in MethodAbsScan::setXscanRange(): setting range for " << scanVar1 << ": " << min << ": " << max << std::endl;
 	m_xrangeset = true;
 }
 

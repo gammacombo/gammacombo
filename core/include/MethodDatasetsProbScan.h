@@ -41,7 +41,7 @@ public:
     std::vector<TString>    inputFiles;
     std::vector<double>     bootstrapPVals;
     TChain*                 chain;
-    RooFitResult*           dataFreeFitResult;
+    // RooFitResult*           dataFreeFitResult;
     RooFitResult*           bkgOnlyFitResult;
     ToyTree*                probScanTree;
 
