@@ -161,6 +161,7 @@ void PDF_Datasets::initPDF(const TString& name) {
 };
 
 void PDF_Datasets::initBkgPDF(const TString& name) {
+    std::cout << "PDF_Datasets::initBkgPDF() currently useless, as the Bkg pdf is taken as the full pdf with scanvar=0" << std::endl;
     if (isBkgPdfSet) {
         std::cout << "ERROR in PDF_Datasets::initBkgPDF -- Bkg PDF already set" << std::endl;
         exit(EXIT_FAILURE);
@@ -326,12 +327,13 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit, TString signalvar) {
         std::cout << "Other names can be passed via PDF_Datasets::initConstraints" << std::endl;
         exit(EXIT_FAILURE);
     }
+    // if (!pdfBkg)
+    // {
+    //     std::cout << "WARNING in PDF_Datasets::fitBkg -- No background PDF given!" << std::endl;
+    //     // exit(EXIT_FAILURE);
+    // }
+    // std::cout << "WARNING in PDF_Datasets::fitBkg -- Fitting bkg model as sig+bkg model with " << signalvar << " to zero!" << std::endl;
 
-    if (!pdfBkg)
-    {
-        std::cout << "ERROR in PDF_Datasets::fitBkg -- No background PDF given!" << std::endl;
-        exit(EXIT_FAILURE);
-    }
     double parvalue = getWorkspace()->var(signalvar)->getVal();
     bool isconst = getWorkspace()->var(signalvar)->isConstant();
     getWorkspace()->var(signalvar)->setVal(0.0);
@@ -380,7 +382,13 @@ void   PDF_Datasets::generateBkgToys(int SeedShift, TString signalvar) {
 
     initializeRandomGenerator(SeedShift);
 
-    if(isBkgPdfSet){
+    // if(!isBkgPdfSet){
+    //     std::cout << "WRANING in PDF_Datasets::generateBkgToys: No bkg pdf given." << std::endl;
+    //     // exit(EXIT_FAILURE);
+    // }
+    // std::cout << "WARNING in PDF_Datasets::generateBkgToys -- Fitting bkg model as sig+bkg model with " << signalvar << " to zero!" << std::endl;
+    // if(isBkgPdfSet)
+    {
         double parvalue = getWorkspace()->var(signalvar)->getVal();
         bool isconst = getWorkspace()->var(signalvar)->isConstant();
         getWorkspace()->var(signalvar)->setVal(0.0);
@@ -391,10 +399,6 @@ void   PDF_Datasets::generateBkgToys(int SeedShift, TString signalvar) {
         getWorkspace()->var(signalvar)->setVal(parvalue);
         getWorkspace()->var(signalvar)->setConstant(isconst);    
         this->toyBkgObservables  = toys;
-    }
-    else{
-        std::cerr << "Error in PDF_Datasets::generateBkgToys: No bkg pdf given." << std::endl;
-        exit(EXIT_FAILURE);
     }
 };
 

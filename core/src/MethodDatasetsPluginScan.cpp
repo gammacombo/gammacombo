@@ -975,7 +975,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
     }
     for ( int j = 0; j < nActualToys; j++ ) {
         // std::cout << "Toy " << j << std::endl;
-      if(pdf->getBkgPdf()){
+      // if(pdf->getBkgPdf())
+      {
         Utils::setParameters(w,dataBkgFitResult); //set parameters to bkg fit so the generation always starts at the same value
         // pdf->printParameters();
         pdf->generateBkgToys(0,arg->var[0]);

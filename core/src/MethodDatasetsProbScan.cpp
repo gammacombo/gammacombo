@@ -166,8 +166,7 @@ void MethodDatasetsProbScan::initScan() {
     chi2minGlobal = 2 * pdf->getMinNll();
     std::cout << "=============== Global minimum (2*-Log(Likelihood)) is: 2*" << globalMin->minNll() << " = " << chi2minGlobal << endl;
     // background only
-    if ( pdf->getBkgPdf() )
-    {
+    // if ( !pdf->getBkgPdf() ) 
       bkgOnlyFitResult = pdf->fitBkg(pdf->getData(), arg->var[0]); // fit on data w/ bkg only hypoth
       assert(bkgOnlyFitResult);
       bkgOnlyFitResult->SetName("bkgOnlyFitResult");
@@ -181,22 +180,21 @@ void MethodDatasetsProbScan::initScan() {
           chi2minBkg = chi2minGlobal;
           std::cout << "=============== New bkg minimum (2*-Log(Likelihood)) is: " << chi2minBkg << endl;
       }
-    }
-    else if ( arg->cls.size()!=0 ){
-        std::cout << "**************************************************************************************************************************************" << std::endl;
-        std::cout << "WARNING: No Bkg PDF is given! Will calculate CLs method by assuming the bkgchi2 to be the chi2 of the first bin." << std::endl;
-        std::cout << "WARNING: This is only an approximate solution and MIGHT EVEN BE WRONG, if the first bin does not represent the background expectation!" << std::endl;
-        std::cout << "**************************************************************************************************************************************" << std::endl;
+    // else if ( arg->cls.size()!=0 ){
+    //     std::cout << "**************************************************************************************************************************************" << std::endl;
+    //     std::cout << "WARNING: No Bkg PDF is given! Will calculate CLs method by assuming the bkgchi2 to be the chi2 of the first bin." << std::endl;
+    //     std::cout << "WARNING: This is only an approximate solution and MIGHT EVEN BE WRONG, if the first bin does not represent the background expectation!" << std::endl;
+    //     std::cout << "**************************************************************************************************************************************" << std::endl;
 
-        w->var(scanVar1)->setVal(min1);
-        w->var(scanVar1)->setConstant(true);
-        bkgOnlyFitResult = loadAndFit(pdf); // fit on data w/ bkg only hypoth
-        assert(bkgOnlyFitResult);
-        // chi2minBkg = 2 * bkgOnlyFitResult->minNll();
-        chi2minBkg = 2 * pdf->getMinNll();
-        std::cout << "=============== Bkg minimum (2*-Log(Likelihood)) is: 2*" << bkgOnlyFitResult->minNll() << " = " << chi2minBkg << endl;
-        w->var(scanVar1)->setConstant(false);
-    }
+    //     w->var(scanVar1)->setVal(min1);
+    //     w->var(scanVar1)->setConstant(true);
+    //     bkgOnlyFitResult = loadAndFit(pdf); // fit on data w/ bkg only hypoth
+    //     assert(bkgOnlyFitResult);
+    //     // chi2minBkg = 2 * bkgOnlyFitResult->minNll();
+    //     chi2minBkg = 2 * pdf->getMinNll();
+    //     std::cout << "=============== Bkg minimum (2*-Log(Likelihood)) is: 2*" << bkgOnlyFitResult->minNll() << " = " << chi2minBkg << endl;
+    //     w->var(scanVar1)->setConstant(false);
+    // }
 
 
     if (arg->debug) {
