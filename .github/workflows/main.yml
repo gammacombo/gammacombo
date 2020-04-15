@@ -6,11 +6,11 @@ name: CI
 # events but only for the master branch
 on:
   push:
-    branches: 
+    branches:
     - master
     - development
   pull_request:
-    branches: 
+    branches:
     - master
     - development
 
@@ -29,22 +29,22 @@ jobs:
     # Runs a single command using the runners shell
     - name: Get docker image
       run: docker pull gammacombo/gcimage
-      
+
     - name: Make docker container
       run: |
         docker run --name gccont gammacombo/gcimage /bin/bash -c "mkdir /code"
         docker cp . gccont:/code
         docker commit gccont gccontwfiles
-        
+
     - name: Compile GC and save image
       run: |
         docker run --name gcbuild gccontwfiles /bin/bash -c "mkdir /code/build; cd /code/build; cmake ..; make install"
         docker commit gcbuild gcbuiltimage
-       
-     - name: Run CI Tests
-       run: docker run --name gcrun gcbuiltimage /bin/bash -c "cd /code; sudo python scripts/run_ci_tests.py"
-      
-     - name: Publish Output
-       run: docker cp gcrun:/code/tutorial/ci_logs .
-       # need to figure out what to now do with the output (ideally push it to gammacombo.github.io/ci_logs?
-        
+
+    - name: Run CI Tests
+      run: docker run --name gcrun gcbuiltimage /bin/bash -c "cd /code; sudo python scripts/run_ci_tests.py"
+
+    - name: Publish Output
+      run: docker cp gcrun:/code/tutorial/ci_logs .
+      # need to figure out what to now do with the output (ideally push it to gammacombo.github.io/ci_logs?
+

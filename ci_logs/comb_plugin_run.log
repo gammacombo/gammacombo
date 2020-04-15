@@ -1,552 +1,0 @@
-
-[1mRooFit v3.60 -- Developed by Wouter Verkerke and David Kirkby[0m 
-                Copyright (C) 2000-2013 NIKHEF, University of California & Stanford University
-                All rights reserved, please read http://roofit.sourceforge.net/license.txt
-
-
-[1mGammaCombo v1.3 [0m-- All rights reserved under GPLv3, http://www.gnu.org/licenses/gpl.txt
-
-
-Combiner Configuration: 2D Gaus & Gaus 1
-=======================
-
- 1. [measurement   2] 1D Gaussian (a_{obs} =  1.5)                                     
- 2. [measurement   3] 2D Gaussian (a_{obs}, b_{obs})                                   
-
-loading scanner: plots/scanner/tutorial_scanner_tutorial5_a_gaus.root
-reading files: root/scan1dPlugin_tutorial5_a_gaus/scan1dPlugin_tutorial5_a_gaus_run*.root
-read toy files: 1analysing toys ...
-  2% [=                                                 ]  4% [==                                                ]  6% [===                                               ]  8% [====                                              ] 11% [=====                                             ] 13% [======                                            ] 15% [=======                                           ] 17% [========                                          ] 19% [=========                                         ] 22% [===========                                       ] 24% [============                                      ] 26% [=============                                     ] 28% [==============                                    ] 30% [===============                                   ] 33% [================                                  ] 35% [=================                                 ] 37% [==================                                ] 39% [===================                               ] 41% [====================                              ] 44% [======================                            ] 46% [=======================                           ] 48% [========================                          ] 50% [=========================                         ] 52% [==========================                        ] 55% [===========================                       ] 57% [============================                      ] 59% [=============================                     ] 61% [==============================                    ] 63% [===============================                   ] 66% [=================================                 ] 68% [==================================                ] 70% [===================================               ] 72% [====================================              ] 74% [=====================================             ] 77% [======================================            ] 79% [=======================================           ] 81% [========================================          ] 83% [=========================================         ] 85% [==========================================        ] 88% [============================================      ] 90% [=============================================     ] 92% [==============================================    ] 94% [===============================================   ] 96% [================================================  ] 99% [================================================= ]100% [==================================================]                                                          building p-value histogram ...
-  2% [=                                                 ]  4% [==                                                ]  6% [===                                               ]  8% [====                                              ] 11% [=====                                             ] 13% [======                                            ] 15% [=======                                           ] 17% [========                                          ] 19% [=========                                         ] 22% [===========                                       ] 24% [============                                      ] 26% [=============                                     ] 28% [==============                                    ] 30% [===============                                   ] 33% [================                                  ] 35% [=================                                 ] 37% [==================                                ] 39% [===================                               ] 41% [====================                              ] 44% [======================                            ] 46% [=======================                           ] 48% [========================                          ] 50% [=========================                         ] 52% [==========================                        ] 55% [===========================                       ] 57% [============================                      ] 59% [=============================                     ] 61% [==============================                    ] 63% [===============================                   ] 66% [=================================                 ] 68% [==================================                ] 70% [===================================               ] 72% [====================================              ] 74% [=====================================             ] 77% [======================================            ] 79% [=======================================           ] 81% [========================================          ] 83% [=========================================         ] 85% [==========================================        ] 88% [============================================      ] 90% [=============================================     ] 92% [==============================================    ] 94% [===============================================   ] 96% [================================================  ] 99% [================================================= ]100% [==================================================]                                                          read an average of 5 toys per scan point.
-fraction of failed toys: 0%.
-fraction of background toys: 0%.
-Info in <TCanvas::Print>: pdf file p_values1.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values2.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values3.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values4.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values5.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values6.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values7.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values8.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values9.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values10.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values11.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values12.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values13.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values14.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values15.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values16.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values17.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values18.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values19.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values20.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values21.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values22.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values23.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values24.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values25.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values26.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values27.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values28.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values29.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values30.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values31.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values32.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values33.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values34.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values35.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values36.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values37.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values38.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values39.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values40.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values41.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values42.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values43.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values44.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values45.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values46.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values47.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values48.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values49.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values50.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values51.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values52.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values53.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values54.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values55.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values56.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values57.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values58.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values59.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values60.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values61.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values62.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values63.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values64.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values65.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values66.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values67.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values68.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values69.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values70.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values71.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values72.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values73.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values74.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values75.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values76.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values77.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values78.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values79.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values80.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values81.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values82.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values83.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values84.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values85.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values86.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values87.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values88.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values89.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values90.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values91.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values92.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values93.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values94.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values95.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values96.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values97.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values98.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values99.pdf has been created
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clsbvals (Potential memory leak).
-Warning in <TFile::Append>: Replacing existing TH1: bkg_clbvals (Potential memory leak).
-Warning in <TCanvas::Constructor>: Deleting canvas with same name: canvasdebug
-Info in <TCanvas::Print>: pdf file p_values100.pdf has been created
-fit prob of best-fit point (1.0249): (0.0+/-0.0)%
-CONFIDENCE INTERVALS for combination tutorial5
-
-a_gaus = [   0.85,    1.47] (   1.20 -   0.35 +   0.27) @0.68CL, Plugin
-
-a_gaus = [   0.83,    1.71] (   1.20 -   0.37 +   0.51) @0.95CL, Plugin
-
-a_gaus = [   0.83,    1.72] (   1.20 -   0.37 +   0.52) @1.00CL, Plugin
-
-
-
-
-Fit quality: chi2/(nObs-nPar) = 1.54/(3-2), P = 21.5%
-
-Computing CL values based on test statistic decision
-Using 2-sided test statistic
-CONFIDENCE INTERVALS for combination tutorial5
-
-a_gaus = [   0.74,    1.66] (   1.20 -   0.46 +   0.46) @0.68CL, Prob
-
-a_gaus = [   0.27,    2.13] (   1.20 -   0.93 +   0.93) @0.95CL, Prob
-
-a_gaus = [   -0.2,     2.5] (    1.2 -    1.4 +    1.3) @1.00CL, Prob
-
-
-
-
-a_gaus = [  -2.50,    2.50] @1.00CL, Prob (boundary scan)
-
-Fit quality: chi2/(nObs-nPar) = 1.54/(3-2), P = 21.5%
-
-saving plot (pdf and other formats) to: plots/pdf/tutorial_tutorial5_a_gaus_plugin.pdf
-
-Real time 0:00:00, CP time 0.440
