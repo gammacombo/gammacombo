@@ -9,10 +9,12 @@ on:
     branches:
     - master
     - development
+    - ci_deployment
   pull_request:
     branches:
     - master
     - development
+    - ci_deployment
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -53,10 +55,10 @@ jobs:
 
     - name: Publish output
       run: |
-        git config --local user.email "gcci@cern.ch"
-        git config --local user.name "gammacombo"
         git clone git@github.com:gammacombo/gammacombo.github.io.git
         cd gammacombo.github.io
+        git config --local user.email "gcci@cern.ch"
+        git config --local user.name "gammacombo"
         echo "Hello" >> ci.html
         git add ci.html
         git commit -m "CI test results"
