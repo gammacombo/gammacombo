@@ -1,4 +1,4 @@
-# This is a basic workflow to help you get started with Actions
+# Run GC CI tests
 
 name: CI
 
@@ -18,36 +18,31 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   build:
-    # The type of runner that the job will run on
     runs-on: ubuntu-16.04
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@master
 
-    # Runs a single command using the runners shell
-    #- name: Get docker image
-      #run: docker pull gammacombo/gcimage
+    - name: Get docker image
+      run: docker pull gammacombo/gcimage
 
-    #- name: Make docker container
-      #run: |
-        #docker run --name gccont gammacombo/gcimage /bin/bash -c "sudo mkdir /code"
-        #docker cp . gccont:/code
-        #docker commit gccont gccontwfiles
+    - name: Make docker container
+      run: |
+        docker run --name gccont gammacombo/gcimage /bin/bash -c "sudo mkdir /code"
+        docker cp . gccont:/code
+        docker commit gccont gccontwfiles
 
-    #- name: Compile GC and save image
-      #run: |
-        #docker run --name gcbuild gccontwfiles /bin/bash -c "sudo mkdir /code/build; cd /code/build; sudo cmake ..; sudo make install"
-        #docker commit gcbuild gcbuiltimage
+    - name: Compile GC and save image
+      run: |
+        docker run --name gcbuild gccontwfiles /bin/bash -c "sudo mkdir /code/build; cd /code/build; sudo cmake ..; sudo make install"
+        docker commit gcbuild gcbuiltimage
 
-    #- name: Run CI Tests
-      #run: docker run --name gcrun gcbuiltimage /bin/bash -c "cd /code; sudo python scripts/run_ci_tests.py"
+    - name: Run CI Tests
+      run: docker run --name gcrun gcbuiltimage /bin/bash -c "cd /code; sudo python scripts/run_ci_tests.py"
 
-    #- name: Copy output
-      #run: docker cp gcrun:/code/tutorial/ci_logs .
+    - name: Copy output
+      run: docker cp gcrun:/code/tutorial/ci_logs .
 
     - uses: webfactory/ssh-agent@v0.2.0
       with:
@@ -56,16 +51,12 @@ jobs:
     - name: Publish output
       run: |
         git clone git@github.com:gammacombo/gammacombo.github.io.git
+        cp ci_logs/* gammacombo.github.io/assets/images/ci/
         cd gammacombo.github.io
         git config --local user.email "gcci@cern.ch"
         git config --local user.name "gammacombo"
-        echo "Hello" >> ci.html
+        touch ci.html
         git add ci.html
+        git add assets/images/ci/*
         git commit -m "CI test results"
         git push origin master
-      #uses: ad-m/github-push-action@master
-      #with:
-        #github_token: ${{ secrets.GITHUB_TOKEN }}
-
-    # need to figure out what to now do with the output (ideally push it to gammacombo.github.io/ci_logs?
-
