@@ -35,7 +35,7 @@ jobs:
 
     - name: Compile GC and save image
       run: |
-        docker run --name gcbuild gccontwfiles /bin/bash -c "sudo mkdir /code/build; cd /code/build; sudo cmake ..; sudo make install"
+        docker run --name gcbuild gccontwfiles /bin/bash -c "sudo mkdir /code/build; cd /code/build; sudo cmake ..; sudo make -j8 install"
         docker commit gcbuild gcbuiltimage
 
     - name: Run CI Tests
@@ -60,3 +60,7 @@ jobs:
         git add assets/images/ci/*
         git commit -m "CI test results"
         git push origin master
+
+    - name: Print Info
+      run: echo "Success. Check your CI tests at https://gammacombo.github.io/ci.html"
+
