@@ -36,15 +36,15 @@ jobs:
         docker cp . gccont:/code
         docker commit gccont gccontwfiles
         
-    -name: Compile GC and save image
-     run: |
-       docker run --name gcbuild gccontwfiles /bin/bash -c "mkdir /code/build; cd /code/build; cmake ..; make install"
-       docker commit gcbuild gcbuiltimage
+    - name: Compile GC and save image
+      run: |
+        docker run --name gcbuild gccontwfiles /bin/bash -c "mkdir /code/build; cd /code/build; cmake ..; make install"
+        docker commit gcbuild gcbuiltimage
        
-     -name: Run CI Tests
-      run: docker run --name gcrun gcbuiltimage /bin/bash -c "cd /code; sudo python scripts/run_ci_tests.py"
+     - name: Run CI Tests
+       run: docker run --name gcrun gcbuiltimage /bin/bash -c "cd /code; sudo python scripts/run_ci_tests.py"
       
-     -name: Publish Output
-      run: docker cp gcrun:/code/tutorial/ci_logs .
-      # need to figure out what to now do with the output (ideally push it to gammacombo.github.io/ci_logs?
+     - name: Publish Output
+       run: docker cp gcrun:/code/tutorial/ci_logs .
+       # need to figure out what to now do with the output (ideally push it to gammacombo.github.io/ci_logs?
         
