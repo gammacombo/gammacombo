@@ -1,0 +1,85 @@
+
+[1mRooFit v3.60 -- Developed by Wouter Verkerke and David Kirkby[0m 
+                Copyright (C) 2000-2013 NIKHEF, University of California & Stanford University
+                All rights reserved, please read http://roofit.sourceforge.net/license.txt
+
+INFO in PDF_Datasets::initData -- Data initialized
+INFO in PDF_Datasets::initBkgPDF -- PDF initialized. CLs method ready.
+INFO in PDF_Datasets::initPDF -- PDF initialized
+[#1] INFO:Minization -- createNLL: caching constraint set under name CONSTR_OF_PDF_mass_model_FOR_OBS_mass with 1 entries
+[#1] INFO:Minization --  Including the following contraint terms in minimization: (norm_constant_constraint)
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#1] INFO:Eval -- RooRealVar::setRange(mass) new range named 'unblind0' created with bounds [4360,6360]
+
+[1mGammaCombo v1.3 [0m-- All rights reserved under GPLv3, http://www.gnu.org/licenses/gpl.txt
+
+Start parameter configuration:
+
+  No start parameter file was found, will use the default values
+  configured in ParameterAbs class. Start parameter files are searched
+  in the following order:
+  1. --parfile option
+  2. default start paramter file: plots/par/tutorial_dataset_PDF_Dataset_branchingRatio_start.dat
+
+=============== Global minimum (2*-Log(Likelihood)) is: 2*-325.811 = -651.621
+=============== Bkg minimum (2*-Log(Likelihood)) is: 2*-325.53 = -651.059
+Scan strategy:
+==============
+
+1. perform an initial scan
+2. perform an additional scan starting from each solution found
+
+first scan ...
+MethodDatasetsProbScan::scan1d_prob() : starting ... with 20 scanpoints...
+  5% [==                                                ] 10% [=====                                             ] 15% [=======                                           ] 20% [==========                                        ] 25% [============                                      ] 30% [===============                                   ] 35% [=================                                 ] 40% [====================                              ] 45% [======================                            ] 50% [=========================                         ] 55% [===========================                       ] 60% [==============================                    ] 65% [================================                  ] 70% [===================================               ] 75% [=====================================             ] 80% [========================================          ] 85% [==========================================        ] 90% [=============================================     ] 95% [===============================================   ]100% [==================================================]                                                          Wrote ToyTree to file
+analysing toys ...
+  5% [==                                                ] 10% [=====                                             ] 15% [=======                                           ] 20% [==========                                        ] 25% [============                                      ] 30% [===============                                   ] 35% [=================                                 ] 40% [====================                              ] 45% [======================                            ] 50% [=========================                         ] 55% [===========================                       ] 60% [==============================                    ] 65% [================================                  ] 70% [===================================               ] 75% [=====================================             ] 80% [========================================          ] 85% [==========================================        ] 90% [=============================================     ] 95% [===============================================   ]100% [==================================================]                                                          Best fit at: scanVar  = 1.02813e-07 with Chi2Min: -651.621
+Scan i: 0
+
+Results:
+========
+
+SOLUTION 0:
+
+  combination: PDF_Dataset
+  title:       default
+  date:        Wed Apr 15 13:30:53 2020
+  FCN: -325.811, EDM: 1.35112e-06
+  COV quality: 3, status: 0, confirmed: yes
+
+    Parameter                      FinalValue +/- Error (HESSE)
+  ----------------------------   ---------------------------------
+                         mean           5370 +/-          0 (const)
+          norm_constant_sigma          5e-10 +/-          0 (const)
+                        sigma           20.9 +/-          0 (const)
+     0                   Nbkg        4990.21 +/-    71.7603
+     1         branchingRatio    1.02813e-07 +/- 1.39999e-07
+     2               exponent    -0.000977098 +/- 2.70034e-05
+     3          norm_constant    1.04989e-08 +/- 5.00007e-10
+
+Computing CL values based on test statistic decision
+Using 2-sided test statistic
+CONFIDENCE INTERVALS for combination PDF_Dataset
+
+branchingRatio = [-0.00000001, 0.00000025] (0.00000010 -0.00000011 +0.00000015) @0.68CL, DatasetsProb
+
+branchingRatio = [-0.00000001, 0.00000040] (0.00000010 -0.00000011 +0.00000030) @0.95CL, DatasetsProb
+
+branchingRatio = [-0.00000001, 0.00000051] (0.00000010 -0.00000011 +0.00000041) @1.00CL, DatasetsProb
+
+
+
+
+branchingRatio = [  -0.00,    0.00] @0.68CL, DatasetsProb (boundary scan)
+
+branchingRatio = [  -0.00,    0.00] @0.95CL, DatasetsProb (boundary scan)
+
+branchingRatio = [  -0.00,    0.00] @1.00CL, DatasetsProb (boundary scan)
+
+branchingRatio = [  -0.00,    0.00] @1.00CL, DatasetsProb (boundary scan)
+
+saving parameters to: plots/par/tutorial_dataset_PDF_Dataset_branchingRatio.dat
+Dataset Scan Done
+saving plot (pdf and other formats) to: plots/pdf/tutorial_dataset_branchingRatio.pdf
+
+Real time 0:00:01, CP time 0.990

@@ -1,0 +1,117 @@
+
+[1mRooFit v3.60 -- Developed by Wouter Verkerke and David Kirkby[0m 
+                Copyright (C) 2000-2013 NIKHEF, University of California & Stanford University
+                All rights reserved, please read http://roofit.sourceforge.net/license.txt
+
+
+[1mGammaCombo v1.3 [0m-- All rights reserved under GPLv3, http://www.gnu.org/licenses/gpl.txt
+
+
+Combiner Configuration: 2D Gaus & Gaus 1
+=======================
+
+ 1. [measurement   2] 1D Gaussian (a_{obs} =  1.5)                                     
+ 2. [measurement   3] 2D Gaussian (a_{obs}, b_{obs})                                   
+
+Start parameter configuration:
+
+  No start parameter file was found, will use the default values
+  configured in ParameterAbs class. Start parameter files are searched
+  in the following order:
+  1. --parfile option
+  2. default start paramter file: plots/par/tutorial_tutorial5_a_gaus_start.dat
+
+Scan strategy:
+==============
+
+1. perform an initial scan
+2. perform an additional scan starting from each solution found
+
+first scan ...
+MethodProbScan::scan1d() : scanning 0%   MethodProbScan::scan1d() : scanning 10%   MethodProbScan::scan1d() : scanning 20%   MethodProbScan::scan1d() : scanning 30%   MethodProbScan::scan1d() : scanning 40%   MethodProbScan::scan1d() : scanning 50%   MethodProbScan::scan1d() : scanning 60%   MethodProbScan::scan1d() : scanning 70%   MethodProbScan::scan1d() : scanning 80%   MethodProbScan::scan1d() : scanning 90%   MethodProbScan::scan1d() : scan done.           
+Scan i: 0
+MethodProbScan::scan1d() : scanning 0%   MethodProbScan::scan1d() : scanning 10%   MethodProbScan::scan1d() : scanning 20%   MethodProbScan::scan1d() : scanning 30%   MethodProbScan::scan1d() : scanning 40%   MethodProbScan::scan1d() : scanning 50%   MethodProbScan::scan1d() : scanning 60%   MethodProbScan::scan1d() : scanning 70%   MethodProbScan::scan1d() : scanning 80%   MethodProbScan::scan1d() : scanning 90%   MethodProbScan::scan1d() : scan done.           
+
+Results:
+========
+
+SOLUTION 0:
+
+  combination: tutorial5
+  title:       2D Gaus & Gaus 1
+  date:        Wed Apr 15 13:30:49 2020
+  FCN: 1.54028, EDM: 3.04952e-19
+  COV quality: 3, status: 0, confirmed: yes
+
+    Parameter                      FinalValue +/- Error (HESSE)
+  ----------------------------   ---------------------------------
+     0                 a_gaus         1.2002 +/-   0.462758
+     1                 b_gaus        2.16012 +/-   0.846813
+
+Computing CL values based on test statistic decision
+Using 2-sided test statistic
+CONFIDENCE INTERVALS for combination tutorial5
+
+a_gaus = [   0.74,    1.66] (   1.20 -   0.46 +   0.46) @0.68CL, Prob
+
+a_gaus = [   0.27,    2.13] (   1.20 -   0.93 +   0.93) @0.95CL, Prob
+
+a_gaus = [   -0.2,     2.5] (    1.2 -    1.4 +    1.3) @1.00CL, Prob
+
+
+
+
+a_gaus = [  -2.50,    2.50] @1.00CL, Prob (boundary scan)
+
+Fit quality: chi2/(nObs-nPar) = 1.54/(3-2), P = 21.5%
+
+PLUGIN scan starting ...
+  2%
+  4%
+  6%
+  8%
+ 11%
+ 13%
+ 15%
+ 17%
+ 19%
+ 22%
+ 24%
+ 26%
+ 28%
+ 30%
+ 33%
+ 35%
+ 37%
+ 39%
+ 41%
+ 44%
+ 46%
+ 48%
+ 50%
+ 52%
+ 55%
+ 57%
+ 59%
+ 61%
+ 63%
+ 66%
+ 68%
+ 70%
+ 72%
+ 74%
+ 77%
+ 79%
+ 81%
+ 83%
+ 85%
+ 88%
+ 90%
+ 92%
+ 94%
+ 96%
+ 99%
+100%
+saving toys to: root/scan1dPlugin_tutorial5_a_gaus/scan1dPlugin_tutorial5_a_gaus_run1.root
+
+Real time 0:00:00, CP time 0.710

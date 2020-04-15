@@ -1,0 +1,45 @@
+
+[1mRooFit v3.60 -- Developed by Wouter Verkerke and David Kirkby[0m 
+                Copyright (C) 2000-2013 NIKHEF, University of California & Stanford University
+                All rights reserved, please read http://roofit.sourceforge.net/license.txt
+
+INFO in PDF_Datasets::initData -- Data initialized
+INFO in PDF_Datasets::initBkgPDF -- PDF initialized. CLs method ready.
+INFO in PDF_Datasets::initPDF -- PDF initialized
+[#1] INFO:Minization -- createNLL: caching constraint set under name CONSTR_OF_PDF_mass_model_FOR_OBS_mass with 1 entries
+[#1] INFO:Minization --  Including the following contraint terms in minimization: (norm_constant_constraint)
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#1] INFO:Eval -- RooRealVar::setRange(mass) new range named 'unblind0' created with bounds [4360,6360]
+
+[1mGammaCombo v1.3 [0m-- All rights reserved under GPLv3, http://www.gnu.org/licenses/gpl.txt
+
+loading scanner: plots/scanner/tutorial_dataset_scanner_PDF_Dataset_DatasetsProb_branchingRatio.root
+analysing toys ...
+  5% [==                                                ] 10% [=====                                             ] 15% [=======                                           ] 20% [==========                                        ] 25% [============                                      ] 30% [===============                                   ] 35% [=================                                 ] 40% [====================                              ] 45% [======================                            ] 50% [=========================                         ] 55% [===========================                       ] 60% [==============================                    ] 65% [================================                  ] 70% [===================================               ] 75% [=====================================             ] 80% [========================================          ] 85% [==========================================        ] 90% [=============================================     ] 95% [===============================================   ]100% [==================================================]                                                          Best fit at: scanVar  = 1.02813e-07 with Chi2Min: -651.621
+Computing CL values based on test statistic decision
+Using 1-sided test statistic
+[#1] INFO:Plotting -- RooTreeData::plotOn: plotting 5000 events out of 5000 total events
+saving plot (pdf and other formats) to: plots/pdf/tutorial_dataset_branchingRatio_cls_fit.pdf
+CONFIDENCE INTERVALS for combination PDF_Dataset
+
+branchingRatio = [-0.000000013, 0.000000171] (0.000000103 -0.000000116 +0.000000068) @0.68CL, DatasetsProb
+
+branchingRatio = [-0.00000001, 0.00000035] (0.00000010 -0.00000011 +0.00000025) @0.95CL, DatasetsProb
+
+branchingRatio = [-0.00000001, 0.00000051] (0.00000010 -0.00000011 +0.00000041) @1.00CL, DatasetsProb
+
+
+
+
+branchingRatio = [  -0.00,    0.00] @0.68CL, DatasetsProb (boundary scan)
+
+branchingRatio = [  -0.00,    0.00] @0.95CL, DatasetsProb (boundary scan)
+
+branchingRatio = [  -0.00,    0.00] @1.00CL, DatasetsProb (boundary scan)
+
+branchingRatio = [  -0.00,    0.00] @1.00CL, DatasetsProb (boundary scan)
+
+Dataset Scan Done
+saving plot (pdf and other formats) to: plots/pdf/tutorial_dataset_branchingRatio_cls.pdf
+
+Real time 0:00:00, CP time 0.230
