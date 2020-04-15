@@ -27,32 +27,36 @@ jobs:
     - uses: actions/checkout@master
 
     # Runs a single command using the runners shell
-    - name: Get docker image
-      run: docker pull gammacombo/gcimage
+    #- name: Get docker image
+      #run: docker pull gammacombo/gcimage
 
-    - name: Make docker container
-      run: |
-        docker run --name gccont gammacombo/gcimage /bin/bash -c "sudo mkdir /code"
-        docker cp . gccont:/code
-        docker commit gccont gccontwfiles
+    #- name: Make docker container
+      #run: |
+        #docker run --name gccont gammacombo/gcimage /bin/bash -c "sudo mkdir /code"
+        #docker cp . gccont:/code
+        #docker commit gccont gccontwfiles
 
-    - name: Compile GC and save image
-      run: |
-        docker run --name gcbuild gccontwfiles /bin/bash -c "sudo mkdir /code/build; cd /code/build; sudo cmake ..; sudo make install"
-        docker commit gcbuild gcbuiltimage
+    #- name: Compile GC and save image
+      #run: |
+        #docker run --name gcbuild gccontwfiles /bin/bash -c "sudo mkdir /code/build; cd /code/build; sudo cmake ..; sudo make install"
+        #docker commit gcbuild gcbuiltimage
 
-    - name: Run CI Tests
-      run: docker run --name gcrun gcbuiltimage /bin/bash -c "cd /code; sudo python scripts/run_ci_tests.py"
+    #- name: Run CI Tests
+      #run: docker run --name gcrun gcbuiltimage /bin/bash -c "cd /code; sudo python scripts/run_ci_tests.py"
 
-    - name: Copy output
-      run: docker cp gcrun:/code/tutorial/ci_logs .
+    #- name: Copy output
+      #run: docker cp gcrun:/code/tutorial/ci_logs .
+
+    - uses: webfactory/ssh-agent@v0.2.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
     - name: Publish output
       run: |
         git clone git@github.com:gammacombo/gammacombo.github.io.git
-        mv ci_logs gammacombo.github.io
         cd gammacombo.github.io
-        git add ci_logs/*
+        echo "Hello" >> ci.html
+        git add ci.html
         git commit -m "CI test results"
         git push origin master
       #uses: ad-m/github-push-action@master
