@@ -83,7 +83,7 @@ def write_html_entry(cmd, plot):
 def check_comb_prob_run():
   cmd  = 'bin/tutorial -c 5 --var a_gaus --ps 1 --grouppos def:0.8'
   outn = 'comb_prob_run'
-  os.system('%s > ci_logs/%s.log'%(cmd,outn))
+  os.system('%s > ci_logs/%s.log 2>&1'%(cmd,outn))
   check_comb_stdout('ci_logs/%s.log'%outn)
   check_comb_dat('plots/par/tutorial_tutorial5_a_gaus.dat')
   copy_plot('tutorial_tutorial5_a_gaus',outn)
@@ -93,7 +93,7 @@ def check_comb_prob_run():
 def check_comb_prob_plot():
   cmd  = 'bin/tutorial -c 5 --var a_gaus --ps 1 -a plot --grouppos def:0.8'
   outn = 'comb_prob_plot'
-  os.system('%s > ci_logs/%s.log'%(cmd,outn))
+  os.system('%s > ci_logs/%s.log 2>&1'%(cmd,outn))
   check_comb_stdout('ci_logs/%s.log'%outn)
   check_comb_dat('plots/par/tutorial_tutorial5_a_gaus.dat')
   copy_plot('tutorial_tutorial5_a_gaus',outn)
@@ -103,14 +103,14 @@ def check_comb_prob_plot():
 def check_comb_plugin_gen():
   cmd  = 'bin/tutorial -c 5 --var a_gaus -a pluginbatch --ntoys 5'
   outn = 'comb_plugin_gen'
-  os.system('%s > ci_logs/%s.log'%(cmd,outn))
+  os.system('%s > ci_logs/%s.log 2>&1'%(cmd,outn))
   check_comb_stdout('ci_logs/%s.log'%outn)
   return True
 
 def check_comb_plugin_run():
   cmd  = 'bin/tutorial -c 5 --var a_gaus -a plugin --ntoys 5 --ps 1 --grouppos def:0.8'
   outn = 'comb_plugin_run'
-  os.system('%s > ci_logs/%s.log'%(cmd,outn))
+  os.system('%s > ci_logs/%s.log 2>&1'%(cmd,outn))
   check_comb_stdout('ci_logs/%s.log'%outn)
   copy_plot('tutorial_tutorial5_a_gaus_plugin',outn)
   write_html_entry( cmd, outn )
@@ -119,14 +119,14 @@ def check_comb_plugin_run():
 def check_comb_plugin_plot():
   cmd  = 'bin/tutorial -c 5 --var a_gaus -a plugin -a plot --ps 1 --grouppos def:0.8'
   outn = 'comb_plugin_plot'
-  os.system('%s > ci_logs/%s.log'%(cmd,outn))
+  os.system('%s > ci_logs/%s.log 2>&1'%(cmd,outn))
   check_comb_stdout('ci_logs/%s.log'%outn)
   copy_plot('tutorial_tutorial5_a_gaus_plugin',outn)
   write_html_entry( cmd, outn )
   return True
 
 def check_dsets_build_workspace():
-  os.system('bin/tutorial_dataset_build_workspace > ci_logs/dsets_build_workspace.log')
+  os.system('bin/tutorial_dataset_build_workspace > ci_logs/dsets_build_workspace.log 2>&1')
   assert( os.path.exists(os.path.join(os.getcwd(),'workspace.root')) )
   return True
 
@@ -134,7 +134,7 @@ def check_dsets_prob_run():
   assert( os.path.exists(os.path.join(os.getcwd(),'workspace.root')) )
   cmd  = 'bin/tutorial_dataset --var branchingRatio --scanrange 0:5.e-7 --ps 1 --npoints 20 --grouppos def:0.8'
   outn = 'dsets_prob_run'
-  os.system('%s > ci_logs/%s.log'%(cmd,outn))
+  os.system('%s > ci_logs/%s.log 2>&1'%(cmd,outn))
   check_dsets_stdout('ci_logs/%s.log'%outn)
   check_dsets_dat('plots/par/tutorial_dataset_PDF_Dataset_branchingRatio.dat')
   copy_plot('tutorial_dataset_branchingRatio',outn)
@@ -145,7 +145,7 @@ def check_dsets_prob_plot():
   assert( os.path.exists(os.path.join(os.getcwd(),'workspace.root')) )
   cmd  = 'bin/tutorial_dataset --var branchingRatio --scanrange 0:5.e-7 -a plot --ps 1 --npoints 20 --grouppos def:0.8'
   outn = 'dsets_prob_plot'
-  os.system('%s > ci_logs/%s.log'%(cmd,outn))
+  os.system('%s > ci_logs/%s.log 2>&1'%(cmd,outn))
   check_dsets_stdout('ci_logs/%s.log'%outn)
   check_dsets_dat('plots/par/tutorial_dataset_PDF_Dataset_branchingRatio.dat')
   copy_plot('tutorial_dataset_branchingRatio',outn)
@@ -156,7 +156,7 @@ def check_dsets_prob_plot_cls():
   assert( os.path.exists(os.path.join(os.getcwd(),'workspace.root')) )
   cmd  = 'bin/tutorial_dataset --var branchingRatio --scanrange 0:5.e-7 -a plot --ps 1 --npoints 20 --cls 1 --teststat 1 --grouppos def:0.8'
   outn = 'dsets_prob_plot_cls'
-  os.system('%s > ci_logs/%s.log'%(cmd,outn))
+  os.system('%s > ci_logs/%s.log 2>&1'%(cmd,outn))
   check_dsets_stdout_cls('ci_logs/%s.log'%outn)
   copy_plot('tutorial_dataset_branchingRatio_cls',outn)
   write_html_entry( cmd, outn )
@@ -166,7 +166,7 @@ def check_dsets_plugin_gen():
   assert( os.path.exists(os.path.join(os.getcwd(),'workspace.root')) )
   cmd  = 'bin/tutorial_dataset --var branchingRatio --scanrange 0:5.e-7 -a pluginbatch --ps 1 --npoints 20 --npointstoy 20 --ntoys 5'
   outn = 'dsets_plugin_gen'
-  os.system('%s > ci_logs/%s.log'%(cmd,outn))
+  os.system('%s > ci_logs/%s.log 2>&1'%(cmd,outn))
   check_dsets_stdout('ci_logs/%s.log'%outn)
   return True
 
@@ -174,7 +174,7 @@ def check_dsets_plugin_run():
   assert( os.path.exists(os.path.join(os.getcwd(),'workspace.root')) )
   cmd  = 'bin/tutorial_dataset --var branchingRatio --scanrange 0:5.e-7 -a plugin --ps 1 --npoints 20 --npointstoy 20'
   outn = 'dsets_plugin_run'
-  os.system('%s > ci_logs/%s.log'%(cmd,outn))
+  os.system('%s > ci_logs/%s.log 2>&1'%(cmd,outn))
   check_dsets_stdout('ci_logs/%s.log'%outn)
   copy_plot('tutorial_dataset_branchingRatio_plugin',outn)
   write_html_entry( cmd, outn )
@@ -184,7 +184,7 @@ def check_dsets_plugin_plot():
   assert( os.path.exists(os.path.join(os.getcwd(),'workspace.root')) )
   cmd  = 'bin/tutorial_dataset --var branchingRatio --scanrange 0:5.e-7 -a plugin -a plot --ps 1 --npoints 20'
   outn = 'dsets_plugin_plot'
-  os.system('%s > ci_logs/%s.log'%(cmd,outn))
+  os.system('%s > ci_logs/%s.log 2>&1'%(cmd,outn))
   check_dsets_stdout('ci_logs/%s.log'%outn)
   copy_plot('tutorial_dataset_branchingRatio_plugin',outn)
   write_html_entry( cmd, outn )
@@ -194,7 +194,7 @@ def check_dsets_plugin_plot_cls():
   assert( os.path.exists(os.path.join(os.getcwd(),'workspace.root')) )
   cmd  = 'bin/tutorial_dataset --var branchingRatio --scanrange 0:5.e-7 -a plugin -a plot --ps 1 --npoints 20 --cls 1 --teststat 1'
   outn = 'dsets_plugin_plot_cls'
-  os.system('%s > ci_logs/%s.log'%(cmd,outn))
+  os.system('%s > ci_logs/%s.log 2>&1'%(cmd,outn))
   check_dsets_stdout_cls('ci_logs/%s.log'%outn)
   copy_plot('tutorial_dataset_branchingRatio_plugin_cls',outn)
   write_html_entry( cmd, outn )
