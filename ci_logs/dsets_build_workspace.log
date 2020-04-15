@@ -1,0 +1,227 @@
+
+[1mRooFit v3.60 -- Developed by Wouter Verkerke and David Kirkby[0m 
+                Copyright (C) 2000-2013 NIKHEF, University of California & Stanford University
+                All rights reserved, please read http://roofit.sourceforge.net/license.txt
+
+[#1] INFO:Minization -- p.d.f. provides expected number of events, including extended term in likelihood.
+[#1] INFO:Minization --  Including the following contraint terms in minimization: (norm_constant_constraint)
+[#1] INFO:Fitting -- RooAddition::defaultErrorLevel(nll_mass_model_data_with_constr) Summation contains a RooNLLVar, using its error level
+[#1] INFO:Minization -- RooMinimizer::optimizeConst: activating const optimization
+[#1] INFO:Minization --  The following expressions have been identified as constant and will be precalculated and cached: (g)
+[#1] INFO:Minization --  The following expressions will be evaluated in cache-and-track mode: (background_model)
+ **********
+ **    1 **SET PRINT           1
+ **********
+ **********
+ **    2 **SET NOGRAD
+ **********
+ PARAMETER DEFINITIONS:
+    NO.   NAME         VALUE      STEP SIZE      LIMITS
+     1 Nbkg         4.90000e+03  1.00000e+03    0.00000e+00  1.00000e+04
+     2 branchingRatio   1.00000e-07  5.50000e-07   -1.00000e-06  1.00000e-04
+     3 exponent    -1.00000e-03  2.00000e-01   -1.00000e+00  1.00000e+00
+     4 norm_constant   1.00000e-08  5.00000e-09    1.00000e-20  1.00000e-06
+ **********
+ **    3 **SET ERR         0.5
+ **********
+ **********
+ **    4 **SET PRINT           1
+ **********
+ **********
+ **    5 **SET STR           1
+ **********
+ NOW USING STRATEGY  1: TRY TO BALANCE SPEED AGAINST RELIABILITY
+ **********
+ **    6 **MIGRAD        2000           1
+ **********
+ FIRST CALL TO USER FUNCTION AT NEW START POINT, WITH IFLAG=4.
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 4.84458e+08
+ START MIGRAD MINIMIZATION.  STRATEGY  1.  CONVERGENCE WHEN EDM .LT. 1.00e-03
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 4.84458e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 4.84458e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 4.84458e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 4.84458e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 4.84458e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 4.84458e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 4.84458e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 4.84458e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 4.84458e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 4.84458e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 4.84458e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 4.84458e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 4.84458e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 4.84458e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 5.34423e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 4.346e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 4.90553e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 4.78364e+08
+ FCN=-324.131 FROM MIGRAD    STATUS=INITIATE       18 CALLS          19 TOTAL
+                     EDM= unknown      STRATEGY= 1      NO ERROR MATRIX       
+  EXT PARAMETER               CURRENT GUESS       STEP         FIRST   
+  NO.   NAME      VALUE            ERROR          SIZE      DERIVATIVE 
+   1  Nbkg         4.90000e+03   1.00000e+03   2.01400e-01  -9.15824e+01
+   2  branchingRatio   1.00000e-07   5.50000e-07   5.43044e-02  -2.42559e+01
+   3  exponent    -1.00000e-03   2.00000e-01   2.01358e-01  -3.14878e+04
+   4  norm_constant   1.00000e-08   5.00000e-09   5.20130e-02  -1.96482e+02
+                               ERR DEF= 0.5
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97627e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97627e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97627e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97627e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97627e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97627e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97627e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97627e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97627e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97297e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97822e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97616e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97614e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97614e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97614e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97614e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97614e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97614e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97614e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97294e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97811e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97839e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97803e+08
+ MIGRAD MINIMIZATION HAS CONVERGED.
+ MIGRAD WILL VERIFY CONVERGENCE AND ERROR MATRIX.
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97839e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97803e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97884e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97877e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97839e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97839e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97839e+08
+ COVARIANCE MATRIX CALCULATED SUCCESSFULLY
+ FCN=-325.811 FROM MIGRAD    STATUS=CONVERGED      71 CALLS          72 TOTAL
+                     EDM=8.25913e-06    STRATEGY= 1      ERROR MATRIX ACCURATE 
+  EXT PARAMETER                                   STEP         FIRST   
+  NO.   NAME      VALUE            ERROR          SIZE      DERIVATIVE 
+   1  Nbkg         4.99006e+03   7.18162e+01   1.76336e-04  -1.39051e-01
+   2  branchingRatio   1.02859e-07   1.40163e-07   1.63139e-04  -1.47753e-02
+   3  exponent    -9.77127e-04   2.70034e-05   3.34936e-07  -3.77221e+01
+   4  norm_constant   1.04986e-08   5.00018e-10   6.10939e-05  -3.68567e-01
+                               ERR DEF= 0.5
+ EXTERNAL ERROR MATRIX.    NDIM=  25    NPAR=  4    ERR DEF=0.5
+  5.158e+03 -1.765e-06  3.848e-05 -3.336e-12 
+ -1.765e-06  1.965e-14 -4.043e-13  2.487e-18 
+  3.848e-05 -4.043e-13  7.292e-10 -7.649e-19 
+ -3.336e-12  2.487e-18 -7.649e-19  2.500e-19 
+ PARAMETER  CORRELATION COEFFICIENTS  
+       NO.  GLOBAL      1      2      3      4
+        1  0.17543   1.000 -0.175  0.020 -0.000
+        2  0.20659  -0.175  1.000 -0.107  0.035
+        3  0.10689   0.020 -0.107  1.000 -0.000
+        4  0.03622  -0.000  0.035 -0.000  1.000
+ **********
+ **    7 **SET ERR         0.5
+ **********
+ **********
+ **    8 **SET PRINT           1
+ **********
+ **********
+ **    9 **HESSE        2000
+ **********
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97884e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97877e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97884e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97882e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97883e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97884e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97884e+08
+[#0] WARNING:Eval -- RooAbsPdf::getLogVal(norm_constant_constraint) WARNING: large likelihood value: 7.97884e+08
+ COVARIANCE MATRIX CALCULATED SUCCESSFULLY
+ FCN=-325.811 FROM HESSE     STATUS=OK             23 CALLS          95 TOTAL
+                     EDM=8.25968e-06    STRATEGY= 1      ERROR MATRIX ACCURATE 
+  EXT PARAMETER                                INTERNAL      INTERNAL  
+  NO.   NAME      VALUE            ERROR       STEP SIZE       VALUE   
+   1  Nbkg         4.99006e+03   7.18175e+01   3.52673e-05  -1.98727e-03
+   2  branchingRatio   1.02859e-07   1.40164e-07   3.26279e-05  -1.36142e+00
+   3  exponent    -9.77127e-04   2.70036e-05   6.69872e-08  -9.77127e-04
+   4  norm_constant   1.04986e-08   5.00010e-10   1.22188e-05  -1.36551e+00
+                               ERR DEF= 0.5
+ EXTERNAL ERROR MATRIX.    NDIM=  25    NPAR=  4    ERR DEF=0.5
+  5.158e+03 -1.766e-06  3.853e-05 -6.216e-13 
+ -1.766e-06  1.965e-14 -4.046e-13  2.456e-18 
+  3.853e-05 -4.046e-13  7.292e-10 -1.576e-19 
+ -6.216e-13  2.456e-18 -1.576e-19  2.500e-19 
+ PARAMETER  CORRELATION COEFFICIENTS  
+       NO.  GLOBAL      1      2      3      4
+        1  0.17553   1.000 -0.175  0.020 -0.000
+        2  0.20663  -0.175  1.000 -0.107  0.035
+        3  0.10695   0.020 -0.107  1.000 -0.000
+        4  0.03580  -0.000  0.035 -0.000  1.000
+[#1] INFO:Minization -- RooMinimizer::optimizeConst: deactivating const optimization
+Info in <TCanvas::Print>: pdf file plots/pdf/data_and_fit_in_workspace.pdf has been created
+
+  RooFitResult: minimized FCN value: -325.811, estimated distance to minimum: 8.25968e-06
+                covariance matrix quality: Full, accurate covariance matrix
+                Status : MINIMIZE=0 HESSE=0 
+
+    Floating Parameter    FinalValue +/-  Error   
+  --------------------  --------------------------
+                  Nbkg    4.9901e+03 +/-  7.18e+01
+        branchingRatio    1.0286e-07 +/-  1.40e-07
+              exponent   -9.7713e-04 +/-  2.70e-05
+         norm_constant    1.0499e-08 +/-  5.00e-10
+
+[#1] INFO:ObjectHandling -- RooWorkspace::import(dataset_workspace) importing RooAddPdf::mass_model
+[#1] INFO:ObjectHandling -- RooWorkspace::import(dataset_workspace) importing RooGaussian::g
+[#1] INFO:ObjectHandling -- RooWorkspace::import(dataset_workspace) importing RooRealVar::mass
+[#1] INFO:ObjectHandling -- RooWorkspace::import(dataset_workspace) importing RooRealVar::mean
+[#1] INFO:ObjectHandling -- RooWorkspace::import(dataset_workspace) importing RooRealVar::sigma
+[#1] INFO:ObjectHandling -- RooWorkspace::import(dataset_workspace) importing RooFormulaVar::Nsig
+[#1] INFO:ObjectHandling -- RooWorkspace::import(dataset_workspace) importing RooRealVar::branchingRatio
+[#1] INFO:ObjectHandling -- RooWorkspace::import(dataset_workspace) importing RooRealVar::norm_constant
+[#1] INFO:ObjectHandling -- RooWorkspace::import(dataset_workspace) importing RooExponential::background_model
+[#1] INFO:ObjectHandling -- RooWorkspace::import(dataset_workspace) importing RooRealVar::exponent
+[#1] INFO:ObjectHandling -- RooWorkspace::import(dataset_workspace) importing RooRealVar::Nbkg
+[#1] INFO:ObjectHandling -- RooWorkspace::import(dataset_workspace) importing RooExtendPdf::extended_bkg_model
+[#1] INFO:ObjectHandling -- RooWorkspace::import(dataset_workspace) importing RooExponential::bkg_only_model
+[#1] INFO:ObjectHandling -- RooWorkspace::import(dataset_workspace) importing dataset data
+[#1] INFO:ObjectHandling -- RooWorkspace::import(dataset_workspace) importing RooGaussian::norm_constant_constraint
+[#1] INFO:ObjectHandling -- RooWorkspace::import(dataset_workspace) importing RooRealVar::norm_constant_glob_obs
+[#1] INFO:ObjectHandling -- RooWorkspace::import(dataset_workspace) importing RooRealVar::norm_constant_sigma
+Info in <RooWorkspace::SaveAs>: ROOT file workspace.root has been created
