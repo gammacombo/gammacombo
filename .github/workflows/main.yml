@@ -24,7 +24,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@master
 
     # Runs a single command using the runners shell
     - name: Get docker image
@@ -32,19 +32,32 @@ jobs:
 
     - name: Make docker container
       run: |
-        docker run --name gccont gammacombo/gcimage /bin/bash -c "mkdir /code"
+        docker run --name gccont gammacombo/gcimage /bin/bash -c "sudo mkdir /code"
         docker cp . gccont:/code
         docker commit gccont gccontwfiles
 
     - name: Compile GC and save image
       run: |
-        docker run --name gcbuild gccontwfiles /bin/bash -c "mkdir /code/build; cd /code/build; cmake ..; make install"
+        docker run --name gcbuild gccontwfiles /bin/bash -c "sudo mkdir /code/build; cd /code/build; sudo cmake ..; sudo make install"
         docker commit gcbuild gcbuiltimage
 
     - name: Run CI Tests
       run: docker run --name gcrun gcbuiltimage /bin/bash -c "cd /code; sudo python scripts/run_ci_tests.py"
 
-    - name: Publish Output
+    - name: Copy output
       run: docker cp gcrun:/code/tutorial/ci_logs .
-      # need to figure out what to now do with the output (ideally push it to gammacombo.github.io/ci_logs?
+
+    - name: Publish output
+      run: |
+        git clone git@github.com:gammacombo/gammacombo.github.io.git
+        mv ci_logs gammacombo.github.io
+        cd gammacombo.github.io
+        git add ci_logs/*
+        git commit -m "CI test results"
+        git push origin master
+      #uses: ad-m/github-push-action@master
+      #with:
+        #github_token: ${{ secrets.GITHUB_TOKEN }}
+
+    # need to figure out what to now do with the output (ideally push it to gammacombo.github.io/ci_logs?
 
