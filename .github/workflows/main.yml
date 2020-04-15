@@ -53,8 +53,8 @@ jobs:
 
     - name: Publish output
       run: |
-        git config user.email "gcci@cern.ch"
-        git config user.name "gammacombo"
+        git config --local user.email "gcci@cern.ch"
+        git config --local user.name "gammacombo"
         git clone git@github.com:gammacombo/gammacombo.github.io.git
         cd gammacombo.github.io
         echo "Hello" >> ci.html
