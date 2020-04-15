@@ -1,7 +1,8 @@
 from __future__ import print_function
 import os
 
-assert( os.path.basename( os.getcwd() ) == 'gammacombo' )
+assert( os.path.exists( os.path.join( os.getcwd(), 'build' ) ) )
+assert( os.path.exists( os.path.join( os.getcwd(), 'core' ) ) )
 assert( os.path.exists( os.path.join( os.getcwd(), 'tutorial' ) ) )
 os.chdir('tutorial')
 if not os.path.exists('ci_logs'): os.mkdir('ci_logs')
