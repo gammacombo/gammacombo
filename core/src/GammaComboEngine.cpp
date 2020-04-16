@@ -475,7 +475,7 @@ void GammaComboEngine::scaleStatAndSystErrors()
     if ( pdf[i]==0 ) continue;
     for ( int iObs=0; iObs<pdf[i]->getNobs(); iObs++ ) {
       pdf[i]->StatErr[iObs] *= arg->scaleerr;
-      pdf[i]->StatErr[iObs] *= arg->scaleerr;
+      pdf[i]->SystErr[iObs] *= arg->scaleerr;
     }
     pdf[i]->buildCov();
     pdf[i]->buildPdf();
