@@ -305,10 +305,10 @@ RooFitResult* PDF_Datasets::fit(RooDataSet* dataToFit) {
 
     RooMsgService::instance().setSilentMode(kFALSE);
     RooMsgService::instance().setGlobalKillBelow(INFO);
-    fitStatus = result->status();
+    this->fitStatus = result->status();
     // RooAbsReal* nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE));
     RooAbsReal* nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)));
-    minNll = nll->getVal();
+    this->minNll = nll->getVal();
     delete nll;
 
     return result;
@@ -333,36 +333,58 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit, TString signalvar) {
     //     // exit(EXIT_FAILURE);
     // }
     // std::cout << "WARNING in PDF_Datasets::fitBkg -- Fitting bkg model as sig+bkg model with " << signalvar << " to zero!" << std::endl;
+    if(pdfBkg){
 
-    double parvalue = getWorkspace()->var(signalvar)->getVal();
-    bool isconst = getWorkspace()->var(signalvar)->isConstant();
-    getWorkspace()->var(signalvar)->setVal(0.0);
-    getWorkspace()->var(signalvar)->setConstant(true);
+        // Turn off RooMsg
+        RooMsgService::instance().setGlobalKillBelow(ERROR);
+        RooMsgService::instance().setSilentMode(kTRUE);
+        // unfortunately Minuit2 does not initialize the status of the roofitresult, if all parameters are constant. Therefore need to stay with standard Minuit fitting.
+        // RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Minimizer("Minuit2", "Migrad"));
+        RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
+        RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit, RooFit::Extended(kTRUE));
 
-    // Turn off RooMsg
-    RooMsgService::instance().setGlobalKillBelow(ERROR);
-    RooMsgService::instance().setSilentMode(kTRUE);
-    // Choose Dataset to fit to
+        RooMsgService::instance().setSilentMode(kFALSE);
+        RooMsgService::instance().setGlobalKillBelow(INFO);
 
-    // unfortunately Minuit2 does not initialize the status of the roofitresult, if all parameters are constant. Therefore need to stay with standard Minuit fitting.
-    // RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Minimizer("Minuit2", "Migrad"));
+        this->fitStatus = result->status();
+        this->minNllBkg = nll_bkg->getVal();
+        delete nll_bkg;
+        return result;
 
-    RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
-    // RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
-    RooMsgService::instance().setSilentMode(kFALSE);
-    RooMsgService::instance().setGlobalKillBelow(INFO);
-    this->fitStatus = result->status();
-    // RooAbsReal* nll_bkg = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE));
-    // RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit, RooFit::Extended(kTRUE));
-    RooAbsReal* nll_bkg = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)));
-    // RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
-    this->minNllBkg = nll_bkg->getVal();
+    }
 
-    getWorkspace()->var(signalvar)->setVal(parvalue);
-    getWorkspace()->var(signalvar)->setConstant(isconst);    
-    delete nll_bkg;
 
-    return result;
+    else {
+        double parvalue = getWorkspace()->var(signalvar)->getVal();
+        bool isconst = getWorkspace()->var(signalvar)->isConstant();
+        getWorkspace()->var(signalvar)->setVal(0.0);
+        getWorkspace()->var(signalvar)->setConstant(true);
+
+        // Turn off RooMsg
+        RooMsgService::instance().setGlobalKillBelow(ERROR);
+        RooMsgService::instance().setSilentMode(kTRUE);
+        // Choose Dataset to fit to
+
+        // unfortunately Minuit2 does not initialize the status of the roofitresult, if all parameters are constant. Therefore need to stay with standard Minuit fitting.
+        // RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Minimizer("Minuit2", "Migrad"));
+
+        RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
+        // RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
+        RooMsgService::instance().setSilentMode(kFALSE);
+        RooMsgService::instance().setGlobalKillBelow(INFO);
+        this->fitStatus = result->status();
+        // RooAbsReal* nll_bkg = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE));
+        // RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit, RooFit::Extended(kTRUE));
+        RooAbsReal* nll_bkg = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)));
+        // RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
+        this->minNllBkg = nll_bkg->getVal();
+
+        getWorkspace()->var(signalvar)->setVal(parvalue);
+        getWorkspace()->var(signalvar)->setConstant(isconst);    
+        delete nll_bkg;
+
+        return result;
+    }
 };
 
 void   PDF_Datasets::generateToys(int SeedShift) {
@@ -387,7 +409,11 @@ void   PDF_Datasets::generateBkgToys(int SeedShift, TString signalvar) {
     //     // exit(EXIT_FAILURE);
     // }
     // std::cout << "WARNING in PDF_Datasets::generateBkgToys -- Fitting bkg model as sig+bkg model with " << signalvar << " to zero!" << std::endl;
-    // if(isBkgPdfSet)
+    if(pdfBkg){
+        RooDataSet* toys = pdfBkg->generate(*observables, wspc->data(dataName)->numEntries(),false,true,"",false,true);
+        this->toyBkgObservables  = toys;
+    }
+    else
     {
         double parvalue = getWorkspace()->var(signalvar)->getVal();
         bool isconst = getWorkspace()->var(signalvar)->isConstant();
