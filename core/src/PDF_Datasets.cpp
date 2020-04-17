@@ -161,7 +161,7 @@ void PDF_Datasets::initPDF(const TString& name) {
 };
 
 void PDF_Datasets::initBkgPDF(const TString& name) {
-    std::cout << "PDF_Datasets::initBkgPDF() currently useless, as the Bkg pdf is taken as the full pdf with scanvar=0" << std::endl;
+    // std::cout << "PDF_Datasets::initBkgPDF() currently useless, as the Bkg pdf is taken as the full pdf with scanvar=0" << std::endl;
     if (isBkgPdfSet) {
         std::cout << "ERROR in PDF_Datasets::initBkgPDF -- Bkg PDF already set" << std::endl;
         exit(EXIT_FAILURE);
