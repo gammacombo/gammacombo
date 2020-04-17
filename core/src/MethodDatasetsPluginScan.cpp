@@ -29,7 +29,7 @@
 MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF_Datasets* PDF, OptParser* opt):
     MethodPluginScan(probScan, PDF, opt),
     pdf                 (PDF),
-    drawPlots           (false),
+    drawPlots           (arg->controlplots),
     explicitInputFile   (false)
 {
     chi2minGlobalFound = true; // the free fit to data must be done and must be saved to the workspace before gammacombo is even called
@@ -691,7 +691,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         	cls_vals.push_back(cls_val);
         }
 
-        if (arg->debug || arg->controlplot ){
+        if (arg->debug || drawPlots ){
             TH1F *bkg_pvals_cls  = new TH1F(Form("bkg_clsvals_bin%d",i), "bkg cls p values", 50, -0.1, 1.1);
             bkg_pvals_cls->SetLineColor(1);
             bkg_pvals_cls->SetLineWidth(3);
@@ -797,10 +797,10 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         }
     }
 
-    if ( arg->controlplot ) makeControlPlots( sampledBValues, sampledSchi2Values );
-    if ( arg->controlplot ) makeControlPlotsBias( sampledBiasValues );
+    if ( drawPlots ) makeControlPlots( sampledBValues, sampledSchi2Values );
+    if ( drawPlots ) makeControlPlotsBias( sampledBiasValues );
 
-    if ( arg->controlplot ){
+    if ( drawPlots ){
         TCanvas *biascanv = newNoWarnTCanvas("biascanv", "biascanv");
         biascanv->SetRightMargin(0.11);
         h_sig_bkgtoys->GetXaxis()->SetTitle("POI residual for bkg-only toys");
@@ -823,7 +823,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         leg->Draw("same");
         savePlot(biascanv, "bkg-only_toyfit");
         hCLb->Draw("PE");
-        hCLb->GetXaxis()->SetTitle("POI value");
+        hCLb->GetXaxis()->SetTitle(w->var(scanVar1)->GetTitle());
         hCLb->GetYaxis()->SetTitle("CL_{b}");
         hCLb->GetXaxis()->SetTitleSize(0.06);
         hCLb->GetYaxis()->SetTitleSize(0.06);
@@ -839,6 +839,15 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         bkg_pvals->SetXTitle("bkg-only p value");
         bkg_pvals->Draw();
         savePlot(canvas1,"bkg_only_pvalues");
+        h_failed->Draw("PE");
+        h_failed->GetXaxis()->SetTitle(w->var(scanVar1)->GetTitle());
+        h_failed->GetYaxis()->SetTitle("N_{failed}");
+        h_failed->GetXaxis()->SetTitleSize(0.06);
+        h_failed->GetYaxis()->SetTitleSize(0.06);
+        h_failed->GetXaxis()->SetLabelSize(0.06);
+        h_failed->GetYaxis()->SetLabelSize(0.06);
+        h_failed->SetLineWidth(2);
+        savePlot(biascanv, "failed_toys_plugin");
         TCanvas* can = newNoWarnTCanvas("can", "can");
         can->cd();
         gStyle->SetOptTitle(0);
@@ -868,6 +877,8 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         h_background->SetXTitle("h_bkg");
         h_background->SetYTitle("fraction of neg. test stat toys");
         h_background->Draw();
+
+
     }
     // goodness-of-fit
 
