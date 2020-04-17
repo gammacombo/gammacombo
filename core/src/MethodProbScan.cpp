@@ -279,12 +279,22 @@ int MethodProbScan::computeCLvalues(){
     std::cout << "Computing CL values based on test statistic decision" << std::endl;
     std::cout << "Using "<< arg->teststatistic <<"-sided test statistic" << std::endl;
 
-	float bestfitpoint = ((RooRealVar*)globalMin->floatParsFinal().find(scanVar1))->getVal();
-	float bestfitpointerr = ((RooRealVar*)globalMin->floatParsFinal().find(scanVar1))->getError();
+    if ( !globalMin && !this->getSolution() ) {
+      std::cout << "Could not find a solution so can't redefine the test statistics appropriately" << std::endl;
+      return 1;
+    }
 
-    if(getSolution()){
-		float bestfitpoint = ((RooRealVar*)getSolution()->floatParsFinal().find(scanVar1))->getVal();
-		float bestfitpointerr = ((RooRealVar*)getSolution()->floatParsFinal().find(scanVar1))->getError();    	
+    float bestfitpoint;
+    float bestfitpointerr;
+
+    if ( globalMin ) {
+      bestfitpoint    = ((RooRealVar*)globalMin->floatParsFinal().find(scanVar1))->getVal();
+      bestfitpointerr = ((RooRealVar*)globalMin->floatParsFinal().find(scanVar1))->getError();
+    }
+
+    if(this->getSolution()){
+      bestfitpoint    = ((RooRealVar*)this->getSolution()->floatParsFinal().find(scanVar1))->getVal();
+      bestfitpointerr = ((RooRealVar*)this->getSolution()->floatParsFinal().find(scanVar1))->getError();
     }
 
 	for (int k=1; k<=hCL->GetNbinsX(); k++){
