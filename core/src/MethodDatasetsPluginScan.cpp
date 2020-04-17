@@ -29,9 +29,9 @@
 MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF_Datasets* PDF, OptParser* opt):
     MethodPluginScan(probScan, PDF, opt),
     pdf                 (PDF),
-    drawPlots           (arg->controlplots),
     explicitInputFile   (false)
 {
+    drawPlots=arg->controlplot;
     chi2minGlobalFound = true; // the free fit to data must be done and must be saved to the workspace before gammacombo is even called
     methodName = "DatasetsPlugin";
     w = PDF->getWorkspace();
@@ -847,7 +847,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         h_failed->GetXaxis()->SetLabelSize(0.06);
         h_failed->GetYaxis()->SetLabelSize(0.06);
         h_failed->SetLineWidth(2);
-        savePlot(biascanv, "failed_toys_plugin");
+        savePlot(canvas1, "failed_toys_plugin");
         TCanvas* can = newNoWarnTCanvas("can", "can");
         can->cd();
         gStyle->SetOptTitle(0);
