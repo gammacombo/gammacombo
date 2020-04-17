@@ -53,7 +53,7 @@ def check_dsets_stdout_cls( logf ):
 def check_dsets_dat( datf ):
   f = open(datf)
   for line in f.readlines():
-    if line.startswith('Nbkg'):                assert('4990.208984   -71.760254    71.760254' in line)
+    if line.startswith('Nbkg'):                assert('4990.20' in line and '-71.76' in line and '71.76' in line)
     if line.startswith('branchingRatio'):      assert('   0.000000    -0.000000     0.000000' in line)
     if line.startswith('exponent'):            assert('  -0.000977    -0.000027     0.000027' in line)
     if line.startswith('mean'):                assert('5370.000000     1.000000    -1.000000' in line)
