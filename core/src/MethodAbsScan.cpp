@@ -594,20 +594,24 @@ bool MethodAbsScan::interpolate(TH1F* h, int i, float y, float central, bool upp
 	TF1 *f1 = new TF1("f1", "pol2", h->GetBinCenter(i-2), h->GetBinCenter(i+2));
 	g->Fit("f1", "q");    // fit linear to get decent start parameters
 	g->Fit("f1", "qf+");  // refit with minuit to get more correct errors (TGraph fit errors bug)
-	float p[3], e[3];
+	double p[3], e[3];
 	for ( int ii=0; ii<3; ii++ )
 	{
 		p[ii] = f1->GetParameter(ii);
 		e[ii] = f1->GetParError(ii);
 	}
 
-	float sol0 = pq(p[0], p[1], p[2], y, 0);
-	float sol1 = pq(p[0], p[1], p[2], y, 1);
+	double sol0 = pq(p[0], p[1], p[2], y, 0);
+	double sol1 = pq(p[0], p[1], p[2], y, 1);
 	// cout << upper << " ";
 	// printf("%f %f %f\n", central, sol0, sol1);
-	if(h->GetBinCenter(i-2) > sol0 || sol0 > h->GetBinCenter(i+2) || h->GetBinCenter(i-2) > sol1 || sol1 > h->GetBinCenter(i+2))
+	// std::cout << central << "\t" << sol0 << "\t" <<sol1 << std::endl;
+	if((h->GetBinCenter(i-2) > sol0 || sol0 > h->GetBinCenter(i+2) ) && (h->GetBinCenter(i-2) > sol1 || sol1 > h->GetBinCenter(i+2)))
 	{
-		if(arg->verbose || arg->debug) cout << "Polynomial interpolation out of bounds." << endl;
+		if(arg->verbose || arg->debug){
+			cout << "MethodAbsScan::interpolate(): Quadratic interpolation out of bounds [" << h->GetBinCenter(i-2) <<", " << h->GetBinCenter(i+2) << "]:"<< std::endl;
+			std::cout << "Solutions are "<< central << "(free fit result)\t" << sol0 << "(bound solution 0) \t" <<sol1 << "(bound solution 1)." << std::endl;
+		}
 		return false;
 	}
 
