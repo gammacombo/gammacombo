@@ -926,7 +926,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         h_all->SetYTitle("Valid toys");
         h_all->Draw();
         canvas->cd(2);
-        h_better->SetYTitle("Better toys than t_{measured}");
+        h_better->SetYTitle("Better toys than #Delta#chi^{2}_{data}");
         h_better->SetXTitle(w->var(scanVar1)->GetTitle());
         h_better->Draw();
         canvas->cd(3);
