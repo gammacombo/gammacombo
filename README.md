@@ -93,7 +93,7 @@ An advanced part of the CI can upload the results of the test to the web at (htt
 ```
 
 * Put the private part of the key in your fork of `gammacombo`'s "Secrets"
-  * Go to https://github.com/<username>/gammacombo
+  * Go to `https://github.com/<username>/gammacombo`
   * Go to the "Settings" tab
   * Click on "Secrets"
   * Click "Add a new secret"
