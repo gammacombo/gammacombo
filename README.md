@@ -86,7 +86,7 @@ Some continuous integration (CI) checks will run automatically when you make a p
 
 An advanced part of the CI can upload the results of the test to the web at (https://gammacombo.github.io/ci) but in order to do this you will need to setup the appropriate access keys between your fork of `<username>/gammacombo` (which is where the CI test will run) and `gammacombo/gammacombo.github.io` which is the repository for the website. This feature won't run by default but if you want to enable it you can do the following:
 
- * Generate an ssh key on your local machine and convert it to PEM format
+ * Generate an ssh key on your local machine and convert it to PEM format. Do not enter any password otherwise the CI action will fail (in general this is a bad idea but as this will be stored in your github Secrets it should be relatively safe).
  ``` bash
  ssh-keygen -t ed25519 -a 100 -f mynewkey
  ssh-keygen -p -f mynewkey -m pem
