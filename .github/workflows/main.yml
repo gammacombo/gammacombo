@@ -44,12 +44,13 @@ jobs:
 
     - name: Get users
       run: |
-        for i in  "${users[@]}"; do echo $i; done
+        for i in "${users[@]}"; do echo $i; done
+        echo ${GITHUB_ACTOR}
       env:
         users: ($(cat .github/workflows/push_users.list))
 
     - name: Configure ssh keys
-      if: github.actor == 'gammacombo'
+      if: [[ " ${users[@]} " =~ " ${GITHUB_ACTOR} " ]]
       uses: webfactory/ssh-agent@v0.2.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
