@@ -22,25 +22,31 @@ jobs:
     steps:
     - uses: actions/checkout@master
 
-    - name: Get docker image
-      run: docker pull gammacombo/gcimage
+    #- name: Get docker image
+      #run: docker pull gammacombo/gcimage
 
-    - name: Make docker container
+    #- name: Make docker container
+      #run: |
+        #docker run --name gccont gammacombo/gcimage /bin/bash -c "sudo mkdir /code"
+        #docker cp . gccont:/code
+        #docker commit gccont gccontwfiles
+
+    #- name: Compile GC and save image
+      #run: |
+        #docker run --name gcbuild gccontwfiles /bin/bash -c "sudo mkdir /code/build; cd /code/build; sudo cmake ..; sudo make -j8 install"
+        #docker commit gcbuild gcbuiltimage
+
+    #- name: Run CI Tests
+      #run: docker run --name gcrun gcbuiltimage /bin/bash -c "cd /code; sudo python scripts/run_ci_tests.py"
+
+    #- name: Copy output
+      #run: docker cp gcrun:/code/tutorial/ci_logs .
+
+    - name: Get users
       run: |
-        docker run --name gccont gammacombo/gcimage /bin/bash -c "sudo mkdir /code"
-        docker cp . gccont:/code
-        docker commit gccont gccontwfiles
-
-    - name: Compile GC and save image
-      run: |
-        docker run --name gcbuild gccontwfiles /bin/bash -c "sudo mkdir /code/build; cd /code/build; sudo cmake ..; sudo make -j8 install"
-        docker commit gcbuild gcbuiltimage
-
-    - name: Run CI Tests
-      run: docker run --name gcrun gcbuiltimage /bin/bash -c "cd /code; sudo python scripts/run_ci_tests.py"
-
-    - name: Copy output
-      run: docker cp gcrun:/code/tutorial/ci_logs .
+        for i in  "${users[@]}"; echo $i; done
+      env:
+        users: ${{ ($(cat .github/workflows/push_users.list)) }}
 
     - name: Configure ssh keys
       if: github.actor == 'gammacombo'
