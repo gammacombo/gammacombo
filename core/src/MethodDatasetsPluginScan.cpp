@@ -31,7 +31,6 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
     pdf                 (PDF),
     explicitInputFile   (false)
 {
-    drawPlots=arg->controlplot;
     chi2minGlobalFound = true; // the free fit to data must be done and must be saved to the workspace before gammacombo is even called
     methodName = "DatasetsPlugin";
     w = PDF->getWorkspace();
@@ -703,7 +702,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         	cls_vals.push_back(cls_val);
         }
 
-        if (arg->debug || drawPlots ){
+        if (arg->debug || arg->controlplot ){
             TH1F *bkg_pvals_cls  = new TH1F(Form("bkg_clsvals_bin%d",i), "bkg cls p values", 50, -0.1, 1.1);
             bkg_pvals_cls->SetLineColor(1);
             bkg_pvals_cls->SetLineWidth(3);
@@ -809,10 +808,23 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         }
     }
 
-    if ( drawPlots ) makeControlPlots( sampledBValues, sampledSchi2Values );
-    if ( drawPlots ) makeControlPlotsBias( sampledBiasValues );
+    if ( arg->controlplot ) makeControlPlots( sampledBValues, sampledSchi2Values );
+    if ( arg->controlplot ) makeControlPlotsBias( sampledBiasValues );
 
-    if ( drawPlots ){
+    if ( arg->controlplot ){
+
+        // do the control plots for the combiner case
+        // ToDo: the tayloring of those control plots does not suit the datasets case as there is no normalisation to chi2minGlobal
+        // ControlPlots cp(&t);
+        // if ( arg->plotid==0 || arg->plotid==1 ) cp.ctrlPlotMore(profileLH);
+        // if ( arg->plotid==0 || arg->plotid==2 ) cp.ctrlPlotChi2();
+        // if ( arg->plotid==0 || arg->plotid==3 ) cp.ctrlPlotNuisances();
+        // if ( arg->plotid==0 || arg->plotid==4 ) cp.ctrlPlotObservables();
+        // if ( arg->plotid==0 || arg->plotid==5 ) cp.ctrlPlotChi2Distribution();
+        // if ( arg->plotid==0 || arg->plotid==6 ) cp.ctrlPlotChi2Parabola();
+        // if ( arg->plotid==0 || arg->plotid==7 ) cp.ctrlPlotPvalue();
+        // cp.saveCtrlPlots();
+
         TCanvas *biascanv = newNoWarnTCanvas("biascanv", "biascanv");
         biascanv->SetRightMargin(0.11);
         h_sig_bkgtoys->GetXaxis()->SetTitle("POI residual for bkg-only toys");
@@ -846,7 +858,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         savePlot(biascanv, "CLb_values_"+scanVar1);
     }
 
-    if (arg->debug || drawPlots) {
+    if (arg->debug || arg->controlplot) {
         
         // Bkg-only p-values distribution. assuming first scan point ~ bkg-only.
         // Should be flat. Large peaks at 0/1 indicate negative test statistics.
@@ -930,17 +942,18 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         h_better->SetXTitle(w->var(scanVar1)->GetTitle());
         h_better->Draw();
         canvas->cd(3);
-        // the goodness of fit distribution -> should be flat in principle, but not guaranteed for every case
+        // the goodness of fit distribution -> should be smooth close to the best fit point (probably always true)
         h_gof->SetXTitle(w->var(scanVar1)->GetTitle());
         h_gof->SetYTitle("(-2*NLL(toy,free)) - (-2*NLL(data,free)) (goodness of fit)");
         h_gof->Draw();
         TLegend *leg_gof = new TLegend(0.16,0.8,0.89,0.95);
-        leg_gof->SetHeader("Should be flat, but not guaranteed in every case.");
+        leg_gof->SetHeader("Should be smooth close to best fit point");
         leg_gof->SetFillColorAlpha(0, 0.5);
         leg_gof->Draw("same");
-        // TLatex *pt = new TLatex();
-        // pt->SetTextSize(0.04);
-        // pt->DrawLatex(0.1,0.8,"Should be flat, but not guaranteed in every case.");
+        TArrow *lD = new TArrow( hCL->GetBinCenter(hCL->GetMaximumBin()),0.9*h_gof->GetMaximum(), hCL->GetBinCenter(hCL->GetMaximumBin()), h_gof->GetMinimum(), 0.15, "|>" ); 
+        lD->SetLineColor(kRed);
+        lD->SetLineWidth(2);
+        lD->Draw("same");
 
         canvas->cd(4);
         h_background->SetXTitle(w->var(scanVar1)->GetTitle());
