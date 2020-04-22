@@ -105,6 +105,8 @@ An advanced part of the CI can upload the results of the test to the web at (htt
    * Go to https://github.com/gammacombo/gammacombo.github.io 
    * Go to the "Settings" tab
    * Click on "Deploy Keys" and then `Add deploy key`
+   * Enter the public part of the key which begins with `ssh-ed25519`
+   * Make sure you tick the box which says `Allow write access`
    
  * Finally tell the CI system to add your `<username>` to the list of users that will execute this action
    * As part of your commit edit the file `.github/workflows/push_users.yml` to include your `username`
