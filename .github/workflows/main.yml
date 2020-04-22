@@ -45,13 +45,8 @@ jobs:
     - name: Check users
       id: vars
       run: |
-        for i in "${users[@]}"; do echo $i; done
-        echo ${GITHUB_ACTOR}
-        unset VALID_USER
-        [[ " ${users[@]} " =~ " ${GITHUB_ACTOR} " ]] && VALID_USER='true' || VALID_USER='false'
+        if grep -Fxq ${GITHUB_ACTOR} .github/workflows/push_users.list; then VALID_USER='true'; else VALID_USER='false'; fi
         echo ::set-output name=IS_VALID_USER::${VALID_USER}
-      env:
-        users: ($(cat .github/workflows/push_users.list))
 
     - name: Configure ssh keys
       if: ${{ steps.vars.outputs.IS_VALID_USER }}
