@@ -109,7 +109,7 @@ def check_comb_plugin_gen():
   return True
 
 def check_comb_plugin_run():
-  cmd  = 'bin/tutorial -c 5 --var a_gaus -a plugin --ntoys 5 --ps 1 --grouppos def:0.8'
+  cmd  = 'bin/tutorial -c 5 --var a_gaus -a plugin --ps 1 --grouppos def:0.8 --controlplots'
   outn = 'comb_plugin_run'
   os.system('%s > ci_logs/%s.log 2>&1'%(cmd,outn))
   check_comb_stdout('ci_logs/%s.log'%outn)
@@ -173,7 +173,7 @@ def check_dsets_plugin_gen():
 
 def check_dsets_plugin_run():
   assert( os.path.exists(os.path.join(os.getcwd(),'workspace.root')) )
-  cmd  = 'bin/tutorial_dataset --var branchingRatio --scanrange 0:5.e-7 -a plugin --ps 1 --npoints 20 --npointstoy 20'
+  cmd  = 'bin/tutorial_dataset --var branchingRatio --scanrange 0:5.e-7 -a plugin --ps 1 --npoints 20 --npointstoy 20 --controlplots'
   outn = 'dsets_plugin_run'
   os.system('%s > ci_logs/%s.log 2>&1'%(cmd,outn))
   check_dsets_stdout('ci_logs/%s.log'%outn)
