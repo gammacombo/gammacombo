@@ -44,7 +44,7 @@ jobs:
 
     - name: Get users
       run: |
-        for i in  "${users[@]}"; echo $i; done
+        for i in  "${users[@]}"; do echo $i; done
       env:
         users: ($(cat .github/workflows/push_users.list))
 
