@@ -29,7 +29,6 @@
 MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF_Datasets* PDF, OptParser* opt):
     MethodPluginScan(probScan, PDF, opt),
     pdf                 (PDF),
-    drawPlots           (false),
     explicitInputFile   (false)
 {
     chi2minGlobalFound = true; // the free fit to data must be done and must be saved to the workspace before gammacombo is even called
@@ -431,6 +430,8 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     TH1F *h_all_bkg           = (TH1F*)hCL->Clone("h_all_bkg");
     // numbers of toys failing the selection criteria
     TH1F *h_failed        = (TH1F*)hCL->Clone("h_failed");
+    // numbers of bkg toys failing the selection criteria, needed for CLs method
+    TH1F *h_failed_bkg        = (TH1F*)hCL->Clone("h_failed_bkg");
     // numbers of toys which are not in the physical region dChi2<0
     TH1F *h_background    = (TH1F*)hCL->Clone("h_background");
     // histo for GoF test
@@ -485,7 +486,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         bool convergedFits      = (t.statusFree == 0. && t.statusScan == 0.) && (t.covQualFree == 3 && t.covQualScan == 3);
         bool tooHighLikelihood  = !( abs(t.chi2minToy) < 1e27 && abs(t.chi2minGlobalToy) < 1e27);
         // bool BadBkgFit          = (!(t.statusFreeBkg == 0 && t.statusBkgBkg == 0) && (t.covQualFreeBkg == 3 && t.covQualBkgBkg == 3))||(std::isnan(t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy)||(t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy<-1.e-6)||(t.statusBkgBkg!=0)||(t.statusFreeBkg!=0));
-        bool BadBkgFit          = (!(t.statusFreeBkg == 0 && t.statusBkgBkg == 0) && (t.covQualFreeBkg == 3 && t.covQualBkgBkg == 3))||(std::isnan(t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy)||(abs(t.chi2minBkgToy) > 1e27 || abs(t.chi2minGlobalBkgToy) > 1e27|| abs(t.chi2minBkgBkgToy) > 1e27)||(t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy<-1.e-6));
+        bool BadBkgFit          = (!(t.statusFreeBkg == 0 && t.statusScanBkg == 0) && (t.covQualFreeBkg == 3 && t.covQualScanBkg == 3))||(std::isnan(t.chi2minBkgToy - t.chi2minGlobalBkgToy)||(abs(t.chi2minBkgToy) > 1e27 || abs(t.chi2minGlobalBkgToy) > 1e27));
         // bool BadBkgFit          = false;
 
         // apply cuts
@@ -499,7 +500,16 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         }
 
         if ( BadBkgFit){
-            // std::cout << "Failed because of "  << t.statusFreeBkg << t.statusBkgBkg << t.covQualFreeBkg << t.covQualBkgBkg << std::endl;
+            if(arg->debug){
+                std::cout << "MethodDatasetsPluginScan::readScan1dTrees():Bkg toy failed because of ";
+                if(t.statusFreeBkg!=0) std::cout << "bad free fit status, ";
+                if(t.statusScanBkg!=0) std::cout << "bad scan fit status, ";
+                if(t.covQualFreeBkg!=3) std::cout << "imperfect free fit covariance matrix (status " << t.covQualFreeBkg << "), ";
+                if(t.covQualScanBkg!=3) std::cout << "imperfect scan fit covariance matrix (status " << t.covQualScanBkg << "), ";
+                if (std::isnan(t.chi2minBkgToy - t.chi2minGlobalBkgToy)||(abs(t.chi2minBkgToy) > 1e27 || abs(t.chi2minGlobalBkgToy) > 1e27)) std::cout << "and problem with likelihood computations.";
+                std::cout << std::endl;
+            }
+            h_failed_bkg->Fill(t.scanpoint);
             nfailedbkg++;
         }
 
@@ -652,6 +662,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         if ( nall == 0. ) continue;
         h_background->SetBinContent(i, nbackground / nall);
         h_fracGoodToys->SetBinContent(i, (nall) / (float)ntot);
+        h_fracGoodToys->SetBinError(i, sqrt(((nall) / (float)ntot)*(1.-((nall) / (float)ntot))/ntot));
         // subtract background
         // float p = (nbetter-nbackground)/(nall-nbackground);
         // hCL->SetBinContent(i, p);
@@ -718,7 +729,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
             leg->AddEntry(bkg_pvals_clsb,"CLs+b","L");
             leg->AddEntry(bkg_pvals_clb,"CLb","L");
             leg->Draw("same");
-            savePlot(canvasdebug, Form("p_values%d",i));
+            savePlot(canvasdebug, TString(Form("p_values%d",i))+"_"+scanVar1);
         }
 
         std::vector<double> probs  = {TMath::Prob(4,1)/2., TMath::Prob(1,1)/2., 0.5, 1.-(TMath::Prob(1,1)/2.), 1.-(TMath::Prob(4,1)/2.) };
@@ -801,6 +812,19 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     if ( arg->controlplot ) makeControlPlotsBias( sampledBiasValues );
 
     if ( arg->controlplot ){
+
+        // do the control plots for the combiner case
+        // ToDo: the tayloring of those control plots does not suit the datasets case as there is no normalisation to chi2minGlobal
+        // ControlPlots cp(&t);
+        // if ( arg->plotid==0 || arg->plotid==1 ) cp.ctrlPlotMore(profileLH);
+        // if ( arg->plotid==0 || arg->plotid==2 ) cp.ctrlPlotChi2();
+        // if ( arg->plotid==0 || arg->plotid==3 ) cp.ctrlPlotNuisances();
+        // if ( arg->plotid==0 || arg->plotid==4 ) cp.ctrlPlotObservables();
+        // if ( arg->plotid==0 || arg->plotid==5 ) cp.ctrlPlotChi2Distribution();
+        // if ( arg->plotid==0 || arg->plotid==6 ) cp.ctrlPlotChi2Parabola();
+        // if ( arg->plotid==0 || arg->plotid==7 ) cp.ctrlPlotPvalue();
+        // cp.saveCtrlPlots();
+
         TCanvas *biascanv = newNoWarnTCanvas("biascanv", "biascanv");
         biascanv->SetRightMargin(0.11);
         h_sig_bkgtoys->GetXaxis()->SetTitle("POI residual for bkg-only toys");
@@ -821,53 +845,121 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         leg->AddEntry((TObject*)0,Form("#mu=%4.2g +/- %4.2g",h_sig_bkgtoys->GetMean(),h_sig_bkgtoys->GetMeanError()),"");
         leg->AddEntry((TObject*)0,Form("#sigma=%4.2g +/- %4.2g",h_sig_bkgtoys->GetStdDev(),h_sig_bkgtoys->GetStdDevError()),"");
         leg->Draw("same");
-        savePlot(biascanv, "bkg-only_toyfit");
-        hCLb->Draw("PE");
-        hCLb->GetXaxis()->SetTitle("POI value");
+        savePlot(biascanv, "BiasControlPlot_bkg-only_"+scanVar1);
+        hCLb->GetXaxis()->SetTitle(w->var(scanVar1)->GetTitle());
         hCLb->GetYaxis()->SetTitle("CL_{b}");
         hCLb->GetXaxis()->SetTitleSize(0.06);
         hCLb->GetYaxis()->SetTitleSize(0.06);
         hCLb->GetXaxis()->SetLabelSize(0.06);
         hCLb->GetYaxis()->SetLabelSize(0.06);
         hCLb->SetLineWidth(2);
-        savePlot(biascanv, "CLb_values");
+        hCLb->GetYaxis()->SetRangeUser(0.,1.05);
+        hCLb->Draw("PE");
+        savePlot(biascanv, "CLb_values_"+scanVar1);
     }
 
-    if (arg->debug || drawPlots) {
+    if (arg->debug || arg->controlplot) {
+        
+        // Bkg-only p-values distribution. assuming first scan point ~ bkg-only.
+        // Should be flat. Large peaks at 0/1 indicate negative test statistics.
         TCanvas *canvas1 = newNoWarnTCanvas("canvas1", "canvas1");
         bkg_pvals->SetLineWidth(2);
         bkg_pvals->SetXTitle("bkg-only p value");
         bkg_pvals->Draw();
-        savePlot(canvas1,"bkg_only_pvalues");
+        savePlot(canvas1,"bkg-only_pvalues_"+scanVar1);
+
+        // Distributions of fractions of failed fits for the scan toys and the bkg-only toys.
+        // Fraction should be small and hopefully independent of the scanvariable.
+        for (int i = 1; i <= h_failed->GetNbinsX(); i++) {
+            double n_failed = h_failed->GetBinContent(i);
+            double n_failed_bkg = h_failed_bkg->GetBinContent(i);
+            double n_tot= h_tot->GetBinContent(i);
+            h_failed->SetBinContent(i, n_failed/n_tot);
+            h_failed->SetBinError(i, sqrt((n_failed/n_tot) * (1. - (n_failed/n_tot)) / n_tot));
+            h_failed_bkg->SetBinContent(i, n_failed_bkg/n_tot);
+            h_failed_bkg->SetBinError(i, sqrt((n_failed_bkg/n_tot) * (1. - (n_failed_bkg/n_tot)) / n_tot));
+        }
+        canvas1->SetRightMargin(0.11);
+        double max_failed = max(h_failed->GetMaximum(),h_failed_bkg->GetMaximum());
+        h_failed->GetYaxis()->SetRangeUser(0.,max_failed+min(max_failed,0.15));
+        h_failed_bkg->GetYaxis()->SetRangeUser(0.,max_failed+min(max_failed,0.15));
+
+        h_failed->GetXaxis()->SetTitle(w->var(scanVar1)->GetTitle());
+        h_failed->GetYaxis()->SetTitle("failed toy fraction");
+        h_failed->GetXaxis()->SetTitleSize(0.06);
+        h_failed->GetYaxis()->SetTitleSize(0.06);
+        h_failed->GetXaxis()->SetLabelSize(0.06);
+        h_failed->GetYaxis()->SetLabelSize(0.06);
+        h_failed->SetLineWidth(2);
+
+        h_failed_bkg->GetXaxis()->SetTitle(w->var(scanVar1)->GetTitle());
+        h_failed_bkg->GetYaxis()->SetTitle("failed toy fraction");
+        h_failed_bkg->GetXaxis()->SetTitleSize(0.06);
+        h_failed_bkg->GetYaxis()->SetTitleSize(0.06);
+        h_failed_bkg->GetXaxis()->SetLabelSize(0.06);
+        h_failed_bkg->GetYaxis()->SetLabelSize(0.06);
+        h_failed_bkg->SetLineColor(kRed);
+        h_failed_bkg->SetMarkerColor(kRed);
+        h_failed_bkg->SetLineWidth(2);
+
+        h_failed->Draw("PE");
+        h_failed_bkg->Draw("SAMESPE");
+
+        TLegend *leg = new TLegend(0.7,0.8,0.89,0.95);
+        leg->SetHeader(("   " + std::to_string(int((double) nentries / (double)nPoints1d)) + " toys").c_str());
+        leg->SetFillColorAlpha(0, 0.5);
+        leg->AddEntry(h_failed,"plugin toys","PE");
+        leg->AddEntry(h_failed_bkg,"bkg-only toys","PE");
+        leg->Draw("same");
+
+
+        // Distribution of good plugin toys
+        // Values should be 1. and flat. 
+        savePlot(canvas1, "failed_toys_plugin_"+scanVar1);
         TCanvas* can = newNoWarnTCanvas("can", "can");
         can->cd();
         gStyle->SetOptTitle(0);
-        //gStyle->SetOptStat(0);
         gStyle->SetPadTopMargin(0.05);
-        gStyle->SetPadRightMargin(0.05);
+        gStyle->SetPadRightMargin(0.11);
         gStyle->SetPadBottomMargin(0.17);
         gStyle->SetPadLeftMargin(0.16);
         gStyle->SetLabelOffset(0.015, "X");
         gStyle->SetLabelOffset(0.015, "Y");
-        h_fracGoodToys->SetXTitle(scanVar1);
-        h_fracGoodToys->SetYTitle("fraction of good toys");
-        h_fracGoodToys->Draw();
+        h_fracGoodToys->SetXTitle(w->var(scanVar1)->GetTitle());
+        h_fracGoodToys->SetYTitle("fraction of good plugin toys");
+        h_fracGoodToys->Draw("PE");
+        savePlot(can, "good toys_"+scanVar1);
+
+
         TCanvas *canvas = newNoWarnTCanvas("canvas", "canvas");
         canvas->Divide(2, 2);
         canvas->cd(1);
-        h_all->SetXTitle("h_all");
-        h_all->SetYTitle("number of toys");
+        h_all->SetXTitle(w->var(scanVar1)->GetTitle());
+        h_all->SetYTitle("Valid toys");
         h_all->Draw();
         canvas->cd(2);
-        h_better->SetXTitle("h_better");
+        h_better->SetYTitle("Better toys than #Delta#chi^{2}_{data}");
+        h_better->SetXTitle(w->var(scanVar1)->GetTitle());
         h_better->Draw();
         canvas->cd(3);
-        h_gof->SetXTitle("h_gof");
+        // the goodness of fit distribution -> should be smooth close to the best fit point (probably always true)
+        h_gof->SetXTitle(w->var(scanVar1)->GetTitle());
+        h_gof->SetYTitle("(-2*NLL(toy,free)) - (-2*NLL(data,free)) (goodness of fit)");
         h_gof->Draw();
+        TLegend *leg_gof = new TLegend(0.16,0.8,0.89,0.95);
+        leg_gof->SetHeader("Should be smooth close to best fit point");
+        leg_gof->SetFillColorAlpha(0, 0.5);
+        leg_gof->Draw("same");
+        TArrow *lD = new TArrow( hCL->GetBinCenter(hCL->GetMaximumBin()),0.9*h_gof->GetMaximum(), hCL->GetBinCenter(hCL->GetMaximumBin()), h_gof->GetMinimum(), 0.15, "|>" ); 
+        lD->SetLineColor(kRed);
+        lD->SetLineWidth(2);
+        lD->Draw("same");
+
         canvas->cd(4);
-        h_background->SetXTitle("h_bkg");
+        h_background->SetXTitle(w->var(scanVar1)->GetTitle());
         h_background->SetYTitle("fraction of neg. test stat toys");
         h_background->Draw();
+        savePlot(canvas, "debug_plots_"+scanVar1);
     }
     // goodness-of-fit
 
@@ -885,7 +977,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
 
 
 double MethodDatasetsPluginScan::getPValueTTestStatistic(double test_statistic_value) {
-    if ( test_statistic_value > 0) {
+    if ( test_statistic_value >= 0) {
         // this is the normal case
         return TMath::Prob(test_statistic_value, 1);
     } else {
@@ -973,7 +1065,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
     }
     for ( int j = 0; j < nActualToys; j++ ) {
         // std::cout << "Toy " << j << std::endl;
-      if(pdf->getBkgPdf()){
+      // if(pdf->getBkgPdf())
+      {
         Utils::setParameters(w,dataBkgFitResult); //set parameters to bkg fit so the generation always starts at the same value
         // pdf->printParameters();
         pdf->generateBkgToys(0,arg->var[0]);
@@ -2038,7 +2131,7 @@ void MethodDatasetsPluginScan::makeControlPlots(map<int, vector<double> > bVals,
     leg->AddEntry(lD,"Data","L");
     leg->Draw("same");
     c->SetLogy();
-    savePlot(c,Form("cls_testStatControlPlot_p%d",i) );
+    savePlot(c,TString(Form("cls_testStatControlPlot_p%d",i))+"_"+scanVar1);
   }
 
   TCanvas *c = newNoWarnTCanvas( "cls_ctr", "CLs Control" );
@@ -2074,7 +2167,7 @@ void MethodDatasetsPluginScan::makeControlPlots(map<int, vector<double> > bVals,
   hCLsExp->Draw("Lsame");
   hCLsFreq->Draw("Lsame");
 
-  savePlot(c, "cls_ControlPlot");
+  savePlot(c, "cls_ControlPlot_"+scanVar1);
 
 }
 
@@ -2117,7 +2210,7 @@ void MethodDatasetsPluginScan::makeControlPlotsBias(map<int, vector<double> > bi
     leg->AddEntry((TObject*)0,Form("#mu=%4.2g +/- %4.2g",hsig->GetMean(),hsig->GetMeanError()),"");
     leg->AddEntry((TObject*)0,Form("#sigma=%4.2g +/- %4.2g",hsig->GetStdDev(),hsig->GetStdDevError()),"");
     leg->Draw("same");
-    savePlot(c,Form("BiasControlPlot_p%d",i) );
+    savePlot(c,TString(Form("BiasControlPlot_p%d",i))+"_"+scanVar1);
   }
 return;
 }

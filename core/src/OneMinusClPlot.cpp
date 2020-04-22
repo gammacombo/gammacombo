@@ -439,7 +439,7 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
     double *yvalsRawExpErr2Up = gErr2UpRaw->GetY();
 
     for (int i=0; i<gExp->GetN(); i++){
-    	std::cout << xvalsRaw[i] << "\t" <<xvals[i] << std::endl;
+    	// std::cout << xvalsRaw[i] << "\t" <<xvals[i] << std::endl;
     	// if(yvalsRawExp[i]>0.99){
     	// 	gExp->SetPoint(i,xvals[i], 1.0);
     	// }

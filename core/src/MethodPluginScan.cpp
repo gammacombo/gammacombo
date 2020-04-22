@@ -1178,7 +1178,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
           leg->AddEntry(bkg_pvals_clsb,"CLs+b","L");
           leg->AddEntry(bkg_pvals_clb,"CLb","L");
           leg->Draw("same");
-          savePlot(canvasdebug,Form("p_values%d",i));
+          savePlot(canvasdebug,TString(Form("p_values%d",i))+"_"+scanVar1);
         }
 
 
@@ -1583,7 +1583,7 @@ void MethodPluginScan::makeControlPlotsCLs(map<int, vector<double> > bVals, map<
     leg->AddEntry(lD,"Data","L");
     leg->Draw("same");
     c->SetLogy();
-    savePlot(c,Form("cls_testStatControlPlot_p%d",i) );
+    savePlot(c,TString(Form("cls_testStatControlPlot_p%d",i))+"_"+scanVar1 );
   }
 
   TCanvas *c = newNoWarnTCanvas( "cls_ctr", "CLs Control" );
@@ -1619,7 +1619,7 @@ void MethodPluginScan::makeControlPlotsCLs(map<int, vector<double> > bVals, map<
   hCLsExp->Draw("Lsame");
   hCLsFreq->Draw("Lsame");
 
-  savePlot(c, "cls_ControlPlot");
+  savePlot(c, "cls_ControlPlot_"+scanVar1);
 
 }
 
