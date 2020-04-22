@@ -28,10 +28,10 @@ public:
     void                  deleteNLL() {if (_NLL) {delete _NLL; _NLL = NULL;}};
 
     virtual RooFitResult* fit(RooDataSet* dataToFit);
-    virtual RooFitResult* fitBkg(RooDataSet* dataToFit);
+    virtual RooFitResult* fitBkg(RooDataSet* dataToFit, TString signalvar);
     virtual void          generateToys(int SeedShift = 0);
     virtual void          generateToysGlobalObservables(int SeedShift = 0);
-    virtual void          generateBkgToys(int SeedShift = 0);
+    virtual void          generateBkgToys(int SeedShift = 0, TString signalvar="");
     virtual void          generateBkgToysGlobalObservables(int SeedShift = 0, int index = 0);
 
     void                  initConstraints(const TString& setName);

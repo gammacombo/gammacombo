@@ -30,8 +30,7 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
     MethodPluginScan(probScan, PDF, opt),
     pdf                 (PDF),
     drawPlots           (false),
-    explicitInputFile   (false),
-    dataFreeFitResult   (NULL)
+    explicitInputFile   (false)
 {
     chi2minGlobalFound = true; // the free fit to data must be done and must be saved to the workspace before gammacombo is even called
     methodName = "DatasetsPlugin";
@@ -47,10 +46,12 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
         cerr << "ERROR: The workspace must contain the fit result of the fit to data. The name of the fit result must be 'data_fit_result'. " << endl;
         exit(EXIT_FAILURE);
     }
-    dataFreeFitResult = (RooFitResult*) w->obj("data_fit_result");
-    // chi2minGlobal = 2 * dataFreeFitResult->minNll();
+    globalMin = probScan->globalMin;
+    bestfitpoint = ((RooRealVar*) globalMin->floatParsFinal().find(scanVar1))->getVal();
+    // globalMin = (RooFitResult*) w->obj("data_fit_result");
+    // chi2minGlobal = 2 * globalMin->minNll();
     chi2minGlobal = probScan->getChi2minGlobal();
-    std::cout << "=============== Global Minimum (2*-Log(Likelihood)) is: 2*" << dataFreeFitResult->minNll() << " = " << chi2minGlobal << endl;
+    std::cout << "=============== Global Minimum (2*-Log(Likelihood)) is: 2*" << globalMin->minNll() << " = " << chi2minGlobal << endl;
 
     // implement physical range a la Feldman Cousins
     bool refit_necessary = false;
@@ -67,7 +68,7 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
                     if(arg->debug) std::cout << "MethodDatasetsPluginScan::scan1d()::fit " << arg->physRanges[0][j].name <<"=" << w->var( arg->physRanges[0][j].name )->getVal() <<" out of physics range, fixing to " << arg->physRanges[0][j].max << std::endl;
                     w->var( arg->physRanges[0][j].name )->setVal(arg->physRanges[0][j].max);
                     w->var( arg->physRanges[0][j].name )->setConstant(true);
-                    refit_necessary = true;                        
+                    refit_necessary = true;
                 }
             }
         }
@@ -75,8 +76,16 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
 
     if(refit_necessary){
         std::cout << "!!!!!!!!!!! Global Minimum outside physical range, refitting ..." << std::endl;
-        dataFreeFitResult = pdf->fit(pdf->getData());
-        chi2minGlobal = pdf->getMinNll();
+        globalMin = pdf->fit(pdf->getData());
+        chi2minGlobal = 2*pdf->getMinNll();
+        if(!globalMin->floatParsFinal().find(scanVar1)){
+            bestfitpoint = w->var(scanVar1)->getVal();
+            std::cout << "=============== NEW Best Fit Point is: " << bestfitpoint << endl;
+        }
+        else{
+            bestfitpoint = ((RooRealVar*) globalMin->floatParsFinal().find(scanVar1))->getVal();
+            std::cout << "=============== NEW Best Fit Point is: " << bestfitpoint << endl;
+        }
         std::cout << "=============== NEW Global Minimum (2*-Log(Likelihood)) is: 2*" << chi2minGlobal << endl;
     }
 
@@ -108,8 +117,8 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
         cerr << "MethodDatasetsPluginScan::MethodDatasetsPluginScan() : ERROR : no '" + pdf->getParName() + "' set found in workspace" << endl;
         exit(EXIT_FAILURE);
     }
-    dataBkgFitResult = pdf->fitBkg(pdf->getData()); // get Bkg fit parameters
-    Utils::setParameters(w,dataFreeFitResult);  // reset fit parameters to the free fit
+    dataBkgFitResult = pdf->fitBkg(pdf->getData(), arg->var[0]); // get Bkg fit parameters
+    Utils::setParameters(w,globalMin);  // reset fit parameters to the free fit
 }
 
 ///////////////////////////////////////////////
@@ -435,7 +444,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
 
     TH1F *bkg_pvals  = new TH1F("bkg_pvals", "bkg p values", 20, -0.1, 1.1);
 
-    TH1F *h_sig_bkgtoys  = new TH1F("h_sig_bkgtoys", "signal distribution for bkg toys", 50, -5*(((RooRealVar*) dataFreeFitResult->floatParsFinal().find(scanVar1))->getError()), 5*(((RooRealVar*) dataFreeFitResult->floatParsFinal().find(scanVar1))->getError()));
+    TH1F *h_sig_bkgtoys  = new TH1F("h_sig_bkgtoys", "signal distribution for bkg toys", 50, -5*(w->var(scanVar1)->getError()), 5*(w->var(scanVar1)->getError()));
 
     // map of vectors for determining signal distributions per scan point
     std::map<int,std::vector<double> > sampledBiasValues;
@@ -499,9 +508,9 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         // to little fluctuaions the best fit point can be missing from the plugin plot...
 
         // std::cout << "using scanvar: " << scanVar1 << std::endl;
-        // dataFreeFitResult->Print();
+        // globalMin->Print();
 
-        double bestfitpoint = ((RooRealVar*) dataFreeFitResult->floatParsFinal().find(scanVar1))->getVal();
+        // best fit point is a class variable and define in constructor
         bool inPhysicalRegion     = ((t.chi2minToy - t.chi2minGlobalToy) >= 0 );
 
         // // build test statistic
@@ -514,7 +523,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         // sb_teststat_toy = t.scanbest <= t.scanpoint ? sb_teststat_toy : 0.; // if mu < muhat then q_mu = 0
 
 
-        // double b_teststat_measured= t.chi2min - this->chi2minGlobal; 
+        // double b_teststat_measured= t.chi2min - this->chi2minGlobal;
         // b_teststat_measured = bestfitpoint <= t.scanpoint ? b_teststat_measured : 0.; // if mu < muhat then q_mu = 0
 
         // double b_teststat_toy = t.chi2minBkgToy - t.chi2minGlobalBkgToy;
@@ -524,11 +533,11 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         // chi2minBkgBkgToy is the best fit of the bkg pdf of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
         // chi2minBkgToy is the best fit at scanpoint of bkg-only toy
         double teststat_measured = t.chi2min - t.chi2minGlobal;
-        hChi2min->SetBinContent(hChi2min->FindBin(t.scanpoint), teststat_measured);        
+        hChi2min->SetBinContent(hChi2min->FindBin(t.scanpoint), teststat_measured);
         double sb_teststat_toy= t.chi2minToy - t.chi2minGlobalToy;
         double b_teststat_toy = t.chi2minBkgToy - t.chi2minGlobalBkgToy;
         if (arg->teststatistic ==1){ // use one-sided test statistic
-            teststat_measured = bestfitpoint <= t.scanpoint ? teststat_measured : 0.; // if mu < muhat then q_mu = 0
+            teststat_measured = bestfitpoint <= t.scanpoint ? teststat_measured : 0.; // if mu < muhat then q_mu = 0 //best fit point defined in constructor
             sb_teststat_toy = t.scanbest <= t.scanpoint ? sb_teststat_toy : 0.; // if mu < muhat then q_mu = 0
             b_teststat_toy = t.scanbestBkg <= t.scanpoint ? b_teststat_toy : 0.;  // if mu < muhat then q_mu = 0
         }
@@ -576,7 +585,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
             h_all_bkg->Fill(t.scanpoint);
         }
 
-        // chi2minToy is the best of the toy at scanpoint, chi2minGlobalToy is the best global fit of the toy 
+        // chi2minToy is the best of the toy at scanpoint, chi2minGlobalToy is the best global fit of the toy
         if(valid && sb_teststat_toy>-1.e-6){
             if(sb_teststat_toy<0&&sb_teststat_toy>-1.e-6) sb_teststat_toy = 0.0;
             sampledSchi2Values[hBin].push_back(sb_teststat_toy);
@@ -586,7 +595,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         // chi2minBkgBkgToy is the best fit of the bkg pdf of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
         // chi2minBkgToy is the best fit at scanpoint of bkg-only toy
         if(b_teststat_toy<0&&b_teststat_toy>-1.e-6) b_teststat_toy=0.0;
-        
+
         if( !BadBkgFit ){
             if(hBin==2){
                 // std::cout << bkgTestStatVal << std::endl;
@@ -682,23 +691,23 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         	cls_vals.push_back(cls_val);
         }
 
-        if (arg->debug ){
-            TH1F *bkg_pvals_cls  = new TH1F("bkg_clsvals", "bkg cls p values", 50, -0.1, 1.1);
+        if (arg->debug || arg->controlplot ){
+            TH1F *bkg_pvals_cls  = new TH1F(Form("bkg_clsvals_bin%d",i), "bkg cls p values", 50, -0.1, 1.1);
             bkg_pvals_cls->SetLineColor(1);
             bkg_pvals_cls->SetLineWidth(3);
-            TH1F *bkg_pvals_clsb  = new TH1F("bkg_clsbvals", "bkg clsb p values", 50, -0.1, 1.1);
+            TH1F *bkg_pvals_clsb  = new TH1F(Form("bkg_clsbvals_bin%d",i), "bkg clsb p values", 50, -0.1, 1.1);
             bkg_pvals_clsb->SetLineColor(2);
             bkg_pvals_clsb->SetLineWidth(3);
-            TH1F *bkg_pvals_clb  = new TH1F("bkg_clbvals", "bkg clb p values", 50, -0.1, 1.1);
+            TH1F *bkg_pvals_clb  = new TH1F(Form("bkg_clbvals_bin%d",i), "bkg clb p values", 50, -0.1, 1.1);
             bkg_pvals_clb->SetLineColor(3);
             bkg_pvals_clb->SetLineWidth(3);
             for(int j=0; j<sampledBValues[i].size(); j++){
                 bkg_pvals_cls->Fill(TMath::Min( cls_vals[j] , 1.));
                 bkg_pvals_clsb->Fill(TMath::Min( clsb_vals[j] , 1.));
-                bkg_pvals_clb->Fill(TMath::Min( clb_vals[j] , 1.));                
+                bkg_pvals_clb->Fill(TMath::Min( clb_vals[j] , 1.));
             }
 
-            TCanvas *canvasdebug = new TCanvas("canvasdebug", "canvas1", 1200, 1000);
+            TCanvas *canvasdebug = newNoWarnTCanvas("canvasdebug", "canvas1", 1200, 1000);
             bkg_pvals_cls->Draw();
             bkg_pvals_clsb->Draw("same");
             bkg_pvals_clb->Draw("same");
@@ -709,9 +718,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
             leg->AddEntry(bkg_pvals_clsb,"CLs+b","L");
             leg->AddEntry(bkg_pvals_clb,"CLb","L");
             leg->Draw("same");
-            std::string pvalue_outstream;
-    		pvalue_outstream ="p_values" + std::to_string(i) + ".pdf";
-            canvasdebug->SaveAs(pvalue_outstream.c_str());
+            savePlot(canvasdebug, Form("p_values%d",i));
         }
 
         std::vector<double> probs  = {TMath::Prob(4,1)/2., TMath::Prob(1,1)/2., 0.5, 1.-(TMath::Prob(1,1)/2.), 1.-(TMath::Prob(4,1)/2.) };
@@ -734,7 +741,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
           cout << "CLs: ";
           for (int k=0; k<quantiles_cls.size(); k++) cout << quantiles_cls[k] << " , ";
           cout << endl;
-        }       
+        }
 
         // //effective method -> works robustly (cf. TLimit class), but is actually wrong
         // hCLsExp->SetBinContent   ( i, TMath::Min( quantiles_clsb[2]/quantiles_clb[2] , 1.) );
@@ -760,6 +767,11 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         }
         float dataCLb    = p_clb;
         float dataCLbErr = sqrt( dataCLb * (1.-dataCLb) / sampledBValues[i].size() );
+        if(dataCLb==0){
+            std::cout << "!!!!!! ERROR: CL_b=0: this should only happen for really few toys! Setting to a small value. Please run more toys to get a reliable result." << std::endl;
+            dataCLb=1e-9;
+            dataCLbErr=1.;
+        }
         if ( p/dataCLb >= 1. ) {
           hCLsFreq->SetBinContent(i, 1.);
           hCLsFreq->SetBinError  (i, 0.);
@@ -810,7 +822,14 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         leg->AddEntry((TObject*)0,Form("#sigma=%4.2g +/- %4.2g",h_sig_bkgtoys->GetStdDev(),h_sig_bkgtoys->GetStdDevError()),"");
         leg->Draw("same");
         savePlot(biascanv, "bkg-only_toyfit");
-        hCLb-> Draw("PE");
+        hCLb->Draw("PE");
+        hCLb->GetXaxis()->SetTitle("POI value");
+        hCLb->GetYaxis()->SetTitle("CL_{b}");
+        hCLb->GetXaxis()->SetTitleSize(0.06);
+        hCLb->GetYaxis()->SetTitleSize(0.06);
+        hCLb->GetXaxis()->SetLabelSize(0.06);
+        hCLb->GetYaxis()->SetLabelSize(0.06);
+        hCLb->SetLineWidth(2);
         savePlot(biascanv, "CLb_values");
     }
 
@@ -940,11 +959,11 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 	vector<TString> bkgOnlyGlobObsSnaphots;
     vector<float> chi2minGlobalBkgToysStore;    // Global fit to bkg-only toys
     vector<float> chi2minBkgBkgToysStore;       // Bkg fit to bkg-only toys
-    vector<float> scanbestBkgToysStore;         // best fit point of gloabl fit to bkg-only toys 
+    vector<float> scanbestBkgToysStore;         // best fit point of gloabl fit to bkg-only toys
     vector<float> scanbestBkgBkgToysStore;      // best fit point of bkg fit to bkg-only toys (usually zero because bkg pdf will not depend on signal parameter)
-    vector<int> covQualFreeBkgToysStore;      // covariance quality of gloabl fit to bkg-only toys 
-    vector<int> covQualBkgBkgToysStore;       // covariance quality of bkg fit to bkg-only toys 
-    vector<int> StatusFreeBkgToysStore;       // status of gloabl fit to bkg-only toys 
+    vector<int> covQualFreeBkgToysStore;      // covariance quality of gloabl fit to bkg-only toys
+    vector<int> covQualBkgBkgToysStore;       // covariance quality of bkg fit to bkg-only toys
+    vector<int> StatusFreeBkgToysStore;       // status of gloabl fit to bkg-only toys
     vector<int> StatusBkgBkgToysStore;        // status of bkg fit to bkg-only toys
     // Titus: Try importance sampling from the combination part -> works, but definitely needs improvement in precision
     int nActualToys = nToys;
@@ -957,7 +976,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
       if(pdf->getBkgPdf()){
         Utils::setParameters(w,dataBkgFitResult); //set parameters to bkg fit so the generation always starts at the same value
         // pdf->printParameters();
-        pdf->generateBkgToys();
+        pdf->generateBkgToys(0,arg->var[0]);
         pdf->generateBkgToysGlobalObservables(0,j);
         RooDataSet* bkgOnlyToy = pdf->getBkgToyObservables();
         cls_bkgOnlyToys.push_back( (RooDataSet*)bkgOnlyToy->Clone() ); // clone required because of deleteToys() call at end of loop
@@ -994,7 +1013,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                     else if (w->var( arg->physRanges[0][j].name )->getVal() > arg->physRanges[0][j].max){
                         if(arg->debug) std::cout << "MethodDatasetsPluginScan::scan1d()::fit " << arg->physRanges[0][j].name <<"=" << w->var( arg->physRanges[0][j].name )->getVal() <<" out of physics range, fixing to " << arg->physRanges[0][j].max << std::endl;
                         w->var( arg->physRanges[0][j].name )->setVal(arg->physRanges[0][j].max);
-                        w->var( arg->physRanges[0][j].name )->setConstant(true);                        
+                        w->var( arg->physRanges[0][j].name )->setConstant(true);
                     }
                 }
             }
@@ -1036,7 +1055,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         // chi2minGlobalBkgToysStore.push_back( 2 * rb->minNll() );
         chi2minGlobalBkgToysStore.push_back( 2 * pdf->getMinNll() );
         if(rb->floatParsFinal().find(scanVar1)){
-            scanbestBkgToysStore.push_back( ((RooRealVar*)w->set(pdf->getParName())->find(scanVar1))->getVal() );    
+            scanbestBkgToysStore.push_back( ((RooRealVar*)w->set(pdf->getParName())->find(scanVar1))->getVal() );
         }
         // if the pdf does not depend on the signal parameter, set best fit value of signa l parameter for the bkg fit to 0
         else scanbestBkgToysStore.push_back(0.0);
@@ -1054,20 +1073,20 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 
         // fit the bkg-only toys with the bkg-only hypothesis
         delete rb;
-        rb = pdf->fitBkg(bkgOnlyToy);
+        rb = pdf->fitBkg(bkgOnlyToy, arg->var[0]);
         assert(rb);
         pdf->setMinNllScan(pdf->minNll);
         if (pdf->getFitStatus() != 0) {
             pdf->setFitStrategy(1);
             delete rb;
-            rb = pdf->fitBkg(bkgOnlyToy);
+            rb = pdf->fitBkg(bkgOnlyToy, arg->var[0]);
             pdf->setMinNllScan(pdf->minNll);
             assert(rb);
 
             if (pdf->getFitStatus() != 0) {
                 pdf->setFitStrategy(2);
                 delete rb;
-                rb = pdf->fitBkg(bkgOnlyToy);
+                rb = pdf->fitBkg(bkgOnlyToy, arg->var[0]);
                 assert(rb);
             }
         }
@@ -1081,7 +1100,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         chi2minBkgBkgToysStore.push_back( 2 * pdf->getMinNllBkg() );
         if(rb->floatParsFinal().find(scanVar1)){
         	std::cout << "found signal parameter in bkg fit with value " << ((RooRealVar*)w->set(pdf->getParName())->find(scanVar1))->getVal() << std::endl;
-            scanbestBkgBkgToysStore.push_back( ((RooRealVar*)w->set(pdf->getParName())->find(scanVar1))->getVal() );    
+            scanbestBkgBkgToysStore.push_back( ((RooRealVar*)w->set(pdf->getParName())->find(scanVar1))->getVal() );
         }
         // if the pdf does not depend on the signal parameter, set best fit value of signal parameter for the bkg fit to 0
         else scanbestBkgBkgToysStore.push_back(0.0);
@@ -1296,11 +1315,13 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             // free parameter of interest
             parameterToScan->setConstant(false);
             //setLimit(w, scanVar1, "free");
-            w->var(scanVar1)->removeRange();
+            // w->var(scanVar1)->removeRange();
 
 			// set dataset back
 			if (arg->debug) cout << "Setting toy back as data " << tempData << endl;
 			this->pdf->setToyData( tempData );
+            // restore MinNllScan to value from 2. (not take from 2.5) for more correct error messages
+            pdf->setMinNllScan(toyTree.chi2minToy/2.);
 
             // Fit
             pdf->setFitStrategy(0);
@@ -1389,7 +1410,6 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                             parameterToScan->setVal(static_cast<RooRealVar*>(r1->floatParsFinal().find(parameterToScan->GetName()))->getVal());
                             delete r_tmp;
                         }
-                        delete parsAfterScanFit;
                     };
                     if (arg->debug) {
                         cout  << "===== > compare free fit result with pdf parameters: " << endl;
@@ -1413,7 +1433,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                         else if (w->var( arg->physRanges[0][j].name )->getVal() > arg->physRanges[0][j].max){
                             if(arg->debug) std::cout << "MethodDatasetsPluginScan::scan1d()::fit " << arg->physRanges[0][j].name <<"=" << w->var( arg->physRanges[0][j].name )->getVal() <<" out of physics range, fixing to " << arg->physRanges[0][j].max << std::endl;
                             w->var( arg->physRanges[0][j].name )->setVal(arg->physRanges[0][j].max);
-                            w->var( arg->physRanges[0][j].name )->setConstant(true);                        
+                            w->var( arg->physRanges[0][j].name )->setConstant(true);
                         }
                     }
                 }
@@ -1506,7 +1526,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                             parameterToScan->setVal(static_cast<RooRealVar*>(r1->floatParsFinal().find(parameterToScan->GetName()))->getVal());
                             delete r_tmp;
                         }
-                        delete parsAfterScanFit;
+                        // delete parsAfterScanFit;
                     };
                     if (arg->debug) {
                         cout  << "===== > compare free fit result with pdf parameters: " << endl;
@@ -1592,6 +1612,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 
             toyTree.fill();
             //remove dataset and pointers
+            delete parsAfterScanFit;
             delete r;
             delete r1;
             delete rb;
@@ -1938,13 +1959,16 @@ void MethodDatasetsPluginScan::makeControlPlots(map<int, vector<double> > bVals,
     double max = *(std::max_element( bVals[i].begin(), bVals[i].end() ) );
     TH1F *hb = new TH1F( Form("hb%d",i), "hbq", 50,0, max );
     TH1F *hsb = new TH1F( Form("hsb%d",i), "hsbq", 50,0, max );
+    // fixing the range for teststat plots for private plots (DONT COMMIT THIS UNCOMMENTED)
+    // TH1F *hb = new TH1F( Form("hb%d",i), "hbq", 50,0, 5 );
+    // TH1F *hsb = new TH1F( Form("hsb%d",i), "hsbq", 50,0, 5 );
 
     for ( int j=0; j<bVals[i].size(); j++ ) hb->Fill( bVals[i][j] );
     for ( int j=0; j<sbVals[i].size(); j++ ) hsb->Fill( sbVals[i][j] );
 
     // double dataVal = TMath::ChisquareQuantile( 1.-hCL->GetBinContent(i),1 );
     double dataVal = hChi2min->GetBinContent(i);
-    std::cout << "CLb alternative: " << getVectorFracAboveValue( bVals[i], dataVal) << std::endl;
+    // std::cout << "CLb alternative: " << getVectorFracAboveValue( bVals[i], dataVal) << std::endl;
     TArrow *lD = new TArrow( dataVal, 0.6*hsb->GetMaximum(), dataVal, 0., 0.15, "|>" );
 
     vector<TLine*> qLs;
@@ -2055,7 +2079,7 @@ void MethodDatasetsPluginScan::makeControlPlots(map<int, vector<double> > bVals,
 }
 
 void MethodDatasetsPluginScan::makeControlPlotsBias(map<int, vector<double> > biasVals)
-{ 
+{
   for ( int i=1; i<= hCLs->GetNbinsX(); i++ ) {
 
     TCanvas *c = newNoWarnTCanvas( Form("q%d",i), Form("q%d",i));

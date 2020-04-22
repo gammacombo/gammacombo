@@ -51,6 +51,7 @@ void  PDF_Datasets::initConstraints(const TString& setName) {
         std::cout << "ERROR in PDF_B_MuMu::initConstraints - constraint pdf not initialized." << endl;
         exit(EXIT_FAILURE);
     }
+    if(data && pdf) minNll = pdf->createNLL(*data, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)))->getVal();
 };
 
 void PDF_Datasets::initData(const TString& name) {
@@ -67,7 +68,7 @@ void PDF_Datasets::initData(const TString& name) {
         std::cout << "FATAL in PDF_Datasets::initData -- Data: " << dataName << " not found in workspace" << std::endl;
         exit(EXIT_FAILURE);
     }
-    if(pdf) this->minNll = pdf->createNLL(*data)->getVal();
+    if(pdf && getWorkspace()->obj(constraintName)) minNll = pdf->createNLL(*data, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)))->getVal();
     std::cout << "INFO in PDF_Datasets::initData -- Data initialized" << std::endl;
     return;
 };
@@ -155,7 +156,7 @@ void PDF_Datasets::initPDF(const TString& name) {
     }
 
     std::cout << "INFO in PDF_Datasets::initPDF -- PDF initialized" << std::endl;
-    if(data) this->minNll = pdf->createNLL(*data)->getVal();
+    if(data && getWorkspace()->obj(constraintName)) minNll = pdf->createNLL(*data, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)))->getVal();
     return;
 };
 
@@ -299,20 +300,20 @@ RooFitResult* PDF_Datasets::fit(RooDataSet* dataToFit) {
 
     // unfortunately Minuit2 does not initialize the status of the roofitresult, if all parameters are constant. Therefore need to stay with standard Minuit fitting.
     // RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Minimizer("Minuit2", "Migrad"));
-    RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
+    RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
 
     RooMsgService::instance().setSilentMode(kFALSE);
     RooMsgService::instance().setGlobalKillBelow(INFO);
-    this->fitStatus = result->status();
+    fitStatus = result->status();
     // RooAbsReal* nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE));
-    RooAbsReal* nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
-    this->minNll = nll->getVal();
+    RooAbsReal* nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)));
+    minNll = nll->getVal();
     delete nll;
 
     return result;
 };
 
-RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit) {
+RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit, TString signalvar) {
 
     if (this->getWorkspace()->set(constraintName) == NULL) {
         std::cout << std::endl;
@@ -331,10 +332,10 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit) {
         std::cout << "ERROR in PDF_Datasets::fitBkg -- No background PDF given!" << std::endl;
         exit(EXIT_FAILURE);
     }
-    double parvalue = getWorkspace()->var("branchingRatio")->getVal();
-    bool isconst = getWorkspace()->var("branchingRatio")->isConstant();
-    getWorkspace()->var("branchingRatio")->setVal(0.0);
-    getWorkspace()->var("branchingRatio")->setConstant(true);
+    double parvalue = getWorkspace()->var(signalvar)->getVal();
+    bool isconst = getWorkspace()->var(signalvar)->isConstant();
+    getWorkspace()->var(signalvar)->setVal(0.0);
+    getWorkspace()->var(signalvar)->setConstant(true);
 
     // Turn off RooMsg
     RooMsgService::instance().setGlobalKillBelow(ERROR);
@@ -344,19 +345,19 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit) {
     // unfortunately Minuit2 does not initialize the status of the roofitresult, if all parameters are constant. Therefore need to stay with standard Minuit fitting.
     // RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Minimizer("Minuit2", "Migrad"));
 
-    RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
+    RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
     // RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
     RooMsgService::instance().setSilentMode(kFALSE);
     RooMsgService::instance().setGlobalKillBelow(INFO);
     this->fitStatus = result->status();
     // RooAbsReal* nll_bkg = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE));
     // RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit, RooFit::Extended(kTRUE));
-    RooAbsReal* nll_bkg = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
+    RooAbsReal* nll_bkg = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)));
     // RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
     this->minNllBkg = nll_bkg->getVal();
 
-    getWorkspace()->var("branchingRatio")->setVal(parvalue);
-    getWorkspace()->var("branchingRatio")->setConstant(isconst);    
+    getWorkspace()->var(signalvar)->setVal(parvalue);
+    getWorkspace()->var(signalvar)->setConstant(isconst);    
     delete nll_bkg;
 
     return result;
@@ -365,8 +366,8 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit) {
 void   PDF_Datasets::generateToys(int SeedShift) {
 
     initializeRandomGenerator(SeedShift);
-    RooDataSet* toys = this->pdf->generate(*observables, RooFit::NumEvents(wspc->data(dataName)->numEntries()), RooFit::Extended(kTRUE));
-
+    // RooDataSet* toys = this->pdf->generate(*observables, RooFit::NumEvents(wspc->data(dataName)->numEntries()), RooFit::Extended(kTRUE));
+    RooDataSet* toys = pdf->generate(*observables, wspc->data(dataName)->numEntries(),false,true,"",false,true);
     // Having the delete in here causes a segmentation fault, likely due to a double free
     // related to Root's internal memory management. Therefore we do not delete,
     // which might or might not cause a memory leak.
@@ -375,19 +376,20 @@ void   PDF_Datasets::generateToys(int SeedShift) {
     this->isToyDataSet    = kTRUE;
 };
 
-void   PDF_Datasets::generateBkgToys(int SeedShift) {
+void   PDF_Datasets::generateBkgToys(int SeedShift, TString signalvar) {
 
     initializeRandomGenerator(SeedShift);
 
     if(isBkgPdfSet){
-        double parvalue = getWorkspace()->var("branchingRatio")->getVal();
-        bool isconst = getWorkspace()->var("branchingRatio")->isConstant();
-        getWorkspace()->var("branchingRatio")->setVal(0.0);
-        getWorkspace()->var("branchingRatio")->setConstant(true);
+        double parvalue = getWorkspace()->var(signalvar)->getVal();
+        bool isconst = getWorkspace()->var(signalvar)->isConstant();
+        getWorkspace()->var(signalvar)->setVal(0.0);
+        getWorkspace()->var(signalvar)->setConstant(true);
         // RooDataSet* toys = pdfBkg->generate(*observables, RooFit::NumEvents(wspc->data(dataName)->numEntries()), RooFit::Extended(kTRUE));
-        RooDataSet* toys = pdf->generate(*observables, RooFit::NumEvents(wspc->data(dataName)->numEntries()), RooFit::Extended(kTRUE));
-        getWorkspace()->var("branchingRatio")->setVal(parvalue);
-        getWorkspace()->var("branchingRatio")->setConstant(isconst);    
+        // RooDataSet* toys = pdf->generate(*observables, RooFit::NumEvents(wspc->data(dataName)->numEntries()), RooFit::Extended(kTRUE));
+        RooDataSet* toys = pdf->generate(*observables, wspc->data(dataName)->numEntries(),false,true,"",false,true);
+        getWorkspace()->var(signalvar)->setVal(parvalue);
+        getWorkspace()->var(signalvar)->setConstant(isconst);    
         this->toyBkgObservables  = toys;
     }
     else{

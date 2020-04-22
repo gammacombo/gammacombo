@@ -159,6 +159,7 @@ class MethodAbsScan
 		vector<CLInterval> clintervals2sigma;           ///< all 2 sigma intervals that were found by calcCLintervals()
 		vector<CLInterval> clintervals3sigma;           ///< all 3 sigma intervals that were found by calcCLintervals()
 		vector<CLInterval> clintervalsuser;           ///< all intervals with an additional user specific CL that were found by calcCLintervals()
+		RooFitResult* globalMin;    ///< parameter values at a global minimum
 
 	protected:
 
@@ -185,7 +186,6 @@ class MethodAbsScan
 		RooWorkspace* w;
 		RooDataSet* obsDataset;     ///< save the nominal observables so we can restore them after we have fitted toys
 		RooDataSet* startPars;      ///< save the start parameter values before any scan
-		RooFitResult* globalMin;    ///< parameter values at a global minimum
 		TH1F* hCL;                  ///< 1-CL curve
 		TH1F* hCLs;                 ///< 1-CL curve
     TH1F* hCLsFreq;             ///< 1-CL curve
