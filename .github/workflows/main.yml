@@ -42,15 +42,19 @@ jobs:
     #- name: Copy output
       #run: docker cp gcrun:/code/tutorial/ci_logs .
 
-    - name: Get users
+    - name: Check users
+      id: vars
       run: |
         for i in "${users[@]}"; do echo $i; done
         echo ${GITHUB_ACTOR}
+        unset VALID_USER
+        [[ " ${users[@]} " =~ " ${GITHUB_ACTOR} " ]] && VALID_USER='true' || VALID_USER='false'
+        echo ::set-output name=IS_VALID_USER::${VALID_USER}
       env:
         users: ($(cat .github/workflows/push_users.list))
 
     - name: Configure ssh keys
-      if: [[ " ${users[@]} " =~ " ${GITHUB_ACTOR} " ]]
+      if: ${{ steps.vars.outputs.IS_VALID_USER }}
       uses: webfactory/ssh-agent@v0.2.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
