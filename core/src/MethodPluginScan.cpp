@@ -1216,6 +1216,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
 
         // //ideal method, but prone to fluctuations
         hCLsExp->SetBinContent   ( i, TMath::Min( quantiles_cls[2] , 1.) );
+        hCLsExp->SetBinError   ( i, sq((1.-TMath::Min( quantiles_cls[2] , 1.))*TMath::Min( quantiles_cls[2] , 1.)/sampledBValues[i].size()) );        
         hCLsErr1Up->SetBinContent( i, TMath::Min( quantiles_cls[3] , 1.) );
         hCLsErr1Dn->SetBinContent( i, TMath::Min( quantiles_cls[1] , 1.) );
         hCLsErr2Up->SetBinContent( i, TMath::Min( quantiles_cls[4] , 1.) );
