@@ -85,7 +85,7 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
             bestfitpoint = ((RooRealVar*) globalMin->floatParsFinal().find(scanVar1))->getVal();
             std::cout << "=============== NEW Best Fit Point is: " << bestfitpoint << endl;
         }
-        std::cout << "=============== NEW Global Minimum (2*-Log(Likelihood)) is: 2*" << chi2minGlobal << endl;
+        std::cout << "=============== NEW Global Minimum (2*-Log(Likelihood)) is: " << chi2minGlobal << endl;
     }
 
     //reset parameters free from the Feldman Cousins behaviour
@@ -542,8 +542,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         // build test statistics
         // chi2minBkgBkgToy is the best fit of the bkg pdf of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
         // chi2minBkgToy is the best fit at scanpoint of bkg-only toy
-        double teststat_measured = t.chi2min - t.chi2minGlobal;
-        hChi2min->SetBinContent(hChi2min->FindBin(t.scanpoint), teststat_measured);
+        double teststat_measured = t.chi2min - this->chi2minGlobal;
         double sb_teststat_toy= t.chi2minToy - t.chi2minGlobalToy;
         double b_teststat_toy = t.chi2minBkgToy - t.chi2minGlobalBkgToy;
         if (arg->teststatistic ==1){ // use one-sided test statistic
@@ -552,6 +551,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
             b_teststat_toy = t.scanbestBkg <= t.scanpoint ? b_teststat_toy : 0.;  // if mu < muhat then q_mu = 0
         }
         // the usage of the two-sided test statistic is default
+        hChi2min->SetBinContent(hChi2min->FindBin(t.scanpoint), teststat_measured);
 
 
 
@@ -1801,7 +1801,7 @@ void MethodDatasetsPluginScan::performBootstrapTest(int nSamples, const TString&
     for (int i = 0; i < t.GetEntries(); i++) {
         t.GetEntry(i);
         if (i == 0) {
-            q_data = t.chi2min - t.chi2minGlobal;
+            q_data = t.chi2min - this->chi2minGlobal;
             cout << "Test stat for data: " << q_data << endl;
         }
         if (!(t.statusScan == 0 && t.statusFree == 0 && fabs(t.chi2minToy) < 1e27
@@ -2132,6 +2132,7 @@ void MethodDatasetsPluginScan::makeControlPlots(map<int, vector<double> > bVals,
     leg->AddEntry(lD,"Data","L");
     leg->Draw("same");
     c->SetLogy();
+    c->SetRightMargin(0.11);
     savePlot(c,TString(Form("cls_testStatControlPlot_p%d",i))+"_"+scanVar1);
   }
 
