@@ -547,6 +547,12 @@ bool MethodAbsScan::interpolate(TH1F* h, int i, float y, float central, bool upp
 	if ( i > h->GetNbinsX()-2 ) return false;
 	if ( i < 3 ) return false;
 
+	if(methodName.Contains("Prob")){
+		for (int k=0;k<h->GetNbinsX();k++){
+			h->SetBinError(k+1,0.);
+		}
+	}
+
 	// compute pol2 fit interpolation
 	TGraphErrors *g = new TGraphErrors(3);
 	g->SetPoint(0, h->GetBinCenter(i-1), h->GetBinContent(i-1));
@@ -602,7 +608,7 @@ bool MethodAbsScan::interpolate(TH1F* h, int i, float y, float central, bool upp
 	double sol1 = pq(p[0], p[1], p[2], y, 1);
 	// cout << upper << " ";
 	// printf("%f %f %f\n", central, sol0, sol1);
-	// std::cout << central << "\t" << sol0 << "\t" <<sol1 << std::endl;
+	std::cout << central << "\t" << sol0 << "\t" <<sol1 << std::endl;
 
 	// debug: show fitted 1-CL histogram
 	if ( arg->controlplot)
