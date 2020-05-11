@@ -547,6 +547,7 @@ bool MethodAbsScan::interpolate(TH1F* h, int i, float y, float central, bool upp
 	if ( i > h->GetNbinsX()-2 ) return false;
 	if ( i < 3 ) return false;
 
+	// if method Prob, don't interpolate (no proper error estimate)
 	if(methodName.Contains("Prob")){
 		for (int k=0;k<h->GetNbinsX();k++){
 			h->SetBinError(k+1,0.);
