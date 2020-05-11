@@ -20,10 +20,10 @@
 #include <algorithm>
 #include <ios>
 #include <iomanip>
-#include <boost/accumulators/accumulators.hpp>
-#include <boost/accumulators/statistics/stats.hpp>
-#include <boost/accumulators/statistics/mean.hpp>
-#include <boost/accumulators/statistics/variance.hpp>
+// #include <boost/accumulators/accumulators.hpp>
+// #include <boost/accumulators/statistics/stats.hpp>
+// #include <boost/accumulators/statistics/mean.hpp>
+// #include <boost/accumulators/statistics/variance.hpp>
 
 
 
@@ -804,16 +804,16 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         // // cout <<hCLsExp->GetBinContent(i)<<": " <<  boost::accumulators::mean(acc) << "\t" << sqrt(boost::accumulators::variance(acc)) << endl;
         // mederr_bootstrap->SetBinContent(i , sqrt(boost::accumulators::variance(acc)));
 
-        // std::cout << "non-parameric median errors for bin " << i << std::endl;
-        std::sort (cls_vals.begin(), cls_vals.begin()+cls_vals.size());
-        int k =0;
-        do{
-            k++;
-            // std::cout << "Binomial: " << TMath::BinomialI(0.5, cls_vals.size(), cls_vals.size()/2-k) - TMath::BinomialI(0.5, cls_vals.size(), cls_vals.size()/2+k) << std::endl;
-        // }while( ROOT::Math::binomial_cdf(cls_vals.size()/2+k,0.5, cls_vals.size()) - ROOT::Math::binomial_cdf(cls_vals.size()/2-k,0.5, cls_vals.size()) <=0.68);
-        }while(TMath::BetaIncomplete(0.5,cls_vals.size()/2-k+1, cls_vals.size()-(cls_vals.size()/2-k)) - TMath::BetaIncomplete(0.5,cls_vals.size()/2+k+1, cls_vals.size()-(cls_vals.size()/2+k))<=0.68);
+        // // std::cout << "non-parameric median errors for bin " << i << std::endl;
+        // std::sort (cls_vals.begin(), cls_vals.begin()+cls_vals.size());
+        // int k =0;
+        // do{
+        //     k++;
+        //     // std::cout << "Binomial: " << TMath::BinomialI(0.5, cls_vals.size(), cls_vals.size()/2-k) - TMath::BinomialI(0.5, cls_vals.size(), cls_vals.size()/2+k) << std::endl;
+        // // }while( ROOT::Math::binomial_cdf(cls_vals.size()/2+k,0.5, cls_vals.size()) - ROOT::Math::binomial_cdf(cls_vals.size()/2-k,0.5, cls_vals.size()) <=0.68);
+        // }while(TMath::BetaIncomplete(0.5,cls_vals.size()/2-k+1, cls_vals.size()-(cls_vals.size()/2-k)) - TMath::BetaIncomplete(0.5,cls_vals.size()/2+k+1, cls_vals.size()-(cls_vals.size()/2+k))<=0.68);
 
-        hCLsExp->SetBinError(i , (cls_vals[cls_vals.size()/2+k-1] - cls_vals[cls_vals.size()/2-k-1])/2.);
+        // hCLsExp->SetBinError(i , (cls_vals[cls_vals.size()/2+k-1] - cls_vals[cls_vals.size()/2-k-1])/2.);
 
         // double mederr_asymptotic_val = sqrt( probs[2]*( 1.-probs[2] ) / ( cls_vals.size()*bkg_pvals_cls->GetBinContent( bkg_pvals_cls->FindBin( TMath::Min( quantiles_cls[2], 1. ) ) ) / ( 1.0*bkg_pvals_cls->GetEntries()*bkg_pvals_cls->GetBinWidth(2) ) ) );
         // std::vector<double> low_high_median = {0.5 - mederr_asymptotic_val, 0.5 + mederr_asymptotic_val};
