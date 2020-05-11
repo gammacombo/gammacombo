@@ -1222,6 +1222,16 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
         hCLsErr2Up->SetBinContent( i, TMath::Min( quantiles_cls[4] , 1.) );
         hCLsErr2Dn->SetBinContent( i, TMath::Min( quantiles_cls[0] , 1.) );
 
+        // std::cout << "non-parameric median errors for bin " << i << std::endl;
+        std::sort (cls_vals.begin(), cls_vals.begin()+cls_vals.size());
+        int k =0;
+        do{
+            k++;
+            // std::cout << "Binomial: " << TMath::BinomialI(0.5, cls_vals.size(), cls_vals.size()/2-k) - TMath::BinomialI(0.5, cls_vals.size(), cls_vals.size()/2+k) << std::endl;
+        // }while( ROOT::Math::binomial_cdf(cls_vals.size()/2+k,0.5, cls_vals.size()) - ROOT::Math::binomial_cdf(cls_vals.size()/2-k,0.5, cls_vals.size()) <=0.68);
+        }while(TMath::BetaIncomplete(0.5,cls_vals.size()/2-k+1, cls_vals.size()-(cls_vals.size()/2-k)) - TMath::BetaIncomplete(0.5,cls_vals.size()/2+k+1, cls_vals.size()-(cls_vals.size()/2+k))<=0.68);
+
+        hCLsExp->SetBinError(i , (cls_vals[cls_vals.size()/2+k-1] - cls_vals[cls_vals.size()/2-k-1])/2.);
     }
 
     if ( arg->controlplot && arg->cls.size()>0) makeControlPlotsCLs( sampledBValues, sampledSchi2Values );
