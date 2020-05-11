@@ -20,6 +20,10 @@
 #include <algorithm>
 #include <ios>
 #include <iomanip>
+#include <boost/accumulators/accumulators.hpp>
+#include <boost/accumulators/statistics/stats.hpp>
+#include <boost/accumulators/statistics/mean.hpp>
+#include <boost/accumulators/statistics/variance.hpp>
 
 
 
@@ -644,6 +648,25 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
              << (double)nwrongrun / (double)(nentries - nfailed) * 100. << "%.\n" << endl;
     }
 
+    // //Test median error...
+    // TH1F *mederr_bootstrap        = (TH1F*)hCL->Clone("mederr_bootstrap");
+    // mederr_bootstrap->SetLineColor(kRed);
+    // mederr_bootstrap->SetMarkerColor(kRed);
+    // mederr_bootstrap->SetMarkerStyle(3);
+    // mederr_bootstrap->SetLineWidth(2);
+    // TH1F *mederr_nonpar        = (TH1F*)hCL->Clone("mederr_nonpar");
+    // mederr_nonpar->SetLineColor(kBlue);
+    // mederr_nonpar->SetLineWidth(2);
+    // TH1F *mederr_asymptotic        = (TH1F*)hCL->Clone("mederr_asymptotic");
+    // mederr_asymptotic->SetLineColor(kBlack);
+    // mederr_asymptotic->SetLineWidth(2);
+    // TH1F *mederr_poisson_cls        = (TH1F*)hCL->Clone("mederr_poisson_cls");
+    // mederr_poisson_cls->SetLineColor(kOrange);
+    // mederr_poisson_cls->SetLineWidth(2);
+    // TH1F *mederr_poisson_clsb_clb        = (TH1F*)hCL->Clone("mederr_poisson_clsb_clb");
+    // mederr_poisson_clsb_clb->SetLineColor(kCyan);
+    // mederr_poisson_clsb_clb->SetLineWidth(2);
+    // //...
 
     for (int i = 1; i <= h_better->GetNbinsX(); i++) {
         float nbetter = h_better->GetBinContent(i);
@@ -702,14 +725,13 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         	cls_vals.push_back(cls_val);
         }
 
-        if (arg->debug || arg->controlplot ){
-            TH1F *bkg_pvals_cls  = new TH1F(Form("bkg_clsvals_bin%d",i), "bkg cls p values", 50, -0.1, 1.1);
+            TH1F *bkg_pvals_cls  = new TH1F(Form("bkg_clsvals_bin%d",i), "bkg cls p values", 50, -0.01, 1.01);
             bkg_pvals_cls->SetLineColor(1);
             bkg_pvals_cls->SetLineWidth(3);
-            TH1F *bkg_pvals_clsb  = new TH1F(Form("bkg_clsbvals_bin%d",i), "bkg clsb p values", 50, -0.1, 1.1);
+            TH1F *bkg_pvals_clsb  = new TH1F(Form("bkg_clsbvals_bin%d",i), "bkg clsb p values", 50, -0.01, 1.01);
             bkg_pvals_clsb->SetLineColor(2);
             bkg_pvals_clsb->SetLineWidth(3);
-            TH1F *bkg_pvals_clb  = new TH1F(Form("bkg_clbvals_bin%d",i), "bkg clb p values", 50, -0.1, 1.1);
+            TH1F *bkg_pvals_clb  = new TH1F(Form("bkg_clbvals_bin%d",i), "bkg clb p values", 50, -0.01, 1.01);
             bkg_pvals_clb->SetLineColor(3);
             bkg_pvals_clb->SetLineWidth(3);
             for(int j=0; j<sampledBValues[i].size(); j++){
@@ -717,6 +739,8 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
                 bkg_pvals_clsb->Fill(TMath::Min( clsb_vals[j] , 1.));
                 bkg_pvals_clb->Fill(TMath::Min( clb_vals[j] , 1.));
             }
+
+        if (arg->debug || arg->controlplot ){
 
             TCanvas *canvasdebug = newNoWarnTCanvas("canvasdebug", "canvas1", 1200, 1000);
             bkg_pvals_cls->Draw();
@@ -754,13 +778,6 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
           cout << endl;
         }
 
-        // //effective method -> works robustly (cf. TLimit class), but is actually wrong
-        // hCLsExp->SetBinContent   ( i, TMath::Min( quantiles_clsb[2]/quantiles_clb[2] , 1.) );
-        // hCLsErr1Up->SetBinContent( i, TMath::Min( quantiles_clsb[3]/quantiles_clb[3] , 1.) );
-        // hCLsErr1Dn->SetBinContent( i, TMath::Min( quantiles_clsb[1]/quantiles_clb[1] , 1.) );
-        // hCLsErr2Up->SetBinContent( i, TMath::Min( quantiles_clsb[4]/quantiles_clb[4] , 1.) );
-        // hCLsErr2Dn->SetBinContent( i, TMath::Min( quantiles_clsb[0]/quantiles_clb[0] , 1.) );
-
         // //ideal method, but prone to fluctuations
         hCLsExp->SetBinContent   ( i, TMath::Min( quantiles_cls[2] , 1.) );
         hCLsExp->SetBinError   ( i, sqrt((1.-TMath::Min( quantiles_cls[2] , 1.))*TMath::Min( quantiles_cls[2] , 1.)/sampledBValues[i].size()) );        
@@ -769,7 +786,45 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         hCLsErr2Up->SetBinContent( i, TMath::Min( quantiles_cls[4] , 1.) );
         hCLsErr2Dn->SetBinContent( i, TMath::Min( quantiles_cls[0] , 1.) );
 
+        // //Test median error...
+        // // std::cout << "bootstrapping median errors for bin " << i << std::endl;
+        // std::vector<float> medians;
+        // for (int m=0; m<10000; m++){
+        //     TRandom3 rndg(0);
+        //     std::vector<double> testsample;
+        //     for(int bs_index=0; bs_index<cls_vals.size(); bs_index++){
+        //         testsample.push_back(cls_vals[rndg.Integer(cls_vals.size())]);
+        //     }
+        //     // medians.push_back(m);
+        //     medians.push_back(TMath::Min( Quantile<double>( testsample, probs )[2], 1.));
+        //     // std::cout << medians[m] << std::endl;
+        // }
+        // boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::mean, boost::accumulators::tag::variance> > acc;
+        // acc = for_each(medians.begin(), medians.end(), acc);
+        // // cout <<hCLsExp->GetBinContent(i)<<": " <<  boost::accumulators::mean(acc) << "\t" << sqrt(boost::accumulators::variance(acc)) << endl;
+        // mederr_bootstrap->SetBinContent(i , sqrt(boost::accumulators::variance(acc)));
 
+        // std::cout << "non-parameric median errors for bin " << i << std::endl;
+        std::sort (cls_vals.begin(), cls_vals.begin()+cls_vals.size());
+        int k =0;
+        do{
+            k++;
+            // std::cout << "Binomial: " << TMath::BinomialI(0.5, cls_vals.size(), cls_vals.size()/2-k) - TMath::BinomialI(0.5, cls_vals.size(), cls_vals.size()/2+k) << std::endl;
+        // }while( ROOT::Math::binomial_cdf(cls_vals.size()/2+k,0.5, cls_vals.size()) - ROOT::Math::binomial_cdf(cls_vals.size()/2-k,0.5, cls_vals.size()) <=0.68);
+        }while(TMath::BetaIncomplete(0.5,cls_vals.size()/2-k+1, cls_vals.size()-(cls_vals.size()/2-k)) - TMath::BetaIncomplete(0.5,cls_vals.size()/2+k+1, cls_vals.size()-(cls_vals.size()/2+k))<=0.68);
+
+        hCLsExp->SetBinError(i , (cls_vals[cls_vals.size()/2+k-1] - cls_vals[cls_vals.size()/2-k-1])/2.);
+
+        // double mederr_asymptotic_val = sqrt( probs[2]*( 1.-probs[2] ) / ( cls_vals.size()*bkg_pvals_cls->GetBinContent( bkg_pvals_cls->FindBin( TMath::Min( quantiles_cls[2], 1. ) ) ) / ( 1.0*bkg_pvals_cls->GetEntries()*bkg_pvals_cls->GetBinWidth(2) ) ) );
+        // std::vector<double> low_high_median = {0.5 - mederr_asymptotic_val, 0.5 + mederr_asymptotic_val};
+        // std::vector<double> quantiles_cls_low_high_med = Quantile<double>( cls_vals, low_high_median );
+        // // mederr_asymptotic->SetBinContent(i,sqrt( probs[2]*( 1.-probs[2] ) / ( cls_vals.size()*bkg_pvals_cls->GetBinContent( bkg_pvals_cls->FindBin( TMath::Min( quantiles_cls[2], 1. ) ) ) / ( 1.0*bkg_pvals_cls->GetEntries()*bkg_pvals_cls->GetBinWidth(2) ) ) ) );
+        // mederr_asymptotic->SetBinContent(i, (quantiles_cls_low_high_med[1]-quantiles_cls_low_high_med[0])/2.);
+
+
+        // mederr_poisson_cls->SetBinContent(i,sqrt((1.-TMath::Min( quantiles_cls[2] , 1.))*TMath::Min( quantiles_cls[2] , 1.)/sampledBValues[i].size()));
+        // mederr_poisson_clsb_clb->SetBinContent(i,sqrt( (quantiles_clsb[2]*(1.-quantiles_clsb[2])/sampledSchi2Values[i].size()) + (quantiles_clb[2]*(1.-quantiles_clb[2])/sampledBValues[i].size())));
+        // //...
 
         // CLs values in data
         int nDataAboveBkgExp = 0;
@@ -808,6 +863,28 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
           cout << "At scanpoint " << hCL->GetBinCenter(i) << ": ===== pValue CLsFreq: " << hCLsFreq->GetBinContent(i) << endl;
         }
     }
+
+    // //Test median errors...
+    // TCanvas *canvas_medianerr = newNoWarnTCanvas("canvas_medianerr", "canvas1", 1200, 1000);
+    // canvas_medianerr->SetRightMargin(0.11);
+    // // mederr_bootstrap->GetYaxis()->SetRangeUser(0.,0.1);
+    // mederr_bootstrap->Draw("P");
+    // mederr_nonpar->Draw("SAME");
+    // mederr_asymptotic->Draw("SAME");
+    // mederr_poisson_cls->Draw("SAME");
+    // mederr_poisson_clsb_clb->Draw("SAME");
+    // TLegend *leg_medianerr = new TLegend(0.5,0.74,0.89,0.95);
+    // leg_medianerr->SetHeader("Median uncertainties");
+    // leg_medianerr->SetFillColor(0);
+    // leg_medianerr->AddEntry(mederr_bootstrap,"from bootstrapping (optimal)","PE");
+    // leg_medianerr->AddEntry(mederr_nonpar, "non-parameric","L");
+    // leg_medianerr->AddEntry(mederr_asymptotic, "with asymptotic formula", "L");
+    // leg_medianerr->AddEntry(mederr_poisson_cls, "simple binomial error on cls dist.", "L");
+    // leg_medianerr->AddEntry(mederr_poisson_clsb_clb, "(wrong) error prop. clsb/clb", "L");
+    // leg_medianerr->Draw("same");
+    // canvas_medianerr->SaveAs("median_error_test.png"); 
+    // //...
+
 
     if ( arg->controlplot ) makeControlPlots( sampledBValues, sampledSchi2Values );
     if ( arg->controlplot ) makeControlPlotsBias( sampledBiasValues );
