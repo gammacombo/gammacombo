@@ -609,7 +609,7 @@ bool MethodAbsScan::interpolate(TH1F* h, int i, float y, float central, bool upp
 	double sol1 = pq(p[0], p[1], p[2], y, 1);
 	// cout << upper << " ";
 	// printf("%f %f %f\n", central, sol0, sol1);
-	std::cout << central << "\t" << sol0 << "\t" <<sol1 << std::endl;
+	// std::cout << central << "\t" << sol0 << "\t" <<sol1 << std::endl;
 
 	// debug: show fitted 1-CL histogram
 	if ( arg->controlplot)
