@@ -20,6 +20,8 @@
 #include <algorithm>
 #include <ios>
 #include <iomanip>
+#include "TFitResultPtr.h"
+#include "TFitResult.h"
 // #include <boost/accumulators/accumulators.hpp>
 // #include <boost/accumulators/statistics/stats.hpp>
 // #include <boost/accumulators/statistics/mean.hpp>
@@ -2256,12 +2258,14 @@ void MethodDatasetsPluginScan::makeControlPlotsBias(map<int, vector<double> > bi
 
     TCanvas *c = newNoWarnTCanvas( Form("q%d",i), Form("q%d",i));
     c->SetRightMargin(0.11);
-    double max = *(std::max_element( biasVals[i].begin(), biasVals[i].end() ) );
-    double min = *(std::min_element( biasVals[i].begin(), biasVals[i].end() ) );
-    TH1F *hsig = new TH1F( Form("hsig%d",i), "hsig", 50,min, max );
+    double range_max = *(std::max_element( biasVals[i].begin(), biasVals[i].end() ) );
+    double range_min = *(std::min_element( biasVals[i].begin(), biasVals[i].end() ) );
+    TH1F *hsig = new TH1F( Form("hsig%d",i), "hsig", 50,range_min+(range_max-range_min)*0.001, range_max-(range_max-range_min)*0.001); //this way we loose a little stats in the tails, but make sure the overflow bins are not used.
+    for(int j=0;j<biasVals[i].size();j++){
+        hsig->Fill(biasVals[i][j]);
+    }
 
-    for ( int j=0; j<biasVals[i].size(); j++ ) hsig->Fill( biasVals[i][j] );
-
+    TFitResultPtr fitresult = hsig->Fit("gaus","LSQ","",range_min, range_max);
     hsig->GetXaxis()->SetTitle("POI residual #hat{#alpha} #minus #alpha_{0}");
     hsig->GetYaxis()->SetTitle("Entries");
     hsig->GetXaxis()->SetTitleSize(0.06);
@@ -2286,8 +2290,8 @@ void MethodDatasetsPluginScan::makeControlPlotsBias(map<int, vector<double> > bi
     leg->SetHeader(Form("p=%4.2g",hCLs->GetBinCenter(i)));
     leg->SetFillColor(0);
     leg->AddEntry(hsig,"POI residual","LF");
-    leg->AddEntry((TObject*)0,Form("#mu=%4.2g +/- %4.2g",hsig->GetMean(),hsig->GetMeanError()),"");
-    leg->AddEntry((TObject*)0,Form("#sigma=%4.2g +/- %4.2g",hsig->GetStdDev(),hsig->GetStdDevError()),"");
+    leg->AddEntry((TObject*)0,Form("#mu=%4.2g +/- %4.2g",fitresult->Parameter(1),fitresult->ParError(1)),"");
+    leg->AddEntry((TObject*)0,Form("#sigma=%4.2g +/- %4.2g",fitresult->Parameter(2),fitresult->ParError(2)),"");
     leg->Draw("same");
     savePlot(c,TString(Form("BiasControlPlot_p%d",i))+"_"+scanVar1);
   }
