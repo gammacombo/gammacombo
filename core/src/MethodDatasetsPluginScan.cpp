@@ -612,7 +612,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         // chi2minBkgToy is the best fit at scanpoint of bkg-only toy
         if(b_teststat_toy<0&&b_teststat_toy>-1.e-6) b_teststat_toy=0.0;
 
-        if( !BadBkgFit ){
+        if( !BadBkgFit && b_teststat_toy>-1.e-6){
             if(hBin==2){
                 // std::cout << bkgTestStatVal << std::endl;
                 bkg_pvals->Fill(TMath::Prob(b_teststat_toy,1));
