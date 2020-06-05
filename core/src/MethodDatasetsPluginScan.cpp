@@ -440,6 +440,8 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     TH1F *h_failed_bkg        = (TH1F*)hCL->Clone("h_failed_bkg");
     // numbers of toys which are not in the physical region dChi2<0
     TH1F *h_background    = (TH1F*)hCL->Clone("h_background");
+    // numbers of bkg toys which are not in the physical region dChi2<0
+    TH1F *h_negtest_bkg    = (TH1F*)hCL->Clone("h_negtest_bkg");
     // histo for GoF test
     TH1F *h_gof           = (TH1F*)hCL->Clone("h_gof");
     // likelihood scan p values
@@ -621,6 +623,9 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
             sampledBValues[hBin].push_back( b_teststat_toy );
             sampledSBValues[hBin].push_back( b_teststat_toy );
         }
+        else if (!BadBkgFit && b_teststat_toy<-1.e-6){
+            h_negtest_bkg->Fill(t.scanpoint);
+        }
 
 
 
@@ -646,7 +651,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of failed toys: " << (double)nfailed / (double)nentries * 100. << "%." << endl;
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of failed background toys: " << (double)nfailedbkg / (double)nentries * 100. << "%." << endl;
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of unphysical (negative test stat) toys: " << h_background->GetEntries() / (double)nentries * 100. << "%." << endl;
-    cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of unphysical (negative test stat) bkg toys: " << (bkg_pvals->GetEntries() / (double)h_all_bkg->GetBinContent(2)) * 100. << "%." << endl;
+    cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of unphysical (negative test stat) bkg toys: " << (h_negtest_bkg->GetEntries() / (double)h_all_bkg->GetEntries()) * 100. << "%." << endl;
     if ( nwrongrun > 0 ) {
         cout << "\nMethodDatasetsPluginScan::readScan1dTrees() : WARNING : Read toys that differ in global chi2min (wrong run) : "
              << (double)nwrongrun / (double)(nentries - nfailed) * 100. << "%.\n" << endl;
@@ -688,6 +693,9 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         float ntot = h_tot->GetBinContent(i);
         if ( nall == 0. ) continue;
         h_background->SetBinContent(i, nbackground / nall);
+        h_background->SetBinError(i, sqrt(h_background->GetBinContent(i)*(1.- h_background->GetBinContent(i))/nall));
+        h_negtest_bkg->SetBinContent(i, ((float)h_negtest_bkg->GetBinContent(i)) / nall);
+        h_negtest_bkg->SetBinError(i, sqrt(h_negtest_bkg->GetBinContent(i)*(1.- h_negtest_bkg->GetBinContent(i))/nall));
         h_fracGoodToys->SetBinContent(i, (nall) / (float)ntot);
         h_fracGoodToys->SetBinError(i, sqrt(((nall) / (float)ntot)*(1.-((nall) / (float)ntot))/ntot));
         // subtract background
@@ -1040,7 +1048,23 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         canvas->cd(4);
         h_background->SetXTitle(w->var(scanVar1)->GetTitle());
         h_background->SetYTitle("fraction of neg. test stat toys");
-        h_background->Draw();
+        h_background->SetLineColor(kBlue);
+        h_background->SetMarkerColor(kBlue);
+        h_background->SetLineWidth(2);
+        h_background->Draw("PE");
+        h_negtest_bkg->SetXTitle(w->var(scanVar1)->GetTitle());
+        h_negtest_bkg->SetYTitle("fraction of neg. test stat toys");
+        h_negtest_bkg->SetLineColor(kRed);
+        h_negtest_bkg->SetMarkerColor(kRed);
+        h_negtest_bkg->SetLineWidth(2);
+        h_negtest_bkg->Draw("SAMESPE");
+
+        TLegend *leg_neg = new TLegend(0.7,0.8,0.89,0.95);
+        leg_neg->SetHeader(("   " + std::to_string(int((double) nentries / (double)nPoints1d)) + " toys").c_str());
+        leg_neg->SetFillColorAlpha(0, 0.5);
+        leg_neg->AddEntry(h_background,"plugin toys","PE");
+        leg_neg->AddEntry(h_negtest_bkg,"bkg-only toys","PE");
+        leg_neg->Draw("same");
         savePlot(canvas, "debug_plots_"+scanVar1);
     }
     // goodness-of-fit
