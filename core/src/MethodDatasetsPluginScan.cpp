@@ -626,6 +626,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
 
         // use the unphysical events to estimate background (be careful with this,
         // at least inspect the control plots to judge if this can be at all reasonable)
+        // ToDo: is that really sensible? Currently only used for control plots and background is estimated in a dedicated way
         if ( valid && !inPhysicalRegion ) {
             h_background->Fill(t.scanpoint);
         }
@@ -644,7 +645,8 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : read an average of " << ((double)nentries - (double)nfailed) / (double)nPoints1d << " toys per scan point." << endl;
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of failed toys: " << (double)nfailed / (double)nentries * 100. << "%." << endl;
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of failed background toys: " << (double)nfailedbkg / (double)nentries * 100. << "%." << endl;
-    cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of unphysical toys: " << h_background->GetEntries() / (double)nentries * 100. << "%." << endl;
+    cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of unphysical (negative test stat) toys: " << h_background->GetEntries() / (double)nentries * 100. << "%." << endl;
+    cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of unphysical (negative test stat) bkg toys: " << (bkg_pvals->GetEntries() / (double)h_all_bkg->GetBinContent(2)) * 100. << "%." << endl;
     if ( nwrongrun > 0 ) {
         cout << "\nMethodDatasetsPluginScan::readScan1dTrees() : WARNING : Read toys that differ in global chi2min (wrong run) : "
              << (double)nwrongrun / (double)(nentries - nfailed) * 100. << "%.\n" << endl;

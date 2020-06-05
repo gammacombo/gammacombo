@@ -1021,7 +1021,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
     if ( arg->debug ) cout << "MethodPluginScan::analyseToys() : ";
     cout << "fraction of failed toys: " << (double)nfailed/(double)nentries*100. << "%." << endl;
     if ( arg->debug ) cout << "MethodPluginScan::analyseToys() : ";
-    cout << "fraction of background toys: " << h_background->GetEntries()/(double)nentries*100. << "%." << endl;
+    cout << "fraction of negative test stat toys: " << h_background->GetEntries()/(double)nentries*100. << "%." << endl;
     if ( id==-1 && nwrongrun>0 ){
         cout << "\nMethodPluginScan::analyseToys() : WARNING : Read toys that differ in global chi2min (wrong run) : "
             << (double)nwrongrun/(double)(nentries-nfailed)*100. << "%.\n" << endl;
