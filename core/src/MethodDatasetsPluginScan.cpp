@@ -493,7 +493,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         // criteria for GammaCombo
         bool convergedFits      = (t.statusFree == 0. && t.statusScan == 0.) && (t.covQualFree == 3 && t.covQualScan == 3);
         bool tooHighLikelihood  = !( abs(t.chi2minToy) < 1e27 && abs(t.chi2minGlobalToy) < 1e27);
-        // bool BadBkgFit          = (!(t.statusFreeBkg == 0 && t.statusBkgBkg == 0) && (t.covQualFreeBkg == 3 && t.covQualBkgBkg == 3))||(std::isnan(t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy)||(t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy<-1.e-6)||(t.statusBkgBkg!=0)||(t.statusFreeBkg!=0));
+        // bool BadBkgFit          = (!(t.statusFreeBkg == 0 && t.statusBkgBkg == 0) && (t.covQualFreeBkg == 3 && t.covQualBkgBkg == 3))||(std::isnan(t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy)||(t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy<0)||(t.statusBkgBkg!=0)||(t.statusFreeBkg!=0));
         bool BadBkgFit          = (!(t.statusFreeBkg == 0 && t.statusScanBkg == 0) && (t.covQualFreeBkg == 3 && t.covQualScanBkg == 3))||(std::isnan(t.chi2minBkgToy - t.chi2minGlobalBkgToy)||(abs(t.chi2minBkgToy) > 1e27 || abs(t.chi2minGlobalBkgToy) > 1e27));
         // bool BadBkgFit          = false;
 
@@ -604,17 +604,17 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         }
 
         // chi2minToy is the best of the toy at scanpoint, chi2minGlobalToy is the best global fit of the toy
-        if(valid && sb_teststat_toy>-1.e-6){
-            if(sb_teststat_toy<0&&sb_teststat_toy>-1.e-6) sb_teststat_toy = 0.0;
+        if(valid && sb_teststat_toy>=0){
+            // if(sb_teststat_toy<0&&sb_teststat_toy>=0) sb_teststat_toy = 0.0;
             sampledSchi2Values[hBin].push_back(sb_teststat_toy);
         }
 
 
         // chi2minBkgBkgToy is the best fit of the bkg pdf of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
         // chi2minBkgToy is the best fit at scanpoint of bkg-only toy
-        if(b_teststat_toy<0&&b_teststat_toy>-1.e-6) b_teststat_toy=0.0;
+        // if(b_teststat_toy<0&&b_teststat_toy>0) b_teststat_toy=0.0;
 
-        if( !BadBkgFit && b_teststat_toy>-1.e-6){
+        if( !BadBkgFit && b_teststat_toy>=0){
             if(hBin==2){
                 // std::cout << bkgTestStatVal << std::endl;
                 bkg_pvals->Fill(TMath::Prob(b_teststat_toy,1));
@@ -623,7 +623,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
             sampledBValues[hBin].push_back( b_teststat_toy );
             sampledSBValues[hBin].push_back( b_teststat_toy );
         }
-        else if (!BadBkgFit && b_teststat_toy<-1.e-6){
+        else if (!BadBkgFit && b_teststat_toy<0){
             h_negtest_bkg->Fill(t.scanpoint);
         }
 

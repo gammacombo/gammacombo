@@ -932,7 +932,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
         // Check if toys are in physical region.
         // Don't enforce t.chi2min-t.chi2minGlobal>0, else it can be hard because due
         // to little fluctuaions the best fit point can be missing from the plugin plot...
-        bool inPhysicalRegion = t->chi2minToy - t->chi2minGlobalToy>0; //&& t.chi2min-t.chi2minGlobal>0
+        bool inPhysicalRegion = t->chi2minToy - t->chi2minGlobalToy>=0; //&& t.chi2min-t.chi2minGlobal>0
         int iBinBestFit = hCL->GetMaximumBin();
         float bestfitpoint = hCL->GetBinCenter(iBinBestFit);
         if(getSolution()){
@@ -992,7 +992,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
             sampledSchi2Values[hBin].push_back(sb_teststat_toy);
         }
 
-        if(b_teststat_toy<0&&b_teststat_toy>-1.e-4) b_teststat_toy=0.0;
+        // if(b_teststat_toy<0&&b_teststat_toy>-1.e-4) b_teststat_toy=0.0;
 
         if( inPhysicalRegion ){
             // bkgTestStatVal = t->scanbestBkgfitBkg <= 0. ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
