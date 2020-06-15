@@ -20,6 +20,8 @@
 #include <algorithm>
 #include <ios>
 #include <iomanip>
+#include "TFitResultPtr.h"
+#include "TFitResult.h"
 // #include <boost/accumulators/accumulators.hpp>
 // #include <boost/accumulators/statistics/stats.hpp>
 // #include <boost/accumulators/statistics/mean.hpp>
@@ -438,6 +440,8 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     TH1F *h_failed_bkg        = (TH1F*)hCL->Clone("h_failed_bkg");
     // numbers of toys which are not in the physical region dChi2<0
     TH1F *h_background    = (TH1F*)hCL->Clone("h_background");
+    // numbers of bkg toys which are not in the physical region dChi2<0
+    TH1F *h_negtest_bkg    = (TH1F*)hCL->Clone("h_negtest_bkg");
     // histo for GoF test
     TH1F *h_gof           = (TH1F*)hCL->Clone("h_gof");
     // likelihood scan p values
@@ -489,7 +493,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         // criteria for GammaCombo
         bool convergedFits      = (t.statusFree == 0. && t.statusScan == 0.) && (t.covQualFree == 3 && t.covQualScan == 3);
         bool tooHighLikelihood  = !( abs(t.chi2minToy) < 1e27 && abs(t.chi2minGlobalToy) < 1e27);
-        // bool BadBkgFit          = (!(t.statusFreeBkg == 0 && t.statusBkgBkg == 0) && (t.covQualFreeBkg == 3 && t.covQualBkgBkg == 3))||(std::isnan(t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy)||(t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy<-1.e-6)||(t.statusBkgBkg!=0)||(t.statusFreeBkg!=0));
+        // bool BadBkgFit          = (!(t.statusFreeBkg == 0 && t.statusBkgBkg == 0) && (t.covQualFreeBkg == 3 && t.covQualBkgBkg == 3))||(std::isnan(t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy)||(t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy<0)||(t.statusBkgBkg!=0)||(t.statusFreeBkg!=0));
         bool BadBkgFit          = (!(t.statusFreeBkg == 0 && t.statusScanBkg == 0) && (t.covQualFreeBkg == 3 && t.covQualScanBkg == 3))||(std::isnan(t.chi2minBkgToy - t.chi2minGlobalBkgToy)||(abs(t.chi2minBkgToy) > 1e27 || abs(t.chi2minGlobalBkgToy) > 1e27));
         // bool BadBkgFit          = false;
 
@@ -600,17 +604,17 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         }
 
         // chi2minToy is the best of the toy at scanpoint, chi2minGlobalToy is the best global fit of the toy
-        if(valid && sb_teststat_toy>-1.e-6){
-            if(sb_teststat_toy<0&&sb_teststat_toy>-1.e-6) sb_teststat_toy = 0.0;
+        if(valid && sb_teststat_toy>=0){
+            // if(sb_teststat_toy<0&&sb_teststat_toy>=0) sb_teststat_toy = 0.0;
             sampledSchi2Values[hBin].push_back(sb_teststat_toy);
         }
 
 
         // chi2minBkgBkgToy is the best fit of the bkg pdf of bkg-only toy, chi2minGlobalBkgToy is the best global fit of the bkg-only toy
         // chi2minBkgToy is the best fit at scanpoint of bkg-only toy
-        if(b_teststat_toy<0&&b_teststat_toy>-1.e-6) b_teststat_toy=0.0;
+        // if(b_teststat_toy<0&&b_teststat_toy>0) b_teststat_toy=0.0;
 
-        if( !BadBkgFit ){
+        if( !BadBkgFit && b_teststat_toy>=0){
             if(hBin==2){
                 // std::cout << bkgTestStatVal << std::endl;
                 bkg_pvals->Fill(TMath::Prob(b_teststat_toy,1));
@@ -619,11 +623,15 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
             sampledBValues[hBin].push_back( b_teststat_toy );
             sampledSBValues[hBin].push_back( b_teststat_toy );
         }
+        else if (!BadBkgFit && b_teststat_toy<0){
+            h_negtest_bkg->Fill(t.scanpoint);
+        }
 
 
 
         // use the unphysical events to estimate background (be careful with this,
         // at least inspect the control plots to judge if this can be at all reasonable)
+        // ToDo: is that really sensible? Currently only used for control plots and background is estimated in a dedicated way
         if ( valid && !inPhysicalRegion ) {
             h_background->Fill(t.scanpoint);
         }
@@ -642,7 +650,8 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : read an average of " << ((double)nentries - (double)nfailed) / (double)nPoints1d << " toys per scan point." << endl;
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of failed toys: " << (double)nfailed / (double)nentries * 100. << "%." << endl;
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of failed background toys: " << (double)nfailedbkg / (double)nentries * 100. << "%." << endl;
-    cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of unphysical toys: " << h_background->GetEntries() / (double)nentries * 100. << "%." << endl;
+    cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of unphysical (negative test stat) toys: " << h_background->GetEntries() / (double)nentries * 100. << "%." << endl;
+    cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of unphysical (negative test stat) bkg toys: " << (h_negtest_bkg->GetEntries() / (double)h_all_bkg->GetEntries()) * 100. << "%." << endl;
     if ( nwrongrun > 0 ) {
         cout << "\nMethodDatasetsPluginScan::readScan1dTrees() : WARNING : Read toys that differ in global chi2min (wrong run) : "
              << (double)nwrongrun / (double)(nentries - nfailed) * 100. << "%.\n" << endl;
@@ -684,6 +693,9 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         float ntot = h_tot->GetBinContent(i);
         if ( nall == 0. ) continue;
         h_background->SetBinContent(i, nbackground / nall);
+        h_background->SetBinError(i, sqrt(h_background->GetBinContent(i)*(1.- h_background->GetBinContent(i))/nall));
+        h_negtest_bkg->SetBinContent(i, ((float)h_negtest_bkg->GetBinContent(i)) / nall);
+        h_negtest_bkg->SetBinError(i, sqrt(h_negtest_bkg->GetBinContent(i)*(1.- h_negtest_bkg->GetBinContent(i))/nall));
         h_fracGoodToys->SetBinContent(i, (nall) / (float)ntot);
         h_fracGoodToys->SetBinError(i, sqrt(((nall) / (float)ntot)*(1.-((nall) / (float)ntot))/ntot));
         // subtract background
@@ -1036,7 +1048,23 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         canvas->cd(4);
         h_background->SetXTitle(w->var(scanVar1)->GetTitle());
         h_background->SetYTitle("fraction of neg. test stat toys");
-        h_background->Draw();
+        h_background->SetLineColor(kBlue);
+        h_background->SetMarkerColor(kBlue);
+        h_background->SetLineWidth(2);
+        h_background->Draw("PE");
+        h_negtest_bkg->SetXTitle(w->var(scanVar1)->GetTitle());
+        h_negtest_bkg->SetYTitle("fraction of neg. test stat toys");
+        h_negtest_bkg->SetLineColor(kRed);
+        h_negtest_bkg->SetMarkerColor(kRed);
+        h_negtest_bkg->SetLineWidth(2);
+        h_negtest_bkg->Draw("SAMESPE");
+
+        TLegend *leg_neg = new TLegend(0.7,0.8,0.89,0.95);
+        leg_neg->SetHeader(("   " + std::to_string(int((double) nentries / (double)nPoints1d)) + " toys").c_str());
+        leg_neg->SetFillColorAlpha(0, 0.5);
+        leg_neg->AddEntry(h_background,"plugin toys","PE");
+        leg_neg->AddEntry(h_negtest_bkg,"bkg-only toys","PE");
+        leg_neg->Draw("same");
         savePlot(canvas, "debug_plots_"+scanVar1);
     }
     // goodness-of-fit
@@ -2256,12 +2284,14 @@ void MethodDatasetsPluginScan::makeControlPlotsBias(map<int, vector<double> > bi
 
     TCanvas *c = newNoWarnTCanvas( Form("q%d",i), Form("q%d",i));
     c->SetRightMargin(0.11);
-    double max = *(std::max_element( biasVals[i].begin(), biasVals[i].end() ) );
-    double min = *(std::min_element( biasVals[i].begin(), biasVals[i].end() ) );
-    TH1F *hsig = new TH1F( Form("hsig%d",i), "hsig", 50,min, max );
+    double range_max = *(std::max_element( biasVals[i].begin(), biasVals[i].end() ) );
+    double range_min = *(std::min_element( biasVals[i].begin(), biasVals[i].end() ) );
+    TH1F *hsig = new TH1F( Form("hsig%d",i), "hsig", 50,range_min+(range_max-range_min)*0.001, range_max-(range_max-range_min)*0.001); //this way we loose a little stats in the tails, but make sure the overflow bins are not used.
+    for(int j=0;j<biasVals[i].size();j++){
+        hsig->Fill(biasVals[i][j]);
+    }
 
-    for ( int j=0; j<biasVals[i].size(); j++ ) hsig->Fill( biasVals[i][j] );
-
+    TFitResultPtr fitresult = hsig->Fit("gaus","LSQ","",range_min, range_max);
     hsig->GetXaxis()->SetTitle("POI residual #hat{#alpha} #minus #alpha_{0}");
     hsig->GetYaxis()->SetTitle("Entries");
     hsig->GetXaxis()->SetTitleSize(0.06);
@@ -2286,8 +2316,8 @@ void MethodDatasetsPluginScan::makeControlPlotsBias(map<int, vector<double> > bi
     leg->SetHeader(Form("p=%4.2g",hCLs->GetBinCenter(i)));
     leg->SetFillColor(0);
     leg->AddEntry(hsig,"POI residual","LF");
-    leg->AddEntry((TObject*)0,Form("#mu=%4.2g +/- %4.2g",hsig->GetMean(),hsig->GetMeanError()),"");
-    leg->AddEntry((TObject*)0,Form("#sigma=%4.2g +/- %4.2g",hsig->GetStdDev(),hsig->GetStdDevError()),"");
+    leg->AddEntry((TObject*)0,Form("#mu=%4.2g +/- %4.2g",fitresult->Parameter(1),fitresult->ParError(1)),"");
+    leg->AddEntry((TObject*)0,Form("#sigma=%4.2g +/- %4.2g",fitresult->Parameter(2),fitresult->ParError(2)),"");
     leg->Draw("same");
     savePlot(c,TString(Form("BiasControlPlot_p%d",i))+"_"+scanVar1);
   }
