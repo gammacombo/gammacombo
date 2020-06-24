@@ -438,18 +438,20 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
     double *yvalsRawExpErr1Up = gErr1UpRaw->GetY();
     double *yvalsRawExpErr2Up = gErr2UpRaw->GetY();
 
-    for (int i=0; i<gExp->GetN(); i++){
-    	// std::cout << xvalsRaw[i] << "\t" <<xvals[i] << std::endl;
-    	// if(yvalsRawExp[i]>0.99){
-    	// 	gExp->SetPoint(i,xvals[i], 1.0);
-    	// }
-    	if(yvalsRawExpErr1Up[i]>0.99){
-    		gErr1Up->SetPoint(i,xvals[i], 1.0);
-    	}
-    	if(yvalsRawExpErr2Up[i]>0.99){
-    		gErr2Up->SetPoint(i,xvals[i], 1.0);
-    	}
-    }
+    if(arg->teststatistic == 1){
+	    for (int i=0; i<gExp->GetN(); i++){
+	    	// std::cout << xvalsRaw[i] << "\t" <<xvals[i] << std::endl;
+	    	// if(yvalsRawExp[i]>0.99){
+	    	// 	gExp->SetPoint(i,xvals[i], 1.0);
+	    	// }
+	    	if(yvalsRawExpErr1Up[i]>0.99){
+	    		gErr1Up->SetPoint(i,xvals[i], 1.0);
+	    	}
+	    	if(yvalsRawExpErr2Up[i]>0.99){
+	    		gErr2Up->SetPoint(i,xvals[i], 1.0);
+	    	}
+	    }
+	}
 
     // fix point 0 to CLs=1 for all expected curves
 
