@@ -1121,13 +1121,13 @@ void GammaComboEngine::scanStrategy2d(MethodProbScan *scanner, ParameterCache *p
 		for ( int i=0; i<s1->getSolutions().size(); i++ ) solutions.push_back(s1->getSolution(i));
 		for ( int i=0; i<s2->getSolutions().size(); i++ ) solutions.push_back(s2->getSolution(i));
 		// \todo remove similar solutions from list
+		delete s1;
+		delete s2;
 		for ( int j=0; j<solutions.size(); j++ ){
 			cout << "2D scan " << j+1 << " of " << solutions.size() << " ..." << endl;
 			scanner->loadParameters(solutions[j]);
 			scanner->scan2d();
 		}
-		delete s1;
-		delete s2;
 	}
 	// otherwise load each starting value found
 	else {

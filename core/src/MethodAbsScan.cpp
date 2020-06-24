@@ -285,7 +285,9 @@ void MethodAbsScan::initScan()
 		setLimit(w, scanVar2, "scan");
 		float min2 = par2->getMin();
 		float max2 = par2->getMax();
+    if (hCL2d) delete hCL2d;
 		hCL2d      = new TH2F("hCL2d"+getUniqueRootName(),      "hCL2d"+pdfName, nPoints2dx, min1, max1, nPoints2dy, min2, max2);
+    if (hChi2min2d) delete hChi2min2d;
 		hChi2min2d = new TH2F("hChi2min2d"+getUniqueRootName(), "hChi2min",      nPoints2dx, min1, max1, nPoints2dy, min2, max2);
 		for ( int i=1; i<=nPoints2dx; i++ )
 			for ( int j=1; j<=nPoints2dy; j++ ) hChi2min2d->SetBinContent(i,j,1e6);
@@ -609,7 +611,7 @@ bool MethodAbsScan::interpolate(TH1F* h, int i, float y, float central, bool upp
 	double sol1 = pq(p[0], p[1], p[2], y, 1);
 	// cout << upper << " ";
 	// printf("%f %f %f\n", central, sol0, sol1);
-	std::cout << central << "\t" << sol0 << "\t" <<sol1 << std::endl;
+  //std::cout << central << "\t" << sol0 << "\t" <<sol1 << std::endl;
 
 	// debug: show fitted 1-CL histogram
 	if ( arg->controlplot)

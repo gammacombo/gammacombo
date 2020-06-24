@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <vector>
 
+#include "RooFormulaVar.h"
 #include "RooGlobalFunc.h"
 #include "RooWorkspace.h"
 #include "RooDataSet.h"
