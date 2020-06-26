@@ -68,7 +68,8 @@ int main(int argc, char* argv[])
   PDF_Datasets* pdf = new PDF_Datasets(workspace);
   // PDF_Datasets* pdf = new PDF_DatasetTutorial(workspace); // put your inherited fitter if you want to
   pdf->initData("data"); // this is the name of the dataset in the workspace
-  pdf->initBkgPDF("extended_bkg_model"); // this the name of the background pdf in the workspace (without the constraints)
+  pdf->initBkgPDF("extended_bkg_model"); // optional: this the name of the background pdf in the workspace (without the constraints)
+  // it might be feasible to comment the above line. Then the tool will assume the BkgPDF to be the PDF with scanVar=0 (most often true)
   pdf->initPDF("mass_model"); // this the name of the pdf in the workspace (without the constraints)
   pdf->initObservables("datasetObservables"); // non-global observables whose measurements are stored in the dataset (for example the mass).
   pdf->initGlobalObservables("global_observables_set"); // global observables
