@@ -90,6 +90,7 @@ template<class FitResult> void RooSlimFitResult::init(const FitResult *r, bool s
 {
 	assert(r);
 	// copy over const parameters
+	// _constParsDummy.removeAll();
 	int size = r->constPars().getSize();
 	for ( int i=0; i<size; i++ ){
 		RooRealVar* p = (RooRealVar*)r->constPars().at(i);
@@ -99,8 +100,10 @@ template<class FitResult> void RooSlimFitResult::init(const FitResult *r, bool s
 		_parsAngle.push_back(isAngle(p));
 		_parsConst.push_back(true);
 		_parsFloatId.push_back(-1); // floating ID doesn't exist for constant parameters
+		// _constParsDummy.addClone(*p);
 	}
 	// copy over floating parameters
+	// _floatParsFinalDummy.removeAll();
 	size = r->floatParsFinal().getSize();
 	for ( int i=0; i<size; i++ ){
 		RooRealVar* p = (RooRealVar*)r->floatParsFinal().at(i);
@@ -110,6 +113,7 @@ template<class FitResult> void RooSlimFitResult::init(const FitResult *r, bool s
 		_parsAngle.push_back(isAngle(p));
 		_parsConst.push_back(false);
 		_parsFloatId.push_back(i); // needed to store the parameter's position in the COR matrix (matches floatParsFinal())
+		_floatParsFinalDummy.addClone(*p); //apparently this takes a significant amount of time -> scales badly with large parameter space
 	}
 	// copy over numeric values
 	_covQual = r->covQual();

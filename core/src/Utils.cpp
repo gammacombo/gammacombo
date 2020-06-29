@@ -494,7 +494,6 @@ void Utils::setParameters(RooWorkspace* w, RooFitResult* values){
 			var->setVal(p->getVal());
 		}
 	}
-  delete it;
 	return;
 };
 
@@ -583,12 +582,13 @@ void Utils::setParameters(RooWorkspace* w, TString parname, RooFitResult* r, boo
 
 void Utils::setParameters(RooWorkspace* w, TString parname, RooSlimFitResult* r, bool constAndFloat)
 {
-  // avoid calls to floatParsFinal on a RooSlimFitResult - errgh!
-	vector<string> &names = r->_parsNames;
-  for ( int i=0; i<names.size(); i++ ) {
-    RooRealVar *var = (RooRealVar*)w->var(names[i].c_str());
-    if (var) var->setVal( r->_parsVal[i] );
-  }
+	if ( constAndFloat ){
+		RooArgList list = r->floatParsFinal();
+		list.add(r->constPars());
+		setParameters(w, parname, &list);
+		return;
+	}
+	setParameters(w, parname, &(r->floatParsFinal()));
 }
 
 ///
