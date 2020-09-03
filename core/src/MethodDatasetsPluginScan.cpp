@@ -1621,6 +1621,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             }
 
             // implement physical range a la Feldman Cousins
+            std::map<TString, double> boundary_vals;
             if ( arg->physRanges.size()>0 ){
                 for ( int j=0; j<arg->physRanges[0].size(); j++ ){
                     if ( w->var( arg->physRanges[0][j].name ) ){
@@ -1628,11 +1629,13 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                             if(arg->debug) std::cout << "MethodDatasetsPluginScan::scan1d()::fit " << arg->physRanges[0][j].name <<"=" << w->var( arg->physRanges[0][j].name )->getVal() <<" out of physics range, fixing to " << arg->physRanges[0][j].min << std::endl;
                             w->var( arg->physRanges[0][j].name )->setVal(arg->physRanges[0][j].min);
                             w->var( arg->physRanges[0][j].name )->setConstant(true);
+                            boundary_vals[arg->physRanges[0][j].name] = arg->physRanges[0][j].min;
                         }
                         else if (w->var( arg->physRanges[0][j].name )->getVal() > arg->physRanges[0][j].max){
                             if(arg->debug) std::cout << "MethodDatasetsPluginScan::scan1d()::fit " << arg->physRanges[0][j].name <<"=" << w->var( arg->physRanges[0][j].name )->getVal() <<" out of physics range, fixing to " << arg->physRanges[0][j].max << std::endl;
                             w->var( arg->physRanges[0][j].name )->setVal(arg->physRanges[0][j].max);
                             w->var( arg->physRanges[0][j].name )->setConstant(true);
+                            boundary_vals[arg->physRanges[0][j].name] = arg->physRanges[0][j].max;
                         }
                     }
                 }
@@ -1706,8 +1709,10 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                         cout << "+++++ > dChi2: " << toyTree.chi2minToy - toyTree.chi2minGlobalToy << endl;
                         cout << "+++++ > dChi2PDF: " << 2 * (pdf->getMinNllScan() - pdf->getMinNllFree()) << endl;
                         Utils::setParameters(this->pdf->getWorkspace(), pdf->getParName(), parsAfterScanFit->get(0));
-                        // if (parameterToScan->getVal() < 1e-13) parameterToScan->setVal(0.67e-12); //what do we gain from this?
-                        parameterToScan->setConstant(false);
+                        // but need to keep the parameters fixed to boundary:
+                        for(auto element : boundary_vals){
+                            w->var(element.first)->setVal(element.second);
+                        }
                         pdf->deleteNLL();
                         RooFitResult* r_tmp = this->loadAndFit(this->pdf);
                         assert(r_tmp);
@@ -1721,11 +1726,14 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                         }
                         else {
                             // set back parameter value to last fit value
-                            cout << "+++++ > no Improvement found, reset ws par value to last fit result" << endl;
-                            parameterToScan->setVal(static_cast<RooRealVar*>(r1->floatParsFinal().find(parameterToScan->GetName()))->getVal());
+                            cout << "+++++ > no Improvement found";
+                            if(!parameterToScan->isConstant()){
+                                std::cout << ", reset ws par value to last fit result";
+                                parameterToScan->setVal(static_cast<RooRealVar*>(r1->floatParsFinal().find(parameterToScan->GetName()))->getVal());
+                            }
+                            std::cout << std::endl;
                             delete r_tmp;
                         }
-                        // delete parsAfterScanFit;
                     };
                     if (arg->debug) {
                         cout  << "===== > compare free fit result with pdf parameters: " << endl;
