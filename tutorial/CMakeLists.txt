@@ -13,6 +13,7 @@ SET(COMBINER_EXECUTABLES
         cartesian
 	tutorial_dataset
 	tutorial_dataset_build_workspace
+  multipdftest
 )
 
 # Configure if this combiner has custom ROOT objects
@@ -39,8 +40,8 @@ SET(COMBINER_SOURCE_DIR ./src)
 SET(COMBINER_MAIN_DIR ./main)
 
 # include directories
-INCLUDE_DIRECTORIES( 
-	BEFORE 
+INCLUDE_DIRECTORIES(
+	BEFORE
 	${ROOT_INCLUDE_DIR}
 	${CORE_INC_DIR}
 	${COMBINER_INCLUDE_DIR}
@@ -87,7 +88,7 @@ TARGET_LINK_LIBRARIES( ${COMBINER_NAME}Components ${ROOT_LIBRARIES} ${PROJECT_NA
 ######################################
 
 SET(COMBINER_LIBS
-	${COMBINER_NAME}Components  
+	${COMBINER_NAME}Components
 	${PROJECT_NAME}Components
 )
 foreach( exec ${COMBINER_EXECUTABLES} )
