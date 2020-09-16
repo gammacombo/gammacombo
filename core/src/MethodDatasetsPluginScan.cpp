@@ -1153,7 +1153,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 		// if CLs toys we need to keep hold of what's going on in the bkg only case
     // there is a small overhead here but it's necessary because the bkg only hypothesis
     // might not necessarily be in the scan range (although often it will be the first point)
-	vector<RooDataSet*> cls_bkgOnlyToys;
+	vector<RooAbsData*> cls_bkgOnlyToys;
 	vector<TString> bkgOnlyGlobObsSnaphots;
     vector<float> chi2minGlobalBkgToysStore;    // Global fit to bkg-only toys
     vector<float> chi2minBkgBkgToysStore;       // Bkg fit to bkg-only toys
@@ -1177,8 +1177,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         // pdf->printParameters();
         pdf->generateBkgToys(0,arg->var[0]);
         pdf->generateBkgToysGlobalObservables(0,j);
-        RooDataSet* bkgOnlyToy = pdf->getBkgToyObservables();
-        cls_bkgOnlyToys.push_back( (RooDataSet*)bkgOnlyToy->Clone() ); // clone required because of deleteToys() call at end of loop
+        RooAbsData* bkgOnlyToy = pdf->getBkgToyObservables();
+        cls_bkgOnlyToys.push_back( (RooAbsData*)bkgOnlyToy->Clone() ); // clone required because of deleteToys() call at end of loop
         bkgOnlyGlobObsSnaphots.push_back(pdf->globalObsBkgToySnapshotName);
         pdf->setToyData( bkgOnlyToy );
         parameterToScan->setConstant(false);
@@ -1456,9 +1456,9 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             parameterToScan->setConstant(true);
             this->pdf->setFitStrategy(0);
             // temporarily store our current toy here so we can put it back in a minute
-            RooDataSet *tempData = (RooDataSet*)this->pdf->getToyObservables();
+            RooAbsData *tempData = (RooAbsData*)this->pdf->getToyObservables();
             // now get our background only toy (to fit under this hypothesis)
-            RooDataSet *bkgToy = (RooDataSet*)cls_bkgOnlyToys[j];
+            RooAbsData *bkgToy = (RooAbsData*)cls_bkgOnlyToys[j];
             if (arg->debug) cout << "Setting background toy as data " << bkgToy << endl;
             this->pdf->setBkgToyData( bkgToy );
             this->pdf->setGlobalObsSnapshotBkgToy( bkgOnlyGlobObsSnaphots[j] );
