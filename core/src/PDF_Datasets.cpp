@@ -62,7 +62,7 @@ void PDF_Datasets::initData(const TString& name) {
         exit(EXIT_FAILURE);
     }
     dataName    = name;
-    data        = (RooDataSet*) wspc->data(dataName);
+    data        = (RooAbsData*) wspc->data(dataName);
     if (data) isDataSet   = true;
     else {
         std::cout << "FATAL in PDF_Datasets::initData -- Data: " << dataName << " not found in workspace" << std::endl;
@@ -198,13 +198,13 @@ void PDF_Datasets::setVarRange(const TString &varName, const TString &rangeName,
 };
 
 
-void PDF_Datasets::setToyData(RooDataSet* ds) {
+void PDF_Datasets::setToyData(RooAbsData* ds) {
     toyObservables  = ds;
     isToyDataSet    = kTRUE;
     return;
 };
 
-void PDF_Datasets::setBkgToyData(RooDataSet* ds) {
+void PDF_Datasets::setBkgToyData(RooAbsData* ds) {
     toyBkgObservables  = ds;
     return;
 };
@@ -280,7 +280,7 @@ void  PDF_Datasets::generateToysGlobalObservables(int SeedShift) {
 };
 
 
-RooFitResult* PDF_Datasets::fit(RooDataSet* dataToFit) {
+RooFitResult* PDF_Datasets::fit(RooAbsData* dataToFit) {
 
     if (this->getWorkspace()->set(constraintName) == NULL) {
         std::cout << std::endl;
@@ -314,7 +314,7 @@ RooFitResult* PDF_Datasets::fit(RooDataSet* dataToFit) {
     return result;
 };
 
-RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit, TString signalvar) {
+RooFitResult* PDF_Datasets::fitBkg(RooAbsData* dataToFit, TString signalvar) {
 
     if (this->getWorkspace()->set(constraintName) == NULL) {
         std::cout << std::endl;
