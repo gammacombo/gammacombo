@@ -22,7 +22,7 @@ PDF_Datasets::PDF_Datasets(RooWorkspace* w, int nObs, OptParser* opt)
     pdfName         = "default_pdf_workspace_name";
     pdfBkgName      = "default_pdf_bkg_workspace_name";
     parName         = "default_internal_parameter_set";
-    areObsSet       = areParsSet = areRangesSet = isPdfSet = isBkgPdfSet = isDataSet = isToyDataSet = kFALSE;
+    areObsSet       = areParsSet = areRangesSet = isPdfSet = isBkgPdfSet = isMultipdfSet = isBkgMultipdfSet = isMultipdfCatSet = isDataSet = isToyDataSet = kFALSE;
     arg             = opt;
     fitStatus       = -10;
     _NLL            = NULL;
@@ -142,13 +142,42 @@ void  PDF_Datasets::initParameters() {
     exit(EXIT_FAILURE);
 };
 
+void PDF_Datasets::initMultipdfCat(const TString& name) {
+    if (isMultipdfCatSet) {
+        std::cout << "ERROR in PDF_Datasets::initMultipdfCat -- Multipdf category already set" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    multipdfCatName = name;
+    multipdfCat = wspc->cat(multipdfCatName);
+    if (multipdfCat) isMultipdfCatSet = true;
+    else {
+        std::cout << "FATAL in PDF_Datasets::initMultipdfCat -- Category: " << multipdfCatName << " not found in workspace" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    std::cout << "INFO in PDF_Datasets::initMultipdfCat -- Category initialized." << std::endl;
+    return;
+};
+
 void PDF_Datasets::initPDF(const TString& name) {
     if (isPdfSet) {
         std::cout << "ERROR in PDF_Datasets::initPDF -- PDF already set" << std::endl;
         exit(EXIT_FAILURE);
     }
     pdfName  = name;
-    pdf      = wspc->pdf(pdfName);
+    if (wspc->pdf(pdfName)->InheritsFrom("RooMultiPdf")) {
+        multipdf = (RooMultiPdf*) wspc->pdf(pdfName);
+        pdf = ((RooMultiPdf*) wspc->pdf(pdfName))->getPdf(0);
+        if (multipdf) {
+            isMultipdfSet = true;
+        }
+        else {
+            std::cout << "FATAL in PDF_Datasets::initPDF -- PDF: " << pdfName << " not found in workspace" << std::endl;
+            exit(EXIT_FAILURE);
+        }
+    }
+    else {
+        pdf = wspc->pdf(pdfName);
+    }
     if (pdf) isPdfSet  = true;
     else {
         std::cout << "FATAL in PDF_Datasets::initPDF -- PDF: " << pdfName << " not found in workspace" << std::endl;
@@ -167,12 +196,24 @@ void PDF_Datasets::initBkgPDF(const TString& name) {
         exit(EXIT_FAILURE);
     }
     pdfBkgName  = name;
-    pdfBkg      = wspc->pdf(pdfBkgName);
+    if (wspc->pdf(pdfBkgName)->InheritsFrom("RooMultiPdf")) {
+        multipdfBkg = (RooMultiPdf*) wspc->pdf(pdfBkgName);
+        pdfBkg = ((RooMultiPdf*) wspc->pdf(pdfBkgName))->getPdf(0);
+        if (multipdfBkg) isBkgMultipdfSet = true;
+        else {
+            std::cout << "FATAL in PDF_Datasets::initBkgPDF -- PDF: " << pdfBkgName << " not found in workspace" << std::endl;
+            exit(EXIT_FAILURE);
+        }
+    }
+    else {
+        pdfBkg = wspc->pdf(pdfBkgName);
+    }
     if (pdfBkg) isBkgPdfSet  = true;
     else {
         std::cout << "FATAL in PDF_Datasets::initBkgPDF -- PDF: " << pdfBkgName << " not found in workspace" << std::endl;
         exit(EXIT_FAILURE);
     }
+
     std::cout << "INFO in PDF_Datasets::initBkgPDF -- PDF initialized. CLs method ready." << std::endl;
     return;
 };
@@ -301,17 +342,48 @@ RooFitResult* PDF_Datasets::fit(RooDataSet* dataToFit) {
 
     // unfortunately Minuit2 does not initialize the status of the roofitresult, if all parameters are constant. Therefore need to stay with standard Minuit fitting.
     // RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Minimizer("Minuit2", "Migrad"));
-    RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
+    if (isMultipdfSet) {
+        RooFitResult* result;
+        double minMultipdfNll;
+        bool badFit = false;
+        for (int npdf = 0; npdf<multipdf->getNumPdfs(); npdf++) {
+//            cout << arg->ndfCorrection << endl; // This should work but doesn't
+//            cout << arg->debug << endl; // Even this doesn't work
+            multipdfCat->setIndex(npdf);
+            RooFitResult* result_tmp = multipdf->getPdf(npdf)->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
+            RooAbsReal* nll = multipdf->getPdf(npdf)->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)));
+            minMultipdfNll = nll->getVal()+multipdf->getCorrection();
+            result_tmp->Print();
+            cout << minMultipdfNll << endl;
+            if (result_tmp->status()!=0 or result_tmp->covQual()!=3 or result_tmp->edm()>1.e-3) badFit = true;
+            if (npdf==0 or minMultipdfNll < this->minNll or badFit) {
+                this->minNll = minMultipdfNll;
+                if (npdf!=0) delete result;
+                result = result_tmp;
+            }
+            else {
+                delete result_tmp;
+            }
+            delete nll;
+            if (badFit) break;
+        }
+        this->fitStatus = result->status();
+        result->Print();
+        return result;
+    }
+    
+    else {
+        RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
+        RooMsgService::instance().setSilentMode(kFALSE);
+        RooMsgService::instance().setGlobalKillBelow(INFO);
+        this->fitStatus = result->status();
+        // RooAbsReal* nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE));
+        RooAbsReal* nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)));
+        this->minNll = nll->getVal();
+        delete nll;
+        return result;
+    }
 
-    RooMsgService::instance().setSilentMode(kFALSE);
-    RooMsgService::instance().setGlobalKillBelow(INFO);
-    this->fitStatus = result->status();
-    // RooAbsReal* nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE));
-    RooAbsReal* nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)));
-    this->minNll = nll->getVal();
-    delete nll;
-
-    return result;
 };
 
 RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit, TString signalvar) {
@@ -340,16 +412,43 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit, TString signalvar) {
         RooMsgService::instance().setSilentMode(kTRUE);
         // unfortunately Minuit2 does not initialize the status of the roofitresult, if all parameters are constant. Therefore need to stay with standard Minuit fitting.
         // RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Minimizer("Minuit2", "Migrad"));
-        RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
-        RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit, RooFit::Extended(kTRUE));
+        if (isBkgMultipdfSet) {
+            RooFitResult* result;
+            double minMultipdfNll;
+            bool badFit = false;
+            for (int npdf = 0; npdf<multipdfBkg->getNumPdfs(); npdf++) {
+                multipdfCat->setIndex(npdf);
+                RooFitResult* result_tmp = multipdfBkg->getPdf(npdf)->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
+                RooAbsReal* nll_bkg = multipdfBkg->getPdf(npdf)->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)));
+                minMultipdfNll = nll_bkg->getVal()+multipdfBkg->getCorrection();
+                if (result_tmp->status()!=0 or result_tmp->covQual()!=3 or result_tmp->edm()>1.e-3) badFit = true;
+                if (npdf==0 or minMultipdfNll < this->minNll or badFit) {
+                    this->minNllBkg = minMultipdfNll;
+                    if (npdf!=0) delete result;
+                    result = result_tmp;
+                }
+                else {
+                    delete result_tmp;
+                }
+                delete nll_bkg;
+                if (badFit) break;
 
-        RooMsgService::instance().setSilentMode(kFALSE);
-        RooMsgService::instance().setGlobalKillBelow(INFO);
-
-        this->fitStatus = result->status();
-        this->minNllBkg = nll_bkg->getVal();
-        delete nll_bkg;
-        return result;
+            }
+            this->fitStatus = result->status();
+            return result;
+        }
+        else {
+            RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
+            RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit, RooFit::Extended(kTRUE));
+    
+            RooMsgService::instance().setSilentMode(kFALSE);
+            RooMsgService::instance().setGlobalKillBelow(INFO);
+    
+            this->fitStatus = result->status();
+            this->minNllBkg = nll_bkg->getVal();
+            delete nll_bkg;
+            return result;
+        }
 
     }
 
@@ -367,23 +466,53 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit, TString signalvar) {
 
         // unfortunately Minuit2 does not initialize the status of the roofitresult, if all parameters are constant. Therefore need to stay with standard Minuit fitting.
         // RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Minimizer("Minuit2", "Migrad"));
+        if (isMultipdfSet) {
+            RooFitResult* result;
+            double minMultipdfNll;
+            bool badFit = false;
+            for (int npdf = 0; npdf<multipdf->getNumPdfs(); npdf++) {
+                multipdfCat->setIndex(npdf);
+                RooFitResult* result_tmp = multipdf->getPdf(npdf)->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
+                result_tmp->Print();
+                RooAbsReal* nll_bkg = multipdf->getPdf(npdf)->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)));
+                minMultipdfNll = nll_bkg->getVal()+multipdf->getCorrection();
+                cout << minMultipdfNll << endl;
+                if (result_tmp->status()!=0 or result_tmp->covQual()!=3 or result_tmp->edm()>1.e-3) badFit = true;
+                if (npdf==0 or minMultipdfNll < this->minNllBkg or badFit) {
+                    this->minNllBkg = minMultipdfNll;
+                    if (npdf!=0) delete result;
+                    result = result_tmp;
+                }
+                else {
+                    delete result_tmp;
+                }
+                delete nll_bkg;
+                if (badFit) break;
 
-        RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
-        // RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
-        RooMsgService::instance().setSilentMode(kFALSE);
-        RooMsgService::instance().setGlobalKillBelow(INFO);
-        this->fitStatus = result->status();
-        // RooAbsReal* nll_bkg = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE));
-        // RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit, RooFit::Extended(kTRUE));
-        RooAbsReal* nll_bkg = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)));
-        // RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
-        this->minNllBkg = nll_bkg->getVal();
+            }
+            this->fitStatus = result->status();
+            result->Print();
+            return result;
+        }
 
-        getWorkspace()->var(signalvar)->setVal(parvalue);
-        getWorkspace()->var(signalvar)->setConstant(isconst);    
-        delete nll_bkg;
-
-        return result;
+        else {
+            RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
+            // RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
+            RooMsgService::instance().setSilentMode(kFALSE);
+            RooMsgService::instance().setGlobalKillBelow(INFO);
+            this->fitStatus = result->status();
+            // RooAbsReal* nll_bkg = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE));
+            // RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit, RooFit::Extended(kTRUE));
+            RooAbsReal* nll_bkg = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)));
+            // RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
+            this->minNllBkg = nll_bkg->getVal();
+    
+            getWorkspace()->var(signalvar)->setVal(parvalue);
+            getWorkspace()->var(signalvar)->setConstant(isconst);    
+            delete nll_bkg;
+    
+            return result;
+        }
     }
 };
 

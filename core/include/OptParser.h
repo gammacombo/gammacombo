@@ -85,6 +85,7 @@ class OptParser
     bool            batcheos;
     int             nbatchjobs;
 		int             nBBpoints;
+        float           ndfCorrection;
 		int             ndiv;
 		int             ndivy;
 		bool            nosyst;

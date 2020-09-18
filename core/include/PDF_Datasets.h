@@ -42,6 +42,7 @@ public:
     void                  initParameters(const TString& setName);
     void                  initParameters(const vector<TString>& parNames);
     virtual void          initParameters(); //overriding the inherited virtual method
+    void                  initMultipdfCat(const TString& name);
     void                  initPDF(const TString& name);
     void                  initBkgPDF(const TString& name);
     inline  void          addFitObs(TString name) {fitObs.push_back(name);};
@@ -63,6 +64,7 @@ public:
     TString               getParName() {return parName;};
     TString               getPdfName() {return pdfName;};
     TString               getBkgPdfName() {return pdfBkgName;};
+    TString               getMultipdfCatName() {return multipdfCatName;};
     RooDataSet*           getToyObservables() {return this->toyObservables;};
     RooDataSet*           getBkgToyObservables() {return toyBkgObservables;};
     RooWorkspace*         getWorkspace() {return wspc;};
@@ -86,7 +88,9 @@ public:
     inline  bool          areObservglobalablesSet() { return areObsSet; };
     inline  bool          areParametersSet() { return areParsSet; };
     inline  bool          isPdfInitialized() { return isPdfSet; };
+    inline  bool          isMultipdfInitialized() { return isMultipdfSet; };
     inline  bool          isDataInitialized() { return isDataSet; };
+    inline  bool          isMultipdfCatInitialized() {return isMultipdfCatSet; };
     inline  bool          notSetupToFit(bool fitToys) {return (!(isPdfSet && isDataSet) || (fitToys && !(isPdfSet && isToyDataSet))); }; // this comes from a previous if-statement
 
 
@@ -108,6 +112,7 @@ protected:
     RooAbsPdf*      _constraintPdf;
     TString         pdfName; //> name of the pdf in the workspace
     TString         pdfBkgName; //> name of the bkg pdf in the workspace
+    TString         multipdfCatName; //> name of the multipdf category
     TString         obsName;
     TString         parName;
     TString         dataName;       //> name of the data set in the workspace
@@ -126,6 +131,9 @@ protected:
     bool areRangesSet;    //> Flag deciding if necessary ranges are set
     bool isPdfSet;        //> Flag deciding if PDF is set
     bool isBkgPdfSet;     //> Flag deciding if Bkg PDF is set
+    bool isMultipdfSet;   //> Flag deciding if multipdf is set
+    bool isBkgMultipdfSet;//> Flag deciding if Bkg multipdf is set
+    bool isMultipdfCatSet;//> Flag deciding if multipdf category is set
     bool isDataSet;       //> Flag deciding if Data is set
     bool isToyDataSet;    //> Flag deciding if ToyData is set
     std::vector<TString>    fitObs;
