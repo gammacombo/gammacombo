@@ -347,14 +347,10 @@ RooFitResult* PDF_Datasets::fit(RooDataSet* dataToFit) {
         double minMultipdfNll;
         bool badFit = false;
         for (int npdf = 0; npdf<multipdf->getNumPdfs(); npdf++) {
-//            cout << arg->ndfCorrection << endl; // This should work but doesn't
-//            cout << arg->debug << endl; // Even this doesn't work
             multipdfCat->setIndex(npdf);
             RooFitResult* result_tmp = multipdf->getPdf(npdf)->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
             RooAbsReal* nll = multipdf->getPdf(npdf)->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)));
             minMultipdfNll = nll->getVal()+multipdf->getCorrection();
-            result_tmp->Print();
-            cout << minMultipdfNll << endl;
             if (result_tmp->status()!=0 or result_tmp->covQual()!=3 or result_tmp->edm()>1.e-3) badFit = true;
             if (npdf==0 or minMultipdfNll < this->minNll or badFit) {
                 this->minNll = minMultipdfNll;
@@ -368,7 +364,6 @@ RooFitResult* PDF_Datasets::fit(RooDataSet* dataToFit) {
             if (badFit) break;
         }
         this->fitStatus = result->status();
-        result->Print();
         return result;
     }
     
@@ -473,10 +468,8 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit, TString signalvar) {
             for (int npdf = 0; npdf<multipdf->getNumPdfs(); npdf++) {
                 multipdfCat->setIndex(npdf);
                 RooFitResult* result_tmp = multipdf->getPdf(npdf)->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
-                result_tmp->Print();
                 RooAbsReal* nll_bkg = multipdf->getPdf(npdf)->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)));
                 minMultipdfNll = nll_bkg->getVal()+multipdf->getCorrection();
-                cout << minMultipdfNll << endl;
                 if (result_tmp->status()!=0 or result_tmp->covQual()!=3 or result_tmp->edm()>1.e-3) badFit = true;
                 if (npdf==0 or minMultipdfNll < this->minNllBkg or badFit) {
                     this->minNllBkg = minMultipdfNll;
@@ -491,7 +484,6 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit, TString signalvar) {
 
             }
             this->fitStatus = result->status();
-            result->Print();
             return result;
         }
 

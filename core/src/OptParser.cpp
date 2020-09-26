@@ -67,7 +67,6 @@ OptParser::OptParser():
 	ntoys = -99;
 	nsmooth = 1;
 	parevol = false;
-  ndfCorrection = 0.5;
   plotext = "";
 	plotid = -99;
 	plotlegend = true;
@@ -179,7 +178,6 @@ void OptParser::defineOptions()
 	availableOptions.push_back("npoints2dy");
 	availableOptions.push_back("npointstoy");
 	availableOptions.push_back("ncoveragetoys");
-    availableOptions.push_back("ndfCorrection");
 	availableOptions.push_back("nrun");
 	availableOptions.push_back("ntoys");
 	availableOptions.push_back("nsmooth");
@@ -396,7 +394,6 @@ void OptParser::parseArguments(int argc, char* argv[])
 			"3: linear + 1/x correction\n",
 			false, 0, "int");
 	TCLAP::ValueArg<int> coverageCorrectionPointArg("","covCorrectPoint","Point to use for coverage correction",false,0,"int");
-    TCLAP::ValueArg<float> ndfCorrectionArg("","ndfCorrection","Correction to NLL per degree of freedom",false,0.5,"float");
 	TCLAP::ValueArg<int> ndivyArg("", "ndivy", "Set the number of axis divisions (y axis in 2d plots): "
 			"ndivy=N1 + 100*N2 + 10000*N3, "
 			"N1 = number of 1st divisions (N2 = 2nd, N3 = 3rd). Default is 407. To enable bin optimization, pre-pend "
@@ -754,7 +751,6 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "npoints" ) ) cmd.add(npointsArg);
 	if ( isIn<TString>(bookedOptions, "nosyst" ) ) cmd.add( nosystArg );
 	if ( isIn<TString>(bookedOptions, "noconfsols" ) ) cmd.add( noconfsolsArg );
-	if ( isIn<TString>(bookedOptions, "nddCorrection" ) ) cmd.add(ndfCorrectionArg);
 	if ( isIn<TString>(bookedOptions, "ndivy" ) ) cmd.add(ndivyArg);
 	if ( isIn<TString>(bookedOptions, "ndiv" ) ) cmd.add(ndivArg);
 	if ( isIn<TString>(bookedOptions, "nBBpoints" ) ) cmd.add(nBBpointsArg);
@@ -860,7 +856,6 @@ void OptParser::parseArguments(int argc, char* argv[])
   batcheos          = batcheosArg.getValue();
   nbatchjobs        = nbatchjobsArg.getValue();
 	nBBpoints         = nBBpointsArg.getValue();
-    ndfCorrection     = ndfCorrectionArg.getValue();
 	ndiv              = ndivArg.getValue();
 	ndivy             = ndivyArg.getValue();
 	nosyst            = nosystArg.getValue();
