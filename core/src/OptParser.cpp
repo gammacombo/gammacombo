@@ -589,6 +589,7 @@ void OptParser::parseArguments(int argc, char* argv[])
       "32: Make the text for printed solutions on 1D plots larger.\n"
       "33: Solid fill for 2D legends.\n"
       "34: Remove CL guide lines.\n"
+      "35: Legend with transparent fill.\n"
 			, false, "int");
   TCLAP::MultiArg<string> readfromfileArg("", "readfromfile", "Read the observables, uncertainties and correlations from a file - e.g. for reading in toys."
       "If 'default' is given, the default values are used."

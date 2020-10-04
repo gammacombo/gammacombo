@@ -157,12 +157,13 @@ def writeHtml( location, title, links, plots, isHome=False ):
 
   # make zip
   if opts.zip:
-    zf = zipfile.ZipFile("plots/%s.zip"%opts.zip, mode="w")
+    zf = zipfile.ZipFile("%s.zip"%opts.zip, mode="w")
     for ext, paths in plots.items():
       for path in paths:
         zf.write(path)
     zf.close()
-    html.write('<div><b>Download all: <a href=%s.zip>%s.zip</a></b></div>\n'%(opts.zip,opts.zip))
+    if opts.newLoc: html.write('<div><b>Download all: <a href=%s.zip>%s.zip</a></b></div>\n'%(opts.zip,opts.zip))
+    else: html.write('<div><b>Download all: <a href=%s.zip>%s.zip</a></b></div>\n'%(os.path.basename(opts.zip),os.path.basename(opts.zip)))
     html.write('<br>\n')
 
   # additional material
@@ -221,7 +222,10 @@ def writeHtml( location, title, links, plots, isHome=False ):
           os.system('cp %s %s/%s/'%(f,opts.newLoc,ext))
 
     if opts.zip:
-      os.system('cp plots/%s.zip %s'%(opts.zip,opts.newLoc))
+      os.system('cp %s.zip %s'%(opts.zip,opts.newLoc))
+  else:
+    if opts.zip:
+      os.system('cp %s.zip %s'%(opts.zip,opts.zip))
 
   # print message
   outloc = opts.newLoc if opts.newLoc else opts.dir
