@@ -728,6 +728,14 @@ void OneMinusClPlot2d::drawLegend()
   m_legend->SetFillColor(0);
   m_legend->SetFillStyle(0);
   m_legend->SetBorderSize(0);
+  if (arg->isQuickhack(35)) {
+    m_legend->SetFillColorAlpha(0,0.7);
+    m_legend->SetFillStyle(1001);
+    m_legend->SetLineStyle(1);
+    m_legend->SetLineWidth(1);
+    m_legend->SetLineColor(kGray+1);
+    m_legend->SetBorderSize(1);
+  }
   m_legend->SetTextFont(font);
   m_legend->SetTextSize(legendsize);
   if ( arg->isQuickhack(26) ) m_legend->SetTextSize(0.9*legendsize);
