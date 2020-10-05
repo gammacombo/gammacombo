@@ -457,7 +457,22 @@ int MethodDatasetsProbScan::scan1d(bool fast, bool reverse)
         // After doing the fit with the parameter of interest constrained to the scanpoint,
         // we are now saving the fit values of the nuisance parameters. These values will be
         // used to generate toys according to the PLUGIN method.
+        // After doing the fit with the parameter of interest constrained to the scanpoint,
+        // we are now saving the fit values of the nuisance parameters. These values will be
+        // used to generate toys according to the PLUGIN method.
+        //
+        // Firstly save the parameter values from the workspace using storeParsScan(). If using
+        // a multipdf, this means that all parameters are close to their scan fit values, which
+        // should help with convergence.
+        // Then save parameter values from the best fit result using storeParsScan(result). If
+        // using a multipdf, this means the values of the parameters which appear in the best
+        // pdf are set to the values from the fit using that pdf, so S+B toys are generated with
+        // the correct nuisance parameter values. If not using a multipdf, this command is identical
+        // to storeParsScan()        
         this->probScanTree->storeParsScan(); // \todo : figure out which one of these is semantically the right one
+        this->probScanTree->storeParsScan(); 
+        this->probScanTree->storeParsScan(result); 
+        this->probScanTree->bestIndexScanData = pdf->getBestIndex();
 
         this->pdf->deleteNLL();
 

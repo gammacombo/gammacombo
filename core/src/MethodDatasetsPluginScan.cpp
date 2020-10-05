@@ -1385,6 +1385,13 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             // This is called the PLUGIN method.
             this->setParevolPointByIndex(i);
 
+            // If there is a multipdf, set bestIndexScan (taken from ProbScan)
+            // and this index will be used to generate toys
+            if (this->pdf->isMultipdfInitialized()) {
+                this->getProfileLH()->probScanTree->GetEntry(i);
+                int index = this->getProfileLH()->probScanTree->bestIndexScanData;
+                this->pdf->setBestIndexScan(index);
+            }
             this->pdf->generateToys(); // this is generating the toy dataset
             this->pdf->generateToysGlobalObservables(); // this is generating the toy global observables and saves globalObs in snapshot
 

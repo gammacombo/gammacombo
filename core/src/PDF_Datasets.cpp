@@ -354,6 +354,7 @@ RooFitResult* PDF_Datasets::fit(RooDataSet* dataToFit) {
             if (result_tmp->status()!=0 or result_tmp->covQual()!=3 or result_tmp->edm()>1.e-3) badFit = true;
             if (npdf==0 or minMultipdfNll < this->minNll or badFit) {
                 this->minNll = minMultipdfNll;
+                this->bestIndex = npdf;
                 if (npdf!=0) delete result;
                 result = result_tmp;
             }
@@ -419,6 +420,7 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit, TString signalvar) {
                 if (result_tmp->status()!=0 or result_tmp->covQual()!=3 or result_tmp->edm()>1.e-3) badFit = true;
                 if (npdf==0 or minMultipdfNll < this->minNll or badFit) {
                     this->minNllBkg = minMultipdfNll;
+                    this->bestIndexBkg = npdf;
                     if (npdf!=0) delete result;
                     result = result_tmp;
                 }
@@ -473,6 +475,7 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit, TString signalvar) {
                 if (result_tmp->status()!=0 or result_tmp->covQual()!=3 or result_tmp->edm()>1.e-3) badFit = true;
                 if (npdf==0 or minMultipdfNll < this->minNllBkg or badFit) {
                     this->minNllBkg = minMultipdfNll;
+                    this->bestIndexBkg = npdf;
                     if (npdf!=0) delete result;
                     result = result_tmp;
                 }
@@ -512,7 +515,14 @@ void   PDF_Datasets::generateToys(int SeedShift) {
 
     initializeRandomGenerator(SeedShift);
     // RooDataSet* toys = this->pdf->generate(*observables, RooFit::NumEvents(wspc->data(dataName)->numEntries()), RooFit::Extended(kTRUE));
-    RooDataSet* toys = pdf->generate(*observables, wspc->data(dataName)->numEntries(),false,true,"",false,true);
+    //
+    RooDataSet* toys;
+    if (isMultipdfSet) {
+        toys = multipdf->getPdf(bestIndexScan)->generate(*observables, wspc->data(dataName)->numEntries(),false,true,"",false,true);
+    }
+    else {
+        toys = pdf->generate(*observables, wspc->data(dataName)->numEntries(),false,true,"",false,true);
+    }
     // Having the delete in here causes a segmentation fault, likely due to a double free
     // related to Root's internal memory management. Therefore we do not delete,
     // which might or might not cause a memory leak.
@@ -530,9 +540,12 @@ void   PDF_Datasets::generateBkgToys(int SeedShift, TString signalvar) {
     //     // exit(EXIT_FAILURE);
     // }
     // std::cout << "WARNING in PDF_Datasets::generateBkgToys -- Fitting bkg model as sig+bkg model with " << signalvar << " to zero!" << std::endl;
-    if(pdfBkg){
-        RooDataSet* toys = pdfBkg->generate(*observables, wspc->data(dataName)->numEntries(),false,true,"",false,true);
-        this->toyBkgObservables  = toys;
+    RooDataSet* toys;
+    if (isBkgMultipdfSet) {
+        toys = multipdfBkg->getPdf(bestIndexBkg)->generate(*observables, wspc->data(dataName)->numEntries(),false,true,"",false,true);
+    }
+    else if(pdfBkg && !isMultipdfSet){
+        toys = pdfBkg->generate(*observables, wspc->data(dataName)->numEntries(),false,true,"",false,true);
     }
     else
     {
@@ -542,11 +555,23 @@ void   PDF_Datasets::generateBkgToys(int SeedShift, TString signalvar) {
         getWorkspace()->var(signalvar)->setConstant(true);
         // RooDataSet* toys = pdfBkg->generate(*observables, RooFit::NumEvents(wspc->data(dataName)->numEntries()), RooFit::Extended(kTRUE));
         // RooDataSet* toys = pdf->generate(*observables, RooFit::NumEvents(wspc->data(dataName)->numEntries()), RooFit::Extended(kTRUE));
-        RooDataSet* toys = pdf->generate(*observables, wspc->data(dataName)->numEntries(),false,true,"",false,true);
+        if (isMultipdfSet) {
+            toys = multipdf->getPdf(bestIndexBkg)->generate(*observables, wspc->data(dataName)->numEntries(),false,true,"",false,true);
+//            RooArgSet* pars = ((RooArgSet*) ((RooAbsPdf*) multipdf->getPdf(bestIndexBkg))->getParameters(wspc->data(dataName))->selectByAttrib("Constant",false));
+//            TIterator* iter = pars->createIterator();
+//            RooRealVar* var = (RooRealVar*) iter->Next();
+//            while (var) {
+//                var->Print();
+//                var = (RooRealVar*) iter->Next();
+//            }
+        }
+        else {
+            toys = pdf->generate(*observables, wspc->data(dataName)->numEntries(),false,true,"",false,true);
+        }
         getWorkspace()->var(signalvar)->setVal(parvalue);
         getWorkspace()->var(signalvar)->setConstant(isconst);    
-        this->toyBkgObservables  = toys;
     }
+    this->toyBkgObservables  = toys;
 };
 
 /*! \brief Initializes the random generator

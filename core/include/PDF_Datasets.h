@@ -60,6 +60,9 @@ public:
     float                 getMinNllFree() {return minNllFree;};
     float                 getMinNllBkg() {return minNllBkg;};
     float                 getMinNllScan() {return minNllScan;};
+    inline int            getBestIndex() {return bestIndex;};
+    inline int            getBestIndexBkg() {return bestIndexBkg;};
+    inline int            getBestIndexScan() {return bestIndexScan;};
     TString               getObsName() {return obsName;};
     TString               getParName() {return parName;};
     TString               getPdfName() {return pdfName;};
@@ -74,6 +77,9 @@ public:
     inline void           setMinNll(float mnll) {minNll = mnll;};
     inline void           setMinNllFree(float mnll) {minNllFree = mnll;};
     inline void           setMinNllScan(float mnll) {minNllScan = mnll;};
+    inline void           setBestIndex(int index) {bestIndex = index;};
+    inline void           setBestIndexBkg(int index) {bestIndexBkg = index;};
+    inline void           setBestIndexScan(int index) {bestIndexScan = index;};
     void                  setNCPU(int n) {NCPU = n;};
     void                  setVarRange(const TString &varName, const TString &rangeName,
                                       const double &rangeMin, const double &rangeMax);
@@ -126,6 +132,9 @@ protected:
     // float           minNll;
     float           minNllBkg;
     float           minNllScan;
+    int             bestIndex;
+    int             bestIndexBkg;
+    int             bestIndexScan;
     bool areObsSet;       //> Forces user to set observables
     bool areParsSet;      //> Forces user to set parameters
     bool areRangesSet;    //> Flag deciding if necessary ranges are set
