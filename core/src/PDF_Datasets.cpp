@@ -420,7 +420,7 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit, TString signalvar) {
                 if (result_tmp->status()!=0 or result_tmp->covQual()!=3 or result_tmp->edm()>1.e-3) badFit = true;
                 if (npdf==0 or minMultipdfNll < this->minNll or badFit) {
                     this->minNllBkg = minMultipdfNll;
-                    this->bestIndexBkg = npdf;
+                    this->bestIndex = npdf;
                     if (npdf!=0) delete result;
                     result = result_tmp;
                 }
@@ -475,7 +475,7 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit, TString signalvar) {
                 if (result_tmp->status()!=0 or result_tmp->covQual()!=3 or result_tmp->edm()>1.e-3) badFit = true;
                 if (npdf==0 or minMultipdfNll < this->minNllBkg or badFit) {
                     this->minNllBkg = minMultipdfNll;
-                    this->bestIndexBkg = npdf;
+                    this->bestIndex = npdf;
                     if (npdf!=0) delete result;
                     result = result_tmp;
                 }
@@ -557,13 +557,6 @@ void   PDF_Datasets::generateBkgToys(int SeedShift, TString signalvar) {
         // RooDataSet* toys = pdf->generate(*observables, RooFit::NumEvents(wspc->data(dataName)->numEntries()), RooFit::Extended(kTRUE));
         if (isMultipdfSet) {
             toys = multipdf->getPdf(bestIndexBkg)->generate(*observables, wspc->data(dataName)->numEntries(),false,true,"",false,true);
-//            RooArgSet* pars = ((RooArgSet*) ((RooAbsPdf*) multipdf->getPdf(bestIndexBkg))->getParameters(wspc->data(dataName))->selectByAttrib("Constant",false));
-//            TIterator* iter = pars->createIterator();
-//            RooRealVar* var = (RooRealVar*) iter->Next();
-//            while (var) {
-//                var->Print();
-//                var = (RooRealVar*) iter->Next();
-//            }
         }
         else {
             toys = pdf->generate(*observables, wspc->data(dataName)->numEntries(),false,true,"",false,true);

@@ -123,6 +123,7 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
         exit(EXIT_FAILURE);
     }
     dataBkgFitResult = pdf->fitBkg(pdf->getData(), arg->var[0]); // get Bkg fit parameters
+    this->pdf->setBestIndexBkg(this->pdf->getBestIndex());
     Utils::setParameters(w,globalMin);  // reset fit parameters to the free fit
 }
 
