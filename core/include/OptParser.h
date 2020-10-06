@@ -100,6 +100,7 @@ class OptParser
 		bool		parevol;
 		vector<int>	pevid;
 		vector<int>     plot2dcl;
+    TString         plotdate;
     TString         plotext;
 		int             plotid;
 		bool            plotlog;

@@ -67,6 +67,7 @@ OptParser::OptParser():
 	ntoys = -99;
 	nsmooth = 1;
 	parevol = false;
+  plotdate = "";
   plotext = "";
 	plotid = -99;
 	plotlegend = true;
@@ -137,6 +138,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("controlplots");
 	availableOptions.push_back("covCorrect");
 	availableOptions.push_back("covCorrectPoint");
+  availableOptions.push_back("date");
 	availableOptions.push_back("debug");
 	availableOptions.push_back("digits");
 	availableOptions.push_back("evol");
@@ -372,6 +374,7 @@ void OptParser::parseArguments(int argc, char* argv[])
   //cmd = CmdLine("", ' ', "");
 
 	// --------------- arguments that take a value
+	TCLAP::ValueArg<string> dateArg("", "date", "Plot the date.", false, "", "string");
 	TCLAP::ValueArg<string> scanrangeArg("", "scanrange", "Restrict the scan range to a given range. "
 			"In 2D scans, this corresponds to the x variable. "
 			"Format: --scanrange min:max.", false, "default", "string");
@@ -788,6 +791,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "evol" ) ) cmd.add(parevolArg);
 	if ( isIn<TString>(bookedOptions, "digits" ) ) cmd.add(digitsArg);
 	if ( isIn<TString>(bookedOptions, "debug" ) ) cmd.add(debugArg);
+	if ( isIn<TString>(bookedOptions, "date" ) ) cmd.add( dateArg );
 	if ( isIn<TString>(bookedOptions, "covCorrectPoint" ) ) cmd.add(coverageCorrectionPointArg);
 	if ( isIn<TString>(bookedOptions, "covCorrect" ) ) cmd.add(coverageCorrectionIDArg);
 	if ( isIn<TString>(bookedOptions, "controlplots" ) ) cmd.add(controlplotArg);
@@ -870,6 +874,7 @@ void OptParser::parseArguments(int argc, char* argv[])
   nsmooth           = nsmoothArg.getValue();
 	parevol           = parevolArg.getValue();
 	pevid             = pevidArg.getValue();
+  plotdate          = dateArg.getValue();
   plotext           = plotextArg.getValue();
 	plotid            = plotidArg.getValue();
 	plotlog           = plotlogArg.getValue();
