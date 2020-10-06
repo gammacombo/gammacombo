@@ -164,6 +164,11 @@ void PDF_Datasets::initPDF(const TString& name) {
         exit(EXIT_FAILURE);
     }
     pdfName  = name;
+    if (! wspc->pdf(pdfName)) {
+        std::cout << "FATAL in PDF_Datasets::initPDF -- PDF: " << pdfName << " not found in workspace" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
     if (wspc->pdf(pdfName)->InheritsFrom("RooMultiPdf")) {
         multipdf = (RooMultiPdf*) wspc->pdf(pdfName);
         pdf = ((RooMultiPdf*) wspc->pdf(pdfName))->getPdf(0);
@@ -196,6 +201,10 @@ void PDF_Datasets::initBkgPDF(const TString& name) {
         exit(EXIT_FAILURE);
     }
     pdfBkgName  = name;
+    if (! wspc->pdf(pdfBkgName)) {
+        std::cout << "FATAL in PDF_Datasets::initBkgPDF -- PDF: " << pdfBkgName << " not found in workspace" << std::endl;
+        exit(EXIT_FAILURE);
+    }
     if (wspc->pdf(pdfBkgName)->InheritsFrom("RooMultiPdf")) {
         multipdfBkg = (RooMultiPdf*) wspc->pdf(pdfBkgName);
         pdfBkg = ((RooMultiPdf*) wspc->pdf(pdfBkgName))->getPdf(0);
