@@ -54,9 +54,8 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
     globalMin = probScan->globalMin;
     bestfitpoint = ((RooRealVar*) globalMin->floatParsFinal().find(scanVar1))->getVal();
     // globalMin = (RooFitResult*) w->obj("data_fit_result");
-    // chi2minGlobal = 2 * globalMin->minNll();
     chi2minGlobal = probScan->getChi2minGlobal();
-    std::cout << "=============== Global Minimum (2*-Log(Likelihood)) is: 2*" << globalMin->minNll() << " = " << chi2minGlobal << endl;
+    std::cout << "=============== Global Minimum (2*-Log(Likelihood)) is: "  << chi2minGlobal << endl;
 
     // implement physical range a la Feldman Cousins
     bool refit_necessary = false;
