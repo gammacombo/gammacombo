@@ -29,6 +29,8 @@ PDF_Datasets::PDF_Datasets(RooWorkspace* w, int nObs, OptParser* opt)
     minNllFree      = 0;
     minNllScan      = 0;
     minNll          = 0;
+    nbkgfits        = 0;
+    nsbfits         = 0;
 };
 
 PDF_Datasets::PDF_Datasets(RooWorkspace* w)
@@ -311,6 +313,7 @@ RooFitResult* PDF_Datasets::fit(RooDataSet* dataToFit) {
     this->minNll = nll->getVal();
     delete nll;
 
+    nsbfits++;
     return result;
 };
 
@@ -327,6 +330,7 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit, TString signalvar) {
         std::cout << "Other names can be passed via PDF_Datasets::initConstraints" << std::endl;
         exit(EXIT_FAILURE);
     }
+    nbkgfits++;
     // if (!pdfBkg)
     // {
     //     std::cout << "WARNING in PDF_Datasets::fitBkg -- No background PDF given!" << std::endl;
@@ -382,7 +386,6 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit, TString signalvar) {
         getWorkspace()->var(signalvar)->setVal(parvalue);
         getWorkspace()->var(signalvar)->setConstant(isconst);    
         delete nll_bkg;
-
         return result;
     }
 };

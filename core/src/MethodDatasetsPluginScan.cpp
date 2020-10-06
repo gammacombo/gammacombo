@@ -124,6 +124,8 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
     }
     dataBkgFitResult = pdf->fitBkg(pdf->getData(), arg->var[0]); // get Bkg fit parameters
     Utils::setParameters(w,globalMin);  // reset fit parameters to the free fit
+
+    std::cout << "DEBUG::MethodDatasetsPluginScan::MethodDatasetsPluginScan: s+b fits: "<< pdf->nsbfits << " bkg-only fits: " << pdf->nbkgfits << std::endl;
 }
 
 ///////////////////////////////////////////////
@@ -1310,7 +1312,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         pdf->deleteToys();
       }
     }
-
+    std::cout << "DEBUG::MethodDatasetsPluginScan::scan1d (bkg toys): s+b fits: "<< pdf->nsbfits << " bkg-only fits: " << pdf->nbkgfits << " for nActualToys: " << nActualToys << std::endl;
     // start scan
     std::cout << "MethodDatasetsPluginScan::scan1d_plugin() : starting ... with " << nPoints1d << " scanpoints..." << std::endl;
     ProgressBar progressBar(arg, nPoints1d);
@@ -1824,8 +1826,10 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             delete r1;
             delete rb;
             pdf->deleteToys();
-        } // End of toys loop
 
+
+        } // End of toys loop
+        std::cout << "DEBUG::MethodDatasetsPluginScan::scan1d (toys after scan point "<< i<<"): s+b fits: "<< pdf->nsbfits << " bkg-only fits: " << pdf->nbkgfits << " for nActualToys: " << nActualToys << std::endl;
         // reset
         setParameters(w, pdf->getParName(), parsFunctionCall->get(0));
         //delete result;
@@ -1845,6 +1849,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
     toyTree.writeToFile();
     outputFile->Close();
     delete parsFunctionCall;
+    std::cout << "DEBUG::MethodDatasetsPluginScan::scan1d total: s+b fits: "<< pdf->nsbfits << " bkg-only fits: " << pdf->nbkgfits << " for nToys: " << nToys << std::endl;
     return 0;
 }
 
