@@ -47,10 +47,6 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
     inputFiles.clear();
 
 
-    // if (w->obj("data_fit_result") == NULL) { //\todo: support passing the name of the fit result in the workspace.
-    //     cerr << "ERROR: The workspace must contain the fit result of the fit to data. The name of the fit result must be 'data_fit_result'. " << endl;
-    //     exit(EXIT_FAILURE);
-    // }
     globalMin = probScan->globalMin;
     bestfitpoint = ((RooRealVar*) globalMin->floatParsFinal().find(scanVar1))->getVal();
     // globalMin = (RooFitResult*) w->obj("data_fit_result");
