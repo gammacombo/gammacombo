@@ -47,10 +47,10 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
     inputFiles.clear();
 
 
-    if (w->obj("data_fit_result") == NULL) { //\todo: support passing the name of the fit result in the workspace.
-        cerr << "ERROR: The workspace must contain the fit result of the fit to data. The name of the fit result must be 'data_fit_result'. " << endl;
-        exit(EXIT_FAILURE);
-    }
+    // if (w->obj("data_fit_result") == NULL) { //\todo: support passing the name of the fit result in the workspace.
+    //     cerr << "ERROR: The workspace must contain the fit result of the fit to data. The name of the fit result must be 'data_fit_result'. " << endl;
+    //     exit(EXIT_FAILURE);
+    // }
     globalMin = probScan->globalMin;
     bestfitpoint = ((RooRealVar*) globalMin->floatParsFinal().find(scanVar1))->getVal();
     // globalMin = (RooFitResult*) w->obj("data_fit_result");
@@ -124,8 +124,6 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
     }
     dataBkgFitResult = pdf->fitBkg(pdf->getData(), arg->var[0]); // get Bkg fit parameters
     Utils::setParameters(w,globalMin);  // reset fit parameters to the free fit
-
-    std::cout << "DEBUG::MethodDatasetsPluginScan::MethodDatasetsPluginScan: s+b fits: "<< pdf->nsbfits << " bkg-only fits: " << pdf->nbkgfits << std::endl;
 }
 
 ///////////////////////////////////////////////
@@ -1317,7 +1315,6 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         pdf->deleteToys();
       }
     }
-    std::cout << "DEBUG::MethodDatasetsPluginScan::scan1d (bkg toys): s+b fits: "<< pdf->nsbfits << " bkg-only fits: " << pdf->nbkgfits << " for nActualToys: " << nActualToys << std::endl;
     // start scan
     std::cout << "MethodDatasetsPluginScan::scan1d_plugin() : starting ... with " << nPoints1d << " scanpoints..." << std::endl;
     ProgressBar progressBar(arg, nPoints1d);
@@ -1839,7 +1836,6 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 
 
         } // End of toys loop
-        std::cout << "DEBUG::MethodDatasetsPluginScan::scan1d (toys after scan point "<< i<<"): s+b fits: "<< pdf->nsbfits << " bkg-only fits: " << pdf->nbkgfits << " for nActualToys: " << nActualToys << std::endl;
         // reset
         setParameters(w, pdf->getParName(), parsFunctionCall->get(0));
         //delete result;
@@ -1859,7 +1855,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
     toyTree.writeToFile();
     outputFile->Close();
     delete parsFunctionCall;
-    std::cout << "DEBUG::MethodDatasetsPluginScan::scan1d total: s+b fits: "<< pdf->nsbfits << " bkg-only fits: " << pdf->nbkgfits << " for nToys: " << nToys << std::endl;
+    if (arg->verbose) std::cout << "DEBUG::MethodDatasetsPluginScan::scan1d total: s+b fits: "<< pdf->nsbfits << " (optimal: "<< nToys*(3*nPoints1d+1)+1 << "), bkg-only fits: " << pdf->nbkgfits << " (optimal "<< nToys+2<<")" << std::endl;
     return 0;
 }
 
