@@ -9,7 +9,18 @@ int main(int argc, char* argv[])
 {
 
   // This script initialises GammaCombo with a RooMultiPdf
-  // It is run in the same way as tutorial_dataset.cpp
+  // This allows the calculation of the limit on a dataset which includes the systematic uncertainty due to model choice, using the discrete profiling method https://arxiv.org/abs/1408.6865
+  //
+  // Note that this is very similar to initialising with a standard pdf:
+  //    - initPDF is called in the same way, with the multipdf name
+  //    - The only difference is the need to call pdf->initMultipdfCat to initialise the category which indexes the multipdf 
+  //
+  // It is run in the same way as tutorial_dataset.cpp:
+  // 1. Profile likelihood scan - For a multipdf, this will not return the correct limit, but is necessary setup for the plugin scan
+  // bin/tutorial_dataset_multipdf --var branchingRatio --npoints 20 --scanrange 0.:5.e-7
+  // 2. Plugin scan
+  // bin/tutorial_dataset_multipdf -a pluginbatch --var branchingRatio --npoints 20 --npointstoy 20 --scanrange 0.:5.e-7 --ntoys 50
+  // bin/tutorial_dataset_multipdf -a plugin --var branchingRatio --npoints 20 --npointstoy 20 --scanrange 0.:5.e-7
 
   // Load the workspace from its file
   TFile f("multipdfworkspace.root");

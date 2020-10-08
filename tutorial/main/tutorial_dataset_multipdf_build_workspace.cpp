@@ -17,17 +17,20 @@ using namespace std;
 using namespace RooFit;
 
 // Builds a workspace containing a multipdf which can be given to GammaCombo
+// The background pdfs here are an exponential, 2nd order polynomial and power law
+// We define a S+B model using each background pdf
+// We also define a RooCategory "pdf_index" which indexes the S+B models
+// These are combined in a RooMultiPdf
 
 int main(int argc, char* argv[])
 {
 
    // mass variable
-   RooRealVar mass("CMS_hgg_mass","m_{#gamma#gamma}",120,100,180);
-
+   RooRealVar mass("mass","m",120,100,180);
 
    // create 3 background pdfs
    // 1. exponential
-   RooRealVar expo_1("expo_1","slope of exponential",-0.02,-0.1,-0.0001);
+   RooRealVar expo_1("expo_1","slope of exponential",-0.035,-0.1,-0.0001);
    RooExponential exponential("exponential","exponential pdf",mass,expo_1);
 
    // 2. polynomial with 2 parameters
@@ -36,15 +39,19 @@ int main(int argc, char* argv[])
    RooChebychev polynomial("polynomial","polynomial pdf",mass,RooArgList(poly_1,poly_2));
 
    // 3. A power law function
-   RooRealVar pow_1("pow_1","exponent of power law",-3,-6,-0.0001);
+   RooRealVar pow_1("pow_1","exponent of power law",-4.5,-10,-0.0001);
    RooGenericPdf powerlaw("powerlaw","TMath::Power(@0,@1)",RooArgList(mass,pow_1));
 
-   // Generate some data 
-   // Here we are using unbinned data, but binning the data is also fine
-   RooDataSet& data = *powerlaw.generate(mass,RooFit::NumEvents(1000));
+   // Generate some data according to a double exponential pdf
+   RooRealVar expo_2("expo_2","slope of exponential",-0.005,-0.2,-0.0002);
+   RooRealVar frac("frac","frac",0.5,0.,1.);
+   RooExponential exponential1("exponential1","exponential1",mass,expo_1);
+   RooExponential exponential2("exponential2","exponential2",mass,expo_2);
+   RooAddPdf doubleexponential("doubleexponential","doubleexponential",exponential1,exponential2,frac);
+   RooDataSet& data = *doubleexponential.generate(mass,RooFit::NumEvents(5000));
    data.SetName("data"); // the name of the dataset MUST be "data" in order for the framework to identify it.
 
-   // First we fit the pdfs to the data (gives us a sensible starting value of parameters for, e.g - blind limits)
+   // First we fit the pdfs to the data (gives us a sensible starting value of parameters)
    exponential.fitTo(data);   // index 0
    polynomial.fitTo(data);   // index 1
    RooFitResult& result = *powerlaw.fitTo(data, RooFit::Save());     // index 2
@@ -64,7 +71,7 @@ int main(int argc, char* argv[])
    RooRealVar sigma("sigma","sigma",1.2); sigma.setConstant(true);
    RooRealVar MH("MH","MH",125); MH.setConstant(true);
    RooGaussian signal("signal","signal",mass,MH,sigma);
-   RooRealVar branchingRatio("branchingRatio", "branchingRatio", 1e-7, -1e-6,  0.0001);  // this is the branching ratio, the parameter of interest
+   RooRealVar branchingRatio("branchingRatio", "branchingRatio", 0., -1e-6,  0.0001);  // this is the branching ratio, the parameter of interest
    RooRealVar  norm_constant("norm_constant","norm_constant", 1e-8);
    RooFormulaVar n_sig("n_sig", "branchingRatio/norm_constant", RooArgList(branchingRatio, norm_constant));
    // Now make signal+background models
@@ -75,7 +82,7 @@ int main(int argc, char* argv[])
    // Make a RooCategory object. This will control which of the pdfs is "active"
    RooCategory cat("pdf_index","Index of Pdf which is active");
 
-   // Make a RooMultiPdf object. The order of the pdfs will be the order of their index, ie for below
+   // Make a RooMultiPdf object. The index corresponds to the order in which pdfs are added, ie for below
    // 0 == exponential
    // 1 == polynomial
    // 2 == powerlaw
