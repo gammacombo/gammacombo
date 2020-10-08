@@ -100,6 +100,10 @@ public:
    TString         globalObsBkgToySnapshotName = "globalObsBkgToySnapshotName";
     //> name of a snapshot that stores the latest simulated values for the global observables of the bkg-only toy
 
+    //debug counters
+    int nbkgfits;
+    int nsbfits;
+
 protected:
     void initializeRandomGenerator(int seedShift);
     RooWorkspace*   wspc;

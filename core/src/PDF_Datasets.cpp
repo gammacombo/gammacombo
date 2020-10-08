@@ -29,6 +29,9 @@ PDF_Datasets::PDF_Datasets(RooWorkspace* w, int nObs, OptParser* opt)
     minNllFree      = 0;
     minNllScan      = 0;
     minNll          = 0;
+    nbkgfits        = 0;
+    nsbfits         = 0;
+    fitStrategy     = 0;
 };
 
 PDF_Datasets::PDF_Datasets(RooWorkspace* w)
@@ -298,19 +301,20 @@ RooFitResult* PDF_Datasets::fit(RooDataSet* dataToFit) {
     RooMsgService::instance().setGlobalKillBelow(ERROR);
     RooMsgService::instance().setSilentMode(kTRUE);
     // Choose Dataset to fit to
-
     // unfortunately Minuit2 does not initialize the status of the roofitresult, if all parameters are constant. Therefore need to stay with standard Minuit fitting.
     // RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Minimizer("Minuit2", "Migrad"));
     RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
 
     RooMsgService::instance().setSilentMode(kFALSE);
     RooMsgService::instance().setGlobalKillBelow(INFO);
-    this->fitStatus = result->status();
+    this->fitStatus = result->status()+(result->covQual()%3);
+    if(this->fitStatus!=0) std::cout << "PDF_Datasets::fit(): Imperfect fit! Fit status "<< result->status() << " cov Qual " << result->covQual() << std::endl;
     // RooAbsReal* nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE));
     RooAbsReal* nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)));
     this->minNll = nll->getVal();
     delete nll;
 
+    nsbfits++;
     return result;
 };
 
@@ -327,6 +331,7 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit, TString signalvar) {
         std::cout << "Other names can be passed via PDF_Datasets::initConstraints" << std::endl;
         exit(EXIT_FAILURE);
     }
+    nbkgfits++;
     // if (!pdfBkg)
     // {
     //     std::cout << "WARNING in PDF_Datasets::fitBkg -- No background PDF given!" << std::endl;
@@ -340,13 +345,14 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit, TString signalvar) {
         RooMsgService::instance().setSilentMode(kTRUE);
         // unfortunately Minuit2 does not initialize the status of the roofitresult, if all parameters are constant. Therefore need to stay with standard Minuit fitting.
         // RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Minimizer("Minuit2", "Migrad"));
-        RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
+        RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE), RooFit::Strategy(fitStrategy));
         RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit, RooFit::Extended(kTRUE));
 
         RooMsgService::instance().setSilentMode(kFALSE);
         RooMsgService::instance().setGlobalKillBelow(INFO);
 
-        this->fitStatus = result->status();
+        this->fitStatus = result->status()+(result->covQual()%3);
+        if(this->fitStatus!=0) std::cout << "PDF_Datasets::fitBkg(): Imperfect fit! Fit status "<< result->status() << " cov Qual " << result->covQual() << std::endl;
         this->minNllBkg = nll_bkg->getVal();
         delete nll_bkg;
         return result;
@@ -367,12 +373,12 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit, TString signalvar) {
 
         // unfortunately Minuit2 does not initialize the status of the roofitresult, if all parameters are constant. Therefore need to stay with standard Minuit fitting.
         // RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Minimizer("Minuit2", "Migrad"));
-
-        RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
+        RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE), RooFit::Strategy(fitStrategy));
         // RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
         RooMsgService::instance().setSilentMode(kFALSE);
         RooMsgService::instance().setGlobalKillBelow(INFO);
-        this->fitStatus = result->status();
+        this->fitStatus = result->status()+(result->covQual()%3);
+        if(this->fitStatus!=0) std::cout << "PDF_Datasets::fitBkg(): Imperfect fit! Fit status "<< result->status() << " cov Qual " << result->covQual() << std::endl;
         // RooAbsReal* nll_bkg = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE));
         // RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit, RooFit::Extended(kTRUE));
         RooAbsReal* nll_bkg = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)));
@@ -382,7 +388,6 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit, TString signalvar) {
         getWorkspace()->var(signalvar)->setVal(parvalue);
         getWorkspace()->var(signalvar)->setConstant(isconst);    
         delete nll_bkg;
-
         return result;
     }
 };
