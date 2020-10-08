@@ -8,7 +8,7 @@
  **/
 
 #include "PDF_Datasets.h"
-
+#include "TIterator.h"
 
 PDF_Datasets::PDF_Datasets(RooWorkspace* w, int nObs, OptParser* opt)
     : PDF_Abs(nObs) {
@@ -360,7 +360,7 @@ RooFitResult* PDF_Datasets::fit(RooDataSet* dataToFit) {
             RooFitResult* result_tmp = multipdf->getPdf(npdf)->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
             RooAbsReal* nll = multipdf->getPdf(npdf)->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)));
             minMultipdfNll = nll->getVal()+multipdf->getCorrection();
-            if (result_tmp->status()!=0 or result_tmp->covQual()!=3 or result_tmp->edm()>1.e-3) badFit = true;
+            if (result_tmp->status()!=0 or result_tmp->covQual()!=3) badFit = true;
             if (npdf==0 or minMultipdfNll < this->minNll or badFit) {
                 this->minNll = minMultipdfNll;
                 this->bestIndex = npdf;
@@ -426,7 +426,7 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit, TString signalvar) {
                 RooFitResult* result_tmp = multipdfBkg->getPdf(npdf)->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
                 RooAbsReal* nll_bkg = multipdfBkg->getPdf(npdf)->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)));
                 minMultipdfNll = nll_bkg->getVal()+multipdfBkg->getCorrection();
-                if (result_tmp->status()!=0 or result_tmp->covQual()!=3 or result_tmp->edm()>1.e-3) badFit = true;
+                if (result_tmp->status()!=0 or result_tmp->covQual()!=3) badFit = true;
                 if (npdf==0 or minMultipdfNll < this->minNll or badFit) {
                     this->minNllBkg = minMultipdfNll;
                     this->bestIndex = npdf;
@@ -481,7 +481,7 @@ RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit, TString signalvar) {
                 RooFitResult* result_tmp = multipdf->getPdf(npdf)->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
                 RooAbsReal* nll_bkg = multipdf->getPdf(npdf)->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)));
                 minMultipdfNll = nll_bkg->getVal()+multipdf->getCorrection();
-                if (result_tmp->status()!=0 or result_tmp->covQual()!=3 or result_tmp->edm()>1.e-3) badFit = true;
+                if (result_tmp->status()!=0 or result_tmp->covQual()!=3) badFit = true;
                 if (npdf==0 or minMultipdfNll < this->minNllBkg or badFit) {
                     this->minNllBkg = minMultipdfNll;
                     this->bestIndex = npdf;
