@@ -38,6 +38,7 @@ int main(int argc, char* argv[])
   PDF_Datasets* pdf = new PDF_Datasets(workspace);
   pdf->initData("data"); // this is the name of the dataset in the workspace
   pdf->initPDF("roomultipdf"); // this the name of the pdf in the workspace (without the constraints)
+  // To compare to the behaviour with a single pdf, you can instead use e.g. pdf->initPDF("SBmodel_exponential")
   pdf->initMultipdfCat("pdf_index"); // this is the only extra thing that needs initialising for a multipdf
   pdf->initObservables("datasetObservables"); // non-global observables whose measurements are stored in the dataset (for example the mass).
   pdf->initGlobalObservables("global_observables_set"); // global observables
