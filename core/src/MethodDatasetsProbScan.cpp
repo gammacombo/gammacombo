@@ -38,10 +38,6 @@ MethodDatasetsProbScan::MethodDatasetsProbScan(PDF_Datasets* PDF, OptParser* opt
 
     inputFiles.clear();
 
-    if (w->obj("data_fit_result") == NULL) { //\todo: support passing the name of the fit result in the workspace.
-        cerr << "ERROR: The workspace must contain the fit result of the fit to data. The name of the fit result must be 'data_fit_result'. " << endl;
-        exit(EXIT_FAILURE);
-    }
     if ( !w->set(pdf->getObsName()) ) {
         cerr << "MethodDatasetsProbScan::MethodDatasetsProbScan() : ERROR : no '" + pdf->getObsName() + "' set found in workspace" << endl;
         cerr << " You can specify the name of the set in the workspace using the pdf->initObservables(..) method.";
