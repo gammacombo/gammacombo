@@ -48,11 +48,11 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
 
 
     globalMin = probScan->globalMin;
+    Utils::setParameters(w,globalMin);  // reset fit parameters to the free fit
     bestfitpoint = ((RooRealVar*) globalMin->floatParsFinal().find(scanVar1))->getVal();
     // globalMin = (RooFitResult*) w->obj("data_fit_result");
-    // chi2minGlobal = 2 * globalMin->minNll();
     chi2minGlobal = probScan->getChi2minGlobal();
-    std::cout << "=============== Global Minimum (2*-Log(Likelihood)) is: 2*" << globalMin->minNll() << " = " << chi2minGlobal << endl;
+    std::cout << "=============== Global Minimum (2*-Log(Likelihood)) is: "  << chi2minGlobal << endl;
 
     // implement physical range a la Feldman Cousins
     bool refit_necessary = false;
@@ -119,6 +119,7 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
         exit(EXIT_FAILURE);
     }
     dataBkgFitResult = pdf->fitBkg(pdf->getData(), arg->var[0]); // get Bkg fit parameters
+    this->pdf->setBestIndexBkg(this->pdf->getBestIndex());
     Utils::setParameters(w,globalMin);  // reset fit parameters to the free fit
 }
 
@@ -1385,6 +1386,13 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             // This is called the PLUGIN method.
             this->setParevolPointByIndex(i);
 
+            // If there is a multipdf, set bestIndexScan (taken from ProbScan)
+            // and this index will be used to generate toys
+            if (this->pdf->isMultipdfInitialized()) {
+                this->getProfileLH()->probScanTree->GetEntry(i);
+                int index = this->getProfileLH()->probScanTree->bestIndexScanData;
+                this->pdf->setBestIndexScan(index);
+            }
             this->pdf->generateToys(); // this is generating the toy dataset
             this->pdf->generateToysGlobalObservables(); // this is generating the toy global observables and saves globalObs in snapshot
 

@@ -160,7 +160,7 @@ void MethodDatasetsProbScan::initScan() {
     globalMin->SetName("globalMin");
     // chi2minGlobal = 2 * globalMin->minNll();
     chi2minGlobal = 2 * pdf->getMinNll();
-    std::cout << "=============== Global minimum (2*-Log(Likelihood)) is: 2*" << globalMin->minNll() << " = " << chi2minGlobal << endl;
+    std::cout << "=============== Global minimum (2*-Log(Likelihood)) is: " << chi2minGlobal << endl;
     // background only
     // if ( !pdf->getBkgPdf() )
       bkgOnlyFitResult = pdf->fitBkg(pdf->getData(), arg->var[0]); // fit on data w/ bkg only hypoth
@@ -168,7 +168,7 @@ void MethodDatasetsProbScan::initScan() {
       bkgOnlyFitResult->SetName("bkgOnlyFitResult");
       // chi2minBkg = 2 * bkgOnlyFitResult->minNll();
       chi2minBkg = 2 * pdf->getMinNllBkg();
-      std::cout << "=============== Bkg minimum (2*-Log(Likelihood)) is: 2*" << bkgOnlyFitResult->minNll() << " = " << chi2minBkg << endl;
+      std::cout << "=============== Bkg minimum (2*-Log(Likelihood)) is: " << chi2minBkg << endl;
       w->var(scanVar1)->setConstant(false);
       if (chi2minBkg<chi2minGlobal)
       {
@@ -382,6 +382,7 @@ int MethodDatasetsProbScan::scan1d(bool fast, bool reverse)
     RooSlimFitResult *slimresult = new RooSlimFitResult(result,true);
 		slimresult->setConfirmed(true);
 		solutions.push_back(slimresult);
+        Utils::setParameters(w,result); // Set parameters to result (necessary to get correct freeDataFitValue if using a multipdf)
 		double freeDataFitValue = w->var(scanVar1)->getVal();
 
     // Define outputfile
@@ -453,7 +454,22 @@ int MethodDatasetsProbScan::scan1d(bool fast, bool reverse)
         // After doing the fit with the parameter of interest constrained to the scanpoint,
         // we are now saving the fit values of the nuisance parameters. These values will be
         // used to generate toys according to the PLUGIN method.
+        // After doing the fit with the parameter of interest constrained to the scanpoint,
+        // we are now saving the fit values of the nuisance parameters. These values will be
+        // used to generate toys according to the PLUGIN method.
+        //
+        // Firstly save the parameter values from the workspace using storeParsScan(). If using
+        // a multipdf, this means that all parameters are close to their scan fit values, which
+        // should help with convergence.
+        // Then save parameter values from the best fit result using storeParsScan(result). If
+        // using a multipdf, this means the values of the parameters which appear in the best
+        // pdf are set to the values from the fit using that pdf, so S+B toys are generated with
+        // the correct nuisance parameter values. If not using a multipdf, this command is identical
+        // to storeParsScan()        
         this->probScanTree->storeParsScan(); // \todo : figure out which one of these is semantically the right one
+        this->probScanTree->storeParsScan(); 
+        this->probScanTree->storeParsScan(result); 
+        this->probScanTree->bestIndexScanData = pdf->getBestIndex();
 
         this->pdf->deleteNLL();
 
