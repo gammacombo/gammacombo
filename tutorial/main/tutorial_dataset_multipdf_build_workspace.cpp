@@ -44,10 +44,10 @@ int main(int argc, char* argv[])
 
    // Generate some data according to a double exponential pdf
    RooRealVar expo_2("expo_2","slope of exponential",-0.005,-0.2,-0.0002);
-   RooRealVar frac("frac","frac",0.5,0.,1.);
+   RooRealVar frac1("frac1","frac1",0.5,0.,1.);
    RooExponential exponential1("exponential1","exponential1",mass,expo_1);
    RooExponential exponential2("exponential2","exponential2",mass,expo_2);
-   RooAddPdf doubleexponential("doubleexponential","doubleexponential",exponential1,exponential2,frac);
+   RooAddPdf doubleexponential("doubleexponential","doubleexponential",RooArgList(exponential1,exponential2),frac1);
    RooDataSet& data = *doubleexponential.generate(mass,RooFit::NumEvents(5000));
    data.SetName("data"); // the name of the dataset MUST be "data" in order for the framework to identify it.
 
@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
 
    // We will also produce a signal model
    RooRealVar sigma("sigma","sigma",1.2); sigma.setConstant(true);
-   RooRealVar MH("MH","MH",125); MH.setConstant(true);
+   RooRealVar MH("MH","MH",115); MH.setConstant(true);
    RooGaussian signal("signal","signal",mass,MH,sigma);
    RooRealVar branchingRatio("branchingRatio", "branchingRatio", 0., -1e-6,  0.0001);  // this is the branching ratio, the parameter of interest
    RooRealVar  norm_constant("norm_constant","norm_constant", 1e-8);
