@@ -382,6 +382,7 @@ int MethodDatasetsProbScan::scan1d(bool fast, bool reverse)
     RooSlimFitResult *slimresult = new RooSlimFitResult(result,true);
 		slimresult->setConfirmed(true);
 		solutions.push_back(slimresult);
+        Utils::setParameters(w,result); // Set parameters to result (necessary to get correct freeDataFitValue if using a multipdf)
 		double freeDataFitValue = w->var(scanVar1)->getVal();
 
     // Define outputfile

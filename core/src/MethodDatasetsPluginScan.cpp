@@ -48,6 +48,7 @@ MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF
 
 
     globalMin = probScan->globalMin;
+    Utils::setParameters(w,globalMin);  // reset fit parameters to the free fit
     bestfitpoint = ((RooRealVar*) globalMin->floatParsFinal().find(scanVar1))->getVal();
     // globalMin = (RooFitResult*) w->obj("data_fit_result");
     chi2minGlobal = probScan->getChi2minGlobal();
