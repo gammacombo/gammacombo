@@ -160,7 +160,7 @@ void MethodDatasetsProbScan::initScan() {
     globalMin->SetName("globalMin");
     // chi2minGlobal = 2 * globalMin->minNll();
     chi2minGlobal = 2 * pdf->getMinNll();
-    std::cout << "=============== Global minimum (2*-Log(Likelihood)) is: 2*" << globalMin->minNll() << " = " << chi2minGlobal << endl;
+    std::cout << "=============== Global minimum (2*-Log(Likelihood)) is: " << chi2minGlobal << endl;
     // background only
     // if ( !pdf->getBkgPdf() )
       bkgOnlyFitResult = pdf->fitBkg(pdf->getData(), arg->var[0]); // fit on data w/ bkg only hypoth
@@ -168,7 +168,7 @@ void MethodDatasetsProbScan::initScan() {
       bkgOnlyFitResult->SetName("bkgOnlyFitResult");
       // chi2minBkg = 2 * bkgOnlyFitResult->minNll();
       chi2minBkg = 2 * pdf->getMinNllBkg();
-      std::cout << "=============== Bkg minimum (2*-Log(Likelihood)) is: 2*" << bkgOnlyFitResult->minNll() << " = " << chi2minBkg << endl;
+      std::cout << "=============== Bkg minimum (2*-Log(Likelihood)) is: " << chi2minBkg << endl;
       w->var(scanVar1)->setConstant(false);
       if (chi2minBkg<chi2minGlobal)
       {
