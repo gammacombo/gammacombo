@@ -881,6 +881,14 @@ void OneMinusClPlot::Draw()
   leg->SetFillStyle(0);
 	leg->SetLineColor(kWhite);
 	leg->SetBorderSize(0);
+  if (arg->isQuickhack(35)) {
+    leg->SetFillColorAlpha(0,0.4);
+    leg->SetFillStyle(1001);
+    leg->SetLineStyle(1);
+    leg->SetLineWidth(1);
+    leg->SetLineColor(kGray+1);
+    leg->SetBorderSize(1);
+  }
 	leg->SetTextFont(font);
 	leg->SetTextSize(legendsize*0.75);
   vector<TString> legTitles;
