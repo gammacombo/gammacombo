@@ -16,7 +16,7 @@ SET(COMBINER_EXECUTABLES
 )
 
 # Configure if this combiner has custom ROOT objects
-SET(HAS_CUSTOMROOTOBJECTS FALSE)
+SET(HAS_CUSTOMROOTOBJECTS TRUE)
 
 # Define the custom ROOT objects
 IF(HAS_CUSTOMROOTOBJECTS)
@@ -24,7 +24,7 @@ IF(HAS_CUSTOMROOTOBJECTS)
 		LinkDef.h # <-- change to name of LinkDef file
 	)
 	SET(COMBINER_DICTIONARY_SOURCES
-		Header.h # <-- add header files here
+                RooDoubleCB.h # <-- add header files here
 	)
 ENDIF()
 
