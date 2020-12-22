@@ -11,8 +11,8 @@
 : OneMinusClPlotAbs(arg,name,title)
 {
   contoursOnly = false;
-  xTitle = "";
-  yTitle = "";
+  xTitle = arg->xtitle;
+  yTitle = arg->ytitle;
   ColorBuilder cb;
   m_legend = 0;
 
@@ -619,6 +619,7 @@ void OneMinusClPlot2d::drawCLcontent(bool isFull)
   float xLow, yLow;
   xLow = 0.17;
   yLow = 0.15;
+  if (arg->square) yLow = 0.11;
   if ( isFull ) {
     xLow = 0.11;
     yLow = 0.11;
@@ -660,7 +661,7 @@ void OneMinusClPlot2d::DrawFull()
     cout << "                                         scanner." << endl;
   }
   if ( m_mainCanvas==0 ){
-    m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, 600);
+    m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, arg->square ? 800 : 600);
   }
   m_mainCanvas->cd();
   m_mainCanvas->SetMargin(0.1,0.15,0.1,0.1);
@@ -789,11 +790,13 @@ void OneMinusClPlot2d::Draw()
     return;
   }
   if ( m_mainCanvas==0 ){
-    m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, 600);
+    m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, arg->square ? 800 : 600);
     // put this in for exponent xaxes
     if ( !arg->isQuickhack(30) ) m_mainCanvas->SetRightMargin(0.1);
     // put this in for exponent yaxes
     if ( !arg->isQuickhack(30) ) m_mainCanvas->SetTopMargin(0.07);
+    cout << m_mainCanvas->GetLeftMargin() << " " << m_mainCanvas->GetBottomMargin() << endl;
+    if ( arg->square ) m_mainCanvas->SetBottomMargin(0.14);
   }
 
   if ( arg->isQuickhack(14) ){
@@ -815,6 +818,7 @@ void OneMinusClPlot2d::Draw()
   haxes->GetXaxis()->SetTitleFont(font);
   haxes->GetYaxis()->SetTitleFont(font);
   haxes->GetXaxis()->SetTitleOffset(0.85);
+  if (arg->square) haxes->GetYaxis()->SetTitleOffset(1.);
   haxes->GetXaxis()->SetLabelSize(labelsize);
   haxes->GetYaxis()->SetLabelSize(labelsize);
   haxes->GetXaxis()->SetTitleSize(titlesize);
@@ -961,8 +965,9 @@ void OneMinusClPlot2d::Draw()
     axisl->SetLabelOffset(haxes->GetYaxis()->GetLabelOffset());
     axisl->SetLabelFont(font);
     axisl->SetLabelSize(labelsize);
-    axisl->SetTitle(xTitle!="" ? xTitle : (TString)scanners[0]->getScanVar2()->GetTitle() + TString(" [#circ]"));
+    axisl->SetTitle(yTitle!="" ? yTitle : (TString)scanners[0]->getScanVar2()->GetTitle() + TString(" [#circ]"));
     axisl->SetTitleOffset(0.9);
+    if (arg->square) axisl->SetTitleOffset(1.2);
     axisl->SetTitleSize(titlesize);
     axisl->SetTitleFont(font);
     axisl->Draw();
@@ -981,8 +986,9 @@ void OneMinusClPlot2d::Draw()
     axisl->SetLabelOffset(haxes->GetYaxis()->GetLabelOffset());
     axisl->SetLabelFont(font);
     axisl->SetLabelSize(labelsize);
-    axisl->SetTitle(xTitle!="" ? xTitle : (TString)scanners[0]->getScanVar2()->GetTitle());
+    axisl->SetTitle(yTitle!="" ? yTitle : (TString)scanners[0]->getScanVar2()->GetTitle());
     axisl->SetTitleOffset(0.8);
+    if (arg->square) axisl->SetTitleOffset(1.2);
     axisl->SetTitleSize(titlesize);
     axisl->SetTitleFont(font);
     axisl->Draw();

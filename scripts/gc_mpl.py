@@ -95,6 +95,8 @@ def read_gc_scan(fname):
     raise RuntimeError('No \'hChi2min\' found in', fname)
 
   res = None
+  print(fname)
+  print(h, type(h), h.InheritsFrom('TH2'))
   if h.InheritsFrom('TH2'):
     res = read2dscan(h, bf, minnll)
   elif h.InheritsFrom('TH1'):
@@ -228,67 +230,68 @@ def plot2d(fname, scans, xvar, yvar, xlim=None, ylim=None, ncontours=2, cl2d=Fal
   plt.show()
 
 
-cfg = { 'nbody'   : { 'scanner': 'plots/scanner/gammacharm_lhcb_scanner_empty+103+105+152+154+155+156_g_r_dk.root',
-                      'fopts'  : { 'label'  : r'$B^{+}\to D^{0}h^{+},\; D^{0}\to hh\pi^{0}/h3\pi$',
-                                   'colors'  : ('#bee7fd','#d3e9ff'),
-                                   'alpha'   : 0.9,
-                                   'zorder'  : 0,
-                                 },
-                      'lopts'  : { 'colors'  : ((0.35,0.33,0.85),(0.09,0.66,0.91)),
-                                   'zorder'  : 1,
-                                 }
-                    },
-        'ggsz'    : { 'scanner': 'plots/scanner/gammacharm_lhcb_scanner_empty+107_g_r_dk.root',
-                      'fopts'  : { 'label'  : r'$B^{+}\to D^{0}h^{+},\; D^{0}\to K_{S}^{0}h^{+}h^{-}$',
-                                   'colors'  : ((0.96,0.48,1.00),(1.00,0.60,1.00)),
-                                   'alpha'   : 0.9,
-                                   'zorder'  : 2,
-                                 },
-                      'lopts'  : { 'colors'  : ((0.82,0.04,0.82),(0.84,0.00,0.99)),
-                                   'zorder'  : 3,
-                                 }
-                    },
-        '2body'   : { 'scanner': 'plots/scanner/gammacharm_lhcb_scanner_empty+101+152+154+155+156+157+158_g_r_dk.root',
-                      'fopts'  : { 'label'  : r'$B^{+}\to D^{0}h^{+},\; D^{0}\to h^{+}h^{\prime-}$',
-                                   'colors'  : ((0.90,0.78,0.60),(0.99,0.87,0.71)),
-                                   'alpha'   : 0.9,
-                                   'zorder'  : 4,
-                                 },
-                      'lopts'  : { 'colors'  : ((0.6,0.2,0.0),(0.8,0.6,0.2)),
-                                   'zorder'  : 5,
-                                 }
-                    },
-        'alld'    : { 'scanner': 'plots/scanner/gammacharm_lhcb_scanner_empty+107+101+103+105+109+152+154+155+156+157+158_g_r_dk.root',
-                      'fopts'  : { 'label'  : r'All $B^{+}\to D^{0}h^{+}$ modes',
-                                   'colors'  : ('#d95f02','#d95f02'),
-                                   'alpha'   : 0.9,
-                                   'zorder'  : 6,
-                                 },
-                      'lopts'  : { 'colors'  : ((0.70,0.00,0.00),(0.90,0.20,0.20)),
-                                   'zorder'  : 7,
-                                 }
-                    },
-        'dhch'    : { 'scanner': 'plots/scanner/gammacharm_lhcb_scanner_lhcb_2020_beauty_and_charm_g_r_dk.root',
-                      'fopts'  : { 'label'  : r'Combination',
-                                   'colors'  : ((0.40,1.00,0.40),(0.40,0.80,0.40)),
-                                   'alpha'   : 0.9,
-                                   'zorder'  : 8,
-                                 },
-                      'lopts'  : { 'colors'  : ((0.2,0.4,0.2),(0.0,0.4,0.0)),
-                                   'zorder'  : 9,
-                                 }
-                    }
-      }
+# 2d example
+#cfg = { 'nbody'   : { 'scanner': 'plots/scanner/gammacharm_lhcb_scanner_empty+103+105+152+154+155+156_g_r_dk.root',
+                      #'fopts'  : { 'label'  : r'$B^{+}\to D^{0}h^{+},\; D^{0}\to hh\pi^{0}/h3\pi$',
+                                   #'colors'  : ('#bee7fd','#d3e9ff'),
+                                   #'alpha'   : 0.9,
+                                   #'zorder'  : 0,
+                                 #},
+                      #'lopts'  : { 'colors'  : ((0.35,0.33,0.85),(0.09,0.66,0.91)),
+                                   #'zorder'  : 1,
+                                 #}
+                    #},
+        #'ggsz'    : { 'scanner': 'plots/scanner/gammacharm_lhcb_scanner_empty+107_g_r_dk.root',
+                      #'fopts'  : { 'label'  : r'$B^{+}\to D^{0}h^{+},\; D^{0}\to K_{S}^{0}h^{+}h^{-}$',
+                                   #'colors'  : ((0.96,0.48,1.00),(1.00,0.60,1.00)),
+                                   #'alpha'   : 0.9,
+                                   #'zorder'  : 2,
+                                 #},
+                      #'lopts'  : { 'colors'  : ((0.82,0.04,0.82),(0.84,0.00,0.99)),
+                                   #'zorder'  : 3,
+                                 #}
+                    #},
+        #'2body'   : { 'scanner': 'plots/scanner/gammacharm_lhcb_scanner_empty+101+152+154+155+156+157+158_g_r_dk.root',
+                      #'fopts'  : { 'label'  : r'$B^{+}\to D^{0}h^{+},\; D^{0}\to h^{+}h^{\prime-}$',
+                                   #'colors'  : ((0.90,0.78,0.60),(0.99,0.87,0.71)),
+                                   #'alpha'   : 0.9,
+                                   #'zorder'  : 4,
+                                 #},
+                      #'lopts'  : { 'colors'  : ((0.6,0.2,0.0),(0.8,0.6,0.2)),
+                                   #'zorder'  : 5,
+                                 #}
+                    #},
+        #'alld'    : { 'scanner': 'plots/scanner/gammacharm_lhcb_scanner_empty+107+101+103+105+109+152+154+155+156+157+158_g_r_dk.root',
+                      #'fopts'  : { 'label'  : r'All $B^{+}\to D^{0}h^{+}$ modes',
+                                   #'colors'  : ('#d95f02','#d95f02'),
+                                   #'alpha'   : 0.9,
+                                   #'zorder'  : 6,
+                                 #},
+                      #'lopts'  : { 'colors'  : ((0.70,0.00,0.00),(0.90,0.20,0.20)),
+                                   #'zorder'  : 7,
+                                 #}
+                    #},
+        #'dhch'    : { 'scanner': 'plots/scanner/gammacharm_lhcb_scanner_lhcb_2020_beauty_and_charm_g_r_dk.root',
+                      #'fopts'  : { 'label'  : r'Combination',
+                                   #'colors'  : ((0.40,1.00,0.40),(0.40,0.80,0.40)),
+                                   #'alpha'   : 0.9,
+                                   #'zorder'  : 8,
+                                 #},
+                      #'lopts'  : { 'colors'  : ((0.2,0.4,0.2),(0.0,0.4,0.0)),
+                                   #'zorder'  : 9,
+                                 #}
+                    #}
+      #}
 
-scans = []
-for key, options in cfg.items():
-  scanfile = options['scanner']
-  pl = scan(scanfile,options['lopts'],options['fopts'])
-  scans.append(pl)
+#scans = []
+#for key, options in cfg.items():
+  #scanfile = options['scanner']
+  #pl = scan(scanfile,options['lopts'],options['fopts'])
+  #scans.append(pl)
 
-x = r'$\gamma\;[^\circ]$'
-y = r'$r_{B^{+}}^{D^{0}K^{+}}$'
-plot2d( 'plot2d', scans, x, y, xlim=(0,180), ylim=(0.05,0.2), ncontours=2, cl2d=True )
+#x = r'$\gamma\;[^\circ]$'
+#y = r'$r_{B^{+}}^{D^{0}K^{+}}$'
+#plot2d( 'plot2d', scans, x, y, xlim=(0,180), ylim=(0.05,0.2), ncontours=2, cl2d=True )
 
 #s1 = scan('plots/scanner/gammacharm_lhcb_scanner_empty+103+105+152+154+155+156_g_r_dk.root')
 #s2 = scan('plots/scanner/gammacharm_lhcb_scanner_empty+107_g_r_dk.root')
@@ -302,50 +305,57 @@ plot2d( 'plot2d', scans, x, y, xlim=(0,180), ylim=(0.05,0.2), ncontours=2, cl2d=
 #import sys
 #sys.exit()
 
-cfg = { 'gamma_bs': { 'scanner': 'plots/scanner/gammacharm_lhcb_scanner_empty+118+119+161_g.root',
-                      'fopts'  : { 'label'  : r'$B_{s}^{0}$',
-                                   'color'  : '#d95f02',
-                                 },
-                      'lopts'  : { 'color'  : '#d95f02',
-                                   'linewidth': 1
-                                 }
-                    },
-        'gamma_bd': { 'scanner': 'plots/scanner/gammacharm_lhcb_scanner_empty+114+115+152+154+155+160_g.root',
-                      'fopts'  : { 'label'  : r'$B^{0}$',
-                                   'color'  : '#e6ab02',
-                                 },
-                      'lopts'  : { 'color'  : '#e6ab02',
-                                   'linewidth': 1
-                                 }
-                    },
-        'gamma_bu': { 'scanner': 'plots/scanner/gammacharm_lhcb_scanner_empty+108+102+104+106+110+111+113+116+152+154+155+156+157+158+159_g.root',
-                      'fopts'  : { 'label'  : r'$B^{+}$',
-                                   'color'  : '#7570b3',
-                                 },
-                      'lopts'  : { 'color'  : '#7570b3',
-                                   'linewidth': 1
-                                 }
-                    },
-        'dhch'    : { 'scanner': 'plots/scanner/gammacharm_lhcb_scanner_lhcb_2020_beauty_and_charm_g.root',
-                      'fopts'  : { 'label'  : r'Combination',
-                                   'color'  : '#1b9e77',
-                                 },
-                      'lopts'  : { 'color'  : '#1b9e77',
-                                   'linewidth': 1
-                                 }
-                    }
-      }
+# 1D example
+#cfg = { 'gamma_bs': { 'scanner': 'plots/scanner/gammacharm_lhcb_scanner_empty+118+119+161_g.root',
+                      #'fopts'  : { 'label'  : r'$B_{s}^{0}$',
+                                   #'color'  : '#d95f02',
+                                 #},
+                      #'lopts'  : { 'color'  : '#d95f02',
+                                   #'linewidth': 1
+                                 #}
+                    #},
+        #'gamma_bd': { 'scanner': 'plots/scanner/gammacharm_lhcb_scanner_empty+114+115+152+154+155+160_g.root',
+                      #'fopts'  : { 'label'  : r'$B^{0}$',
+                                   #'color'  : '#e6ab02',
+                                 #},
+                      #'lopts'  : { 'color'  : '#e6ab02',
+                                   #'linewidth': 1
+                                 #}
+                    #},
+        #'gamma_bu': { 'scanner': 'plots/scanner/gammacharm_lhcb_scanner_empty+108+102+104+106+110+111+113+116+152+154+155+156+157+158+159_g.root',
+                      #'fopts'  : { 'label'  : r'$B^{+}$',
+                                   #'color'  : '#7570b3',
+                                 #},
+                      #'lopts'  : { 'color'  : '#7570b3',
+                                   #'linewidth': 1
+                                 #}
+                    #},
+        #'dhch'    : { 'scanner': 'plots/scanner/gammacharm_lhcb_scanner_lhcb_2020_beauty_and_charm_g.root',
+                      #'fopts'  : { 'label'  : r'Combination',
+                                   #'color'  : '#1b9e77',
+                                 #},
+                      #'lopts'  : { 'color'  : '#1b9e77',
+                                   #'linewidth': 1
+                                 #}
+                    #}
+      #}
 
-scans = []
-for key, options in cfg.items():
-  scanfile = options['scanner']
-  pl = scan(scanfile,options['lopts'],options['fopts'])
-  scans.append(pl)
+#scans = []
+#for key, options in cfg.items():
+  #scanfile = options['scanner']
+  #pl = scan(scanfile,options['lopts'],options['fopts'])
+  #scans.append(pl)
 
-plot1d( 'plot', scans, r'$\gamma\;[^\circ]$' )
+#plot1d( 'plot', scans, r'$\gamma\;[^\circ]$' )
 
 #plt.show()
 
+scans = []
+for scf in opts.scan:
+  pl = scan(scf, {'color':'slateblue'}, {'color':'slateblue'})
+  scans.append(pl)
+
+plot1d( 'plot', scans, r'$\gamma\;[^\circ]$' )
 
 
 
