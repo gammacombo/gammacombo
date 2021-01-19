@@ -42,7 +42,7 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 		cout << s->getName() << " (" << s->getMethodName() << ")" << endl;
 	}
 	if ( m_mainCanvas==0 ){
-		m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, 600);
+		m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, arg->square ? 800 : 600);
 	}
 	m_mainCanvas->cd();
 	bool plotPoints = ( s->getMethodName()=="Plugin" || s->getMethodName()=="BergerBoos" || s->getMethodName()=="DatasetsPlugin" ) && plotPluginMarkers;
@@ -174,7 +174,8 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	float max = arg->scanrangeMin == arg->scanrangeMax ? hCL->GetXaxis()->GetXmax() : arg->scanrangeMax;
 	TH1F *haxes = new TH1F("haxes"+getUniqueRootName(), "", 100, min, max);
 	haxes->SetStats(0);
-	haxes->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
+  if ( arg->xtitle == "" ) haxes->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
+  else haxes->GetXaxis()->SetTitle(arg->xtitle);
 	haxes->GetYaxis()->SetTitle("1#minusCL");
 	haxes->GetXaxis()->SetLabelFont(font);
 	haxes->GetYaxis()->SetLabelFont(font);
@@ -226,7 +227,8 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 
 	// for the angles, draw a new axis in units of degrees
 	if ( isAngle(s->getScanVar1()) ){
-		haxes->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle() + TString(" [#circ]"));
+    if ( arg->xtitle == "" ) haxes->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle() + TString(" [#circ]"));
+    else haxes->GetXaxis()->SetTitle(arg->xtitle);
 		haxes->GetXaxis()->SetNdivisions(0);  // disable old axis
 		if ( last ){
 			// new top axis
@@ -249,7 +251,8 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 			axisb->SetName("axisb");
 			axisb->SetLabelFont(font);
 			axisb->SetLabelSize(labelsize);
-      axisb->SetTitle(s->getScanVar1()->GetTitle() + TString(" [#circ]"));
+      if ( arg->xtitle == "" ) axisb->SetTitle(s->getScanVar1()->GetTitle() + TString(" [#circ]"));
+      else axisb->SetTitle(arg->xtitle);
       axisb->SetTitleOffset(0.85);
       axisb->SetTitleSize(titlesize);
       axisb->SetTitleFont(font);
@@ -332,7 +335,8 @@ void OneMinusClPlot::scan1dPlotSimple(MethodAbsScan* s, bool first, int CLsType)
 	hCL->SetMarkerStyle(8);
 	hCL->SetMarkerSize(0.6);
 	hCL->GetYaxis()->SetNdivisions(407, true);
-	hCL->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
+  if ( arg->xtitle == "" ) hCL->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
+  else hCL->GetXaxis()->SetTitle(arg->xtitle);
 	hCL->GetYaxis()->SetTitle("1#minusCL");
 	hCL->GetXaxis()->SetLabelFont(font);
 	hCL->GetYaxis()->SetLabelFont(font);
@@ -565,7 +569,8 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
 	float max = arg->scanrangeMin == arg->scanrangeMax ? hObs->GetXaxis()->GetXmax() : arg->scanrangeMax;
 	TH1F *haxes = new TH1F("haxes"+getUniqueRootName(), "", 100, min, max);
 	haxes->SetStats(0);
-	haxes->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
+  if ( arg->xtitle == "" ) haxes->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
+  else haxes->GetXaxis()->SetTitle(arg->xtitle);
 	haxes->GetYaxis()->SetTitle("CL_{S}");
 	haxes->GetXaxis()->SetLabelFont(font);
 	haxes->GetYaxis()->SetLabelFont(font);
@@ -855,7 +860,7 @@ void OneMinusClPlot::Draw()
 	///< which directly plots the 1-CL histograms without beautification
 
   if ( m_mainCanvas==0 ){
-		m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, 600);
+		m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, arg->square ? 800 : 600);
     // put this in for exponent xaxes
     if ( !arg->isQuickhack(30) ) m_mainCanvas->SetRightMargin(0.1);
 	}
@@ -881,6 +886,14 @@ void OneMinusClPlot::Draw()
   leg->SetFillStyle(0);
 	leg->SetLineColor(kWhite);
 	leg->SetBorderSize(0);
+  if (arg->isQuickhack(35)) {
+    leg->SetFillColorAlpha(0,0.4);
+    leg->SetFillStyle(1001);
+    leg->SetLineStyle(1);
+    leg->SetLineWidth(1);
+    leg->SetLineColor(kGray+1);
+    leg->SetBorderSize(1);
+  }
 	leg->SetTextFont(font);
 	leg->SetTextSize(legendsize*0.75);
   vector<TString> legTitles;

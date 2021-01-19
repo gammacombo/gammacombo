@@ -112,6 +112,7 @@ OptParser::OptParser():
   scaleerr = -999.;
   scalestaterr = -999.;
 	smooth2d = false;
+  square   = false;
   teststatistic = 2;
   toyFiles = "";
   updateFreq = 10;
@@ -216,10 +217,13 @@ void OptParser::defineOptions()
   availableOptions.push_back("scaleerr");
   availableOptions.push_back("scalestaterr");
 	availableOptions.push_back("smooth2d");
+	availableOptions.push_back("square");
 	availableOptions.push_back("start");
   availableOptions.push_back("teststat");
   availableOptions.push_back("toyFiles");
 	availableOptions.push_back("title");
+	availableOptions.push_back("xtitle");
+	availableOptions.push_back("ytitle");
 	availableOptions.push_back("usage");
   availableOptions.push_back("updateFreq");
 	availableOptions.push_back("unoff");
@@ -267,6 +271,8 @@ void OptParser::bookPlottingOptions()
 	bookedOptions.push_back("ndiv");
 	bookedOptions.push_back("ndivy");
 	bookedOptions.push_back("title");
+	bookedOptions.push_back("xtitle");
+	bookedOptions.push_back("ytitle");
 	bookedOptions.push_back("unoff");
 }
 
@@ -462,6 +468,8 @@ void OptParser::parseArguments(int argc, char* argv[])
   										"1: use one-sided profile likelihood ratio q\n"
   										"2: use classical profile likelihood ratio t (default)", false, 2, "int" );
   TCLAP::ValueArg<string> toyFilesArg("", "toyFiles", "Pass some different toy files, for example if you want 1D projection of 2D FC.", false, "default", "string" );
+  TCLAP::ValueArg<string> xtitleArg("", "xtitle", "Set x axis title.", false, "", "string" );
+  TCLAP::ValueArg<string> ytitleArg("", "ytitle", "Set y axis title.", false, "", "string" );
   TCLAP::ValueArg<string> saveArg("","save", "Save the workspace this file name", false, "", "string");
   TCLAP::ValueArg<int> updateFreqArg("","updateFreq", "Frequency with which to update plots when running in interactive mode (higher number will be faster). Default: 10", false, 10, "int" );
 
@@ -503,6 +511,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::SwitchArg noconfsolsArg("", "noconfsols", "Do not confirm solutions.", false);
 	TCLAP::SwitchArg printcorArg("", "printcor", "Print the correlation matrix of each solution found.", false);
 	TCLAP::SwitchArg smooth2dArg("", "smooth2d", "Smooth 2D p-value or cl histograms for nicer contour (particularly useful for 2D plugin)", false);
+	TCLAP::SwitchArg squareArg("", "square", "Make a square canvas", false);
   TCLAP::SwitchArg saveAtMinArg("","saveAtMin","Save workspace after minimization", false);
 
 	// --------------- aruments that can be given multiple times
@@ -702,6 +711,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "usage" ) ) cmd.add( usageArg );
   if ( isIn<TString>(bookedOptions, "updateFreq" ) ) cmd.add( updateFreqArg );
 	if ( isIn<TString>(bookedOptions, "unoff" ) ) cmd.add( plotunoffArg );
+	if ( isIn<TString>(bookedOptions, "xtitle" ) ) cmd.add( xtitleArg );
+	if ( isIn<TString>(bookedOptions, "ytitle" ) ) cmd.add( ytitleArg );
 	if ( isIn<TString>(bookedOptions, "title" ) ) cmd.add( titleArg );
   if ( isIn<TString>(bookedOptions, "toyFiles" ) ) cmd.add( toyFilesArg );
   if ( isIn<TString>(bookedOptions, "teststat" ) ) cmd.add( teststatArg );
@@ -709,6 +720,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "sn" ) ) cmd.add(snArg);
 	if ( isIn<TString>(bookedOptions, "start" ) ) cmd.add(startArg);
 	if ( isIn<TString>(bookedOptions, "smooth2d" ) ) cmd.add( smooth2dArg );
+	if ( isIn<TString>(bookedOptions, "square" ) ) cmd.add( squareArg );
 	if ( isIn<TString>(bookedOptions, "scanrangey" ) ) cmd.add( scanrangeyArg );
 	if ( isIn<TString>(bookedOptions, "scanrange" ) ) cmd.add( scanrangeArg );
 	if ( isIn<TString>(bookedOptions, "scanforce" ) ) cmd.add( scanforceArg );
@@ -901,8 +913,11 @@ void OptParser::parseArguments(int argc, char* argv[])
 	savenuisances1d   = snArg.getValue();
 	scanforce         = scanforceArg.getValue();
 	smooth2d          = smooth2dArg.getValue();
+	square            = squareArg.getValue();
   toyFiles          = toyFilesArg.getValue();
   teststatistic       = teststatArg.getValue();
+  xtitle            = xtitleArg.getValue();
+  ytitle            = ytitleArg.getValue();
 	usage             = usageArg.getValue();
   updateFreq        = updateFreqArg.getValue();
 	verbose           = verboseArg.getValue();
