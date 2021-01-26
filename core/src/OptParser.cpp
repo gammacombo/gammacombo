@@ -116,9 +116,6 @@ OptParser::OptParser():
   updateFreq = 10;
 	usage = false;
 	verbose = false;
-
-        //Paul:
-        sanity = false;
 }
 
 ///
@@ -234,9 +231,6 @@ void OptParser::defineOptions()
 	availableOptions.push_back("ndiv");
 	availableOptions.push_back("ndivy");
 	availableOptions.push_back("printcor");
-
-        //Paul
-        availableOptions.push_back("sanity");
 }
 
 ///
@@ -508,9 +502,6 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::SwitchArg smooth2dArg("", "smooth2d", "Smooth 2D p-value or cl histograms for nicer contour (particularly useful for 2D plugin)", false);
   TCLAP::SwitchArg saveAtMinArg("","saveAtMin","Save workspace after minimization", false);
 
-        //Paul:
-	TCLAP::SwitchArg sanityArg("", "sanity", "Make plots of the fits", false);
-
 	// --------------- aruments that can be given multiple times
 	vector<string> vAction;
 	//vAction.push_back("bb");
@@ -703,9 +694,6 @@ void OptParser::parseArguments(int argc, char* argv[])
 	// are ordered on the command line, unfortunately in reverse.
 	//
 	if ( isIn<TString>(bookedOptions, "verbose" ) ) cmd.add( verboseArg );
-        //Paul:
-	if ( isIn<TString>(bookedOptions, "sanity" ) ) cmd.add( sanityArg );
-
 	if ( isIn<TString>(bookedOptions, "var" ) ) cmd.add(varArg);
 	if ( isIn<TString>(bookedOptions, "usage" ) ) cmd.add( usageArg );
   if ( isIn<TString>(bookedOptions, "updateFreq" ) ) cmd.add( updateFreqArg );
@@ -912,7 +900,6 @@ void OptParser::parseArguments(int argc, char* argv[])
 	usage             = usageArg.getValue();
   updateFreq        = updateFreqArg.getValue();
 	verbose           = verboseArg.getValue();
-	sanity           = sanityArg.getValue();
 
 	//
 	// The following options need some post-processing to

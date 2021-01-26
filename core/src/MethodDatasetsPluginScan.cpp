@@ -1216,6 +1216,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             // toyTree.chi2minToy          = 2 * r->minNll(); // 2*r->minNll(); //2*r->minNll();
             toyTree.chi2minToy          = 2 * pdf->getMinNll(); // 2*r->minNll(); //2*r->minNll();
             toyTree.chi2minToyPDF       = 2 * pdf->getMinNllScan();
+            std::cout << "::2::==Are Toy and ToyPdf chi2 different?== " << toyTree.chi2minToy << " " << toyTree.chi2minToyPDF <<std::endl;
             toyTree.covQualScan         = r->covQual();
             toyTree.statusScan          = r->status();
             toyTree.statusScanPDF       = pdf->getFitStatus(); //r->status();
@@ -1280,6 +1281,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             // toyTree.chi2minBkgToy          = 2 * rb->minNll(); // 2*r->minNll(); //2*r->minNll();
             toyTree.chi2minBkgToy          = 2 * pdf->getMinNll(); // 2*r->minNll(); //2*r->minNll();
             toyTree.chi2minBkgToyPDF       = 2 * pdf->getMinNllScan();
+            std::cout << "::2.5::==Are Toy and ToyPdf chi2 different?== " << toyTree.chi2minBkgToy << " " << toyTree.chi2minBkgToyPDF <<std::endl;
             toyTree.covQualScanBkg         = rb->covQual(); // 2*r->minNll(); //2*r->minNll();
             toyTree.statusScanBkg          = pdf->getFitStatus();
 
@@ -1296,7 +1298,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             // free parameter of interest
             parameterToScan->setConstant(false);
             //setLimit(w, scanVar1, "free");
-            w->var(scanVar1)->removeRange();
+            w->var(scanVar1)->removeRange(); //Default in GammaCombo
 
 			// set dataset back
 			if (arg->debug) cout << "Setting toy back as data " << tempData << endl;
@@ -1309,6 +1311,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             pdf->setMinNllFree(pdf->minNll);
             // toyTree.chi2minGlobalToy = 2 * r1->minNll();
             toyTree.chi2minGlobalToy = 2 * pdf->getMinNllFree();
+            std::cout<< "::3::== chi2minGlobalToy== " << toyTree.chi2minGlobalToy <<std::endl;
+            std::cout<< "::3::== chi2minToy== " << toyTree.chi2minToy <<std::endl;
 
             if (! std::isfinite(pdf->getMinNllFree())) {
                 cout << "----> nan/inf flag detected " << endl;
@@ -1389,7 +1393,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                             parameterToScan->setVal(static_cast<RooRealVar*>(r1->floatParsFinal().find(parameterToScan->GetName()))->getVal());
                             delete r_tmp;
                         }
-                        delete parsAfterScanFit;
+                        //delete parsAfterScanFit;
                     };
                     if (arg->debug) {
                         cout  << "===== > compare free fit result with pdf parameters: " << endl;
@@ -1426,6 +1430,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             pdf->setMinNllFree(pdf->minNll);
             // toyTree.chi2minGlobalToy = 2 * r1->minNll();
             toyTree.chi2minGlobalToy = 2 * pdf->getMinNllFree();
+            std::cout<< "::3-Refit::== chi2minGlobalToy== " << toyTree.chi2minGlobalToy <<std::endl;
+            std::cout<< "::3-Refit::== chi2minToy== " << toyTree.chi2minToy <<std::endl;
 
             if (! std::isfinite(pdf->getMinNllFree())) {
                 cout << "----> nan/inf flag detected " << endl;
@@ -1486,6 +1492,9 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                         cout << "+++++ > try to fit with different starting values" << endl;
                         cout << "+++++ > dChi2: " << toyTree.chi2minToy - toyTree.chi2minGlobalToy << endl;
                         cout << "+++++ > dChi2PDF: " << 2 * (pdf->getMinNllScan() - pdf->getMinNllFree()) << endl;
+                        std::cout << "1: " << this->pdf->getWorkspace() <<std::endl;
+                        std::cout << "2: " << pdf->getParName() <<std::endl;
+                        std::cout << "3: " << parsAfterScanFit->get(0) <<std::endl;
                         Utils::setParameters(this->pdf->getWorkspace(), pdf->getParName(), parsAfterScanFit->get(0));
                         // if (parameterToScan->getVal() < 1e-13) parameterToScan->setVal(0.67e-12); //what do we gain from this?
                         parameterToScan->setConstant(false);
@@ -1506,7 +1515,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                             parameterToScan->setVal(static_cast<RooRealVar*>(r1->floatParsFinal().find(parameterToScan->GetName()))->getVal());
                             delete r_tmp;
                         }
-                        delete parsAfterScanFit;
+                        //delete parsAfterScanFit;
                     };
                     if (arg->debug) {
                         cout  << "===== > compare free fit result with pdf parameters: " << endl;
@@ -1528,7 +1537,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             }
 
             // set the limit back again
-            // setLimit(w, scanVar1, "scan");
+            //setLimit(w, scanVar1, "scan");
 
             // toyTree.chi2minGlobalToy    = 2 * r1->minNll(); //2*r1->minNll();
             toyTree.chi2minGlobalToy    = 2 * pdf->getMinNllFree(); //2*r1->minNll();
@@ -1595,6 +1604,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             delete r;
             delete r1;
             delete rb;
+            delete parsAfterScanFit;
             pdf->deleteToys();
         } // End of toys loop
 
@@ -1827,9 +1837,13 @@ void MethodDatasetsPluginScan::setAndPrintFitStatusConstrainedToys(const ToyTree
 
     if ( (pdf->getFitStatus() != 0 || negTestStat ) && arg->debug ) {
         cout  << "----> problem in current fit: going to refit with strategy " << pdf->getFitStrategy() << " , summary: " << endl
-              << "----> NLL value: " << std::setprecision(9) << pdf->getMinNllFree() << endl
+              << "----> NLL value(free): " << std::setprecision(9) << pdf->getMinNllFree() << endl
               << "----> fit status: " << pdf->getFitStatus() << endl
+              << "----> toyChi2min: " << toyTree.chi2minToy <<endl
+              << "----> GlobaltoyChi2min: " << toyTree.chi2minGlobalToy <<endl
               << "----> dChi2: " << (toyTree.chi2minToy - toyTree.chi2minGlobalToy) << endl
+              << "----> PDFMinNllScan: " << pdf->getMinNllScan() <<endl
+              << "----> PDFMinNllFree: " << pdf->getMinNllFree() << endl
               << "----> dChi2PDF: " << 2 * (pdf->getMinNllScan() - pdf->getMinNllFree()) << endl;
 
         switch (pdf->getFitStatus()) {
