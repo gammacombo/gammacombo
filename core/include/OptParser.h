@@ -66,6 +66,7 @@ class OptParser
 		vector<vector<RangePar> >   physRanges;
     vector<vector<TString> >    removeRanges;
     vector<vector<TString> >    randomizeToyVars;
+    bool            grid;
 		TString	        group;
 		TString	        groupPos;
 		TString         hfagLabel;

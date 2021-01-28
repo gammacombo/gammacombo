@@ -355,7 +355,8 @@ for scf in opts.scan:
   pl = scan(scf, {'color':'slateblue'}, {'color':'slateblue'})
   scans.append(pl)
 
-plot1d( 'plot', scans, r'$\gamma\;[^\circ]$' )
+#plot1d( 'plot', scans, r'$\gamma\;[^\circ]$' )
 
-
+#if opts
+plot2d( 'plot', scans, r'$|q/p|$', r'$\phi$')
 

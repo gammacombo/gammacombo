@@ -37,6 +37,7 @@ OptParser::OptParser():
 	digits = -99;
 	enforcePhysRange = false;
     filenamechange = "";
+  grid = false;
 	group = "GammaCombo";
 	groupPos = "";
   hfagLabel = "";
@@ -163,6 +164,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("legsize");
   availableOptions.push_back("legstyle");
   availableOptions.push_back("legcols");
+	availableOptions.push_back("grid");
 	availableOptions.push_back("group");
 	availableOptions.push_back("grouppos");
 	availableOptions.push_back("lightfiles");
@@ -475,6 +477,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 
 	// --------------- switch arguments
   TCLAP::SwitchArg batcheosArg("","batcheos", "When submitting batch jobs (for plugin) write the output to eos", false);
+	TCLAP::SwitchArg gridArg("", "grid", "Put a grid on the canvas", false);
 	TCLAP::SwitchArg plotpluginonlyArg("", "po", "Make a 1-CL plot just showing the plugin curves.", false);
 	TCLAP::SwitchArg interactiveArg("i", "interactive", "Enables interactive mode (requires X11 session). Exit with Ctrl+c.", false);
 	TCLAP::SwitchArg intprobArg("", "intprob", "Use the internal (=Prob) chi2min histogram"
@@ -602,6 +605,8 @@ void OptParser::parseArguments(int argc, char* argv[])
       "33: Solid fill for 2D legends.\n"
       "34: Remove CL guide lines.\n"
       "35: Legend with transparent fill.\n"
+      "36: Convert x to degrees.\n"
+      "37: Convert y to degrees.\n"
 			, false, "int");
   TCLAP::MultiArg<string> readfromfileArg("", "readfromfile", "Read the observables, uncertainties and correlations from a file - e.g. for reading in toys."
       "If 'default' is given, the default values are used."
@@ -794,6 +799,7 @@ void OptParser::parseArguments(int argc, char* argv[])
   if ( isIn<TString>(bookedOptions, "hfagLabelPos" ) ) cmd.add(hfagLabelPosArg);
 	if ( isIn<TString>(bookedOptions, "group" ) ) cmd.add( plotgroupArg );
 	if ( isIn<TString>(bookedOptions, "grouppos" ) ) cmd.add( plotgroupposArg );
+	if ( isIn<TString>(bookedOptions, "grid" ) ) cmd.add( gridArg );
 	if ( isIn<TString>(bookedOptions, "fix" ) ) cmd.add(fixArg);
   if ( isIn<TString>(bookedOptions, "filltransparency" ) ) cmd.add( filltransparencyArg );
   if ( isIn<TString>(bookedOptions, "fillstyle" ) ) cmd.add( fillstyleArg );
@@ -859,6 +865,7 @@ void OptParser::parseArguments(int argc, char* argv[])
   linestyle         = linestyleArg.getValue();
   linecolor         = linecolorArg.getValue();
   hfagLabel         = hfagLabelArg.getValue();
+	grid              = gridArg.getValue();
 	group             = plotgroupArg.getValue();
 	id                = idArg.getValue();
 	importance        = importanceArg.getValue();
