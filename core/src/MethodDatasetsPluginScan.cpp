@@ -434,6 +434,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     TH1F *h_fracGoodToys  = (TH1F*)hCL->Clone("h_fracGoodToys");
 
     TH1F *bkg_pvals  = new TH1F("bkg_pvals", "bkg p values", 20, -0.1, 1.1);
+
     TH1F *h_sig_bkgtoys  = new TH1F("h_sig_bkgtoys", "signal distribution for bkg toys", 50, -5*(((RooRealVar*) dataFreeFitResult->floatParsFinal().find(scanVar1))->getError()), 5*(((RooRealVar*) dataFreeFitResult->floatParsFinal().find(scanVar1))->getError()));
 
     // map of vectors for determining signal distributions per scan point
@@ -455,6 +456,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     Long64_t n0failed     = 0;
     Long64_t totFailed    = 0;
 
+
     float printFreq = nentries > 101 ? 100 : nentries;  ///< for the status bar
     t.activateAllBranches();
     for (Long64_t i = 0; i < nentries; i++)
@@ -472,20 +474,15 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         if (t.scanpoint == 0.0) n0tot++;
         // criteria for GammaCombo
         bool convergedFits      = (t.statusFree == 0. && t.statusScan == 0.) && (t.covQualFree == 3 && t.covQualScan == 3);
-        //:::::::::TESTING REMOVING COVQUAL REQUIREMENT
-        //bool convergedFits      = (t.statusFree == 0. && t.statusScan == 0.);// && (t.covQualFree == 3 && t.covQualScan == 3);
         bool tooHighLikelihood  = !( abs(t.chi2minToy) < 1e27 && abs(t.chi2minGlobalToy) < 1e27);
         // bool BadBkgFit          = (!(t.statusFreeBkg == 0 && t.statusBkgBkg == 0) && (t.covQualFreeBkg == 3 && t.covQualBkgBkg == 3))||(std::isnan(t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy)||(t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy<-1.e-6)||(t.statusBkgBkg!=0)||(t.statusFreeBkg!=0));
         bool BadBkgFit          = (!(t.statusFreeBkg == 0 && t.statusBkgBkg == 0) && (t.covQualFreeBkg == 3 && t.covQualBkgBkg == 3))||(std::isnan(t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy)||(abs(t.chi2minBkgToy) > 1e27 || abs(t.chi2minGlobalBkgToy) > 1e27|| abs(t.chi2minBkgBkgToy) > 1e27)||(t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy<-1.e-6));
-        //bool BadBkgFit          = (!(t.statusFreeBkg == 0 && t.statusBkgBkg == 0))||(std::isnan(t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy)||(abs(t.chi2minBkgToy) > 1e27 || abs(t.chi2minGlobalBkgToy) > 1e27|| abs(t.chi2minBkgBkgToy) > 1e27)||(t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy<-1.e-6));
         // bool BadBkgFit          = false;
 
         // apply cuts
         if ( tooHighLikelihood || !convergedFits )
         {
-            std::cout << "tooHighLikelihood?: " << tooHighLikelihood <<std::endl;
-            std::cout << "tStatusFree: " << t.statusFree << " tstatusScan: " << t.statusScan <<std::endl;
-            std::cout << "tcovQualFree: " << t.covQualFree << " tcovQualScan: " << t.covQualScan <<std::endl;
+            if(arg->debug) std::cout << "Failed because of "  << t.statusFree << t.statusScan << t.covQualFree << t.covQualScan << tooHighLikelihood << std::endl;
             h_failed->Fill(t.scanpoint);
             if (t.scanpoint == 0) n0failed++;
             valid = false;
@@ -494,7 +491,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         }
 
         if ( BadBkgFit){
-            std::cout << "Failed because of "  << t.statusFreeBkg << t.statusBkgBkg << t.covQualFreeBkg << t.covQualBkgBkg << std::endl;
+            if(arg->debug) std::cout << "Failed because of "  << t.statusFreeBkg << t.statusBkgBkg << t.covQualFreeBkg << t.covQualBkgBkg << std::endl;
             nfailedbkg++;
         }
 
@@ -1321,7 +1318,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             // free parameter of interest
             parameterToScan->setConstant(false);
             //setLimit(w, scanVar1, "free");
-            w->var(scanVar1)->removeRange(); //Default in GammaCombo
+            w->var(scanVar1)->removeRange(); 
 
 			// set dataset back
 			if (arg->debug) cout << "Setting toy back as data " << tempData << endl;
@@ -1511,9 +1508,6 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                         cout << "+++++ > try to fit with different starting values" << endl;
                         cout << "+++++ > dChi2: " << toyTree.chi2minToy - toyTree.chi2minGlobalToy << endl;
                         cout << "+++++ > dChi2PDF: " << 2 * (pdf->getMinNllScan() - pdf->getMinNllFree()) << endl;
-                        std::cout << "1: " << this->pdf->getWorkspace() <<std::endl;
-                        std::cout << "2: " << pdf->getParName() <<std::endl;
-                        std::cout << "3: " << parsAfterScanFit->get(0) <<std::endl;
                         Utils::setParameters(this->pdf->getWorkspace(), pdf->getParName(), parsAfterScanFit->get(0));
                         // if (parameterToScan->getVal() < 1e-13) parameterToScan->setVal(0.67e-12); //what do we gain from this?
                         parameterToScan->setConstant(false);
@@ -1556,7 +1550,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             }
 
             // set the limit back again
-            //setLimit(w, scanVar1, "scan");
+            // setLimit(w, scanVar1, "scan");
 
             // toyTree.chi2minGlobalToy    = 2 * r1->minNll(); //2*r1->minNll();
             toyTree.chi2minGlobalToy    = 2 * pdf->getMinNllFree(); //2*r1->minNll();

@@ -503,19 +503,10 @@ void Utils::setParameters(RooWorkspace* w, RooFitResult* values){
 ///
 void Utils::setParameters(const RooAbsCollection* setMe, const RooAbsCollection* values)
 {
-        //setMe->Print();
-        //values->Print();
 	TIterator* it = setMe->createIterator();
 	while ( RooRealVar* p = (RooRealVar*)it->Next() ){
-               // std::cout << p->GetName() <<std::endl;
-                //std::cout << values->find(p->GetName()) <<std::endl;
 		RooRealVar *var = (RooRealVar*)values->find(p->GetName());
-                //p->Print();
-		if ( var ){
-                    //var->Print();
-                    p->setVal(var->getVal());
-                }
-                //std::cout << "::::" <<std::endl;
+		if ( var ){ p->setVal(var->getVal()); }
 	}
 	delete it;
 }
@@ -530,7 +521,6 @@ void Utils::setParametersFloating(const RooAbsCollection* setMe, const RooAbsCol
 	while ( RooRealVar* p = (RooRealVar*)it->Next() ){
 		if ( p->isConstant() ) continue;
 		RooRealVar *var = (RooRealVar*)values->find(p->GetName());
-                std::cout << var << " " << p <<std::endl;
 		if ( var ) p->setVal(var->getVal());
 	}
 	delete it;
@@ -688,10 +678,7 @@ void Utils::setLimit(RooRealVar* v, TString limitname)
 void Utils::setLimit(RooWorkspace* w, TString parname, TString limitname)
 {
 	RooMsgService::instance().setGlobalKillBelow(ERROR);
-        //std::cout <<parname << " : " <<  w->var(parname)->getMin() << " " << w->var(parname)->getMax() <<std::endl;
-        //std::cout <<parname << " Free: " <<  w->var(parname)->getMin(limitname) << " " << w->var(parname)->getMax(limitname) <<std::endl;
 	w->var(parname)->setRange(w->var(parname)->getMin(limitname), w->var(parname)->getMax(limitname));
-        //std::cout << "==============" <<std::endl;
 	RooMsgService::instance().setGlobalKillBelow(INFO);
 }
 

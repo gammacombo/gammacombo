@@ -94,6 +94,12 @@ public:
     int nToy = -1;
     int jobID = -1;
     std::string jobType ="";
+
+    std::string massVarName="";
+    std::string plotDir="";
+    bool blindFlag=0;
+    bool sanity=0;
+    bool isToyDataset=0;
     ///////////////////////
 
     int                   NCPU;         //> number of CPU used

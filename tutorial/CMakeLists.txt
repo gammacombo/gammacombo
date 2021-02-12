@@ -125,19 +125,3 @@ install(DIRECTORY DESTINATION ${COMBINER_NAME}/plots/png    )
 install(DIRECTORY DESTINATION ${COMBINER_NAME}/plots/root   )
 install(DIRECTORY DESTINATION ${COMBINER_NAME}/plots/scanner)
 
-
-######################################
-# Create DEBUG plot directories
-######################################
-install(DIRECTORY DESTINATION ${COMBINER_NAME}/BGonlyToy/root         )
-install(DIRECTORY DESTINATION ${COMBINER_NAME}/BGonlyToy/plots        )
-install(DIRECTORY DESTINATION ${COMBINER_NAME}/BGonlyToy/plots/C      )
-install(DIRECTORY DESTINATION ${COMBINER_NAME}/BGonlyToy/plots/cl     )
-install(DIRECTORY DESTINATION ${COMBINER_NAME}/BGonlyToy/plots/dot    )
-install(DIRECTORY DESTINATION ${COMBINER_NAME}/BGonlyToy/plots/eps    )
-install(DIRECTORY DESTINATION ${COMBINER_NAME}/BGonlyToy/plots/par    )
-install(DIRECTORY DESTINATION ${COMBINER_NAME}/BGonlyToy/plots/pdf    )
-install(DIRECTORY DESTINATION ${COMBINER_NAME}/BGonlyToy/plots/png    )
-install(DIRECTORY DESTINATION ${COMBINER_NAME}/BGonlyToy/plots/root   )
-install(DIRECTORY DESTINATION ${COMBINER_NAME}/BGonlyToy/plots/scanner)
-

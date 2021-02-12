@@ -67,7 +67,7 @@ void PDF_Datasets::initData(const TString& name) {
         std::cout << "FATAL in PDF_Datasets::initData -- Data: " << dataName << " not found in workspace" << std::endl;
         exit(EXIT_FAILURE);
     }
-    if(pdf) this->minNll = pdf->createNLL(*data)->getVal();
+    if(pdf) this->minNll = pdf->createNLL(*data)->getVal(); std::cout << "TESTTING010" <<std::endl;
     std::cout << "INFO in PDF_Datasets::initData -- Data initialized" << std::endl;
     return;
 };

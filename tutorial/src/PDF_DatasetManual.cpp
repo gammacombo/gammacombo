@@ -1,13 +1,13 @@
-#include "PDF_DatasetOldFitting.h"
+#include "PDF_DatasetManual.h"
 #include "RooExponential.h"
 #include "RooMinimizer.h"
 #include "TMath.h"
 
-PDF_DatasetOldFitting::PDF_DatasetOldFitting(RooWorkspace* w): PDF_Datasets(w){};
-PDF_DatasetOldFitting::PDF_DatasetOldFitting(RooWorkspace* w, int nObs, OptParser* opt): PDF_Datasets::PDF_Datasets(w,nObs,opt){};
-PDF_DatasetOldFitting::~PDF_DatasetOldFitting(){};
+PDF_DatasetManual::PDF_DatasetManual(RooWorkspace* w): PDF_Datasets(w){};
+PDF_DatasetManual::PDF_DatasetManual(RooWorkspace* w, int nObs, OptParser* opt): PDF_Datasets::PDF_Datasets(w,nObs,opt){};
+PDF_DatasetManual::~PDF_DatasetManual(){};
 
-RooFitResult* PDF_DatasetOldFitting::fit(RooDataSet* dataToFit) {
+RooFitResult* PDF_DatasetManual::fit(RooDataSet* dataToFit) {
 
     if (this->getWorkspace()->set(constraintName) == NULL) {
         std::cout << std::endl;
@@ -21,24 +21,18 @@ RooFitResult* PDF_DatasetOldFitting::fit(RooDataSet* dataToFit) {
         exit(EXIT_FAILURE);
     }
 
+    std::string suffix = Form("_Scanpoint%i_Toy%i_JobID%i",this->scanPoint,this->nToy,this->jobID);
+
     // Turn off RooMsg
     RooMsgService::instance().setGlobalKillBelow(ERROR);
     RooMsgService::instance().setSilentMode(kTRUE);
 
-    // Choose Dataset to fit to
-    // unfortunately Minuit2 does not initialize the status of the roofitresult, if all parameters are constant. Therefore need to stay with standard Minuit fitting.
-    // RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Minimizer("Minuit2", "Migrad"));
     RooAbsReal* nll; 
-    if(blindFlag){
-       std::cout << "PDF_DatasetOldFitting::fit: Creating negative log likelihood with blinding" <<std::endl;
-       nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)),RooFit::Range("lsb,rsb"));
-    }
-    else{
-       nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
-    }
+    if(blindFlag){ nll=pdf->createNLL(*dataToFit,RooFit::Extended(kTRUE),RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)),RooFit::Range("lsb,rsb"));}
+    else{ nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));}
+
     double nll_init_val = nll->getVal(nll->getVariables());
     RooFormulaVar* nll_toFit = new RooFormulaVar("nll_norm", ("@0-"+std::to_string(nll_init_val)).c_str(), RooArgList(*nll));
-    std::cout << "Testing S+BG" <<std::endl;
 
     RooFitResult* result;
     //RooMinuit* min = new RooMinuit(*nll);
@@ -56,14 +50,19 @@ RooFitResult* PDF_DatasetOldFitting::fit(RooDataSet* dataToFit) {
         i=i+1;
         
         if (i>30){ break;}
-        std::cout << i << " | Liquid: Fit Status=" << result->status() << " |  CovQual=" << result->covQual() <<std::endl;
+        std::cout << i << " | PDF_DatasetManual::Fit: Status=" << result->status() << " |  CovQual=" << result->covQual() <<std::endl;
     }while(!(result->status() == 0 && result->covQual()==3));
 
  
     this->fitStatus = result->status();
     this->minNll = nll->getVal();
-    std::cout << "Wifi: Fit Status=" << this->fitStatus << ": Nll=" << this->minNll <<std::endl;
 
+    if(sanity){
+        plotting((plotDir+"SignalBGDataSet").c_str(), suffix, dataToFit , counterSB, 1);
+        counterBGToy+=1;
+    }
+
+    //std::cout << "Sig+BG: Fit Status=" << this->fitStatus << ": Nll=" << this->minNllBkg <<std::endl;
     RooMsgService::instance().setSilentMode(kFALSE);
     RooMsgService::instance().setGlobalKillBelow(INFO);
 
@@ -73,7 +72,7 @@ RooFitResult* PDF_DatasetOldFitting::fit(RooDataSet* dataToFit) {
 };
 
 
-RooFitResult* PDF_DatasetOldFitting::fitBkg(RooDataSet* dataToFit) {
+RooFitResult* PDF_DatasetManual::fitBkg(RooDataSet* dataToFit) {
 
     if (this->getWorkspace()->set(constraintName) == NULL) {
         std::cout << std::endl;
@@ -97,6 +96,8 @@ RooFitResult* PDF_DatasetOldFitting::fitBkg(RooDataSet* dataToFit) {
     getWorkspace()->var("BFsig")->setVal(0.0);
     getWorkspace()->var("BFsig")->setConstant(true);
 
+    std::string suffix = Form("_Scanpoint%i_Toy%i_JobID%i",this->scanPoint,this->nToy,this->jobID);
+
     // Turn off RooMsg
     RooMsgService::instance().setGlobalKillBelow(ERROR);
     RooMsgService::instance().setSilentMode(kTRUE);
@@ -106,7 +107,7 @@ RooFitResult* PDF_DatasetOldFitting::fitBkg(RooDataSet* dataToFit) {
     
     RooAbsReal* nll_bkg; 
     if(blindFlag){
-       std::cout << "PDF_DatasetOldFitting::fit: Creating negative log likelihood with blinding" <<std::endl;
+       std::cout << "PDF_DatasetManual::fit: Creating negative log likelihood with blinding" <<std::endl;
        nll_bkg = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)),RooFit::Range("lsb,rsb"));
     }
     else{
@@ -131,7 +132,7 @@ RooFitResult* PDF_DatasetOldFitting::fitBkg(RooDataSet* dataToFit) {
         i=i+1;
         
         if (i>30){ break;}
-        std::cout << i << " | Solid: Fit Status=" << result->status() << " |  CovQual=" << result->covQual() <<std::endl;
+        std::cout << i << " | PDF_DatasetManual::FitBG: Status=" << result->status() << " |  CovQual=" << result->covQual() <<std::endl;
     }while(!(result->status() == 0 && result->covQual()==3));
 
  
@@ -143,11 +144,11 @@ RooFitResult* PDF_DatasetOldFitting::fitBkg(RooDataSet* dataToFit) {
 
     
     if(sanity){
-        plotting((plotDir+"BackgroundFit").c_str(), dataToFit, counterBG, 0);
-        counterBG=counterBG+1;
+        plotting((plotDir+"BackgroundFit").c_str(), suffix, dataToFit, counterBG, 0);
+        counterBG+=1;
     }
 
-    std::cout << "Intranet: Fit Status=" << this->fitStatus << ": Nll=" << this->minNllBkg <<std::endl;
+    //std::cout << "BG: Fit Status=" << this->fitStatus << ": Nll=" << this->minNllBkg <<std::endl;
     getWorkspace()->var("BFsig")->setVal(parvalue);
     getWorkspace()->var("BFsig")->setConstant(isconst);    
 
@@ -155,22 +156,18 @@ RooFitResult* PDF_DatasetOldFitting::fitBkg(RooDataSet* dataToFit) {
     return result;
 };
 
-void   PDF_DatasetOldFitting::generateToys(int SeedShift) {
+void   PDF_DatasetManual::generateToys(int SeedShift) {
+    std::string suffix = Form("_Scanpoint%i_Toy%i_JobID%i",this->scanPoint,this->nToy,this->jobID);
 
     initializeRandomGenerator(SeedShift);
-    //RooDataSet* toys = this->pdf->generate(RooArgSet(*observables), wspc->data(dataName)->numEntries(), kFALSE, kTRUE, "", kFALSE, kTRUE);
-    //RooDataSet* toys = pdf->generate(RooArgSet(*observables), wspc->data(dataName)->numEntries(), kFALSE, kTRUE, "", kFALSE, kTRUE);
+
     RooDataSet* toys;
-    if(isToyDataset){
-        toys = this->pdf->generate(RooArgSet(*observables), *(RooDataSet*)(wspc->data(dataName)), wspc->data(dataName)->numEntries(), kFALSE, kFALSE, kFALSE);
-    }
-    else{
-        toys = this->pdf->generate(RooArgSet(*observables), wspc->data(dataName)->numEntries(), kFALSE, kTRUE, "", kFALSE, kTRUE);
-    }
+    if(isToyDataset){ toys = this->pdf->generate(RooArgSet(*observables), *(RooDataSet*)(wspc->data(dataName)), wspc->data(dataName)->numEntries(),kFALSE,kFALSE,kFALSE);}
+    else{ toys = this->pdf->generate(RooArgSet(*observables), wspc->data(dataName)->numEntries(), kFALSE, kTRUE, "", kFALSE, kTRUE);}
 
     if(sanity){
-        plotting((plotDir+"ToyDataSet").c_str(), toys, counter, 1);
-        counter=counter+1;
+        plotting((plotDir+"ToyDataSet").c_str(), suffix, toys, counterToy, 1);
+        counterToy+=1;
     }
 
     // Having the delete in here causes a segmentation fault, likely due to a double free
@@ -181,7 +178,8 @@ void   PDF_DatasetOldFitting::generateToys(int SeedShift) {
     this->isToyDataSet    = kTRUE;
 };
 
-void PDF_DatasetOldFitting::generateBkgToys(int SeedShift) {
+void PDF_DatasetManual::generateBkgToys(int SeedShift) {
+    std::string suffix = Form("_Scanpoint%i_Toy%i_JobID%i",this->scanPoint,this->nToy,this->jobID);
 
     initializeRandomGenerator(SeedShift);
 
@@ -190,20 +188,14 @@ void PDF_DatasetOldFitting::generateBkgToys(int SeedShift) {
         bool isconst = getWorkspace()->var("BFsig")->isConstant();
         getWorkspace()->var("BFsig")->setVal(0.0);
         getWorkspace()->var("BFsig")->setConstant(true);
-        // RooDataSet* toys = pdfBkg->generate(*observables, RooFit::NumEvents(wspc->data(dataName)->numEntries()), RooFit::Extended(kTRUE));
-        //RooDataSet* toys = pdf->generate(*observables, RooFit::NumEvents(wspc->data(dataName)->numEntries()), RooFit::Extended(kTRUE));
+
         RooDataSet* toys;
-        if(isToyDataset){
-            toys = this->pdf->generate(RooArgSet(*observables), *(RooDataSet*)(wspc->data(dataName)), wspc->data(dataName)->numEntries(), kFALSE, kFALSE, kFALSE);
-        }
-        else{
-            toys = this->pdf->generate(RooArgSet(*observables), wspc->data(dataName)->numEntries(), kFALSE, kTRUE, "", kFALSE, kTRUE);
-        }
-	//RooDataSet* toys = this->pdf->generate(RooArgSet(wspc->var(massVarname.c_str()), wspc->cat("category")),0,kFALSE,kTRUE,"",kFALSE,kTRUE)
+        if(isToyDataset){ toys=this->pdf->generate(RooArgSet(*observables), *(RooDataSet*)(wspc->data(dataName)), wspc->data(dataName)->numEntries(),kFALSE,kFALSE,kFALSE);}
+        else{ toys = this->pdf->generate(RooArgSet(*observables), wspc->data(dataName)->numEntries(), kFALSE, kTRUE, "", kFALSE, kTRUE);    }
     
         if(sanity){
-            plotting((plotDir+"ToyBGDataSet").c_str(), toys, counterToy, 1);
-            counterToy=counterToy+1;
+            plotting((plotDir+"ToyBGDataSet").c_str(), suffix, toys, counterBGToy, 1);
+            counterBGToy+=1;
         }
 
         getWorkspace()->var("BFsig")->setVal(parvalue);
@@ -216,7 +208,7 @@ void PDF_DatasetOldFitting::generateBkgToys(int SeedShift) {
     }
 };
 
-void PDF_DatasetOldFitting::plotting(std::string plotString, RooDataSet* data, int count, bool isToy){
+void PDF_DatasetManual::plotting(std::string plotString, std::string plotSuffix, RooDataSet* data, int count, bool isToy){
     RooWorkspace* w = this->getWorkspace();
 
     if(isToy){
@@ -225,7 +217,7 @@ void PDF_DatasetOldFitting::plotting(std::string plotString, RooDataSet* data, i
         data->plotOn(frame);
         pdf->plotOn(frame,RooFit::ProjWData(*data), RooFit::Range("full"), RooFit::NormRange("full"));
         frame->Draw();
-        plotString = plotString+"_"+to_string(count)+"_ScanPoint"+to_string(this->scanPoint)+"_Toy"+to_string(this->nToy)+"_JobID"+to_string(this->jobID)+"_"+this->jobType+".pdf";
+        plotString = plotString+"_"+to_string(count)+plotSuffix+"_"+this->jobType+".pdf";
         canvas->SaveAs((plotString).c_str());
         canvas->Close();
     }
@@ -244,12 +236,12 @@ void PDF_DatasetOldFitting::plotting(std::string plotString, RooDataSet* data, i
 
             frame->Draw();
             //std::string plotOutput = plotString+"_"+to_string(count)+"_ScanPoint"+to_string(this->scanPoint)+"_"+cat+"_SBNorm.pdf";
-            std::string plotOutput = plotString+"_"+to_string(count)+"_ScanPoint"+to_string(this->scanPoint)+"_Toy"+to_string(this->nToy)+"_JobID"+to_string(this->jobID)+"_"+cat+"_"+this->jobType+"_SBNorm.pdf";
+            std::string plotOutput = plotString+"_"+to_string(count)+plotSuffix+"_"+cat+"_"+this->jobType+"_SBNorm.pdf";
             canvas->SaveAs((plotOutput).c_str());
             canvas->Close();
         }
 
-        TCanvas* canvas2 = new TCanvas(Form("c%i",9),Form("c%i",9),600,600);
+        TCanvas* canvas2 = new TCanvas("c9","c9",600,600);
         RooPlot* frame2 = w->var(massVarName.c_str())->frame();
         data->plotOn(frame2);
         if(blindFlag){ pdf->plotOn(frame2, RooFit::Range("lsb,rsb"), RooFit::NormRange("lsb,rsb")); }
@@ -257,20 +249,9 @@ void PDF_DatasetOldFitting::plotting(std::string plotString, RooDataSet* data, i
 
         frame2->Draw();
         //std::string plotOutput = plotString+"_"+to_string(count)+"_ScanPoint"+to_string(this->scanPoint)+"_All_SBNorm.pdf";
-        std::string plotOutput = plotString+"_"+to_string(count)+"_ScanPoint"+to_string(this->scanPoint)+"_Toy"+to_string(this->nToy)+"_JobID"+to_string(this->jobID)+"_All"+"_"+this->jobType+"_SBNorm.pdf";
+        std::string plotOutput = plotString+"_"+to_string(count)+plotSuffix+"_All"+"_"+this->jobType+"_SBNorm.pdf";
         canvas2->SaveAs((plotOutput).c_str());
         canvas2->Close();
     }
 };
 
-void PDF_DatasetOldFitting::plotting(std::string plotString, RooAbsReal* nll, int count){
-    RooWorkspace* w = this->getWorkspace();
-
-    TCanvas* canvas = new TCanvas("cNll","cNll",600,600);
-    RooPlot* frame = w->var(massVarName.c_str())->frame();
-    nll->plotOn(frame);
-    frame->Draw();
-    plotString = plotString+"_"+to_string(count)+".pdf";
-    canvas->SaveAs((plotString).c_str());
-    canvas->Close();
-};
