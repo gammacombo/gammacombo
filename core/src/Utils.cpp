@@ -503,16 +503,19 @@ void Utils::setParameters(RooWorkspace* w, RooFitResult* values){
 ///
 void Utils::setParameters(const RooAbsCollection* setMe, const RooAbsCollection* values)
 {
+        //setMe->Print();
+        //values->Print();
 	TIterator* it = setMe->createIterator();
 	while ( RooRealVar* p = (RooRealVar*)it->Next() ){
-                std::cout << p->GetName() <<std::endl;
-                values->Print();
-                std::cout << values->find(p->GetName()) <<std::endl;
+               // std::cout << p->GetName() <<std::endl;
+                //std::cout << values->find(p->GetName()) <<std::endl;
 		RooRealVar *var = (RooRealVar*)values->find(p->GetName());
-                var->Print();
-                p->Print();
-                std::cout << "::::" <<std::endl;
-		if ( var ) p->setVal(var->getVal());
+                //p->Print();
+		if ( var ){
+                    //var->Print();
+                    p->setVal(var->getVal());
+                }
+                //std::cout << "::::" <<std::endl;
 	}
 	delete it;
 }

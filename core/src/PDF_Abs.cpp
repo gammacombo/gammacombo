@@ -240,6 +240,9 @@ void PDF_Abs::loadExtParameters(RooFitResult *r)
 	RooArgSet *tmp = new RooArgSet();
 	tmp->add(r->floatParsFinal());
 	tmp->add(r->constPars());
+        //std::cout << ":::T@::::" <<std::endl;
+        //tmp->Print();
+        //std::cout << ":::T@2::::" <<std::endl;
 	setParameters(parameters, tmp);
 	delete tmp;
 }

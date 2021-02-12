@@ -908,6 +908,11 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
         if ( ! (fabs(t->chi2minToy)<500 && fabs(t->chi2minGlobalToy)<500
                     && t->statusFree==0. && t->statusScan==0. )
            ){
+            if(arg->debug){
+                std::cout << "DEBUG::MethodPluginScan::AnalyseToys::TOYFAILED" <<std::endl;
+                std::cout << "chi2minToy: " << t->chi2minToy << " <500? chi2minGlobalToy: " << t->chi2minGlobalToy << " <500?" <<std::endl; 
+                std::cout << "statusFree: " << t->statusFree << " ==0? statusScan: " << t->statusScan << " ==0?" <<std::endl; 
+            }
             nfailed++;
             continue;
         }

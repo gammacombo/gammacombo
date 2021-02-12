@@ -1,21 +1,21 @@
-#ifndef PDF_DatasetCustom_h
-#define PDF_DatasetCustom_h
+#ifndef PDF_DatasetOldFitting_h
+#define PDF_DatasetOldFitting_h
 
 #include "PDF_Datasets.h"
 
 
-class PDF_DatasetCustom : public PDF_Datasets
+class PDF_DatasetOldFitting : public PDF_Datasets
 {
     public:
-        PDF_DatasetCustom(RooWorkspace* w);
-        PDF_DatasetCustom(RooWorkspace* w, int nObs, OptParser* opt);
+        PDF_DatasetOldFitting(RooWorkspace* w);
+        PDF_DatasetOldFitting(RooWorkspace* w, int nObs, OptParser* opt);
         RooFitResult* fit(RooDataSet* dataToFit);
         RooFitResult* fitBkg(RooDataSet* dataToFit);
         void  generateToys(int SeedShift = 0) override;
         void  generateBkgToys(int SeedShift = 0) override;
         void  plotting(std::string plotString, RooDataSet* data, int count=0, bool isToy=0);
         void  plotting(std::string plotString, RooAbsReal* nll, int count);
-        ~PDF_DatasetCustom();
+        ~PDF_DatasetOldFitting();
 
         std::string massVarName =""; 
         std::string plotDir ="plots/pdf/";

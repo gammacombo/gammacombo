@@ -154,9 +154,7 @@ void MethodDatasetsProbScan::initScan() {
     // Perform the fits needed for later (the global minimum and the background)
     // free data fit
     w->var(scanVar1)->setConstant(false);
-    std::cout << "PLOP1" <<std::endl;
     dataFreeFitResult = loadAndFit(pdf); // fit on data free
-    std::cout << "PLOP2" <<std::endl;
     assert(dataFreeFitResult);
     dataFreeFitResult->SetName("dataFreeFitResult");
     // chi2minGlobal = 2 * dataFreeFitResult->minNll();
@@ -437,6 +435,10 @@ int MethodDatasetsProbScan::scan1d(bool fast, bool reverse)
 
         parameterToScan->setVal(scanpoint);
         parameterToScan->setConstant(true);
+        
+        //Paul:: Addition by me
+        this->pdf->scanPoint = i;
+        /////////////////////////
 
         RooFitResult *result = this->loadAndFit(this->pdf); // fit on data
         assert(result);

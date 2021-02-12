@@ -1,13 +1,13 @@
-#include "PDF_DatasetCustom.h"
+#include "PDF_DatasetOldFitting.h"
 #include "RooExponential.h"
 #include "RooMinimizer.h"
 #include "TMath.h"
 
-PDF_DatasetCustom::PDF_DatasetCustom(RooWorkspace* w): PDF_Datasets(w){};
-PDF_DatasetCustom::PDF_DatasetCustom(RooWorkspace* w, int nObs, OptParser* opt): PDF_Datasets::PDF_Datasets(w,nObs,opt){};
-PDF_DatasetCustom::~PDF_DatasetCustom(){};
+PDF_DatasetOldFitting::PDF_DatasetOldFitting(RooWorkspace* w): PDF_Datasets(w){};
+PDF_DatasetOldFitting::PDF_DatasetOldFitting(RooWorkspace* w, int nObs, OptParser* opt): PDF_Datasets::PDF_Datasets(w,nObs,opt){};
+PDF_DatasetOldFitting::~PDF_DatasetOldFitting(){};
 
-RooFitResult* PDF_DatasetCustom::fit(RooDataSet* dataToFit) {
+RooFitResult* PDF_DatasetOldFitting::fit(RooDataSet* dataToFit) {
 
     if (this->getWorkspace()->set(constraintName) == NULL) {
         std::cout << std::endl;
@@ -28,62 +28,39 @@ RooFitResult* PDF_DatasetCustom::fit(RooDataSet* dataToFit) {
     // Choose Dataset to fit to
     // unfortunately Minuit2 does not initialize the status of the roofitresult, if all parameters are constant. Therefore need to stay with standard Minuit fitting.
     // RooFitResult* result  = pdf->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Minimizer("Minuit2", "Migrad"));
-    
-    RooFitResult* result;
-    int counter =0;
-    int fitStrategy = 2;
-    do{
-        /*
-        if(counter ==20) fitStrategy=0;
-        if(counter ==21) fitStrategy=1;
-        if(counter ==22) fitStrategy=2;
-        if(counter ==23) fitStrategy=1;
-        if(counter ==24) fitStrategy=2;*/
-        if(counter ==30) break;
-
-        if(blindFlag){
-            result  = pdf->fitTo( *dataToFit, RooFit::Save()
-                                  ,RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName))
-                                  ,RooFit::Extended(kTRUE) 
-                                  //,RooFit::Range("lsb,rsb")
-                                  ,RooFit::Minos(true)
-                                  ,RooFit::Strategy(fitStrategy)
-                                  );
-        }
-        else{
-            result  = pdf->fitTo( *dataToFit, RooFit::Save()
-                                  ,RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName))
-                                  ,RooFit::Extended(kTRUE) 
-                                  //,RooFit::Minimizer("Minuit", "minimize") //Used in Test 2
-                                  //,RooFit::Minimizer("Minuit", "migrad") //Used in Test 3
-                                  ,RooFit::Minos(true)
-                                  ,RooFit::Strategy(fitStrategy)
-                                  );
-        }
-        std::cout << counter << " | Liquid::Status = " << result->status() << " | covQual= " << result->covQual() <<std::endl;
-        counter+=1;
-    //}while(!(result->status() == 0));
-    }while( !(result->status() == 0 && result->covQual()==3) );
-
-    if(sanity){
-        plotting((plotDir+"SignalBGFit").c_str(), dataToFit, counterSB, 0);
-        counterSB=counterSB+1;
-    }
- 
-    this->fitStatus = result->status();
-    //Output FitResult to text file
-    std::string outstring = this->plotDir+Form("FitResultFor_Scanpoint%i_Toy%i_JobID%i",this->scanPoint,this->nToy,this->jobID)+"_"+this->jobType+".txt";
-    std::ofstream outfile(outstring, std::ofstream::out);
-    result->printMultiline(outfile, 1111, kTRUE);
-    
     RooAbsReal* nll; 
     if(blindFlag){
-        nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)),RooFit::Range("lsb,rsb"));
-        //nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
+       std::cout << "PDF_DatasetOldFitting::fit: Creating negative log likelihood with blinding" <<std::endl;
+       nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)),RooFit::Range("lsb,rsb"));
     }
     else{
-        nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
+       nll = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
     }
+    double nll_init_val = nll->getVal(nll->getVariables());
+    RooFormulaVar* nll_toFit = new RooFormulaVar("nll_norm", ("@0-"+std::to_string(nll_init_val)).c_str(), RooArgList(*nll));
+    std::cout << "Testing S+BG" <<std::endl;
+
+    RooFitResult* result;
+    //RooMinuit* min = new RooMinuit(*nll);
+    //RooMinimizer* min = new RooMinimizer(*nll);
+    RooMinimizer* min = new RooMinimizer(*nll_toFit);
+    min->setStrategy(2);
+    int i = 0;
+
+    //min->simplex();
+    do{
+        min->migrad();
+        min->hesse();
+        min->minos();
+        result = min->save();
+        i=i+1;
+        
+        if (i>30){ break;}
+        std::cout << i << " | Liquid: Fit Status=" << result->status() << " |  CovQual=" << result->covQual() <<std::endl;
+    }while(!(result->status() == 0 && result->covQual()==3));
+
+ 
+    this->fitStatus = result->status();
     this->minNll = nll->getVal();
     std::cout << "Wifi: Fit Status=" << this->fitStatus << ": Nll=" << this->minNll <<std::endl;
 
@@ -96,7 +73,7 @@ RooFitResult* PDF_DatasetCustom::fit(RooDataSet* dataToFit) {
 };
 
 
-RooFitResult* PDF_DatasetCustom::fitBkg(RooDataSet* dataToFit) {
+RooFitResult* PDF_DatasetOldFitting::fitBkg(RooDataSet* dataToFit) {
 
     if (this->getWorkspace()->set(constraintName) == NULL) {
         std::cout << std::endl;
@@ -127,80 +104,58 @@ RooFitResult* PDF_DatasetCustom::fitBkg(RooDataSet* dataToFit) {
     // unfortunately Minuit2 does not initialize the status of the roofitresult, if all parameters are constant. Therefore need to stay with standard Minuit fitting.
     // RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Minimizer("Minuit2", "Migrad"));
     
-    RooFitResult* result;
-    int counter =0;
-    int fitStrategy = 2;
-    do{
-        /*
-        if(counter ==20) fitStrategy=0;
-        if(counter ==21) fitStrategy=1;
-        if(counter ==22) fitStrategy=2;
-        if(counter ==23) fitStrategy=1;
-        if(counter ==24) fitStrategy=2;*/
-        if(counter ==30) break;
-        counter+=1;
+    RooAbsReal* nll_bkg; 
+    if(blindFlag){
+       std::cout << "PDF_DatasetOldFitting::fit: Creating negative log likelihood with blinding" <<std::endl;
+       nll_bkg = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)),RooFit::Range("lsb,rsb"));
+    }
+    else{
+       nll_bkg = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
+    }
+    double nll_init_valbg = nll_bkg->getVal(nll_bkg->getVariables());
+    RooFormulaVar* nllbg_toFit = new RooFormulaVar("nllbg_norm", ("@0-"+std::to_string(nll_init_valbg)).c_str(), RooArgList(*nll_bkg));
 
-        if(blindFlag){
-           std::cout << "PDF_DatasetCustom::fitBkg: Fitting with blinding" <<std::endl;
-           result = pdf->fitTo( *dataToFit, RooFit::Save() 
-                                ,RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName))
-                                ,RooFit::Extended(kTRUE)
-                                //,RooFit::Range("lsb,rsb")
-                                ,RooFit::Minos(true)
-                                ,RooFit::Strategy(fitStrategy)
-                                );
-        }
-        else{
-            result  = pdf->fitTo( *dataToFit, RooFit::Save() 
-                                ,RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName))
-                                ,RooFit::Extended(kTRUE)
-                                //,RooFit::Minimizer("Minuit", "minimize") //Used in Test 2
-                                //,RooFit::Minimizer("Minuit", "migrad") //Used in Test 3
-                                ,RooFit::Minos(true)
-                                ,RooFit::Strategy(fitStrategy)
-                                );
-        }
-        std::cout << counter << " | Solid::Status = " << result->status() << " | covQual= " << result->covQual() <<std::endl;
-    //}while(!(result->status() == 0));
-    }while( !(result->status() == 0 && result->covQual()==3) );
+    RooFitResult* result;
+    //RooMinuit* min = new RooMinuit(*nll_bkg);
+    //RooMinimizer* min = new RooMinimizer(*nll_bkg);
+    RooMinimizer* min = new RooMinimizer(*nllbg_toFit);
+    min->setStrategy(2);
+    int i = 0;
+
+    //min->simplex();
+    do{
+        min->migrad();
+        min->hesse();
+        min->minos();
+        result = min->save();
+        i=i+1;
+        
+        if (i>30){ break;}
+        std::cout << i << " | Solid: Fit Status=" << result->status() << " |  CovQual=" << result->covQual() <<std::endl;
+    }while(!(result->status() == 0 && result->covQual()==3));
+
+ 
+    this->fitStatus = result->status();
+    this->minNllBkg = nll_bkg->getVal();
 
     RooMsgService::instance().setSilentMode(kFALSE);
     RooMsgService::instance().setGlobalKillBelow(INFO);
-    this->fitStatus = result->status();
 
-    //Output FitResult to text file
-    std::string outstring = this->plotDir+Form("BGFitResultFor_Scanpoint%i_Toy%i_JobID%i",this->scanPoint,this->nToy,this->jobID)+"_"+this->jobType+".txt";
-    std::ofstream outfile(outstring, std::ofstream::out);
-    std::ofstream outfileBG(outstring, std::ofstream::out);
-    result->printMultiline(outfileBG, 1111, kTRUE);
     
     if(sanity){
         plotting((plotDir+"BackgroundFit").c_str(), dataToFit, counterBG, 0);
         counterBG=counterBG+1;
     }
 
-    RooAbsReal* nll_bkg; 
-    if(blindFlag){
-       std::cout << "PDF_DatasetCustom::fitBkg: Creating negative log likelihood with blinding" <<std::endl;
-       nll_bkg = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)),RooFit::Range("lsb,rsb"));
-       //nll_bkg = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
-    }
-    else{
-       nll_bkg = pdf->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
-    }
-
-    //RooAbsReal* nll_bkg = pdfBkg->createNLL(*dataToFit, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)));
-    this->minNllBkg = nll_bkg->getVal();
     std::cout << "Intranet: Fit Status=" << this->fitStatus << ": Nll=" << this->minNllBkg <<std::endl;
     getWorkspace()->var("BFsig")->setVal(parvalue);
     getWorkspace()->var("BFsig")->setConstant(isconst);    
 
     delete nll_bkg;
-
     return result;
 };
 
-void   PDF_DatasetCustom::generateToys(int SeedShift) {
+void   PDF_DatasetOldFitting::generateToys(int SeedShift) {
 
     initializeRandomGenerator(SeedShift);
     //RooDataSet* toys = this->pdf->generate(RooArgSet(*observables), wspc->data(dataName)->numEntries(), kFALSE, kTRUE, "", kFALSE, kTRUE);
@@ -226,7 +181,7 @@ void   PDF_DatasetCustom::generateToys(int SeedShift) {
     this->isToyDataSet    = kTRUE;
 };
 
-void PDF_DatasetCustom::generateBkgToys(int SeedShift) {
+void PDF_DatasetOldFitting::generateBkgToys(int SeedShift) {
 
     initializeRandomGenerator(SeedShift);
 
@@ -239,12 +194,12 @@ void PDF_DatasetCustom::generateBkgToys(int SeedShift) {
         //RooDataSet* toys = pdf->generate(*observables, RooFit::NumEvents(wspc->data(dataName)->numEntries()), RooFit::Extended(kTRUE));
         RooDataSet* toys;
         if(isToyDataset){
-            //TODO: Try with pdfBkg.
             toys = this->pdf->generate(RooArgSet(*observables), *(RooDataSet*)(wspc->data(dataName)), wspc->data(dataName)->numEntries(), kFALSE, kFALSE, kFALSE);
         }
         else{
             toys = this->pdf->generate(RooArgSet(*observables), wspc->data(dataName)->numEntries(), kFALSE, kTRUE, "", kFALSE, kTRUE);
         }
+	//RooDataSet* toys = this->pdf->generate(RooArgSet(wspc->var(massVarname.c_str()), wspc->cat("category")),0,kFALSE,kTRUE,"",kFALSE,kTRUE)
     
         if(sanity){
             plotting((plotDir+"ToyBGDataSet").c_str(), toys, counterToy, 1);
@@ -261,8 +216,7 @@ void PDF_DatasetCustom::generateBkgToys(int SeedShift) {
     }
 };
 
-void PDF_DatasetCustom::plotting(std::string plotString, RooDataSet* data, int count, bool isToy){
-
+void PDF_DatasetOldFitting::plotting(std::string plotString, RooDataSet* data, int count, bool isToy){
     RooWorkspace* w = this->getWorkspace();
 
     if(isToy){
@@ -309,14 +263,14 @@ void PDF_DatasetCustom::plotting(std::string plotString, RooDataSet* data, int c
     }
 };
 
-void PDF_DatasetCustom::plotting(std::string plotString, RooAbsReal* nll, int count){
+void PDF_DatasetOldFitting::plotting(std::string plotString, RooAbsReal* nll, int count){
     RooWorkspace* w = this->getWorkspace();
 
     TCanvas* canvas = new TCanvas("cNll","cNll",600,600);
     RooPlot* frame = w->var(massVarName.c_str())->frame();
     nll->plotOn(frame);
     frame->Draw();
-    plotString = plotString+"_"+to_string(count)+"_ScanPoint"+to_string(this->scanPoint)+".pdf";
+    plotString = plotString+"_"+to_string(count)+".pdf";
     canvas->SaveAs((plotString).c_str());
     canvas->Close();
 };

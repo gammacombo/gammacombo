@@ -28,7 +28,8 @@ GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[]):
 
 	// run ROOT in interactive mode, if requested (-i)
 	if ( arg->interactive ) theApp = new TApplication("App", &argc, argv);
-	else gROOT->SetBatch(false);
+	//else gROOT->SetBatch(false);
+	else gROOT->SetBatch(true);
 
 	// initialize members
 	plot = 0;

@@ -7,6 +7,7 @@
 #include <vector>
 // #include "PDF_DatasetTutorial.h"
 #include "PDF_DatasetCustom.h"
+#include "PDF_DatasetOldFitting.h"
 #include "RooMinimizer.h"
 
 int main(int argc, char* argv[])
@@ -55,48 +56,65 @@ int main(int argc, char* argv[])
   // If you have any problems contact Matthew Kenzie (matthew.kenzie@cern.ch) or Titus Mombächer (titus.mombacher@cern.ch)
 
   //=====Parse additional options=====
+  gROOT->SetBatch(true);
 
   int count=0;
   std::vector<char*> argvTmp;
   bool fullLimitFlag = false;
   bool sanityFlag = false;
   bool blindFlag = false;
+  bool freezeFlag = false;
   bool useToy = false;
   double blindWindow[2] = {999,-999};
   std::string plotDirectory = "plots/pdf/LikelihoodScan/";
   std::string dataName="data";
-  //plotDirectory="FitRangePlots/pdf/LikelihoodScan/";
-  //plotDirectory="FullRangePlots/pdf/LikelihoodScan/";
+  std::string workspaceName="";
+
+  for(int i=0, j=0; i<argc; i++){
+      if(std::string(argv[i]) == "-a"){
+          if(std::string(argv[i+1]) == "pluginbatch"){
+              plotDirectory="plots/pdf/PluginBatch/";
+          }
+          if(std::string(argv[i+1]) == "plugin"){
+              plotDirectory="plots/pdf/Plugin/";
+          }
+          
+      }
+  }
+
   for(int i=0, j=0; i<argc; i++){
       if(std::string(argv[i]) == "--sanity"){ 
           sanityFlag = true;
           count+=1;
       }
-      if(std::string(argv[i]) == "--fl"){ 
+      else if(std::string(argv[i]) == "--full"){ 
           fullLimitFlag = true;
+          count+=1;
+      }
+      else if(std::string(argv[i]) == "--freeze"){ 
+          freezeFlag = true;
           count+=1;
       }
       else if(std::string(argv[i]) == "--blind"){
           blindFlag = true;
           blindWindow[0]=5000;
           blindWindow[1]=5800;
-          plotDirectory="FitRangePlots/pdf/";
+          plotDirectory+="blind/";
           count+=1;
       }
       else if(std::string(argv[i]) == "--toy"){
           useToy = true;
-          plotDirectory="plots/pdf/toyData/";
+          plotDirectory+="toyData/";
           count+=1;
       }
-      else{
-        argvTmp.push_back(argv[i]);
+      else if(std::string(argv[i]) == "--work"){
+          workspaceName=std::string(argv[i+1]);
+          count+=2;
+          i++;
       }
-    
-      if(std::string(argv[i]) == "pluginbatch"){
-          plotDirectory="plots/pdf/Toy/";
-      }
+      else{ argvTmp.push_back(argv[i]); }
   }
-
+  
   int argcNew = argc-count;
   char* argvNew[argcNew];
   for(int i=0; i<argcNew; i++){ argvNew[i] = argvTmp[i]; }
@@ -113,21 +131,24 @@ int main(int argc, char* argv[])
   std::string fit_string = "data_fit_result_"+category;
   */
   std::string workspace_location = std::getenv("LB2LEMUROOT")+std::string("/gammacombo/tutorial/Workspaces/");
-  //std::string workspace_name = "Lb2Lemu_wsOld_WithPDFs.root";
-  //std::string workspace_name = "Lb2Lemu_wsOld_gammaCombo2.root";
+  //std::string workspaceName = "Lb2Lemu_wsOld_WithPDFs.root";
+  //std::string workspaceName = "Lb2Lemu_wsOld_gammaCombo2.root";
   std::string workspace_suffix =""; //These are copies of the original workspace to allow multiple runs at once
-  if (useToy){ workspace_suffix="_Toy1";}
+  //if (useToy){ workspace_suffix="_Toy1";}
+  if (useToy){ workspace_suffix="_NewToyAdj";}
+  if (freezeFlag){ workspace_suffix="_Freeze";}
+  if (fullLimitFlag){ workspace_suffix="_Free";}
   if (blindFlag){ workspace_suffix="_fitRange";}
-  std::string workspace_name = "Lb2Lemu_wsOld_GC3"+workspace_suffix+".root";
+  if(workspaceName==""){ workspaceName = "Lb2Lemu_wsOld_GC3"+workspace_suffix+".root";}
 
-  std::cout << "Using workspace: " << (workspace_location+workspace_name).c_str() <<std::endl;
+  std::cout << "Using workspace: " << (workspace_location+workspaceName).c_str() <<std::endl;
 
   // Load the workspace from its file
   //TFile f("workspace.root");
   //RooWorkspace* workspace = (RooWorkspace*)f.Get("dataset_workspace");
   //TFile f("/afs/cern.ch/work/p/pswallow/private/Lb2LemuAna/gammacombo/tutorial/bin/Lb2Lemu_ws_withPDFs_Old.root");
   //TFile f((std::getenv("LB2LEMUROOT")+std::string("/gammacombo/tutorial/Workspaces/Lb2Lemu_wsOld_WithPDFs.root")).c_str());
-  TFile f((workspace_location+workspace_name).c_str());
+  TFile f((workspace_location+workspaceName).c_str());
   RooWorkspace* workspace = (RooWorkspace*)f.Get("w");
 
   if (workspace==NULL){
@@ -142,6 +163,7 @@ int main(int argc, char* argv[])
   workspace->var("BFsig")->setVal(1e-8);
   //workspace->var("BFsig")->setRange(0,140e-9);
   workspace->var("BFsig")->setRange(0,140e-9);
+  //workspace->var("BFsig")->setRange("scan",0,140e-9);
   //workspace->var("BFsig")->setRange("free",0,1e-5);
   //workspace->var("BFsig")->setRange("free",0,1);
 
@@ -152,35 +174,75 @@ int main(int argc, char* argv[])
   //workspace->import(*fit_result, "data_fit_result");
 
   /*
-  auto iterator = parameters.createIterator();
-  while (RooRealVar* par = (RooRealVar*)iterator->Next() ) {
-    std::cout << par->GetName() << " : " << par->getVal() <<  " Constant: " << par->isConstant() <<std::endl;
+     auto iterator = parameters.createIterator();
+     while (RooRealVar* par = (RooRealVar*)iterator->Next() ) {
+     std::cout << par->GetName() << " : " << par->getVal() <<  " Constant: " << par->isConstant() <<std::endl;
+     }
+     */
+
+  /*
+  std::cout << workspace->pdf("model") <<std::endl;
+
+  RooProdPdf* model;
+  RooProdPdf* modelBG;
+  RooProdPdf* model_unconstrained = (RooProdPdf*)workspace->pdf("model");
+  RooProdPdf* modelBG_unconstrained = (RooProdPdf*)workspace->pdf("bgModel");
+
+  if(!freezeFlag && constr!=""){
+      RooArgSet* allset = new RooArgSet(*model_unconstrained);
+      allset->add(*(workspace->set("constraints")));
+      //std::cout << "Adding the following constraints:" << std::endl;
+      //workspace->set("constraints")->Print("v");
+      model = new RooProdPdf("model_constrained", "model_constrained", *allset);
+      workspace->import(*model,true);
+
+      RooArgSet* allsetBG = new RooArgSet(*modelBG_unconstrained);
+      allsetBG->add(*(workspace->set("constraints")));
+      modelBG = new RooProdPdf("bgModel_constrained", "bgModel_constrained", *allsetBG);
+      workspace->import(*modelBG,true);
   }
+  else{
+      model = model_unconstrained;
+      modelBG = modelBG_unconstrained;
+  }
+
+  workspace->Print("V");
+
+  auto iterator = workspace->set("constrained_variables")->createIterator();
+  while ( RooRealVar* constr_var = (RooRealVar*)iterator->Next() ){
+      std::string cnst_free="";
+      if(freezeFlag) cnst_free = "constant";
+      else{ cnst_free = "free";}
+      //std::cout << "Setting " << constr_var->GetName() << " " << cnst_free<<std::endl;
+      constr_var->setConstant(freezeFlag);
+  }
+  delete iterator;
+  workspace->var("BFsig")->setConstant(false);
   */
 
   std::string categories[8] = {"Brem_DD_Run1","Brem_LL_Run1","NoBrem_DD_Run1","NoBrem_LL_Run1","Brem_DD_Run2","Brem_LL_Run2","NoBrem_DD_Run2","NoBrem_LL_Run2"};
 
-
-  int freeze = 0;
+  /*
   workspace->var("BFsig")->setConstant(0);
   workspace->var(massVarname.c_str())->setConstant(0);
-  workspace->var("Nnorm")->setConstant(freeze);
-  workspace->var("BFnorm")->setConstant(freeze);
-  workspace->var("frac_run1")->setConstant(freeze);
+  workspace->var("Nnorm")->setConstant(freezeFlag);
+  workspace->var("BFnorm")->setConstant(freezeFlag);
+  workspace->var("frac_run1")->setConstant(freezeFlag);
   workspace->var("frac_run1")->setRange(0,1);
-  workspace->var("frac_DD_run1")->setConstant(freeze);
+  workspace->var("frac_DD_run1")->setConstant(freezeFlag);
   workspace->var("frac_DD_run1")->setRange(0,1);
-  workspace->var("frac_DD_run2")->setConstant(freeze);
+  workspace->var("frac_DD_run2")->setConstant(freezeFlag);
   workspace->var("frac_DD_run2")->setRange(0,1);
-  workspace->var("frac_brem_run1_LL")->setConstant(freeze);
+  workspace->var("frac_brem_run1_LL")->setConstant(freezeFlag);
   workspace->var("frac_brem_run1_LL")->setRange(0,1);
-  workspace->var("frac_brem_run1_DD")->setConstant(freeze);
+  workspace->var("frac_brem_run1_DD")->setConstant(freezeFlag);
   workspace->var("frac_brem_run1_DD")->setRange(0,1);
-  workspace->var("frac_brem_run2_LL")->setConstant(freeze);
+  workspace->var("frac_brem_run2_LL")->setConstant(freezeFlag);
   workspace->var("frac_brem_run2_LL")->setRange(0,1);
-  workspace->var("frac_brem_run2_DD")->setConstant(freeze);
+  workspace->var("frac_brem_run2_DD")->setConstant(freezeFlag);
   workspace->var("frac_brem_run2_DD")->setRange(0,1);
-  
+  */
+  /*
   for(int i=0; i<8; i++){
       std::string cat = categories[i];
       std::string brem="";
@@ -193,36 +255,52 @@ int main(int argc, char* argv[])
       if(cat.find("Run1") != std::string::npos){ run="Run1";}
       else{ run="Run2";}
 
+    */  /*
       workspace->var(("f_"+cat).c_str())->setConstant(0);
-      workspace->var(("m_"+brem+"_"+track).c_str())->setConstant(freeze);
-      workspace->var(("s_"+brem+"_"+track).c_str())->setConstant(freeze);
-      workspace->var(("a_"+brem+"_"+track).c_str())->setConstant(freeze);
-      workspace->var(("a2_"+brem+"_"+track).c_str())->setConstant(freeze);
-      workspace->var(("eff_sig_"+cat).c_str())->setConstant(freeze);
+      workspace->var(("m_"+brem+"_"+track).c_str())->setConstant(freezeFlag);
+      workspace->var(("s_"+brem+"_"+track).c_str())->setConstant(freezeFlag);
+      workspace->var(("a_"+brem+"_"+track).c_str())->setConstant(freezeFlag);
+      workspace->var(("a2_"+brem+"_"+track).c_str())->setConstant(freezeFlag);
+      workspace->var(("eff_sig_"+cat).c_str())->setConstant(freezeFlag);
       workspace->var(("eff_sig_"+cat).c_str())->setRange(0,1);
-      //workspace->var(("mean_eff_sig_"+cat).c_str())->setRange(0,1);
-      workspace->var(("eff_norm_"+track+"_"+run).c_str())->setConstant(freeze);
+      workspace->var(("eff_norm_"+track+"_"+run).c_str())->setConstant(freezeFlag);
       workspace->var(("eff_norm_"+track+"_"+run).c_str())->setRange(0,1);
       workspace->var(("Nbkg_"+cat).c_str())->setConstant(0);
       workspace->var(("tau_a_"+cat).c_str())->setConstant(0);
       workspace->var(("tau_b_"+cat).c_str())->setConstant(0);
-
+        */
+/*
       auto val = workspace->var(("Nbkg_"+cat).c_str())->getVal();
-      //workspace->var(("Nbkg_"+cat).c_str())->setMin(0.5*val);
-      //workspace->var(("Nbkg_"+cat).c_str())->setMax(1.5*val);
-      workspace->var(("Nbkg_"+cat).c_str())->setMin(1E-1*val);
-      workspace->var(("Nbkg_"+cat).c_str())->setMax(1E1*val);
+      workspace->var(("Nbkg_"+cat).c_str())->setMin(0.5*val);
+      workspace->var(("Nbkg_"+cat).c_str())->setMax(1.5*val);
+      //workspace->var(("Nbkg_"+cat).c_str())->setMin(1E-2*val);
+      //workspace->var(("Nbkg_"+cat).c_str())->setMax(1E2*val);
       val = workspace->var(("tau_a_"+cat).c_str())->getVal();
-      workspace->var(("tau_a_"+cat).c_str())->setMin(1E1*val);
-      workspace->var(("tau_a_"+cat).c_str())->setMax(1E-1*val);
+      workspace->var(("tau_a_"+cat).c_str())->setMin(1E2*val);
+      //workspace->var(("tau_a_"+cat).c_str())->setMax(1E-2*val);
+      workspace->var(("tau_a_"+cat).c_str())->setMax(0);
       val = workspace->var(("tau_b_"+cat).c_str())->getVal();
-      //workspace->var(("tau_b_"+cat).c_str())->setMin(5*val);
-      //workspace->var(("tau_b_"+cat).c_str())->setMax(0.2*val);
-      workspace->var(("tau_a_"+cat).c_str())->setMin(1E1*val);
-      workspace->var(("tau_a_"+cat).c_str())->setMax(1E-1*val);
-
+      workspace->var(("tau_b_"+cat).c_str())->setMin(1E2*val);
+      //workspace->var(("tau_b_"+cat).c_str())->setMax(1E-2*val);
+      workspace->var(("tau_b_"+cat).c_str())->setMax(0);
+*/
+      /*
+      std::cout << ":::::: tau_a_" << cat << std::endl;
+      workspace->var(("tau_a_"+cat).c_str())->Print();
+      std::cout << ":::::: tau_b_" << cat << std::endl;
+      workspace->var(("tau_b_"+cat).c_str())->Print();
+      std::cout << ":::::: a_" << brem <<"_"<<track << std::endl;
+      workspace->var(("a_"+brem+"_"+track).c_str())->Print();
+      std::cout << ":::::: f_" << brem <<"_"<<track << std::endl;
+      workspace->var(("f_"+cat).c_str())->Print();
+      std::cout << "================" <<std::endl;
+      */
+  /*
   }
 
+  std::cout << "Waiting..." <<std::endl;
+  std::cin.get();
+*/
   if (fullLimitFlag){
       //workspace->var("Nnorm")->setRange(0,1E30);
       //workspace->var("BFnorm")->setRange(0,1E30);
@@ -245,13 +323,13 @@ int main(int argc, char* argv[])
       arg->parseArguments(argcNew, argvNew);
 
       //PDF_DatasetCustom* pdfToy = new PDF_DatasetCustom(workspace);
-      PDF_DatasetCustom* pdfToy = new PDF_DatasetCustom(workspace,1,arg);
+      //PDF_DatasetCustom* pdfToy= new PDF_DatasetCustom(workspace,1,arg);
+      PDF_DatasetOldFitting* pdfToy= new PDF_DatasetOldFitting(workspace,1,arg);
       RooMsgService::instance().setGlobalKillBelow(ERROR);
       RooMsgService::instance().setSilentMode(kTRUE);
-      RooMsgService::instance().Print();
       pdfToy->initData("data"); // this is the name of the dataset in the workspace
-      pdfToy->initPDF("model"); // this the name of the pdfToy in the workspace (without the constraints)
-      pdfToy->initBkgPDF("bgModel"); // this the name of the background pdfToy in the workspace (without the constraints)
+      pdfToy->initPDF(("model"+constr).c_str()); // this the name of the pdfToy in the workspace (without the constraints)
+      pdfToy->initBkgPDF(("bgModel"+constr).c_str()); // this the name of the background pdfToy in the workspace (without the constraints)
       pdfToy->initObservables("observables"); // non-global observables whose measurements are stored in the dataset (for example the mass).
       pdfToy->initGlobalObservables("constrained_variables"); // global observables
       pdfToy->initParameters("parameters"); // all parameters
@@ -265,8 +343,10 @@ int main(int argc, char* argv[])
 
       //RooFitResult* dataFitResult = (RooFitResult*)workspace->genobj("data_fit_result");
       //pdfToy->loadExtParameters(dataFitResult);
-      RooFitResult* dataToyFitResult = (RooFitResult*)workspace->genobj("data_toy_fit_result");
-      pdfToy->loadExtParameters(dataToyFitResult);
+      RooFitResult* dataToyBGFitResult = (RooFitResult*)workspace->genobj("data_toy_fit_result");
+      std::cout << "Before loading External Parameters" <<std::endl;
+      pdfToy->loadExtParameters(dataToyBGFitResult);
+      std::cout << "After loading External Parameters" <<std::endl;
       //pdfToy->fitBkg(pdfToy->getData());
       //RooFitResult* toyFitResult = pdfToy->fitBkg(pdfToy->getData());
       //pdfToy->loadExtParameters(toyFitResult);
@@ -274,11 +354,14 @@ int main(int argc, char* argv[])
       pdfToy->generateBkgToys(10); //Set a seed for a reproducible dataToy set
       RooDataSet* toyData = pdfToy->getBkgToyObservables();
       toyData->SetName("dataToy");
+
+      //RooFitResult* dataToyFitResult = pdfToy->fitBkg(pdfToy->getData());
+      //dataToyFitResult->SetName("data_fit_Result");
       RooMsgService::instance().setSilentMode(kFALSE);
       RooMsgService::instance().setGlobalKillBelow(INFO);
 
       workspace->import(*toyData);
-      //workspace->import(*toyFitResult,true);
+      //workspace->import(*dataToyFitResult,true);
 
       dataName="dataToy";
   }
@@ -297,10 +380,11 @@ int main(int argc, char* argv[])
 
 
   //PDF_Datasets* pdf = new PDF_Datasets(workspace);
-  PDF_DatasetCustom* pdf = new PDF_DatasetCustom(workspace);
+  //PDF_DatasetCustom* pdf = new PDF_DatasetCustom(workspace);
+  PDF_DatasetOldFitting* pdf = new PDF_DatasetOldFitting(workspace);
   pdf->initData(dataName); // this is the name of the dataset in the workspace
-  pdf->initPDF("model"); // this the name of the pdf in the workspace (without the constraints)
-  pdf->initBkgPDF("bgModel"); // this the name of the background pdf in the workspace (without the constraints)
+  pdf->initPDF(("model"+constr).c_str()); // this the name of the pdf in the workspace (without the constraints)
+  pdf->initBkgPDF(("bgModel"+constr).c_str()); // this the name of the background pdf in the workspace (without the constraints)
   pdf->initObservables("observables"); // non-global observables whose measurements are stored in the dataset (for example the mass).
   //pdf->initGlobalObservables("global_observables"); // global observables
   pdf->initGlobalObservables("constrained_variables"); // global observables
