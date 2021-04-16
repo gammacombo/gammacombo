@@ -1,0 +1,153 @@
+# This file includes the following commands into a snakemake workflow. Any of the commands can be executed outside snakemake independently as well!
+  
+  # 0.) Create a RooWorkspace
+  #        bin/tutorial_dataset_build_workspace
+  # 1.) Running a Profile Likelihood Scan with the cls option --cls 1
+  #        bin/tutorial_dataset --var branchingRatio --npoints 50 --scanrange 0.:1.e-6 --cls 1
+  # 2.) To do a Feldman Cousins plugin scan (run a bunch in parallel and give them different names with --nrun %d
+  #        bin/tutorial_dataset -a pluginbatch --var branchingRatio --npoints 50 --scanrange 0.:1.e-6 --ntoys 100 --nrun 0
+  #        bin/tutorial_dataset -a pluginbatch --var branchingRatio --npoints 50 --scanrange 0.:1.e-6 --ntoys 100 --nrun 1
+  #        bin/tutorial_dataset -a pluginbatch --var branchingRatio --npoints 50 --scanrange 0.:1.e-6 --ntoys 100 --nrun 2
+  #        bin/tutorial_dataset -a pluginbatch --var branchingRatio --npoints 50 --scanrange 0.:1.e-6 --ntoys 100 --nrun 3
+  #        bin/tutorial_dataset -a pluginbatch --var branchingRatio --npoints 50 --scanrange 0.:1.e-6 --ntoys 100 --nrun 4
+  # 3.) Read a bunch of Feldman Cousins scans back in (use the -j option to label the different run numbers), use the --cls 2 option
+  #        bin/tutorial_dataset -a plugin --var branchingRatio --npoints 50 --scanrange 0.:1.e-6 -j 1-5 -a plot --cls 1 --cls 2
+
+# This file is just performing program executions. Make sure you have compiled the program properly before executing with snakemake!
+# If you encounter any problems contact Matthew Kenzie (matthew.kenzie@cern.ch) or Titus Mombächer (titus.mombacher@cern.ch)
+
+
+# setup the environment on lxplus, needed for every rule, since the rules can run independently
+SETUP_LXPLUS_PREFIX = ' ;'.join([
+  'export PATH=/usr/local/bin:/usr/bin',
+  'set +u',
+  'source ../scripts/setup_lxplus.sh',
+  # 'set -u',
+  ' ',
+  ])
+
+# some parameter definitions to generalise the snakefile (can be specified in a separate config if desired)
+combiner_name = "PDF_Dataset" # default name, can be defined in "tutorial_dataset.cpp"
+nscanpoints = 50
+scanvar = "branchingRatio"
+scanrange = "0:1.e-6"
+ntoys_per_run = 100
+nruns = 5
+
+
+
+rule all:
+  input:
+    'workspace.root',
+    'root/scan1dDatasetsProb_{combiner_name}_{nscanpoints}p_{scanvar}.root'.format(combiner_name=combiner_name, nscanpoints=nscanpoints, scanvar=scanvar),
+    expand('root/scan1dDatasetsPlugin_{combiner_name}_{scanvar}/scan1dDatasetsPlugin_{combiner_name}_{scanvar}_run{jobnum}.root', combiner_name=combiner_name, scanvar=scanvar, jobnum=list(range(nruns))),
+    'plots/cl/clintervals_{combiner_name}_{scanvar}_DatasetsPlugin.py'.format(combiner_name=combiner_name, scanvar=scanvar),
+    'plots/cl/clintervals_{combiner_name}_{scanvar}_DatasetsPlugin_CLs2.py'.format(combiner_name=combiner_name, scanvar=scanvar),
+    'plots/cl/clintervals_{combiner_name}_{scanvar}_DatasetsPlugin_expected_standardCLs.py'.format(combiner_name=combiner_name, scanvar=scanvar)
+
+rule build_wspc:
+  output:
+    'workspace.root'
+
+  threads: 1  # this will set request_cpus to 1, this is also used when not submitting to the cluster, always set the correct value here
+  # resources:
+  #     request_memory = 1024,  # in mb, more than enough
+  #     MaxRunHours = 1,  # defining the queue, 1 hour is more than enough
+  #     request_disk = 1024000  # in kb, more than enough
+  log:
+    'build_workspace.log'       
+  shell:
+    SETUP_LXPLUS_PREFIX+
+      ' '.join([
+          'bin/tutorial_dataset_build_workspace',
+          '> {log}'
+      ])
+
+rule run_prob:
+  input:
+    'workspace.root'
+  output:
+    'root/scan1dDatasetsProb_{name}_{points}p_{var}.root'
+
+
+  threads: 1  # this will set request_cpus to 1, this is also used when not submitting to the cluster, always set the correct value here
+  # resources:
+  #     request_memory = 1024,  # in mb, more than enough
+  #     MaxRunHours = 1,  # defining the queue, 1 hour is more than enough
+  #     request_disk = 1024000   # in kb, more than enough
+  log:
+    'tutorial_dataset_prob_{name}_{points}p_{var}.log'       
+  shell:
+    SETUP_LXPLUS_PREFIX+
+      ' '.join([
+          'bin/tutorial_dataset',
+          '--var {wildcards.var}',
+          '--npoints {wildcards.points}',
+          '--scanrange '+scanrange,
+          '--cls 2', # calculates the cls method
+          '--CL 90', # calculates the limit at 90% CL
+          '--CL 95', # calculates the limit at 95% CL
+          '> {log}'
+      ])
+
+rule run_pluginbatch:
+  input:
+    'workspace.root',
+    'root/scan1dDatasetsProb_{name}_'+str(nscanpoints)+'p_{var}.root',
+
+  output:
+    'root/scan1dDatasetsPlugin_{name}_{var}/scan1dDatasetsPlugin_{name}_{var}_run{jobnum}.root'
+
+  threads: 1  # this will set request_cpus to 1, this is also used when not submitting to the cluster, always set the correct value here
+  # resources:
+  #     request_memory = 1024, # in mb, more than enough
+  #     MaxRunHours = 1,  # defining the queue, the batch scan can be quite time consuming (very problem dependent), here 1h is enough
+  #     request_disk = 1024000  # in kb, more than enough
+  log:
+    'tutorial_dataset_pluginbatch_{name}_{var}_{jobnum}.log'       
+  shell:
+    SETUP_LXPLUS_PREFIX+
+      ' '.join([
+          'bin/tutorial_dataset',
+          '--var {wildcards.var}',
+          '--npoints '+str(nscanpoints),
+          '--scanrange '+scanrange,
+          '-a pluginbatch',
+          '--ntoys '+str(ntoys_per_run),
+          '--nrun {wildcards.jobnum}'
+          ' > {log}'
+      ])
+
+
+rule run_plugin:
+  input:
+    'workspace.root',
+    'root/scan1dDatasetsProb_{name}_'+str(nscanpoints)+'p_{var}.root',
+    expand('root/scan1dDatasetsPlugin_{name}_{var}/scan1dDatasetsPlugin_{name}_{var}_run{jobnum}.root',name=combiner_name, var=scanvar, jobnum=list(range(nruns)))
+
+  output:
+    'plots/cl/clintervals_{name}_{var}_DatasetsPlugin.py',
+    'plots/cl/clintervals_{name}_{var}_DatasetsPlugin_CLs2.py',
+    'plots/cl/clintervals_{name}_{var}_DatasetsPlugin_expected_standardCLs.py'
+
+  threads: 1  # this will set request_cpus to 1, this is also used when not submitting to the cluster, always set the correct value here
+  # resources:
+  #     request_memory = 1024,  # in mb, more than enough
+  #     MaxRunHours = 1,  # defining the queue, 1 hour is more than enough
+  #     request_disk = 1024000  # in kb, more than enough
+  log:
+    'tutorial_dataset_plugin_{name}_{var}.log'       
+  shell:
+    SETUP_LXPLUS_PREFIX+
+      ' '.join([
+          'bin/tutorial_dataset',
+          '--var {wildcards.var}',
+          '--npoints '+str(nscanpoints),
+          '--scanrange '+scanrange,
+          '-a plugin',
+          '-j 0-'+str(nruns-1),
+          '--cls 2', # calculates the cls method
+          '--CL 90', # calculates the limit at 90% CL
+          '--CL 95', # calculates the limit at 95% CL
+          '> {log}'
+      ])
