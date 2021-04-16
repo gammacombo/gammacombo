@@ -67,15 +67,17 @@ int main(int argc, char* argv[])
 
   PDF_Datasets* pdf = new PDF_Datasets(workspace);
   // PDF_Datasets* pdf = new PDF_DatasetTutorial(workspace); // put your inherited fitter if you want to
+  // pdf->setTitle("datasets_combiner"); // give a meaningful title if you want to, default is "PDF_Dataset"
+  // pdf->setName("datasets_combiner"); // give a meaningful name if you want to (will enter file names as well), default is "PDF_Dataset"
   pdf->initData("data"); // this is the name of the dataset in the workspace
-  pdf->initBkgPDF("extended_bkg_model"); // optional: this the name of the background pdf in the workspace (without the constraints)
-  // it might be feasible to comment the above line. Then the tool will assume the BkgPDF to be the PDF with scanVar=0 (most often true)
   pdf->initPDF("mass_model"); // this the name of the pdf in the workspace (without the constraints)
+  // pdf->initBkgPDF("extended_bkg_model"); // optional: this the name of the background pdf in the workspace (without the constraints)
+  // If the above line is commented, the tool will assume the BkgPDF to be the PDF with scanVar=0 (most often true)
   pdf->initObservables("datasetObservables"); // non-global observables whose measurements are stored in the dataset (for example the mass).
   pdf->initGlobalObservables("global_observables_set"); // global observables
   pdf->initParameters("parameters"); // all parameters
   pdf->initConstraints("constraint_set"); // RooArgSet containing the "constraint" PDF's
-  // the below are optional (will not effect the results but just make some plots for you)
+  // the below are optional (will not affect the results but just make some plots for you)
   pdf->addFitObs("mass");                         // this is not required but will make some sanity plots
   //pdf->unblind("mass","[4360:5260],[5460:6360]"); // have to be a bit careful about staying blind (this code isn't yet really blind friendly)
   pdf->unblind("mass", "[4360:6360]" );
