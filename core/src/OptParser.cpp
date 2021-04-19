@@ -77,6 +77,9 @@ OptParser::OptParser():
 	plotlegsizex = -99;
 	plotlegsizey = -99;
   plotlegcols = 1;
+  plotlegbox = false;
+  plotlegboxx = -99;
+  plotlegboxy = -99;
 	plotgroupx = -99;
 	plotgroupy = -99;
   plotHFAGLabelPosX = 0;
@@ -164,6 +167,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("legsize");
   availableOptions.push_back("legstyle");
   availableOptions.push_back("legcols");
+  availableOptions.push_back("legbox");
 	availableOptions.push_back("grid");
 	availableOptions.push_back("group");
 	availableOptions.push_back("grouppos");
@@ -260,6 +264,7 @@ void OptParser::bookPlottingOptions()
 	bookedOptions.push_back("ext");
 	bookedOptions.push_back("leg");
 	bookedOptions.push_back("legsize");
+  bookedOptions.push_back("legbox");
 	bookedOptions.push_back("group");
 	bookedOptions.push_back("grouppos");
 	bookedOptions.push_back("log");
@@ -421,6 +426,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::ValueArg<string> plotlegsizeArg("", "legsize", "Adjust the plot legend size.\n"
 			"2d plots: set the size of the legend. "
 			"Format: --legsize xsize:ysize in normalized coordinates [0,1]. Default: 0.38:0.15", false, "default", "string");
+	TCLAP::ValueArg<string> plotlegboxArg("", "legbox", "Make a box for the legend.\n"
+			"2d plots: set the size of the legend box. "
+			"Format: --legbox xsize:ysize in normalized coordinates [0,1]. Default: 0.38:0.15", false, "default", "string");
   TCLAP::ValueArg<string> plotlegstyleArg("", "legstyle", "Change the legend style.", false, "default", "string");
   TCLAP::ValueArg<int>    plotlegcolsArg("", "legcols", "Set the number of columns in the legend. Default: 1", false, 1, "int");
 	TCLAP::ValueArg<string> pluginplotrangeArg("", "pluginplotrange", "Restrict the Plugin plot to a given range to "
@@ -787,6 +795,7 @@ void OptParser::parseArguments(int argc, char* argv[])
   if ( isIn<TString>(bookedOptions, "legstyle" ) ) cmd.add( plotlegstyleArg );
   if ( isIn<TString>(bookedOptions, "legcols" ) ) cmd.add( plotlegcolsArg );
 	if ( isIn<TString>(bookedOptions, "leg" ) ) cmd.add( plotlegArg );
+	if ( isIn<TString>(bookedOptions, "legbox" ) ) cmd.add( plotlegboxArg );
 	if ( isIn<TString>(bookedOptions, "largest" ) ) cmd.add( largestArg );
   if ( isIn<TString>(bookedOptions, "latex" ) ) cmd.add( latexArg );
 	if ( isIn<TString>(bookedOptions, "jobs" ) ) cmd.add(jobsArg);
@@ -1096,6 +1105,21 @@ void OptParser::parseArguments(int argc, char* argv[])
 	usage += "  --legsize 0.4:def\n";
 	usage += "  --legsize def:0.2\n";
 	parsePosition(plotlegsizeArg.getValue(), plotlegsizex, plotlegsizey, usage);
+
+	// --legbox
+	usage = "";
+	usage += "Required format: '--legbox 0.a:0.b'\n";
+	usage += "  Examples:\n";
+	usage += "  --legbox 0.4:0.2\n";
+	usage += "  --legbox 0.4:def\n";
+	usage += "  --legbox def:0.2\n";
+	if ( TString(plotlegboxArg.getValue())==TString("default") ){
+		plotlegbox = false;
+	}
+	else{
+		plotlegbox = true;
+		parsePosition(plotlegboxArg.getValue(), plotlegboxx, plotlegboxy, usage);
+	}
 
 	// --grouppos
 	usage = "";

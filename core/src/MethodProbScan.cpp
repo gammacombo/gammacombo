@@ -284,6 +284,7 @@ int MethodProbScan::computeCLvalues(){
       return 1;
     }
 
+
     float bestfitpoint;
     float bestfitpointerr;
 
@@ -293,8 +294,10 @@ int MethodProbScan::computeCLvalues(){
     }
 
     if(this->getSolution()){
-      bestfitpoint    = ((RooRealVar*)this->getSolution()->floatParsFinal().find(scanVar1))->getVal();
-      bestfitpointerr = ((RooRealVar*)this->getSolution()->floatParsFinal().find(scanVar1))->getError();
+      if (this->getSolution()->floatParsFinal().find(scanVar1)) {
+        bestfitpoint    = ((RooRealVar*)this->getSolution()->floatParsFinal().find(scanVar1))->getVal();
+        bestfitpointerr = ((RooRealVar*)this->getSolution()->floatParsFinal().find(scanVar1))->getError();
+      }
     }
 
 	for (int k=1; k<=hCL->GetNbinsX(); k++){
@@ -311,6 +314,7 @@ int MethodProbScan::computeCLvalues(){
         // std::cout << "MethodProbScan::" << k << "\t" << hCL->GetBinContent(k) << "\t" << CLb << "\t" << hCLs->GetBinContent(k) <<std::endl;
 
 	}
+
 	return 0;
 }
 

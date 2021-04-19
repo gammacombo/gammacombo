@@ -48,7 +48,8 @@ void HFAGLabel(const TString& label,
   // tbox1->SetLineWidth(2);
   tbox1->SetFillColor(kBlack);
   tbox1->SetFillStyle(1001);
-  // tbox1->SetBorderSize(1);
+  tbox1->SetBorderSize(1);
+  tbox1->SetLineColor(0);
   tbox1->SetShadowColor(kWhite);
   tbox1->SetTextColor(kWhite);
   tbox1->SetTextFont(76);
@@ -63,7 +64,8 @@ void HFAGLabel(const TString& label,
   // tbox2->SetLineWidth(2);
   tbox2->SetFillColor(kWhite);
   tbox2->SetFillStyle(1001);
-  // tbox2->SetBorderSize(1);
+  tbox2->SetBorderSize(1);
+  tbox2->SetLineColor(0);
   tbox2->SetShadowColor(kWhite);
   tbox2->SetTextColor(kBlack);
   tbox2->SetTextFont(76);

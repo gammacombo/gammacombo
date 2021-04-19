@@ -112,6 +112,9 @@ class OptParser
 		float           plotlegsizey;
     TString         plotlegstyle;
     int             plotlegcols;
+    bool            plotlegbox;
+    float           plotlegboxx;
+    float           plotlegboxy;
 		float           plotgroupx;
 		float           plotgroupy;
     Double_t        plotHFAGLabelPosX;

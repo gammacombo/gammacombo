@@ -776,6 +776,17 @@ void OneMinusClPlot2d::drawLegend()
       }
     }
   }
+  if ( arg->plotlegbox ) {
+    TPaveText *legbox = new TPaveText(legendXmin,legendYmin,legendXmin+arg->plotlegboxx,legendYmin+arg->plotlegboxy,"ndc");
+    legbox->SetFillColorAlpha(0,0.7);
+    legbox->SetFillStyle(1001);
+    legbox->SetLineStyle(1);
+    legbox->SetLineWidth(1);
+    legbox->SetLineColor(kGray+1);
+    legbox->SetBorderSize(1);
+    legbox->SetShadowColor(0);
+    legbox->Draw();
+  }
   m_legend->Draw();
 }
 
