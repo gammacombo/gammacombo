@@ -611,6 +611,18 @@ void PDF_Datasets::initializeRandomGenerator(int seedShift) {
 
 void PDF_Datasets::unblind(TString var, TString unblindRegs) {
 
+  if(!wspc->var(var)){
+    std::cerr << "ERROR::PDF_Datasets::unblind(): the variable " << var << " is not present in the workspace."<< std::endl;
+    if(observables){
+        std::cerr << "Candidates are:";
+        TIterator* it =  observables->createIterator();
+        while (RooRealVar* obs = dynamic_cast<RooRealVar*>(it->Next())) {
+            std::cerr <<" "<<obs->GetName();
+        }
+        std::cerr<<"."<<std::endl;
+    }
+    exit(EXIT_FAILURE);
+  }
   TString unblindString = "";
   TObjArray *regs = unblindRegs.Tokenize(","); // split string at ","
   for (int i=0; i<regs->GetEntries(); i++){
