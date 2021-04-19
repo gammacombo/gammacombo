@@ -932,7 +932,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
         // Check if toys are in physical region.
         // Don't enforce t.chi2min-t.chi2minGlobal>0, else it can be hard because due
         // to little fluctuaions the best fit point can be missing from the plugin plot...
-        bool inPhysicalRegion = t->chi2minToy - t->chi2minGlobalToy>0; //&& t.chi2min-t.chi2minGlobal>0
+        bool inPhysicalRegion = t->chi2minToy - t->chi2minGlobalToy>=0; //&& t.chi2min-t.chi2minGlobal>0
         int iBinBestFit = hCL->GetMaximumBin();
         float bestfitpoint = hCL->GetBinCenter(iBinBestFit);
         if(getSolution()){
@@ -992,7 +992,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
             sampledSchi2Values[hBin].push_back(sb_teststat_toy);
         }
 
-        if(b_teststat_toy<0&&b_teststat_toy>-1.e-4) b_teststat_toy=0.0;
+        // if(b_teststat_toy<0&&b_teststat_toy>-1.e-4) b_teststat_toy=0.0;
 
         if( inPhysicalRegion ){
             // bkgTestStatVal = t->scanbestBkgfitBkg <= 0. ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
@@ -1021,7 +1021,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
     if ( arg->debug ) cout << "MethodPluginScan::analyseToys() : ";
     cout << "fraction of failed toys: " << (double)nfailed/(double)nentries*100. << "%." << endl;
     if ( arg->debug ) cout << "MethodPluginScan::analyseToys() : ";
-    cout << "fraction of background toys: " << h_background->GetEntries()/(double)nentries*100. << "%." << endl;
+    cout << "fraction of negative test stat toys: " << h_background->GetEntries()/(double)nentries*100. << "%." << endl;
     if ( id==-1 && nwrongrun>0 ){
         cout << "\nMethodPluginScan::analyseToys() : WARNING : Read toys that differ in global chi2min (wrong run) : "
             << (double)nwrongrun/(double)(nentries-nfailed)*100. << "%.\n" << endl;
@@ -1119,7 +1119,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
         //   for (int k=0; k<clsb_vals.size(); k++) cout << clsb_vals[k]/clb_vals[k] << " , ";
         //   // for (int k=0; k<clsb_vals.size(); k++) cout << clsb_vals[k]/probs[k] << " , ";
         //   cout << endl;
-        // }       
+        // }
 
         // // Matt's idea
         // hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] / clb_vals[2] , 1.) );
@@ -1140,16 +1140,6 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
             exit(EXIT_FAILURE);
         }
 
-        TH1F *bkg_pvals_cls  = new TH1F("bkg_clsvals", "bkg cls p values", 50, -0.1, 1.1);
-        bkg_pvals_cls->SetLineColor(1);
-        bkg_pvals_cls->SetLineWidth(3);
-        TH1F *bkg_pvals_clsb  = new TH1F("bkg_clsbvals", "bkg clsb p values", 50, -0.1, 1.1);
-        bkg_pvals_clsb->SetLineColor(2);
-        bkg_pvals_clsb->SetLineWidth(3);
-        TH1F *bkg_pvals_clb  = new TH1F("bkg_clbvals", "bkg clb p values", 50, -0.1, 1.1);
-        bkg_pvals_clb->SetLineColor(3);
-        bkg_pvals_clb->SetLineWidth(3);
-
         for(int j=0; j<sampledBValues[i].size(); j++){
             double clsb_val = getVectorFracAboveValue( sampledSchi2Values[i], sampledSBValues[i][j]); // p_cls+b value for each bkg-only toy
             double clb_val = getVectorFracAboveValue( sampledBValues[i], sampledSBValues[i][j]); // p_clb value for each bkg-only toy CAUTION: duplicate use of sampledBValues
@@ -1157,20 +1147,39 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
 
             clsb_vals.push_back(clsb_val);
             clb_vals.push_back(clb_val);
-            // if(cls_val<=1.){
             cls_vals.push_back(cls_val);
-            bkg_pvals_cls->Fill(TMath::Min( cls_val , 1.));
-            bkg_pvals_clsb->Fill(TMath::Min( clsb_val , 1.));
-            bkg_pvals_clb->Fill(TMath::Min( clb_val , 1.));
-            // }
         }
-        TCanvas *canvasdebug = new TCanvas("canvasdebug", "canvas1", 1200, 1000);
-        bkg_pvals_cls->Draw();
-        bkg_pvals_clsb->Draw("same");
-        bkg_pvals_clb->Draw("same");
-        std::string pvalue_outstream;
-        pvalue_outstream ="p_values" + std::to_string(i) + ".pdf";
-        canvasdebug->SaveAs(pvalue_outstream.c_str());
+
+        if ( arg->debug || arg->controlplot ) {
+
+          TH1F *bkg_pvals_cls  = new TH1F(Form("bkg_clsvals_bin%d",i), "bkg cls p values", 50, -0.1, 1.1);
+          bkg_pvals_cls->SetLineColor(1);
+          bkg_pvals_cls->SetLineWidth(3);
+          TH1F *bkg_pvals_clsb  = new TH1F(Form("bkg_clsbvals_bin%d",i), "bkg clsb p values", 50, -0.1, 1.1);
+          bkg_pvals_clsb->SetLineColor(2);
+          bkg_pvals_clsb->SetLineWidth(3);
+          TH1F *bkg_pvals_clb  = new TH1F(Form("bkg_clbvals_bin%d",i), "bkg clb p values", 50, -0.1, 1.1);
+          bkg_pvals_clb->SetLineColor(3);
+          bkg_pvals_clb->SetLineWidth(3);
+          for(int j=0; j<sampledBValues[i].size(); j++){
+              bkg_pvals_cls->Fill(TMath::Min( cls_vals[j] , 1.));
+              bkg_pvals_clsb->Fill(TMath::Min( clsb_vals[j] , 1.));
+              bkg_pvals_clb->Fill(TMath::Min( clb_vals[j] , 1.));
+          }
+
+          TCanvas *canvasdebug = newNoWarnTCanvas("canvasdebug", "canvas1", 1200, 1000);
+          bkg_pvals_cls->Draw();
+          bkg_pvals_clsb->Draw("same");
+          bkg_pvals_clb->Draw("same");
+          TLegend *leg = new TLegend(0.65,0.74,0.89,0.95);
+          leg->SetHeader("p-value distributions");
+          leg->SetFillColor(0);
+          leg->AddEntry(bkg_pvals_cls,"CLs","L");
+          leg->AddEntry(bkg_pvals_clsb,"CLs+b","L");
+          leg->AddEntry(bkg_pvals_clb,"CLb","L");
+          leg->Draw("same");
+          savePlot(canvasdebug,TString(Form("p_values%d",i))+"_"+scanVar1);
+        }
 
 
         std::vector<double> probs  = {TMath::Prob(4,1)/2., TMath::Prob(1,1)/2., 0.5, 1.-(TMath::Prob(1,1)/2.), 1.-(TMath::Prob(4,1)/2.) };
@@ -1196,7 +1205,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
           cout << endl;
           // for (int k=0; k<quantiles_cls.size(); k++) cout << quantiles_clsb[k]/quantiles_clb[k] << " , ";
           // cout << endl;
-        }       
+        }
 
         // //effective method -> works robustly (cf. TLimit class), but is actually wrong
         // hCLsExp->SetBinContent   ( i, TMath::Min( quantiles_clsb[2]/quantiles_clb[2] , 1.) );
@@ -1207,11 +1216,22 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
 
         // //ideal method, but prone to fluctuations
         hCLsExp->SetBinContent   ( i, TMath::Min( quantiles_cls[2] , 1.) );
+        hCLsExp->SetBinError   ( i, sqrt((1.-TMath::Min( quantiles_cls[2] , 1.))*TMath::Min( quantiles_cls[2] , 1.)/sampledBValues[i].size()) );        
         hCLsErr1Up->SetBinContent( i, TMath::Min( quantiles_cls[3] , 1.) );
         hCLsErr1Dn->SetBinContent( i, TMath::Min( quantiles_cls[1] , 1.) );
         hCLsErr2Up->SetBinContent( i, TMath::Min( quantiles_cls[4] , 1.) );
         hCLsErr2Dn->SetBinContent( i, TMath::Min( quantiles_cls[0] , 1.) );
 
+        // std::cout << "non-parameric median errors for bin " << i << std::endl;
+        // std::sort (cls_vals.begin(), cls_vals.begin()+cls_vals.size());
+        // int k =0;
+        // do{
+        //     k++;
+        //     // std::cout << "Binomial: " << TMath::BinomialI(0.5, cls_vals.size(), cls_vals.size()/2-k) - TMath::BinomialI(0.5, cls_vals.size(), cls_vals.size()/2+k) << std::endl;
+        // // }while( ROOT::Math::binomial_cdf(cls_vals.size()/2+k,0.5, cls_vals.size()) - ROOT::Math::binomial_cdf(cls_vals.size()/2-k,0.5, cls_vals.size()) <=0.68);
+        // }while(TMath::BetaIncomplete(0.5,cls_vals.size()/2-k+1, cls_vals.size()-(cls_vals.size()/2-k)) - TMath::BetaIncomplete(0.5,cls_vals.size()/2+k+1, cls_vals.size()-(cls_vals.size()/2+k))<=0.68);
+
+        // hCLsExp->SetBinError(i , (cls_vals[cls_vals.size()/2+k-1] - cls_vals[cls_vals.size()/2-k-1])/2.);
     }
 
     if ( arg->controlplot && arg->cls.size()>0) makeControlPlotsCLs( sampledBValues, sampledSchi2Values );
@@ -1482,7 +1502,7 @@ double MethodPluginScan::importance(double pvalue)
 /// make control plots for the CLs method. ToDo: this does not really belong here, but in the ControlPlots class,
 /// but for the moment I don't see a way how to put it there.
 /// The Chisquare quantile plots have to be updated as well.
-/// 
+///
 void MethodPluginScan::makeControlPlotsCLs(map<int, vector<double> > bVals, map<int, vector<double> > sbVals)
 {
   // the quantiles of the CLb distribution (for expected CLs)
@@ -1574,7 +1594,7 @@ void MethodPluginScan::makeControlPlotsCLs(map<int, vector<double> > bVals, map<
     leg->AddEntry(lD,"Data","L");
     leg->Draw("same");
     c->SetLogy();
-    savePlot(c,Form("cls_testStatControlPlot_p%d",i) );
+    savePlot(c,TString(Form("cls_testStatControlPlot_p%d",i))+"_"+scanVar1 );
   }
 
   TCanvas *c = newNoWarnTCanvas( "cls_ctr", "CLs Control" );
@@ -1610,7 +1630,7 @@ void MethodPluginScan::makeControlPlotsCLs(map<int, vector<double> > bVals, map<
   hCLsExp->Draw("Lsame");
   hCLsFreq->Draw("Lsame");
 
-  savePlot(c, "cls_ControlPlot");
+  savePlot(c, "cls_ControlPlot_"+scanVar1);
 
 }
 

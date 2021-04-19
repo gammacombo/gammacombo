@@ -60,6 +60,7 @@ class ToyTree
 		void                    storeParsPll();
 		void                    storeParsFree();
 		void                    storeParsScan();
+		void                    storeParsScan(RooFitResult* values);
 		void                    storeTheory();
 		void                    storeObservables();
 		void                    writeToFile(TString fName);
@@ -100,6 +101,7 @@ class ToyTree
 		float covQualBkgBkg;
 		float statusScanData;
 		float covQualScanData;
+        int   bestIndexScanData;
 		float nBergerBoos;
 		float BergerBoos_id;
 		float genericProbPValue;

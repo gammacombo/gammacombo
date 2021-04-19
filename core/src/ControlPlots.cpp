@@ -10,6 +10,10 @@ ControlPlots::ControlPlots(ToyTree *tt)
 	ctrlPlotCuts = "statusFree==0 && statusScan==0";
 	// if ( arg->id!=-1 ) ctrlPlotCuts = ctrlPlotCuts && Form("BergerBoos_id==%i", arg->id);
 	if ( arg->id!=-1 ) ctrlPlotCuts = ctrlPlotCuts && Form("id==%i", arg->id);
+	if(t->GetEntries(ctrlPlotCuts)==0){
+		std::cout << "\nError in ControlPlots::ControlPlots(): Prob free fit or Prob scan fit have inappropriate fit result (fit status or cov qual). Cannot do control plots." << std::endl;
+		exit(1);
+	}
 }
 
 

@@ -30,7 +30,6 @@ void PDF_Gaus::initParameters()
 	ParametersTutorial p;
 	parameters = new RooArgList("parameters");
 	parameters->add(*(p.get("a_gaus")));
-	parameters->add(*(p.get("b_gaus")));
 }
 
 

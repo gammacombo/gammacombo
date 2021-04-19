@@ -19,7 +19,9 @@
 	observables = NULL;
 	pdf         = NULL;
 	pdfBkg      = NULL;
+    multipdf    = NULL;
 	isBkgPdfSet = false;
+    isBkgMultipdfSet = false;
 	toyObservables = NULL;
 	nToyObs = 1000;
 	iToyObs = 0;
@@ -388,6 +390,14 @@ void PDF_Abs::print() const
 			ostringstream stream;
 			v->printMetaArgs(stream);
 			TString formula = stream.str();
+      if ( formula.Contains("formula=") ) { // this is a RooFormulaVar
+        RooFormulaVar *form = dynamic_cast<RooFormulaVar*>(v);
+        int nFormPars = form->getVariables()->getSize();
+        for (int i=0; i<nFormPars; i++) {
+          if ( ! form->getParameter(i) ) continue;
+          formula.ReplaceAll( Form("x[%d]",i), form->getParameter(i)->GetName() );
+        }
+      }
 			formula.ReplaceAll("formula=", "");
 			formula.ReplaceAll("\"", "");
 			if ( formula=="" ) formula = v->ClassName(); // compiled custom Roo*Var classes don't have a formula

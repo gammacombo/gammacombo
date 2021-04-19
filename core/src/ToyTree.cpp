@@ -79,6 +79,7 @@ void ToyTree::initMembers(TChain* t){
 	chi2minToyPDF       = 0.;
 	chi2minGlobalToyPDF = 0.;
 	chi2minBkgToyPDF    = 0.;
+    bestIndexScanData   = 0;
 };
 
 ///
@@ -177,6 +178,7 @@ void ToyTree::init()
 	t->Branch("statusFreeBkg",       &statusFreeBkg,   		"statusFreeBkg/F");
 	t->Branch("statusScanBkg",       &statusScanBkg,    	"statusScanBkg/F");
 	t->Branch("statusBkgBkg",        &statusBkgBkg,        	"statusBkgBkg/F");
+    t->Branch("bestIndexScanData",   &bestIndexScanData,    "bestIndexScanData/I");
 	if ( !arg->lightfiles )
 	{
 		TIterator* it = w->set(parsName)->createIterator();
@@ -271,6 +273,7 @@ void ToyTree::open()
 	if(branches->FindObject("statusFreePDF"      )) t->SetBranchAddress("statusFreePDF",      &statusFreePDF);
 	// if(branches->FindObject("statusScanData"     )) t->SetBranchAddress("statusScanData",     &statusScanData);
 	if(branches->FindObject("statusScanPDF"      )) t->SetBranchAddress("statusScanPDF",      &statusScanPDF);
+    if(branches->FindObject("bestIndexScanData"  )) t->SetBranchAddress("bestIndexScanData",  &bestIndexScanData);
 }
 
 ///
@@ -376,6 +379,21 @@ void ToyTree::storeParsScan()
 {
 	TIterator* it = w->set(parsName)->createIterator();
 	while ( RooRealVar* p = (RooRealVar*)it->Next() ) parametersScan[p->GetName()] = p->getVal();
+	delete it;
+}
+
+///
+/// Store the fit result parameters as the
+/// scan fit result.
+///
+void ToyTree::storeParsScan(RooFitResult* values)
+{
+    RooArgList list = values->floatParsFinal();
+    list.add(values->constPars());
+	TIterator* it = list.createIterator();
+	while ( RooRealVar* p = (RooRealVar*)it->Next() ) {
+        parametersScan[p->GetName()] = p->getVal();
+    }
 	delete it;
 }
 
