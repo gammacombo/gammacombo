@@ -41,6 +41,7 @@ int main(int argc, char* argv[])
   // 8.) There are various ways of prettyfying your plots - for CLs stuff you can try adding --qh 23 (moves the CL label) --group LHCb (adds LHCb label) --prelim (add preliminary label)
   //        bin/tutorial_dataset -a plugin --var branchingRatio --npoints 50 --scanrange 0.:1.e-6 -j 1-5 -a plot --cls 1 --cls 2 --qh 23 --group LHCb --prelim
   //
+  // See also the Snakefile in the tutorial top directory for an example workflow
   // If you have any problems contact Matthew Kenzie (matthew.kenzie@cern.ch) or Titus Mombächer (titus.mombacher@cern.ch)
 
   // Load the workspace from its file
@@ -79,7 +80,7 @@ int main(int argc, char* argv[])
   pdf->initConstraints("constraint_set"); // RooArgSet containing the "constraint" PDF's
   // the below are optional (will not affect the results but just make some plots for you)
   pdf->addFitObs("mass");                         // this is not required but will make some sanity plots
-  //pdf->unblind("mass","[4360:5260],[5460:6360]"); // have to be a bit careful about staying blind (this code isn't yet really blind friendly)
+  // pdf->unblind("mass","[4360:5260],[5460:6360]"); // have to be a bit careful about staying blind (this code isn't yet really blind friendly)
   pdf->unblind("mass", "[4360:6360]" );
 
   // pdf->printParameters();

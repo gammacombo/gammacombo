@@ -1,4 +1,4 @@
-# This file includes the following commands into a snakemake workflow. Any of the commands can be executed outside snakemake independently as well!
+# This file includes the following commands into a snakemake workflow (optimised to work on LXPLUS). Any of the commands can be executed outside snakemake independently as well!
   
   # 0.) Create a RooWorkspace
   #        bin/tutorial_dataset_build_workspace
