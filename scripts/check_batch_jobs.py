@@ -75,11 +75,11 @@ for job_dir in job_dirs:
       else:
         waiting.append(fil)
 
-    print job_dir
-    if len(waiting)>0: print '\tQueued:  ', len(waiting), '/', len(scripts)
-    if len(fail)>0:    print '\tFailed:  ', len(fail), '/', len(scripts)
-    if len(run)>0:     print '\tRunning: ', len(run), '/', len(scripts)
-    if len(done)>0:    print '\tComplete:', len(done), '/', len(scripts)
+    print(job_dir)
+    if len(waiting)>0: print('\tQueued:  ', len(waiting), '/', len(scripts))
+    if len(fail)>0:    print('\tFailed:  ', len(fail), '/', len(scripts))
+    if len(run)>0:     print('\tRunning: ', len(run), '/', len(scripts))
+    if len(done)>0:    print('\tComplete:', len(done), '/', len(scripts))
 
     total_done.extend(done)
     total_fail.extend(fail)
@@ -97,7 +97,7 @@ for job_dir in job_dirs:
         resubmits += run
 
     if opts.resubmit:
-      print 'Will resubmit %d jobs:'%len(resubmits)
+      print('Will resubmit %d jobs:'%len(resubmits))
       subfname = os.path.join(job_dir,os.path.basename(job_dir))+'_sublist.txt'
       subf = open(subfname,'w')
       for job in resubmits:
@@ -112,18 +112,18 @@ for job_dir in job_dirs:
           #line = 'bsub -q %s -o %s.log %s'%(opts.queue,full_path,full_path)
           #os.system(line)
         else:
-          print '\t', scriptpath
+          print('\t', scriptpath)
       subf.close()
       if opts.queue:
         line = 'condor_submit %s'%(subfname.replace('_sublist.txt','.sub'))
         os.system(line)
 
 # print total
-print "TOTAL"
-if len(total_waiting)>0: print '\tQueued:  ', len(total_waiting), '/', len(total_scripts)
-if len(total_fail)>0:    print '\tFailed:  ', len(total_fail), '/', len(total_scripts)
-if len(total_run)>0:     print '\tRunning: ', len(total_run), '/', len(total_scripts)
-if len(total_done)>0:    print '\tComplete:', len(total_done), '/', len(total_scripts)
+print("TOTAL")
+if len(total_waiting)>0: print('\tQueued:  ', len(total_waiting), '/', len(total_scripts))
+if len(total_fail)>0:    print('\tFailed:  ', len(total_fail), '/', len(total_scripts))
+if len(total_run)>0:     print('\tRunning: ', len(total_run), '/', len(total_scripts))
+if len(total_done)>0:    print('\tComplete:', len(total_done), '/', len(total_scripts))
 
 
 import time
@@ -146,13 +146,13 @@ if opts.synch:
     os.system('mv root/scan* root/back_up/%d/'%timestamp)
 
   # now link the root files
-  print 'Synching files'
+  print('Synching files')
   nSynch = 0
   for job_dir in job_dirs:
     synch_dir = job_dir
     if opts.synchdir:
       synch_dir = synch_dir.replace(opts.dir,opts.synchdir)
-    print synch_dir
+    print(synch_dir)
     for root, dirs, files in os.walk(synch_dir):
       match_files = fnmatch.filter(files,"*.root")
       target_dir = root.replace(opts.synchdir,'root/')
@@ -168,4 +168,4 @@ if opts.synch:
         os.system(exec_line)
         nSynch += 1
 
-  print 'Synched %d files'%nSynch
+  print('Synched %d files'%nSynch)
