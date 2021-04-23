@@ -364,7 +364,7 @@ void Combiner::print()
 		name.ReplaceAll(pdfs[i]->getUniqueID(),"");
 		printf("%2i. [measurement %3i] %-65s\n", i+1, pdfs[i]->getGcId(), (pdfs[i]->getTitle()).Data());
 	}
-	if ( arg->verbose ) {
+  //if ( arg->verbose ) {
     cout <<   "=======================" << endl;
     // print observables of the combination
     vector<string>& olist = getObservableNames();
@@ -401,7 +401,7 @@ void Combiner::print()
     }
     parlist += " "+plist[plist.size()-1] + " )";
     cout << parlist << endl;
-  }
+    //}
 	cout <<   "=======================" << endl;
 
 	// verbose printout

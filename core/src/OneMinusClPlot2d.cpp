@@ -776,6 +776,17 @@ void OneMinusClPlot2d::drawLegend()
       }
     }
   }
+  if ( arg->plotlegbox ) {
+    TPaveText *legbox = new TPaveText(legendXmin,legendYmin,legendXmin+arg->plotlegboxx,legendYmin+arg->plotlegboxy,"ndc");
+    legbox->SetFillColorAlpha(0,0.7);
+    legbox->SetFillStyle(1001);
+    legbox->SetLineStyle(1);
+    legbox->SetLineWidth(1);
+    legbox->SetLineColor(kGray+1);
+    legbox->SetBorderSize(1);
+    legbox->SetShadowColor(0);
+    legbox->Draw();
+  }
   m_legend->Draw();
 }
 
@@ -803,6 +814,8 @@ void OneMinusClPlot2d::Draw()
     m_mainCanvas->GetPad(0)->SetLeftMargin(0.16);
   }
 
+  if (arg->grid) m_mainCanvas->SetGrid();
+
   TH2F *hCL = histos[0];
   float min1 = arg->scanrangeMin  == arg->scanrangeMax  ? hCL->GetXaxis()->GetXmin() : arg->scanrangeMin;
   float max1 = arg->scanrangeMin  == arg->scanrangeMax  ? hCL->GetXaxis()->GetXmax() : arg->scanrangeMax;
@@ -829,6 +842,11 @@ void OneMinusClPlot2d::Draw()
   bool optimizeNdivy = arg->ndivy<0 ? true : false;
   haxes->GetXaxis()->SetNdivisions(xndiv, optimizeNdivx);
   haxes->GetYaxis()->SetNdivisions(yndiv, optimizeNdivy);
+  // for the grid
+  if (arg->grid) {
+    haxes->GetXaxis()->SetAxisColor(15);
+    haxes->GetYaxis()->SetAxisColor(15);
+  }
   haxes->Draw();
 
   // draw origin if requested
@@ -899,8 +917,21 @@ void OneMinusClPlot2d::Draw()
   float xmax = gPad->GetUxmax();
 
   // Draw new axes.
-  haxes->GetXaxis()->SetNdivisions(0);  // disable old axis
-  haxes->GetYaxis()->SetNdivisions(0);
+  if (!arg->grid) {
+    haxes->GetXaxis()->SetNdivisions(0);  // disable old axis
+    haxes->GetYaxis()->SetNdivisions(0);
+  }
+  else {
+    haxes->GetXaxis()->SetTitleSize(0);
+    haxes->GetYaxis()->SetTitleSize(0);
+    haxes->GetXaxis()->SetLabelSize(0);
+    haxes->GetYaxis()->SetLabelSize(0);
+    haxes->GetXaxis()->SetTickLength(0);
+    haxes->GetYaxis()->SetTickLength(0);
+
+    m_mainCanvas->RedrawAxis();
+  }
+
   // configure axis draw options
   TString xtchopt = "-U"; // - = downward ticks, U = unlabeled, http://root.cern.ch/root/html534/TGaxis.html
   TString xbchopt = "";
@@ -915,7 +946,7 @@ void OneMinusClPlot2d::Draw()
     yrchopt += "N";
   }
   // New X axis. For angles in units of degrees.
-  if ( isAngle(scanners[0]->getScanVar1()) ){
+  if ( isAngle(scanners[0]->getScanVar1()) || arg->isQuickhack(36) ){
     haxes->GetXaxis()->SetTitle(haxes->GetXaxis()->GetTitle() + TString(" [#circ]"));
 
     // new axis for the top ticks
@@ -956,7 +987,7 @@ void OneMinusClPlot2d::Draw()
   }
 
   // New Y axis. For angles in units of degrees.
-  if ( isAngle(scanners[0]->getScanVar2()) ){
+  if ( isAngle(scanners[0]->getScanVar2()) || arg->isQuickhack(37) ){
     haxes->GetYaxis()->SetTitle(haxes->GetYaxis()->GetTitle() + TString(" [#circ]"));
 
     // new left axis

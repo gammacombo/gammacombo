@@ -66,6 +66,7 @@ class OptParser
 		vector<vector<RangePar> >   physRanges;
     vector<vector<TString> >    removeRanges;
     vector<vector<TString> >    randomizeToyVars;
+    bool            grid;
 		TString	        group;
 		TString	        groupPos;
 		TString         hfagLabel;
@@ -111,6 +112,9 @@ class OptParser
 		float           plotlegsizey;
     TString         plotlegstyle;
     int             plotlegcols;
+    bool            plotlegbox;
+    float           plotlegboxx;
+    float           plotlegboxy;
 		float           plotgroupx;
 		float           plotgroupy;
     Double_t        plotHFAGLabelPosX;
