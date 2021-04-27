@@ -13,7 +13,8 @@ SET(COMBINER_EXECUTABLES
         cartesian
 	tutorial_dataset
 	tutorial_dataset_build_workspace
-  multipdftest
+    tutorial_dataset_multipdf
+    tutorial_dataset_multipdf_build_workspace
 )
 
 # Configure if this combiner has custom ROOT objects
