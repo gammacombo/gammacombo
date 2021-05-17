@@ -1197,6 +1197,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                 assert(rb);
             }
         }
+        Utils::setParameters(w,rb); // set parameters to fitresult of best fit before making refitting decision, necessary if using multipdf
         // implement physical range a la Feldman Cousins
         bool refit_necessary = false;
         if ( arg->physRanges.size()>0 ){
@@ -1628,6 +1629,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
                 }
             }
 
+            Utils::setParameters(w,r1); //  set parameters to fitresult of best fit before making refitting decision, necessary if using multipdf
             // implement physical range a la Feldman Cousins
             bool refit_necessary = false;
             std::map<TString, double> boundary_vals;
