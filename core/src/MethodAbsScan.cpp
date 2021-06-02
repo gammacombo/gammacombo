@@ -183,6 +183,9 @@ void MethodAbsScan::doInitialFit(bool force)
 		p.printPulls(0.);
 		cout << "MethodAbsScan::doInitialFit() : PDF evaluated at init parameters: ";
 		cout << w->pdf(pdfName)->getVal() << endl;
+		RooFormulaVar ll("ll", "ll", "-2*log(@0)", RooArgSet(*w->pdf(pdfName)));
+		cout << "MethodAbsScan::doInitialFit() : Chi2 at init parameters: ";
+		cout << ll.getVal() << endl;
 	}
 
 	int quiet = arg->debug ? 1 : -1;
@@ -657,7 +660,7 @@ bool MethodAbsScan::interpolate(TH1F* h, int i, float y, float central, bool upp
 	else if(sol0!=sol0 || sol1!=sol1){
 		if(arg->verbose || arg->debug){
 			cout << "MethodAbsScan::interpolate(): Quadratic interpolation leads to NaN:"<< std::endl;
-			std::cout << "Solutions are "<< central << "(free fit result)\t" << sol0 << "(bound solution 0) \t" <<sol1 << "(bound solution 1)." << std::endl;		
+			std::cout << "Solutions are "<< central << "(free fit result)\t" << sol0 << "(bound solution 0) \t" <<sol1 << "(bound solution 1)." << std::endl;
 		}
 		return false;
 	}

@@ -323,8 +323,8 @@ void PDF_Abs::printCorMatrix(TString title, TString source, const TMatrixDSym& c
 		obsName.ReplaceAll(uniqueID,"");
 		printf("      %-20s %2i ", obsName.Data(), i);
 		for ( int j=0; j<nObs; j++ ){
-			if (fabs(cor[i][j])<0.005) printf("%5s ", "-");
-			else printf("%5.2f ", cor[i][j]);
+			if (fabs(cor[i][j])<0.005) printf("%6s ", "-");
+			else printf("%6.3f ", cor[i][j]);
 		}
 		cout << endl;
 	}
