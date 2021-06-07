@@ -22,7 +22,8 @@ int MethodCoverageScan::scan1d(int nRun)
     exit(1);
   }
 	nToys = arg->ncoveragetoys;
-	TString forceVariables = "dD_k3pi,dD_kpi,d_dk,g,d_dpi,r_dpi,";
+	//TString forceVariables = "dD_k3pi,dD_kpi,d_dk,g,d_dpi,r_dpi,";
+	TString forceVariables = "";
 
 	// set up a graph of chi2 of best solution
 	TCanvas* c2 = new TCanvas("c2runToys", "chi2");
@@ -177,6 +178,7 @@ int MethodCoverageScan::scan1d(int nRun)
 		// compute p-value of the Plugin method
 		//
 		MethodPluginScan *scanner = new MethodPluginScan(combiner);
+		scanner->initScan();
 		tPvalue = scanner->getPvalue1d(rToyScan, tChi2free, myTree, i);
 		cout << "P VALUE IS " << tPvalue << endl;
 		hPvalues->Fill(tPvalue);

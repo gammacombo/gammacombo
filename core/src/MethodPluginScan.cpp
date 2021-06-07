@@ -389,12 +389,12 @@ void MethodPluginScan::computePvalue1d(RooSlimFitResult* plhScan, double chi2min
         if(id==0){
             t->chi2minBkgBkgToy = f->getChi2();
             chi2minBkgBkgToysvector.push_back(f->getChi2());
-            // std::cout << id << "\t" << t->chi2minBkgBkgToy << std::endl;
         }
         else{
-            t->chi2minBkgBkgToy = chi2minBkgBkgToysvector[j];
-            // std::cout << id << "\t" << t->chi2minBkgBkgToy << std::endl;
+            t->chi2minBkgBkgToy = chi2minBkgBkgToysvector.size()<=j ? 0 : chi2minBkgBkgToysvector[j];
         }
+				//std::cout << id << "\t" << t->chi2minBkgBkgToy << std::endl;
+
 
         //
         // 3. free fit
@@ -414,22 +414,23 @@ void MethodPluginScan::computePvalue1d(RooSlimFitResult* plhScan, double chi2min
             // std::cout << id << "\t" << t->chi2minGlobalBkgToy << std::endl;
         }
         else{
-            t->chi2minGlobalBkgToy = chi2minGlobalBkgToysvector[j];
-            // std::cout << id << "\t" << t->chi2minGlobalBkgToy << std::endl;
+            t->chi2minBkgBkgToy = chi2minBkgBkgToysvector.size()<=j ? 0 : chi2minBkgBkgToysvector[j];
         }
+				// std::cout << id << "\t" << t->chi2minGlobalBkgToy << std::endl;
 
         //
         // Bkg.1 generate bkg-only toys (for CLs method)
         //          (or select the right one)
         //
-        const RooArgSet* toyDataBkg = BkgToys->get(j);
-        setParameters(w, obsName, toyDataBkg);
-        // t->storeObservables();
+				if (BkgToys) {
+					const RooArgSet* toyDataBkg = BkgToys->get(j);
+					setParameters(w, obsName, toyDataBkg);
+					// t->storeObservables();
+				}
 
         //
         // Bkg.2 fit to bkg-only toys (for CLs method)
         //
-
         par->setVal(scanpoint);
         par->setConstant(true);
         f->setStartparsFirstFit(frCache.getRoundRobinNminus(0));
@@ -486,6 +487,13 @@ double MethodPluginScan::getPvalue1d(RooSlimFitResult* plhScan, double chi2minGl
         ControlPlots cp(myTree);
         cp.ctrlPlotChi2();
     }
+		// if no solutions then use the plhScan passed
+		if (solutions.size()==0) {
+			if (arg->verbose || arg->debug) std::cout << "MethodPluginScan::getPvalue1d() : WARNING: setting solutions from PL scan" << std::endl;
+			vector<RooSlimFitResult*> s;
+			s.push_back(plhScan);
+			setSolutions(s);
+		}
     TH1F *h = analyseToys(myTree, id);
     float scanpoint = plhScan->getParVal(scanVar1);
     double pvalue = h->GetBinContent(h->FindBin(scanpoint));
@@ -899,8 +907,10 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
         pb.progress();
         t->GetEntry(i);
 
-        // std::cout << t->chi2minGlobalToy << "\t" << t->chi2minToy << "\t" << t->chi2min << "\t" << t->scanpoint << std::endl;
-        // std::cout << t->chi2minGlobalBkgToy  << "\t" << t->chi2minBkgBkgToy << "\t" << t->chi2minBkg << "\t" << t->scanpoint << std::endl;
+        if (arg->debug && i%1000==0) {
+					std::cout << t->chi2minGlobalToy << "\t" << t->chi2minToy << "\t" << t->chi2min << "\t" << t->scanpoint << std::endl;
+        	std::cout << t->chi2minGlobalBkgToy  << "\t" << t->chi2minBkgBkgToy << "\t" << t->chi2minBkg << "\t" << t->scanpoint << std::endl;
+				}
         if ( id!=-1 && fabs(t->id-id)>0.001 ) continue; ///< only select entries with given id (unless id==-1)
         ntoysid++;
 
@@ -936,7 +946,13 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
         int iBinBestFit = hCL->GetMaximumBin();
         float bestfitpoint = hCL->GetBinCenter(iBinBestFit);
         if(getSolution()){
-            bestfitpoint= ((RooRealVar*) getSolution()->floatParsFinal().find(scanVar1))->getVal();
+						bestfitpoint = getSolution()->getFloatParFinalVal(scanVar1);
+						if (isnan(bestfitpoint)){
+							bestfitpoint = getSolution()->getConstParVal(scanVar1);
+							if (isnan(bestfitpoint)) {
+								bestfitpoint = hCL->GetBinCenter(iBinBestFit);
+							}
+						}
         }
         else std::cout << "WARNING: No solution found, will approximate to the best scan point" << std::endl;
 
@@ -952,7 +968,6 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
             b_teststat_toy = t->scanbestBkg <= t->scanpoint ? b_teststat_toy : 0.;  // if mu < muhat then q_mu = 0
         }
         // the usage of the two-sided test statistic is default
-
 
         if ( inPhysicalRegion && sb_teststat_toy > teststat_measured ){
             h_better->Fill(t->scanpoint);
@@ -1216,7 +1231,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
 
         // //ideal method, but prone to fluctuations
         hCLsExp->SetBinContent   ( i, TMath::Min( quantiles_cls[2] , 1.) );
-        hCLsExp->SetBinError   ( i, sqrt((1.-TMath::Min( quantiles_cls[2] , 1.))*TMath::Min( quantiles_cls[2] , 1.)/sampledBValues[i].size()) );        
+        hCLsExp->SetBinError   ( i, sqrt((1.-TMath::Min( quantiles_cls[2] , 1.))*TMath::Min( quantiles_cls[2] , 1.)/sampledBValues[i].size()) );
         hCLsErr1Up->SetBinContent( i, TMath::Min( quantiles_cls[3] , 1.) );
         hCLsErr1Dn->SetBinContent( i, TMath::Min( quantiles_cls[1] , 1.) );
         hCLsErr2Up->SetBinContent( i, TMath::Min( quantiles_cls[4] , 1.) );

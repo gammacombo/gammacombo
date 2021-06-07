@@ -227,6 +227,7 @@ void Combiner::combine()
 	RooProdPdf *prod = new RooProdPdf("pdf_"+pdfName, "pdf_"+pdfName, *pdfList);
 
 	// import it into the ws
+	RooMsgService::instance().setGlobalKillBelow(WARNING);
 	w->import(*prod);
 
 	// define sets of combined parameters
