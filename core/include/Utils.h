@@ -86,7 +86,7 @@ namespace Utils
 
 	RooFitResult*   fitToMin(RooAbsPdf *pdf, bool thorough, int printLevel);
 	RooFitResult*   fitToMinBringBackAngles(RooAbsPdf *pdf, bool thorough, int printLevel);
-	RooFitResult*   fitToMinForce(RooWorkspace *w, TString name, TString forceVariables="");
+	RooFitResult*   fitToMinForce(RooWorkspace *w, TString name, TString forceVariables="", bool debug=true);
 	RooFitResult*   fitToMinImprove(RooWorkspace *w, TString name);
 	double          getChi2(RooAbsPdf *pdf);
 	TH1F*           histHardCopy(const TH1F* h, bool copyContent=true, bool uniqueName=true, TString specName="");

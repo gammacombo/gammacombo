@@ -82,17 +82,21 @@ int MethodCoverageScan::scan1d(int nRun)
 
 	// set up a ToyTree to save the results from the
 	// plugin toys
-	ToyTree *myTree = new ToyTree(combiner);
+	ToyTree *myTree = new ToyTree(combiner,0,true);
 	myTree->init();
 
 	// for testing purposes we can fully scan the first 10 toys, set up a plot for this
 	//OneMinusClPlot *plot = 0;
 	//if ( arg->isAction("test") ) plot = new OneMinusClPlot(arg, "coveragetest_plugin_omcl");
+	//
+	//ProgressBar *pb = new ProgressBar(arg, nToys);
 
 	// toy loop
 	for ( int i=0; i<nToys; i++ )
 	{
 		cout << "ITOY = " << i << endl;
+		//pb->progress();
+
 		tId = i;
 		RooWorkspace *w = combiner->getWorkspace();
 		TString pdfName = combiner->getPdfName();
@@ -138,14 +142,14 @@ int MethodCoverageScan::scan1d(int nRun)
 		FitResultCache frCache(arg);
 		frCache.storeParsAtFunctionCall(w->set(parName));
 
-		cout << "FREE" << endl;
+		cout << "Free Fit" << endl;
 		w->var(varName)->setConstant(false);
-		RooFitResult* rToyFreeFull = fitToMinForce(w, pdfName, forceVariables);
+		RooFitResult* rToyFreeFull = fitToMinForce(w, pdfName, forceVariables, false);
 		if ( !rToyFreeFull ) continue;
 		RooSlimFitResult *rToyFree = new RooSlimFitResult(rToyFreeFull);
 		tChi2free = rToyFree->minNll();  ///< save for tree
 		tSol = w->var(varName)->getVal();
-		rToyFree->Print();
+		if (arg->verbose) rToyFree->Print();
 		delete rToyFreeFull;
 
     // can fill values of fit parameters here
@@ -153,14 +157,14 @@ int MethodCoverageScan::scan1d(int nRun)
       paramVals[i] = w->var( combiner->getParameterNames()[i].c_str() )->getVal();
     }
 
-		cout << "SCAN" << endl;
+		cout << "Scan Point Fit" << endl;
 		setParameters(w, parName, frCache.getParsAtFunctionCall());
 		w->var(varName)->setConstant(true);
-		RooFitResult* rToyScanFull = fitToMinForce(w, pdfName, forceVariables);
+		RooFitResult* rToyScanFull = fitToMinForce(w, pdfName, forceVariables, false);
 		if ( !rToyScanFull ) continue;
 		RooSlimFitResult *rToyScan = new RooSlimFitResult(rToyScanFull);
 		tChi2scan = rToyScan->minNll();  ///< save for tree
-		rToyScan->Print();
+		if (arg->verbose) rToyScan->Print();
 		w->var(varName)->setConstant(false);
 		delete rToyScanFull;
 
@@ -177,9 +181,11 @@ int MethodCoverageScan::scan1d(int nRun)
 		//
 		// compute p-value of the Plugin method
 		//
+		cout << "PLUGIN...";
 		MethodPluginScan *scanner = new MethodPluginScan(combiner);
 		scanner->initScan();
-		tPvalue = scanner->getPvalue1d(rToyScan, tChi2free, myTree, i);
+		tPvalue = scanner->getPvalue1d(rToyScan, tChi2free, myTree, i, !arg->verbose);
+		cout << "Done" << endl;
 		cout << "P VALUE IS " << tPvalue << endl;
 		hPvalues->Fill(tPvalue);
 		c3->cd();
@@ -187,20 +193,21 @@ int MethodCoverageScan::scan1d(int nRun)
 		c3->Update();
 
     // now do the uncertainty scan for the Prob method
+		cout << "PROB" << endl;
     MethodProbScan *probScanner = new MethodProbScan( combiner );
     probScanner->initScan();
     probScanner->loadParameters( rToyFree ); // load parameters from forced fit
-    probScanner->scan1d();
+    probScanner->scan1d(false,false,true);
     //vector<RooSlimFitResult*> firstScanSolutions = probScanner->getSolutions();
     //for ( int i=0; i<firstScanSolutions.size(); i++ ){
       //probScanner->loadParameters( firstScanSolutions[i] );
       //probScanner->scan1d(true);
     //}
     probScanner->confirmSolutions();
-    probScanner->printLocalMinima();
-    CLInterval probSig1Int = probScanner->getCLintervalCentral(1);
-    CLInterval probSig2Int = probScanner->getCLintervalCentral(2);
-    CLInterval probSig3Int = probScanner->getCLintervalCentral(3);
+    if (arg->verbose) probScanner->printLocalMinima();
+    CLInterval probSig1Int = probScanner->getCLintervalCentral(1,true);
+    CLInterval probSig2Int = probScanner->getCLintervalCentral(2,true);
+    CLInterval probSig3Int = probScanner->getCLintervalCentral(3,true);
     tSolScan        = probSig1Int.central;
     tSolProbErr1Low = probSig1Int.min;
     tSolProbErr1Up  = probSig1Int.max;

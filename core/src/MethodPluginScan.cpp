@@ -277,7 +277,7 @@ void MethodPluginScan::computePvalue1d(RooSlimFitResult* plhScan, double chi2min
     assert(plhScan);
     assert(t);
     assert(f);
-    assert(pb);
+		//assert(pb);
     if ( !plhScan->hasParameter(scanVar1) ){
         cout << "MethodPluginScan::getPvalue1d() : ERROR : scan variable not found in plhScan. Exit." << endl;
         assert(0);
@@ -349,7 +349,7 @@ void MethodPluginScan::computePvalue1d(RooSlimFitResult* plhScan, double chi2min
     if ( arg->importance ){
         float plhPvalue = TMath::Prob(t->chi2min - t->chi2minGlobal,1);
         nActualToys = nToys*importance(plhPvalue);
-        pb->skipSteps(nToys-nActualToys);
+        if (pb) pb->skipSteps(nToys-nActualToys);
     }
 
     // Draw all toy datasets in advance. This is much faster.
@@ -359,7 +359,7 @@ void MethodPluginScan::computePvalue1d(RooSlimFitResult* plhScan, double chi2min
     for ( int j = 0; j<nActualToys; j++ )
     {
         // status bar
-        pb->progress();
+        if (pb) pb->progress();
 
         //
         // 1. Generate toys
@@ -458,14 +458,14 @@ void MethodPluginScan::computePvalue1d(RooSlimFitResult* plhScan, double chi2min
     delete toyDataSet;
 }
 
-double MethodPluginScan::getPvalue1d(RooSlimFitResult* plhScan, double chi2minGlobal, ToyTree* t, int id)
+double MethodPluginScan::getPvalue1d(RooSlimFitResult* plhScan, double chi2minGlobal, ToyTree* t, int id, bool quiet)
 {
     // Create a ToyTree to store the results of all toys
     // (or use the supplied one so we can have a ToyTree
     // that holds a full scan).
     ToyTree *myTree = 0;
     if ( !t ){
-        myTree = new ToyTree(combiner);
+        myTree = new ToyTree(combiner,0,quiet);
         myTree->init();
     }
     else{
@@ -476,10 +476,11 @@ double MethodPluginScan::getPvalue1d(RooSlimFitResult* plhScan, double chi2minGl
     Fitter *myFit = new Fitter(arg, w, combiner->getPdfName());
 
     // Create a progress bar
-    ProgressBar *myPb = new ProgressBar(arg, nToys);
+    ProgressBar *myPb = NULL;
+		if (!quiet) myPb = new ProgressBar(arg, nToys);
 
     // do the work
-    cout << "MethodPluginScan::getPvalue1d() : computing p-value ..." << endl;
+    if (!quiet) cout << "MethodPluginScan::getPvalue1d() : computing p-value ..." << endl;
     computePvalue1d(plhScan, chi2minGlobal, myTree, id, myFit, myPb);
 
     // compute p-value
@@ -494,7 +495,7 @@ double MethodPluginScan::getPvalue1d(RooSlimFitResult* plhScan, double chi2minGl
 			s.push_back(plhScan);
 			setSolutions(s);
 		}
-    TH1F *h = analyseToys(myTree, id);
+    TH1F *h = analyseToys(myTree, id, quiet);
     float scanpoint = plhScan->getParVal(scanVar1);
     double pvalue = h->GetBinContent(h->FindBin(scanpoint));
     delete h;
@@ -867,14 +868,13 @@ void MethodPluginScan::scan2d(int nRun)
 ///             Default is -1 which uses all entries regardless of their id.
 /// \return     A new histogram that contains the p-values vs the scanpoint.
 ///
-TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
+TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id, bool quiet)
 {
     /// \todo replace this such that there's always one bin per scan point, but still the range is the scan range.
     /// \todo Also, if we use the min/max from the tree, we have the problem that they are not exactly
     /// the scan range, so that the axis won't show the lowest and highest number.
     /// \todo If the scan range was changed after the toys were generate, we absolutely have
     /// to derive the range from the root files - else we'll have bining effects.
-
     float halfBinWidth = (t->getScanpointMax()-t->getScanpointMin())/(float)t->getScanpointN()/2;
     if ( t->getScanpointN()==1 ) halfBinWidth = 1.;
     TH1F *hCL          = new TH1F(getUniqueRootName(), "hCL", t->getScanpointN(), t->getScanpointMin()-halfBinWidth, t->getScanpointMax()+halfBinWidth);
@@ -898,13 +898,14 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
     Long64_t ntoysid   = 0; // if id is not -1, this will count the number of toys with that id
 
     t->activateCoreBranchesOnly(); // speeds up the event loop
-    ProgressBar pb(arg, nentries);
+    ProgressBar *pb = NULL;
+		if (!quiet) pb = new ProgressBar(arg, nentries);
     if ( arg->debug ) cout << "MethodPluginScan::analyseToys() : ";
-    cout << "building p-value histogram ..." << endl;
+    if (!quiet) cout << "building p-value histogram ..." << endl;
 
     for (Long64_t i = 0; i < nentries; i++)
     {
-        pb.progress();
+        if (!quiet) pb->progress();
         t->GetEntry(i);
 
         if (arg->debug && i%1000==0) {
@@ -1030,13 +1031,15 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
         cout << (nentries-nfailed)/nPoints1d << " toys per scan point." << endl;
     }
     else{
+			if (!quiet) {
         cout << "read ";
         cout << ntoysid << " toys at ID " << id << endl;
+			}
     }
     if ( arg->debug ) cout << "MethodPluginScan::analyseToys() : ";
-    cout << "fraction of failed toys: " << (double)nfailed/(double)nentries*100. << "%." << endl;
+    if (!quiet) cout << "fraction of failed toys: " << (double)nfailed/(double)nentries*100. << "%." << endl;
     if ( arg->debug ) cout << "MethodPluginScan::analyseToys() : ";
-    cout << "fraction of negative test stat toys: " << h_background->GetEntries()/(double)nentries*100. << "%." << endl;
+    if (!quiet) cout << "fraction of negative test stat toys: " << h_background->GetEntries()/(double)nentries*100. << "%." << endl;
     if ( id==-1 && nwrongrun>0 ){
         cout << "\nMethodPluginScan::analyseToys() : WARNING : Read toys that differ in global chi2min (wrong run) : "
             << (double)nwrongrun/(double)(nentries-nfailed)*100. << "%.\n" << endl;

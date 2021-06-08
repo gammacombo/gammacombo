@@ -151,10 +151,8 @@ RooFitResult* Utils::fitToMinBringBackAngles(RooAbsPdf *pdf, bool thorough, int 
 /// "var1,var2,var3," (list must end with comma). Default is to apply for all angles,
 /// all ratios except rD_k3pi and rD_kpi, and the k3pi coherence factor.
 ///
-RooFitResult* Utils::fitToMinForce(RooWorkspace *w, TString name, TString forceVariables)
+RooFitResult* Utils::fitToMinForce(RooWorkspace *w, TString name, TString forceVariables, bool debug)
 {
-	bool debug = true;
-
 	TString parsName = "par_"+name;
 	TString obsName  = "obs_"+name;
 	TString pdfName  = "pdf_"+name;

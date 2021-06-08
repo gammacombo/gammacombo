@@ -53,7 +53,7 @@ MethodProbScan::~MethodProbScan()
 ///   When using the drag mode, this can sometimes make a difference.
 /// \return status: 2 = new global minimum found, 1 = error
 ///
-int MethodProbScan::scan1d(bool fast, bool reverse)
+int MethodProbScan::scan1d(bool fast, bool reverse, bool quiet)
 {
 	if ( arg->debug ) cout << "MethodProbScan::scan1d() : starting ... " << endl;
 	nScansDone++;
@@ -189,7 +189,7 @@ int MethodProbScan::scan1d(bool fast, bool reverse)
 
 			// status bar
 			if ( (((int)nStep % (int)(nTotalSteps/printFreq)) == 0))
-				cout << "MethodProbScan::scan1d() : scanning " << (float)nStep/(float)nTotalSteps*100. << "%   \r" << flush;
+				if (!quiet) cout << "MethodProbScan::scan1d() : scanning " << (float)nStep/(float)nTotalSteps*100. << "%   \r" << flush;
 
 			// fit!
 			RooFitResult *fr = 0;
