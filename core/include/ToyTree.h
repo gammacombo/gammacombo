@@ -81,6 +81,8 @@ class ToyTree
 		float chi2minBkgToy;	  ///< the chi2 of the fit of the hypothesis value to the bkg toy distribution (for CLs method)
     	float chi2minGlobalBkgToy; ///< the chi2 of the free fit to the bkg only toys
     	float chi2minBkgBkgToy; ///< the chi2 of the bkg fit to the bkg only toys
+		float chi2minGlobalBkgAsimov; ///< the chi2 of the free fit to asimov data (data sets methods)
+		float chi2minAsimov;	///< the chi2 of the scan fit to asimov data (data sets methods)
 		float scanbest;         ///< an alias to the free fit value of the scan variable
 		float scanbesty;        ///< an alias to the free fit value of the scan y variable in 2D scans
     	float scanbestBkg;      ///< an alias to the free fit value of the scan variable on the bkg only toy (for CLs method)

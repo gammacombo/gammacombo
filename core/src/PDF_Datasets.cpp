@@ -251,13 +251,13 @@ void PDF_Datasets::setVarRange(const TString &varName, const TString &rangeName,
 };
 
 
-void PDF_Datasets::setToyData(RooDataSet* ds) {
+void PDF_Datasets::setToyData(RooAbsData* ds) {
     toyObservables  = ds;
     isToyDataSet    = kTRUE;
     return;
 };
 
-void PDF_Datasets::setBkgToyData(RooDataSet* ds) {
+void PDF_Datasets::setBkgToyData(RooAbsData* ds) {
     toyBkgObservables  = ds;
     return;
 };
@@ -315,6 +315,27 @@ void  PDF_Datasets::generateBkgToysGlobalObservables(int SeedShift, int index) {
 };
 
 
+void  PDF_Datasets::generateBkgAsimovGlobalObservables(int SeedShift, int index) {
+
+    initializeRandomGenerator(SeedShift);
+
+    // generate the global observables into a RooArgSet
+    // const RooArgSet* set = pdfBkg->generate(*(wspc->set(globalObsName)), 1)->get(0);
+    const RooArgSet* set = _constraintPdf->generate(*(wspc->set(globalObsName)), 1)->get(0);
+    // iterate over the generated values and use them to update the actual global observables in the workspace
+
+    TIterator* it =  set->createIterator();
+    while (RooRealVar* genVal = dynamic_cast<RooRealVar*>(it->Next())) {
+        wspc->var(genVal->GetName())->setVal(genVal->getVal());
+    }
+    TString index_string;
+    index_string.Form("globalObsBkgAsimovSnapshotName%d",index);
+    // take a snapshot of the global variables in the workspace so they can be loaded later
+    globalObsBkgAsimovSnapshotName = index_string;
+    wspc->saveSnapshot(globalObsBkgAsimovSnapshotName, *wspc->set(globalObsName));
+};
+
+
 void  PDF_Datasets::generateToysGlobalObservables(int SeedShift) {
 
     initializeRandomGenerator(SeedShift);
@@ -333,7 +354,7 @@ void  PDF_Datasets::generateToysGlobalObservables(int SeedShift) {
 };
 
 
-RooFitResult* PDF_Datasets::fit(RooDataSet* dataToFit) {
+RooFitResult* PDF_Datasets::fit(RooAbsData* dataToFit) {
 
     if (this->getWorkspace()->set(constraintName) == NULL) {
         std::cout << std::endl;
@@ -396,7 +417,7 @@ RooFitResult* PDF_Datasets::fit(RooDataSet* dataToFit) {
     }
 };
 
-RooFitResult* PDF_Datasets::fitBkg(RooDataSet* dataToFit, TString signalvar) {
+RooFitResult* PDF_Datasets::fitBkg(RooAbsData* dataToFit, TString signalvar) {
 
     if (this->getWorkspace()->set(constraintName) == NULL) {
         std::cout << std::endl;
@@ -582,6 +603,48 @@ void   PDF_Datasets::generateBkgToys(int SeedShift, TString signalvar) {
     }
     this->toyBkgObservables  = toys;
 };
+
+
+//ToDo: make proper Asimov sample
+void   PDF_Datasets::generateBkgAsimov(int SeedShift, TString signalvar) {
+
+    initializeRandomGenerator(SeedShift);
+
+    // if(!isBkgPdfSet){
+    //     std::cout << "WRANING in PDF_Datasets::generateBkgToys: No bkg pdf given." << std::endl;
+    //     // exit(EXIT_FAILURE);
+    // }
+    // std::cout << "WARNING in PDF_Datasets::generateBkgToys -- Fitting bkg model as sig+bkg model with " << signalvar << " to zero!" << std::endl;
+    RooDataSet* toys;
+    if (isBkgMultipdfSet) {
+        toys = multipdfBkg->getPdf(bestIndexBkg)->generate(*observables, wspc->data(dataName)->numEntries(),false,true,"",false,true);
+    }
+    else if(pdfBkg && !isMultipdfSet){
+        toys = pdfBkg->generate(*observables, wspc->data(dataName)->numEntries(),false,true,"",false,true);
+    }
+    else
+    {
+        double parvalue = getWorkspace()->var(signalvar)->getVal();
+        bool isconst = getWorkspace()->var(signalvar)->isConstant();
+        getWorkspace()->var(signalvar)->setVal(0.0);
+        getWorkspace()->var(signalvar)->setConstant(true);
+        // RooDataSet* toys = pdfBkg->generate(*observables, RooFit::NumEvents(wspc->data(dataName)->numEntries()), RooFit::Extended(kTRUE));
+        // RooDataSet* toys = pdf->generate(*observables, RooFit::NumEvents(wspc->data(dataName)->numEntries()), RooFit::Extended(kTRUE));
+        if (isMultipdfSet) {
+            toys = multipdf->getPdf(bestIndexBkg)->generate(*observables, wspc->data(dataName)->numEntries(),false,true,"",false,true);
+        }
+        else {
+            toys = pdf->generate(*observables, wspc->data(dataName)->numEntries(),false,true,"",false,true);
+        }
+        getWorkspace()->var(signalvar)->setVal(parvalue);
+        getWorkspace()->var(signalvar)->setConstant(isconst);    
+    }
+    this->AsimovBkgObservables  = toys;
+};
+
+
+
+
 
 /*! \brief Initializes the random generator
  *

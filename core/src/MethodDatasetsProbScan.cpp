@@ -90,6 +90,20 @@ void MethodDatasetsProbScan::initScan() {
     if (hCLs) delete hCLs;
     hCLs = new TH1F("hCLs" + getUniqueRootName(), "hCLs" + pdf->getPdfName(), nPoints1d, min1, max1);
 
+    if ( hChi2minAsimov ) delete hChi2minAsimov;
+    hChi2minAsimov = new TH1F("hChi2minAsimov" + getUniqueRootName(), "hChi2minAsimov" + pdf->getPdfName(), nPoints1d, min1, max1);
+    if (hCLsExp) delete hCLsExp;
+    hCLsExp = new TH1F("hCLsExp" + getUniqueRootName(), "hCLsExp" + pdf->getPdfName(), nPoints1d, min1, max1);
+    if (hCLsErr1Dn) delete hCLsErr1Dn;
+    hCLsErr1Dn = new TH1F("hCLsErr1Dn" + getUniqueRootName(), "hCLsErr1Dn" + pdf->getPdfName(), nPoints1d, min1, max1);
+    if (hCLsErr1Up) delete hCLsErr1Up;
+    hCLsErr1Up = new TH1F("hCLsErr1Up" + getUniqueRootName(), "hCLsErr1Up" + pdf->getPdfName(), nPoints1d, min1, max1);
+    if (hCLsErr2Dn) delete hCLsErr2Dn;
+    hCLsErr2Dn = new TH1F("hCLsErr2Dn" + getUniqueRootName(), "hCLsErr2Dn" + pdf->getPdfName(), nPoints1d, min1, max1);
+    if (hCLsErr2Up) delete hCLsErr2Up;
+    hCLsErr2Up = new TH1F("hCLsErr2Up" + getUniqueRootName(), "hCLsErr2Up" + pdf->getPdfName(), nPoints1d, min1, max1);
+
+
 
     // fill the chi2 histogram with very unlikely values such
     // that inside scan1d() the if clauses work correctly
@@ -191,7 +205,33 @@ void MethodDatasetsProbScan::initScan() {
     //     std::cout << "=============== Bkg minimum (2*-Log(Likelihood)) is: 2*" << bkgOnlyFitResult->minNll() << " = " << chi2minBkg << endl;
     //     w->var(scanVar1)->setConstant(false);
     // }
+    if (arg->cls.size()!=0){
+        // generate the asimov
+        Utils::setParameters(w,bkgOnlyFitResult); //set parameters to bkg fit to receive a bkg-only asimov
+        // pdf->printParameters();
+        pdf->generateBkgAsimov(0,arg->var[0]);
+        pdf->generateBkgAsimovGlobalObservables(0,0);
+        RooAbsData* bkgOnlyAsimov = pdf->getBkgAsimovObservables();
+        pdf->setToyData( bkgOnlyAsimov );
 
+        // Do a global fit to bkg-only asimov
+        // ToDo: do I need a bkg-only fit for the CLs method as well? In theory should give the same result
+        w->var(scanVar1)->setConstant(false);
+        if (!w->loadSnapshot(pdf->globalObsBkgAsimovSnapshotName)) {
+            std::cout << "FATAL in MethodDatasetsProbScan::initScan() - No snapshot globalObsAsimovToySnapshotName found!\n" << std::endl;
+            exit(EXIT_FAILURE);
+        };
+        // then, fit the pdf while passing it the simulated toy dataset
+        GlobalBkgAsimovFitResult = pdf->fit(pdf->getBkgAsimovObservables());
+        chi2minGlobalBkgAsimov = 2 * pdf->getMinNll();
+
+        //reset parameters and global observables
+        Utils::setParameters(w,globalMin);
+        if (!w->loadSnapshot(pdf->globalObsDataSnapshotName)) {
+            std::cout << "FATAL in MethodDatasetsProbScan::initScan() - No snapshot globalObsToySnapshotName found!\n" << std::endl;
+            exit(EXIT_FAILURE);
+        }
+    }
 
     if (arg->debug) {
         std::cout << "DEBUG in MethodDatasetsProbScan::initScan() - Scan initialized successfully!\n" << std::endl;
@@ -254,6 +294,19 @@ void MethodDatasetsProbScan::sethCLFromProbScanTree() {
     delete hCLs;
     this->hCLs = new TH1F("hCLs", "hCLs", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth);
     if (arg->debug) printf("DEBUG %i %f %f %f\n", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth, halfBinWidth);
+
+    this->hCLsExp = new TH1F("hCLsExp", "hCLsExp", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth);
+    if (arg->debug) printf("DEBUG %i %f %f %f\n", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth, halfBinWidth);
+    this->hCLsErr1Up = new TH1F("hCLsErr1Up", "hCLsErr1Up", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth);
+    if (arg->debug) printf("DEBUG %i %f %f %f\n", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth, halfBinWidth);
+    this->hCLsErr1Dn = new TH1F("hCLsErr1Dn", "hCLsErr1Dn", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth);
+    if (arg->debug) printf("DEBUG %i %f %f %f\n", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth, halfBinWidth);
+    this->hCLsErr2Up = new TH1F("hCLsErr2Up", "hCLsErr2Up", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth);
+    if (arg->debug) printf("DEBUG %i %f %f %f\n", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth, halfBinWidth);
+    this->hCLsErr2Dn = new TH1F("hCLsErr2Dn", "hCLsErr2Dn", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth);
+    if (arg->debug) printf("DEBUG %i %f %f %f\n", this->probScanTree->getScanpointN(), this->probScanTree->getScanpointMin() - halfBinWidth, this->probScanTree->getScanpointMax() + halfBinWidth, halfBinWidth);
+
+
     Long64_t nentries     = this->probScanTree->GetEntries();
     this->probScanTree->activateAllBranches();
     // this->probScanTree->a - DATASETSctivateCoreBranchesOnly(); //< speeds up the event loop
@@ -263,13 +316,13 @@ void MethodDatasetsProbScan::sethCLFromProbScanTree() {
         this->probScanTree->GetEntry(i);
 
         double deltaChi2 = probScanTree->chi2min - probScanTree->chi2minGlobal;
-				double oneMinusCL = TMath::Prob( deltaChi2, 1);
-				// save the value and corresponding fit result
-				// but only if an improvement
-				if ( hCL->GetBinContent(hCL->FindBin( probScanTree->scanpoint ) ) <= oneMinusCL ) {
-					hCL->SetBinContent( hCL->FindBin( probScanTree->scanpoint ) , oneMinusCL );
-					hChi2min->SetBinContent( hCL->FindBin( probScanTree->scanpoint ), probScanTree->chi2min );
-				}
+		double oneMinusCL = TMath::Prob( deltaChi2, 1);
+		// save the value and corresponding fit result
+		// but only if an improvement
+		if ( hCL->GetBinContent(hCL->FindBin( probScanTree->scanpoint ) ) <= oneMinusCL ) {
+			hCL->SetBinContent( hCL->FindBin( probScanTree->scanpoint ) , oneMinusCL );
+			hChi2min->SetBinContent( hCL->FindBin( probScanTree->scanpoint ), probScanTree->chi2min );
+		}
         // and whilst we here do the same relative to the background only hypothesis (i.e. for CLs method)
         double deltaChi2Bkg  = probScanTree->chi2min - probScanTree->chi2minBkg;
         //double oneMinusCLBkg = TMath::Prob( deltaChi2Bkg, 1);
@@ -277,6 +330,8 @@ void MethodDatasetsProbScan::sethCLFromProbScanTree() {
         if ( hCLs->GetBinCenter( hCLs->FindBin( probScanTree->scanpoint ) ) <= oneMinusCLBkg ) {
             hCLs->SetBinContent( hCLs->FindBin( probScanTree->scanpoint ), oneMinusCLBkg );
         }
+
+        hChi2minAsimov->SetBinContent(hChi2minAsimov->FindBin(probScanTree->scanpoint), probScanTree->chi2minAsimov);
     }
     // if only the plot method then set the global and bkg minimums from the file
     if ( arg->isAction("plot") ) {
@@ -451,6 +506,33 @@ int MethodDatasetsProbScan::scan1d(bool fast, bool reverse)
         this->probScanTree->covQualScanData   = result->covQual();
         this->probScanTree->scanbest  = freeDataFitValue;
 
+        //Now fit and save the Asimov data (if existing) for the "fast" expected cls/banana plots
+
+        if(arg->cls.size()>0){
+            if (!w->loadSnapshot(pdf->globalObsBkgAsimovSnapshotName)) {
+                std::cout << "FATAL in MethodDatasetsProbScan::scan1d() - No snapshot globalObsAsimovToySnapshotName found!\n" << std::endl;
+                exit(EXIT_FAILURE);
+            };
+            // then, fit the pdf while passing it the simulated toy dataset
+            RooFitResult *asimov_result = pdf->fit(pdf->getBkgAsimovObservables());
+            double chi2minBkgAsimov = 2 * pdf->getMinNll();
+
+            //reset parameters and global observables
+            Utils::setParameters(w,globalMin);
+            if (!w->loadSnapshot(pdf->globalObsDataSnapshotName)) {
+                std::cout << "FATAL in MethodDatasetsProbScan::scan1d() - No snapshot globalObsToySnapshotName found!\n" << std::endl;
+                exit(EXIT_FAILURE);
+            }
+            this->probScanTree->chi2minAsimov = chi2minBkgAsimov;
+            // this->probScanTree->covQualScanAsimov = asimov_result->covQual();
+            // this->probScanTree->scanbestAsimov = //don't think I'll need it? Should in theory be always exactly zero for bkg-only Asimovs...
+            this->probScanTree->chi2minGlobalBkgAsimov = chi2minGlobalBkgAsimov;
+            // probScanTree->covQualFreeAsimov = GlobalBkgAsimovFitResult->covQual();
+            // probScanTree->statusFreeAsimov = GlobalBkgAsimovFitResult->status();
+        }
+
+
+
         // After doing the fit with the parameter of interest constrained to the scanpoint,
         // we are now saving the fit values of the nuisance parameters. These values will be
         // used to generate toys according to the PLUGIN method.
@@ -518,18 +600,36 @@ int MethodDatasetsProbScan::computeCLvalues(){
     std::cout << "Using "<< arg->teststatistic <<"-sided test statistic" << std::endl;
     float bestfitpoint = ((RooRealVar*) globalMin->floatParsFinal().find(scanVar1))->getVal();
     float bestfitpointerr = ((RooRealVar*) globalMin->floatParsFinal().find(scanVar1))->getError();
+    float bestfitpointAsimov = 0.;
+    float bestfitpointerrAsimov = 0.;
+    
+    if(arg->cls.size()>0){
+        float bestfitpointAsimov = ((RooRealVar*) GlobalBkgAsimovFitResult->floatParsFinal().find(scanVar1))->getVal();
+        float bestfitpointerrAsimov = ((RooRealVar*) GlobalBkgAsimovFitResult->floatParsFinal().find(scanVar1))->getError();
+    }
 
     for (int k=1; k<=hCL->GetNbinsX(); k++){
         float scanvalue=hChi2min->GetBinCenter( k);
         float teststat_measured = hChi2min->GetBinContent(k) - chi2minGlobal;
+        float teststat_asimov = hChi2minAsimov->GetBinContent(k) - chi2minGlobalBkgAsimov;
         float CLb = 1. - (normal_cdf(TMath::Sqrt(teststat_measured) + ((scanvalue - 0.)/bestfitpointerr)) + normal_cdf(TMath::Sqrt(teststat_measured) - ((scanvalue - 0.)/bestfitpointerr)) - 1.);
         if (arg->teststatistic ==1){ // use one-sided test statistic
             teststat_measured = bestfitpoint <= scanvalue ? teststat_measured : 0.; // if mu < muhat then q_mu = 0
+            teststat_asimov = bestfitpointAsimov <= scanvalue ? teststat_asimov : 0.; // if mu < muhat then q_mu = 0
             hCL->SetBinContent(k,1. - normal_cdf(TMath::Sqrt(teststat_measured)));
             // if (scanvalue < bestfitpoint) hCL->SetBinContent(k,1.0);    // should not be here, but looks ugly if solution is drawn as p=1
             CLb = 1. - normal_cdf(TMath::Sqrt(teststat_measured) - ((scanvalue - 0.)/bestfitpointerr));
         }
         hCLs->SetBinContent(k,min(1.,hCL->GetBinContent(k)/CLb));
+
+        if(arg->cls.size()>0){
+            double sigma_asimov = TMath::Sqrt(scanvalue*scanvalue/teststat_asimov);
+            hCLsExp->SetBinContent(k,normal_cdf(TMath::Sqrt(teststat_asimov))); //scanvalue/sigma_asimov
+            hCLsErr1Dn->SetBinContent(k,normal_cdf(TMath::Sqrt(teststat_asimov)+1)); //scanvalue/sigma_asimov
+            hCLsErr1Up->SetBinContent(k,normal_cdf(TMath::Sqrt(teststat_asimov)-1)); //scanvalue/sigma_asimov
+            hCLsErr2Dn->SetBinContent(k,normal_cdf(TMath::Sqrt(teststat_asimov)+2)); //scanvalue/sigma_asimov
+            hCLsErr2Up->SetBinContent(k,normal_cdf(TMath::Sqrt(teststat_asimov)-2)); //scanvalue/sigma_asimov
+        }
     }
     return 0;
 }

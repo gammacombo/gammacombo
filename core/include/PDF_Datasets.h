@@ -27,12 +27,16 @@ public:
     ~PDF_Datasets();
     void                  deleteNLL() {if (_NLL) {delete _NLL; _NLL = NULL;}};
 
-    virtual RooFitResult* fit(RooDataSet* dataToFit);
-    virtual RooFitResult* fitBkg(RooDataSet* dataToFit, TString signalvar);
+    virtual RooFitResult* fit(RooAbsData* dataToFit);
+    virtual RooFitResult* fitBkg(RooAbsData* dataToFit, TString signalvar);
     virtual void          generateToys(int SeedShift = 0);
     virtual void          generateToysGlobalObservables(int SeedShift = 0);
     virtual void          generateBkgToys(int SeedShift = 0, TString signalvar="");
     virtual void          generateBkgToysGlobalObservables(int SeedShift = 0, int index = 0);
+
+    virtual void          generateBkgAsimov(int SeedShift = 0, TString signalvar="");
+    virtual void          generateBkgAsimovGlobalObservables(int SeedShift = 0, int index = 0);
+
 
     void                  initConstraints(const TString& setName);
     void                  initData(const TString& name);
@@ -68,8 +72,9 @@ public:
     TString               getPdfName() {return pdfName;};
     TString               getBkgPdfName() {return pdfBkgName;};
     TString               getMultipdfCatName() {return multipdfCatName;};
-    RooDataSet*           getToyObservables() {return this->toyObservables;};
-    RooDataSet*           getBkgToyObservables() {return toyBkgObservables;};
+    RooAbsData*           getToyObservables() {return this->toyObservables;};
+    RooAbsData*           getBkgToyObservables() {return toyBkgObservables;};
+    RooAbsData*           getBkgAsimovObservables() {return AsimovBkgObservables;};
     RooWorkspace*         getWorkspace() {return wspc;};
     // setters
     inline void           setFitStatus(int stat = 0) {fitStatus = stat;};
@@ -83,8 +88,8 @@ public:
     void                  setNCPU(int n) {NCPU = n;};
     void                  setVarRange(const TString &varName, const TString &rangeName,
                                       const double &rangeMin, const double &rangeMax);
-    void                  setToyData(RooDataSet* ds);
-    void                  setBkgToyData(RooDataSet* ds);
+    void                  setToyData(RooAbsData* ds);
+    void                  setBkgToyData(RooAbsData* ds);
     
     void                  setGlobalObsSnapshotBkgToy(TString snapshotname) {globalObsBkgToySnapshotName = snapshotname;};
 
@@ -108,6 +113,7 @@ public:
     const TString         globalObsToySnapshotName = "globalObsToySnapshotName";
     //> name of a snapshot that stores the latest simulated values for the global observables
    TString         globalObsBkgToySnapshotName = "globalObsBkgToySnapshotName";
+   TString         globalObsBkgAsimovSnapshotName = "globalObsBkgAsimovSnapshotName";
     //> name of a snapshot that stores the latest simulated values for the global observables of the bkg-only toy
 
     //debug counters
@@ -118,6 +124,8 @@ protected:
     void initializeRandomGenerator(int seedShift);
     RooWorkspace*   wspc;
     RooDataSet*     data;
+    RooAbsData*     AsimovBkgObservables;
+    
     RooAbsReal*     _NLL; // possible pointer to minimization function
     RooAbsPdf*      _constraintPdf;
     TString         pdfName; //> name of the pdf in the workspace

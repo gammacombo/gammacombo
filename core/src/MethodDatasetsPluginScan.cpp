@@ -1174,7 +1174,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         // pdf->printParameters();
         pdf->generateBkgToys(0,arg->var[0]);
         pdf->generateBkgToysGlobalObservables(0,j);
-        RooDataSet* bkgOnlyToy = pdf->getBkgToyObservables();
+        RooAbsData* bkgOnlyToy = pdf->getBkgToyObservables();
         cls_bkgOnlyToys.push_back( (RooDataSet*)bkgOnlyToy->Clone() ); // clone required because of deleteToys() call at end of loop
         bkgOnlyGlobObsSnaphots.push_back(pdf->globalObsBkgToySnapshotName);
         pdf->setToyData( bkgOnlyToy );
