@@ -1275,7 +1275,7 @@ void GammaComboEngine::make1dCoverageScan(MethodCoverageScan *scanner, int cId)
   }
   else {
     scanner->readScan1dTrees( arg->jmin[cId], arg->jmax[cId] );
-    scanner->saveScanner( m_fnamebuilder->getFileNameScanner( scanner ) );
+    scanner->saveScanner( m_fnamebuilder->getFileNameScanner( scanner ).ReplaceAll("Coverage",Form("id%d_Coverage",arg->id)) );
   }
 
 }
