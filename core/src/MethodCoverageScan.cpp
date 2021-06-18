@@ -104,7 +104,7 @@ int MethodCoverageScan::scan1d(int nRun)
 		TString varName = arg->var[0];
 
 		// set point to test the coverage at
-    int id = arg->id < 0 ? 0 : arg->id;
+    int id = arg->id;
     pCache->setPoint(combiner, id);
 
     // tree gen sol
