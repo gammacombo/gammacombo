@@ -265,6 +265,7 @@ void MethodCoverageScan::readScan1dTrees(int runMin, int runMax) {
   if (arg->debug) c->Print();
 
 	// initialize histograms
+	t_res           = new TTree("t_res", "Toys");
 	h_sol           = new TH1F("h_sol", "best solution", 100, 0, 180);
 	h_pvalue_plugin = new TH1F("h_pvalue_plugin", "p-value", 50, 0, 1);
 	h_pvalue_prob   = new TH1F("h_pvalue_prob",   "p-value", 50, 0, 1);
@@ -288,6 +289,15 @@ void MethodCoverageScan::readScan1dTrees(int runMin, int runMax) {
 	c->SetBranchAddress("solGen",   &tSolGen);
 	c->SetBranchAddress("pvalue",   &tPvalue);
   c->SetBranchAddress("nrun",     &tnRun);
+	float tPvalProb = 0.0;
+	float tPvalPlug = 0.0;
+	float tPvalProbNT = 0.0;
+	float tPvalPlugNT = 0.0;
+	t_res->Branch("sol", &tSol);
+	t_res->Branch("pvalue_prob", &tPvalProb);
+	t_res->Branch("pvalue_plug", &tPvalPlug);
+	t_res->Branch("pvalue_prob_notransf", &tPvalProbNT);
+	t_res->Branch("pvalue_prob_notransf", &tPvalPlugNT);
 
 	// initialize loop variables
 	nentries  = c->GetEntries();
@@ -316,6 +326,9 @@ void MethodCoverageScan::readScan1dTrees(int runMin, int runMax) {
 		// fill prob p-value distribution
 		float pvalueProb = TMath::Prob(tChi2scan-tChi2free,1);
 		h_pvalue_prob_notransf->Fill(pvalueProb);
+		// fill tree
+		tPvalProb = pvalueProb;
+		tPvalPlug = tPvalue;
 	}
 
 	// fit p-values (if transFunc=="none" don't bother)
@@ -361,6 +374,7 @@ void MethodCoverageScan::readScan1dTrees(int runMin, int runMax) {
 			tPvalue = transform(fitParamsPlugin,transFunc,tPvalue);
 		}
 		h_pvalue_plugin->Fill(tPvalue);
+		tPvalPlug = tPvalue;
 		if(tPvalue>1.-0.6827) n68plugin++;
 		if(tPvalue>1.-0.9545) n95plugin++;
 		if(tPvalue>1.-0.9973) n99plugin++;
@@ -376,9 +390,12 @@ void MethodCoverageScan::readScan1dTrees(int runMin, int runMax) {
 			pvalueProb = transform(fitParamsProb,transFunc,pvalueProb);
 		}
 		h_pvalue_prob->Fill(pvalueProb);
+		tPvalProb = pvalueProb;
 		if(pvalueProb>1.-0.6827) n68prob++;
 		if(pvalueProb>1.-0.9545) n95prob++;
 		if(pvalueProb>1.-0.9973) n99prob++;
+
+		t_res->Fill();
 	}
 }
 
@@ -397,6 +414,7 @@ void MethodCoverageScan::saveScanner(TString fName)
   h_pvalue_prob->Write();
   h_pvalue_plugin_notransf->Write();
   h_pvalue_prob_notransf->Write();
+	t_res->Write();
 
   // save result values
   TTree *outTree = new TTree("result_values","Coverage Result Values");
