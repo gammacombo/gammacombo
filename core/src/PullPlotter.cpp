@@ -1,4 +1,6 @@
 #include "PullPlotter.h"
+#include "TLatex.h"
+#include "TFitResult.h"
 
 PullPlotter::PullPlotter(MethodAbsScan *cmb)
 {
@@ -208,6 +210,9 @@ void PullPlotter::plotPulls()
 	if ( arg->debug ) cout << "PullPlotter::plotPulls() : ";
 	cout << "making pull plot  (" << cmb->getTitle() << ", solution " << nSolution << ") ..." << endl;
 
+	// a histogram to store all the pulls
+	TH1F *hPulls = new TH1F("hPulls","hPulls",50,-5,5);
+
 	// add any observables that are not in the ordered list defined above,
 	// where the order of certain observables is defined manually
 	TIterator* it = cmb->getObservables()->createIterator();
@@ -249,6 +254,9 @@ void PullPlotter::plotPulls()
 		if ( arg->verbose ){
 			printf("%30s: obs = %9.6f +/- %9.6f, th = %9.6f\n", pObs->GetName(), pObs->getVal(), pObs->getError(), pTh->getVal());
 		}
+
+		// fill histogram of pulls
+		hPulls->Fill( (pTh->getVal()-pObs->getVal())/pObs->getError() );
 	}
 	if ( arg->verbose ) cout << endl;
 
@@ -264,6 +272,23 @@ void PullPlotter::plotPulls()
 	if ( observables.size()%10!=0 ){
 		plotPullsCanvas(observablesChunk, ceil(observables.size()/10.), ceil(observables.size()/10.), observables.size());
 	}
+
+	// and plot all the pulls
+	TCanvas *cPull = newNoWarnTCanvas("cPull"+getUniqueRootName(), cmb->getTitle(), 0, 0, 600, 400);
+	cPull->cd();
+	hPulls->GetXaxis()->SetTitle("Pull [#sigma]");
+	TFitResultPtr r = hPulls->Fit("gaus","SQ");
+	hPulls->Draw("LEP");
+	TLatex l;
+	l.SetNDC();
+	l.DrawLatex(0.7 ,0.84,"Histogram:");
+	l.DrawLatex(0.72,0.78,Form("#mu = (%4.2f #pm %4.2f)",hPulls->GetMean(),hPulls->GetMeanError()));
+	l.DrawLatex(0.72,0.72,Form("#sigma = (%4.2f #pm %4.2f)",hPulls->GetRMS(),hPulls->GetRMSError()));
+	l.DrawLatex(0.7 ,0.66,"Fit:");
+	l.DrawLatex(0.72,0.60,Form("#mu = (%4.2f #pm %4.2f)",r->Parameter(1),r->ParError(1)));
+	l.DrawLatex(0.72,0.54,Form("#sigma = (%4.2f #pm %4.2f)",r->Parameter(2),r->ParError(2)));
+	savePlot(cPull, "pull_tot_"+cmb->getName());
+
 }
 
 ///
