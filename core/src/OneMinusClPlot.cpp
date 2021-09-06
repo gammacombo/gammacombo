@@ -829,8 +829,8 @@ void OneMinusClPlot::drawCLguideLine(float pvalue)
 void OneMinusClPlot::drawCLguideLines()
 {
 	if ( arg->CL.size()==0){
-		drawCLguideLine(0.3173);
-		drawCLguideLine(4.55e-2);
+		drawCLguideLine(0.31731);
+		drawCLguideLine(4.550026e-2);
 		if ( arg->plotlog ){
 			drawCLguideLine(2.7e-3);
 			if ( arg->plotymin < 6.3e-5 ) {

@@ -969,12 +969,18 @@ void OneMinusClPlot2d::Draw()
   else
   {
     // add top axis
-    TGaxis *axist = new TGaxis(xmin, ymax, xmax, ymax, xmin, xmax, xndiv, xtchopt);
+		double nmin = xmin;
+		double nmax = xmax;
+		if (arg->isQuickhack(38)){
+		 nmin *= 100;
+		 nmax *= 100;
+		}
+    TGaxis *axist = new TGaxis(xmin, ymax, xmax, ymax, nmin, nmax, xndiv, xtchopt);
     axist->SetName("axist");
     axist->Draw();
 
     // draw a new bottom axis because the confidence contours can cover the old one
-    TGaxis *axisb = new TGaxis(xmin, ymin, xmax, ymin, xmin, xmax, xndiv, xbchopt);
+    TGaxis *axisb = new TGaxis(xmin, ymin, xmax, ymin, nmin, nmax, xndiv, xbchopt);
     axisb->SetName("axisb");
     axisb->SetLabelOffset(haxes->GetXaxis()->GetLabelOffset());
     axisb->SetLabelFont(font);
@@ -1011,8 +1017,14 @@ void OneMinusClPlot2d::Draw()
   else
   {
     // new left axis (so that is not covered by the plot)
+		double nmin = ymin;
+		double nmax = ymax;
+		if (arg->isQuickhack(39)){
+		 nmin *= 100;
+		 nmax *= 100;
+		}
     haxes->GetYaxis()->SetNdivisions(0);
-    TGaxis *axisl = new TGaxis(xmin, ymin, xmin, ymax, ymin, ymax, yndiv, ylchopt);
+    TGaxis *axisl = new TGaxis(xmin, ymin, xmin, ymax, nmin, nmax, yndiv, ylchopt);
     axisl->SetName("axisl");
     axisl->SetLabelOffset(haxes->GetYaxis()->GetLabelOffset());
     axisl->SetLabelFont(font);
@@ -1025,7 +1037,7 @@ void OneMinusClPlot2d::Draw()
     axisl->Draw();
 
     // new right axis
-    TGaxis *axisr = new TGaxis(xmax, ymin, xmax, ymax, ymin, ymax, yndiv, yrchopt);
+    TGaxis *axisr = new TGaxis(xmax, ymin, xmax, ymax, nmin, nmax, yndiv, yrchopt);
     axisr->SetName("axisr");
     axisr->Draw();
   }

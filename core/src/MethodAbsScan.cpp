@@ -1540,6 +1540,7 @@ void MethodAbsScan::plotPulls(int nSolution)
 {
 	PullPlotter p(this);
 	p.loadParsFromSolution(nSolution);
+	p.savePulls();
 	p.plotPulls();
 }
 

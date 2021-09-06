@@ -615,6 +615,8 @@ void OptParser::parseArguments(int argc, char* argv[])
       "35: Legend with transparent fill.\n"
       "36: Convert x to degrees.\n"
       "37: Convert y to degrees.\n"
+      "38: Scale x by 100.\n"
+      "39: Scale y by 100.\n"
 			, false, "int");
   TCLAP::MultiArg<string> readfromfileArg("", "readfromfile", "Read the observables, uncertainties and correlations from a file - e.g. for reading in toys."
       "If 'default' is given, the default values are used."

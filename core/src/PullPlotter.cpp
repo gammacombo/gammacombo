@@ -201,6 +201,64 @@ void PullPlotter::plotPullsCanvas(vector<TString>& observables, int currentid, i
 }
 
 ///
+/// Save the pulls per combination pdf into a file so that we can somewhere else compute
+/// the chi2 that each pdf contributes to the total combination
+///
+void PullPlotter::savePulls()
+{
+	cout << "saving pulls" << endl;
+
+	ofstream outfile;
+	outfile.open("plots/par/pulls_"+cmb->getName()+".dat");
+	outfile << "# ObsName  ObsVal  ObsErr  ThVal  Pull  Chi2" << endl;
+
+	double running_chi2 = 0;
+
+	Combiner* combiner = cmb->getCombiner();
+	vector<PDF_Abs*>& pdfs = combiner->getPdfs();
+	for ( const auto& pdf: pdfs ){
+		double pdf_chi2 = 0;
+		//cout << pdf->getName() << endl;
+		outfile << "pulls: " << pdf->getName() << endl;
+		const RooArgList* obs = pdf->getObservables();
+		// combiner holds the parameters so get them and set them on each pdf
+		const RooArgSet* parsMin = combiner->getParameters();
+		RooArgList* pars = pdf->getParameters();
+		TIterator *it1 = pars->createIterator();
+		while ( RooRealVar* pPar = (RooRealVar*)it1->Next() ){
+			pPar->setVal( ((RooAbsReal*)parsMin->find(pPar->GetName()))->getVal() );
+		}
+		//
+		//const RooArgList* th  = pdf->getTheory();
+		//RooAbsPdf *probDist = pdf->getPdf();
+		RooFormulaVar ll("ll","ll","-2*log(@0)", RooArgSet(*pdf->getPdf()));
+		double chi2_contrib = ll.getVal();
+		running_chi2 += chi2_contrib;
+		// loop observables
+		TIterator *it = obs->createIterator();
+		while ( RooRealVar* pObs = (RooRealVar*)it->Next() ){
+			// find associated theory value
+			TString pThName = pObs->GetName();
+			pThName.ReplaceAll("obs", "th");
+			//RooRealVar* pTh = (RooRealVar*)th->find(pThName);
+			RooRealVar* pTh = (RooRealVar*)cmb->getTheory()->find(pThName);
+
+			double pull = (pTh->getVal() - pObs->getVal()) / pObs->getError();
+			string name = string(pObs->GetName()).substr(0, string(pObs->GetName()).find(string("_obs")));
+
+			outfile << "  " << name << " " << pObs->getVal() << " " << pObs->getError() << " " << pTh->getVal() << " " << pull << " " << pull*pull << endl;
+
+			//printf("%f %f %f %f", pTh->getVal(), pObs->getVal(), pObs->getError(), pull);
+		}
+		outfile << "pdf chi2: " << chi2_contrib << endl;
+	}
+	outfile << "total chi2: " << running_chi2 << endl;
+
+	outfile.close();
+
+}
+
+///
 /// Make a pull plot of observables corresponding
 /// to the given solution. Also compute the fit probability
 /// using chi2, ndof and the prob function.
