@@ -19,7 +19,9 @@
 	observables = NULL;
 	pdf         = NULL;
 	pdfBkg      = NULL;
+    multipdf    = NULL;
 	isBkgPdfSet = false;
+    isBkgMultipdfSet = false;
 	toyObservables = NULL;
 	nToyObs = 1000;
 	iToyObs = 0;

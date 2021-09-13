@@ -42,6 +42,7 @@ public:
     void                  initParameters(const TString& setName);
     void                  initParameters(const vector<TString>& parNames);
     virtual void          initParameters(); //overriding the inherited virtual method
+    void                  initMultipdfCat(const TString& name);
     void                  initPDF(const TString& name);
     void                  initBkgPDF(const TString& name);
     inline  void          addFitObs(TString name) {fitObs.push_back(name);};
@@ -59,12 +60,16 @@ public:
     float                 getMinNllFree() {return minNllFree;};
     float                 getMinNllBkg() {return minNllBkg;};
     float                 getMinNllScan() {return minNllScan;};
+    inline int            getBestIndex() {return bestIndex;};
+    inline int            getBestIndexBkg() {return bestIndexBkg;};
+    inline int            getBestIndexScan() {return bestIndexScan;};
     TString               getObsName() {return obsName;};
     TString               getParName() {return parName;};
     TString               getPdfName() {return pdfName;};
     TString               getBkgPdfName() {return pdfBkgName;};
     RooAbsData*           getToyObservables() {return this->toyObservables;};
     RooAbsData*           getBkgToyObservables() {return toyBkgObservables;};
+    TString               getMultipdfCatName() {return multipdfCatName;};
     RooWorkspace*         getWorkspace() {return wspc;};
     // setters
     inline void           setFitStatus(int stat = 0) {fitStatus = stat;};
@@ -72,6 +77,9 @@ public:
     inline void           setMinNll(float mnll) {minNll = mnll;};
     inline void           setMinNllFree(float mnll) {minNllFree = mnll;};
     inline void           setMinNllScan(float mnll) {minNllScan = mnll;};
+    inline void           setBestIndex(int index) {bestIndex = index;};
+    inline void           setBestIndexBkg(int index) {bestIndexBkg = index;};
+    inline void           setBestIndexScan(int index) {bestIndexScan = index;};
     void                  setNCPU(int n) {NCPU = n;};
     void                  setVarRange(const TString &varName, const TString &rangeName,
                                       const double &rangeMin, const double &rangeMax);
@@ -86,7 +94,9 @@ public:
     inline  bool          areObservglobalablesSet() { return areObsSet; };
     inline  bool          areParametersSet() { return areParsSet; };
     inline  bool          isPdfInitialized() { return isPdfSet; };
+    inline  bool          isMultipdfInitialized() { return isMultipdfSet; };
     inline  bool          isDataInitialized() { return isDataSet; };
+    inline  bool          isMultipdfCatInitialized() {return isMultipdfCatSet; };
     inline  bool          notSetupToFit(bool fitToys) {return (!(isPdfSet && isDataSet) || (fitToys && !(isPdfSet && isToyDataSet))); }; // this comes from a previous if-statement
 
 
@@ -100,6 +110,10 @@ public:
    TString         globalObsBkgToySnapshotName = "globalObsBkgToySnapshotName";
     //> name of a snapshot that stores the latest simulated values for the global observables of the bkg-only toy
 
+    //debug counters
+    int nbkgfits;
+    int nsbfits;
+
 protected:
     void initializeRandomGenerator(int seedShift);
     RooWorkspace*   wspc;
@@ -108,6 +122,7 @@ protected:
     RooAbsPdf*      _constraintPdf;
     TString         pdfName; //> name of the pdf in the workspace
     TString         pdfBkgName; //> name of the bkg pdf in the workspace
+    TString         multipdfCatName; //> name of the multipdf category
     TString         obsName;
     TString         parName;
     TString         dataName;       //> name of the data set in the workspace
@@ -121,11 +136,17 @@ protected:
     // float           minNll;
     float           minNllBkg;
     float           minNllScan;
+    int             bestIndex;
+    int             bestIndexBkg;
+    int             bestIndexScan;
     bool areObsSet;       //> Forces user to set observables
     bool areParsSet;      //> Forces user to set parameters
     bool areRangesSet;    //> Flag deciding if necessary ranges are set
     bool isPdfSet;        //> Flag deciding if PDF is set
     bool isBkgPdfSet;     //> Flag deciding if Bkg PDF is set
+    bool isMultipdfSet;   //> Flag deciding if multipdf is set
+    bool isBkgMultipdfSet;//> Flag deciding if Bkg multipdf is set
+    bool isMultipdfCatSet;//> Flag deciding if multipdf category is set
     bool isDataSet;       //> Flag deciding if Data is set
     bool isToyDataSet;    //> Flag deciding if ToyData is set
     std::vector<TString>    fitObs;

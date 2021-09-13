@@ -30,6 +30,8 @@
 #include "RooProdPdf.h"
 #include "RooPlot.h"
 #include "RooArgSet.h"
+#include "RooCategory.h"
+#include "RooMultiPdf.h"
 
 #include "TCanvas.h"
 #include "TTree.h"
@@ -60,6 +62,7 @@ class PDF_Abs
 		virtual void        buildPdf();
 		virtual void        buildCov();
 		bool                bkgpdfset(){return isBkgPdfSet;};
+		bool                bkgmultipdfset(){return isBkgMultipdfSet;};
 		virtual bool        checkConsistency();
 		void                deleteToys(){delete toyObservables;};
 		inline TString			getCorrelationSourceString(){return corSource;};
@@ -77,6 +80,8 @@ class PDF_Abs
 		inline RooArgList*  getParameters(){return parameters;};
 		inline RooAbsPdf*   getPdf(){return pdf;};
 		inline RooAbsPdf*   getBkgPdf(){return pdfBkg;};
+        inline RooMultiPdf* getMultipdf(){return multipdf;};
+        inline RooMultiPdf* getBkgMultipdf(){return multipdfBkg;};
 		void 				getSubCorrelationStat(TMatrixDSym& target, vector<int>& indices);
 		void 		 		getSubCorrelationSyst(TMatrixDSym& target, vector<int>& indices);
 		inline RooArgList*  getTheory(){return theory;};
@@ -133,7 +138,11 @@ class PDF_Abs
 		TString                 title;        // to be printed in human readable summaries
 		RooAbsPdf*              pdf;          // the PDF
 		RooAbsPdf*      		pdfBkg;		  // Bkg PDF for building CLs teststatistic
+        RooMultiPdf*            multipdf;     // the multipdf
+        RooMultiPdf*            multipdfBkg;  // Bkg version of the multipdf
+        RooCategory*            multipdfCat;  // the multipdf category
     	bool 					isBkgPdfSet;     //> Flag deciding if Bkg PDF is set
+    	bool 					isBkgMultipdfSet;//> Flag deciding if Bkg MultiPDF is set
 		int                     nObs;         // number of observables
 		map<string,TObject*>    trash;        // trash bin, gets emptied in destructor
 		bool					m_isCrossCorPdf;	// Cross correlation PDFs need some extra treatment in places, e.g. in uniquify()

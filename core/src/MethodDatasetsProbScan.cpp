@@ -38,10 +38,6 @@ MethodDatasetsProbScan::MethodDatasetsProbScan(PDF_Datasets* PDF, OptParser* opt
 
     inputFiles.clear();
 
-    if (w->obj("data_fit_result") == NULL) { //\todo: support passing the name of the fit result in the workspace.
-        cerr << "ERROR: The workspace must contain the fit result of the fit to data. The name of the fit result must be 'data_fit_result'. " << endl;
-        exit(EXIT_FAILURE);
-    }
     if ( !w->set(pdf->getObsName()) ) {
         cerr << "MethodDatasetsProbScan::MethodDatasetsProbScan() : ERROR : no '" + pdf->getObsName() + "' set found in workspace" << endl;
         cerr << " You can specify the name of the set in the workspace using the pdf->initObservables(..) method.";
@@ -164,7 +160,7 @@ void MethodDatasetsProbScan::initScan() {
     globalMin->SetName("globalMin");
     // chi2minGlobal = 2 * globalMin->minNll();
     chi2minGlobal = 2 * pdf->getMinNll();
-    std::cout << "=============== Global minimum (2*-Log(Likelihood)) is: 2*" << globalMin->minNll() << " = " << chi2minGlobal << endl;
+    std::cout << "=============== Global minimum (2*-Log(Likelihood)) is: " << chi2minGlobal << endl;
     // background only
     // if ( !pdf->getBkgPdf() )
       bkgOnlyFitResult = pdf->fitBkg(pdf->getData(), arg->var[0]); // fit on data w/ bkg only hypoth
@@ -172,7 +168,7 @@ void MethodDatasetsProbScan::initScan() {
       bkgOnlyFitResult->SetName("bkgOnlyFitResult");
       // chi2minBkg = 2 * bkgOnlyFitResult->minNll();
       chi2minBkg = 2 * pdf->getMinNllBkg();
-      std::cout << "=============== Bkg minimum (2*-Log(Likelihood)) is: 2*" << bkgOnlyFitResult->minNll() << " = " << chi2minBkg << endl;
+      std::cout << "=============== Bkg minimum (2*-Log(Likelihood)) is: " << chi2minBkg << endl;
       w->var(scanVar1)->setConstant(false);
       if (chi2minBkg<chi2minGlobal)
       {
@@ -386,6 +382,7 @@ int MethodDatasetsProbScan::scan1d(bool fast, bool reverse)
     RooSlimFitResult *slimresult = new RooSlimFitResult(result,true);
 		slimresult->setConfirmed(true);
 		solutions.push_back(slimresult);
+        Utils::setParameters(w,result); // Set parameters to result (necessary to get correct freeDataFitValue if using a multipdf)
 		double freeDataFitValue = w->var(scanVar1)->getVal();
 
     // Define outputfile
@@ -457,7 +454,22 @@ int MethodDatasetsProbScan::scan1d(bool fast, bool reverse)
         // After doing the fit with the parameter of interest constrained to the scanpoint,
         // we are now saving the fit values of the nuisance parameters. These values will be
         // used to generate toys according to the PLUGIN method.
+        // After doing the fit with the parameter of interest constrained to the scanpoint,
+        // we are now saving the fit values of the nuisance parameters. These values will be
+        // used to generate toys according to the PLUGIN method.
+        //
+        // Firstly save the parameter values from the workspace using storeParsScan(). If using
+        // a multipdf, this means that all parameters are close to their scan fit values, which
+        // should help with convergence.
+        // Then save parameter values from the best fit result using storeParsScan(result). If
+        // using a multipdf, this means the values of the parameters which appear in the best
+        // pdf are set to the values from the fit using that pdf, so S+B toys are generated with
+        // the correct nuisance parameter values. If not using a multipdf, this command is identical
+        // to storeParsScan()        
         this->probScanTree->storeParsScan(); // \todo : figure out which one of these is semantically the right one
+        this->probScanTree->storeParsScan(); 
+        this->probScanTree->storeParsScan(result); 
+        this->probScanTree->bestIndexScanData = pdf->getBestIndex();
 
         this->pdf->deleteNLL();
 
@@ -849,13 +861,22 @@ void MethodDatasetsProbScan::plotFitRes(TString fName) {
 
   for (int i=0; i<pdf->getFitObs().size(); i++) {
     TString fitVar = pdf->getFitObs()[i];
+
+      if(!w->var(fitVar)){
+        std::cerr << "ERROR::MethodDatasetsProbScan::plotFitRes(): the variable " << fitVar << " is not present in the workspace."<< std::endl;
+        std::cerr << "Candidates are: ";
+        TIterator* it =  pdf->getObservables()->createIterator();
+        while (RooRealVar* obs = dynamic_cast<RooRealVar*>(it->Next())) {
+            std::cerr <<" "<<obs->GetName();
+        }
+        std::cerr<<". Will not plot."<<std::endl;
+        return;
+      }
     TCanvas *fitCanv = newNoWarnTCanvas( getUniqueRootName(), Form("S+B and B only fits to the dataset for %s",fitVar.Data()) );
     TLegend *leg = new TLegend(0.6,0.7,0.92,0.92);
     leg->SetFillColor(0);
     leg->SetLineColor(0);
     RooPlot *plot = w->var(fitVar)->frame();
-    // data invisible for norm
-    w->data(pdf->getDataName())->plotOn( plot, Invisible() );
     // bkg pdf
     if ( !bkgOnlyFitResult ) {
       cout << "MethodDatasetsProbScan::plotFitRes() : ERROR : bkgOnlyFitResult is NULL" << endl;
@@ -867,12 +888,13 @@ void MethodDatasetsProbScan::plotFitRes(TString fName) {
     //   exit(1);
     // }
     if( pdf->getBkgPdf() ){
-        w->pdf(pdf->getBkgPdfName())->plotOn( plot, LineColor(kRed) );
+        w->pdf(pdf->getBkgPdfName())->plotOn( plot, LineColor(kRed), RooFit::Normalization( w->pdf( pdf->getBkgPdfName() )->expectedEvents( *pdf->getObservables() ), RooAbsReal::NumEvent ) );
         leg->AddEntry( plot->getObject(plot->numItems()-1), "Background Only Fit", "L");
     }
     else{
         cout << "MethodDatasetsProbScan::plotFitRes() : WARNING : No background pdf is given. Will plot S+B hypothesis with S=0." << std::endl;
-        w->pdf(pdf->getPdfName())->plotOn( plot, LineColor(kRed) );
+        std::cout <<   w->pdf( pdf->getPdfName() )->expectedEvents( *pdf->getObservables() ) << std::endl;
+        w->pdf(pdf->getPdfName())->plotOn( plot, LineColor(kRed), RooFit::Normalization( w->pdf( pdf->getPdfName() )->expectedEvents( *pdf->getObservables() ), RooAbsReal::NumEvent ) );
         leg->AddEntry( plot->getObject(plot->numItems()-1), "Background Only Fit", "L");
     }
     // free fit
@@ -885,7 +907,7 @@ void MethodDatasetsProbScan::plotFitRes(TString fName) {
       cout << "MethodDatasetsProbScan::plotFitRes() : ERROR : No pdf " << pdf->getPdfName() << " found in workspace" << endl;
       exit(1);
     }
-    w->pdf(pdf->getPdfName())->plotOn(plot);
+    w->pdf(pdf->getPdfName())->plotOn(plot, RooFit::Normalization( w->pdf( pdf->getPdfName() )->expectedEvents( *pdf->getObservables() ), RooAbsReal::NumEvent ) );
     leg->AddEntry( plot->getObject(plot->numItems()-1), "Free Fit", "L");
     // data unblinded if needed
     map<TString,TString> unblindRegs = pdf->getUnblindRegions();
