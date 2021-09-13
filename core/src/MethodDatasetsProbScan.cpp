@@ -861,13 +861,22 @@ void MethodDatasetsProbScan::plotFitRes(TString fName) {
 
   for (int i=0; i<pdf->getFitObs().size(); i++) {
     TString fitVar = pdf->getFitObs()[i];
+
+      if(!w->var(fitVar)){
+        std::cerr << "ERROR::MethodDatasetsProbScan::plotFitRes(): the variable " << fitVar << " is not present in the workspace."<< std::endl;
+        std::cerr << "Candidates are: ";
+        TIterator* it =  pdf->getObservables()->createIterator();
+        while (RooRealVar* obs = dynamic_cast<RooRealVar*>(it->Next())) {
+            std::cerr <<" "<<obs->GetName();
+        }
+        std::cerr<<". Will not plot."<<std::endl;
+        return;
+      }
     TCanvas *fitCanv = newNoWarnTCanvas( getUniqueRootName(), Form("S+B and B only fits to the dataset for %s",fitVar.Data()) );
     TLegend *leg = new TLegend(0.6,0.7,0.92,0.92);
     leg->SetFillColor(0);
     leg->SetLineColor(0);
     RooPlot *plot = w->var(fitVar)->frame();
-    // data invisible for norm
-    w->data(pdf->getDataName())->plotOn( plot, Invisible() );
     // bkg pdf
     if ( !bkgOnlyFitResult ) {
       cout << "MethodDatasetsProbScan::plotFitRes() : ERROR : bkgOnlyFitResult is NULL" << endl;
@@ -879,12 +888,13 @@ void MethodDatasetsProbScan::plotFitRes(TString fName) {
     //   exit(1);
     // }
     if( pdf->getBkgPdf() ){
-        w->pdf(pdf->getBkgPdfName())->plotOn( plot, LineColor(kRed) );
+        w->pdf(pdf->getBkgPdfName())->plotOn( plot, LineColor(kRed), RooFit::Normalization( w->pdf( pdf->getBkgPdfName() )->expectedEvents( *pdf->getObservables() ), RooAbsReal::NumEvent ) );
         leg->AddEntry( plot->getObject(plot->numItems()-1), "Background Only Fit", "L");
     }
     else{
         cout << "MethodDatasetsProbScan::plotFitRes() : WARNING : No background pdf is given. Will plot S+B hypothesis with S=0." << std::endl;
-        w->pdf(pdf->getPdfName())->plotOn( plot, LineColor(kRed) );
+        std::cout <<   w->pdf( pdf->getPdfName() )->expectedEvents( *pdf->getObservables() ) << std::endl;
+        w->pdf(pdf->getPdfName())->plotOn( plot, LineColor(kRed), RooFit::Normalization( w->pdf( pdf->getPdfName() )->expectedEvents( *pdf->getObservables() ), RooAbsReal::NumEvent ) );
         leg->AddEntry( plot->getObject(plot->numItems()-1), "Background Only Fit", "L");
     }
     // free fit
@@ -897,7 +907,7 @@ void MethodDatasetsProbScan::plotFitRes(TString fName) {
       cout << "MethodDatasetsProbScan::plotFitRes() : ERROR : No pdf " << pdf->getPdfName() << " found in workspace" << endl;
       exit(1);
     }
-    w->pdf(pdf->getPdfName())->plotOn(plot);
+    w->pdf(pdf->getPdfName())->plotOn(plot, RooFit::Normalization( w->pdf( pdf->getPdfName() )->expectedEvents( *pdf->getObservables() ), RooAbsReal::NumEvent ) );
     leg->AddEntry( plot->getObject(plot->numItems()-1), "Free Fit", "L");
     // data unblinded if needed
     map<TString,TString> unblindRegs = pdf->getUnblindRegions();
