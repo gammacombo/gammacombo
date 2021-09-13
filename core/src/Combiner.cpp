@@ -357,13 +357,53 @@ void Combiner::print()
 {
 	if ( pdfs.size()==0 ) return;
 	cout << "\nCombiner Configuration: " << title << endl;
-	cout <<   "=======================\n" << endl;
+	cout <<   "=======================" << endl;
 	// consice summary
 	for (int i=0; i<pdfs.size(); i++ ){
 		TString name = pdfs[i]->getName();
 		name.ReplaceAll(pdfs[i]->getUniqueID(),"");
 		printf("%2i. [measurement %3i] %-65s\n", i+1, pdfs[i]->getGcId(), (pdfs[i]->getTitle()).Data());
 	}
+	if ( arg->verbose ) {
+    cout <<   "=======================" << endl;
+    // print observables of the combination
+    vector<string>& olist = getObservableNames();
+    TString obslist = "";
+    obslist += Form("%4d input observables: (",int(olist.size()));
+    int indent_length = obslist.Length();
+    int cur_length = obslist.Length();
+    for (int o=0; o<olist.size()-1; o++) {
+      obslist += " "+olist[o]+",";
+      cur_length += olist[o].length()+2;
+      if ( cur_length > 100 ) {
+        cur_length = indent_length;
+        obslist += "\n";
+        for (int i=0; i<indent_length; i++) obslist += " ";
+      }
+    }
+    obslist += " "+olist[olist.size()-1] + " )";
+    cout << obslist << endl;
+
+    // print free parameters of the combination
+    vector<string>& plist = getParameterNames();
+    TString parlist = "";
+    parlist += Form("%4d free parameters:   (",int(plist.size()));
+    indent_length = parlist.Length();
+    cur_length = parlist.Length();
+    for (int p=0; p<plist.size()-1; p++) {
+      parlist += " "+plist[p]+",";
+      cur_length += plist[p].length()+2;
+      if ( cur_length > 100 ) {
+        cur_length = indent_length;
+        parlist += "\n";
+        for (int i=0; i<indent_length; i++) parlist += " ";
+      }
+    }
+    parlist += " "+plist[plist.size()-1] + " )";
+    cout << parlist << endl;
+  }
+	cout <<   "=======================" << endl;
+
 	// verbose printout
 	if ( arg->verbose ){
 		cout << "\nDetailed Configuration:" << endl;

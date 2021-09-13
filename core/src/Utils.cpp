@@ -494,6 +494,7 @@ void Utils::setParameters(RooWorkspace* w, RooFitResult* values){
 			var->setVal(p->getVal());
 		}
 	}
+  delete it;
 	return;
 };
 
@@ -582,13 +583,12 @@ void Utils::setParameters(RooWorkspace* w, TString parname, RooFitResult* r, boo
 
 void Utils::setParameters(RooWorkspace* w, TString parname, RooSlimFitResult* r, bool constAndFloat)
 {
-	if ( constAndFloat ){
-		RooArgList list = r->floatParsFinal();
-		list.add(r->constPars());
-		setParameters(w, parname, &list);
-		return;
-	}
-	setParameters(w, parname, &(r->floatParsFinal()));
+  // avoid calls to floatParsFinal on a RooSlimFitResult - errgh!
+	vector<string> &names = r->_parsNames;
+  for ( int i=0; i<names.size(); i++ ) {
+    RooRealVar *var = (RooRealVar*)w->var(names[i].c_str());
+    if (var) var->setVal( r->_parsVal[i] );
+  }
 }
 
 ///
@@ -749,6 +749,22 @@ TMatrixDSym* Utils::buildCovMatrix(TMatrixDSym &cor, vector<double> &err)
 			cov[i][j] = err[i] * cor[i][j] * err[j];
 		}
 	return new TMatrixDSym(cov);
+}
+
+///
+/// Make a theory var in which the parmaeter list gets slimmed down to only
+/// contain the relevant dependents.
+/// This is a workaround for changes in RooFormulaVar that break things when
+/// making subset pdfs
+RooFormulaVar* Utils::makeTheoryVar(TString name, TString title, TString formula, RooArgList* pars)
+{
+  RooArgList *explicitDependents = new RooArgList();
+  for ( int i=0; i<pars->getSize(); i++ ) {
+    if ( formula.Contains( TString( pars->at(i)->GetName() ) ) ) {
+      explicitDependents->add( *(pars->at(i)) );
+    }
+  }
+  return new RooFormulaVar( name, title, formula, *explicitDependents );
 }
 
 ///
@@ -947,9 +963,10 @@ TGraph* Utils::smoothHist(TH1* h, int option)
 /// \param uniqueName - true: append a unique string to the histogram name
 /// \return a new histogram. Caller assumes ownership.
 ///
-TH1F* Utils::histHardCopy(const TH1F* h, bool copyContent, bool uniqueName)
+TH1F* Utils::histHardCopy(const TH1F* h, bool copyContent, bool uniqueName, TString specName)
 {
 	TString name = h->GetTitle();
+  if ( specName != "" ) name = specName;
 	if ( uniqueName ) name += getUniqueRootName();
 	TH1F* hNew = new TH1F(name, h->GetTitle(),
 			h->GetNbinsX(),
@@ -966,9 +983,10 @@ TH1F* Utils::histHardCopy(const TH1F* h, bool copyContent, bool uniqueName)
 /// Creates a fresh, independent copy of the input histogram.
 /// 2d version of TH1F* Utils::histHardCopy().
 ///
-TH2F* Utils::histHardCopy(const TH2F* h, bool copyContent, bool uniqueName)
+TH2F* Utils::histHardCopy(const TH2F* h, bool copyContent, bool uniqueName, TString specName)
 {
 	TString name = h->GetTitle();
+  if ( specName != "" ) name = specName;
 	if ( uniqueName ) name += getUniqueRootName();
 	TH2F* hNew = new TH2F(name, h->GetTitle(),
 			h->GetNbinsX(),

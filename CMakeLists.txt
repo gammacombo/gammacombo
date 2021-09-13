@@ -171,6 +171,7 @@ SET(CORE_DICTIONARY_SOURCES
 	RooPoly3Var.h
 	RooPoly4Var.h
 	RooSlimFitResult.h
+  RooMultiPdf.h
 )
 # add a make rule for the dictionary
 ROOT_GENERATE_DICTIONARY(${PROJECT_NAME}Dict

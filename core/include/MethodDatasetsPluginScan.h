@@ -36,7 +36,6 @@ public:
     inline  void        addFile(TString name) {inputFiles.push_back(name);};
 
     PDF_Datasets*           pdf;
-    bool                    drawPlots;
     bool                    explicitInputFile;
     std::vector<TString>    inputFiles;
     std::vector<double>     bootstrapPVals;

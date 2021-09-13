@@ -285,7 +285,9 @@ void MethodAbsScan::initScan()
 		setLimit(w, scanVar2, "scan");
 		float min2 = par2->getMin();
 		float max2 = par2->getMax();
+    if (hCL2d) delete hCL2d;
 		hCL2d      = new TH2F("hCL2d"+getUniqueRootName(),      "hCL2d"+pdfName, nPoints2dx, min1, max1, nPoints2dy, min2, max2);
+    if (hChi2min2d) delete hChi2min2d;
 		hChi2min2d = new TH2F("hChi2min2d"+getUniqueRootName(), "hChi2min",      nPoints2dx, min1, max1, nPoints2dy, min2, max2);
 		for ( int i=1; i<=nPoints2dx; i++ )
 			for ( int j=1; j<=nPoints2dy; j++ ) hChi2min2d->SetBinContent(i,j,1e6);
@@ -507,7 +509,7 @@ int MethodAbsScan::scan2d()
 ///
 void MethodAbsScan::interpolateSimple(TH1F* h, int i, float y, float &val)
 {
-	// cout << "MethodAbsScan::interpolateSimple(): i=" << i << " y=" << y << endl;
+	// std::cout << "MethodAbsScan::interpolateSimple(): i=" << i << " y=" << y << std::endl;
 	if ( !( 1 <= i && i <= h->GetNbinsX()-1 ) ) return;
 	float p1x = h->GetBinCenter(i);
 	float p1y = h->GetBinContent(i);
@@ -547,69 +549,120 @@ bool MethodAbsScan::interpolate(TH1F* h, int i, float y, float central, bool upp
 	if ( i > h->GetNbinsX()-2 ) return false;
 	if ( i < 3 ) return false;
 
+	// if method Prob, don't interpolate (no proper error estimate)
+	if(methodName.Contains("Prob")){
+		for (int k=0;k<h->GetNbinsX();k++){
+			h->SetBinError(k+1,0.);
+		}
+	}
+
 	// compute pol2 fit interpolation
-	TGraph *g = new TGraph(3);
+	TGraphErrors *g = new TGraphErrors(3);
 	g->SetPoint(0, h->GetBinCenter(i-1), h->GetBinContent(i-1));
+	g->SetPointError(0, h->GetBinWidth(i-1)/2., h->GetBinError(i-1));
 	g->SetPoint(1, h->GetBinCenter(i),   h->GetBinContent(i));
+	g->SetPointError(1, h->GetBinWidth(i)/2., h->GetBinError(i));
 	g->SetPoint(2, h->GetBinCenter(i+1), h->GetBinContent(i+1));
+	g->SetPointError(2, h->GetBinWidth(i+1)/2., h->GetBinError(i+1));
 
 	// see if we can add a 4th and 5th point
-	if ( (h->GetBinContent(i-2) < h->GetBinContent(i-1) && h->GetBinContent(i-1) < h->GetBinContent(i))
-			|| (h->GetBinContent(i-2) > h->GetBinContent(i-1) && h->GetBinContent(i-1) > h->GetBinContent(i)) )
+	if ( (h->GetBinContent(i-2) - h->GetBinError(i-2) < h->GetBinContent(i-1) + h->GetBinError(i-1) && h->GetBinContent(i-1) < h->GetBinContent(i))
+			|| (h->GetBinContent(i-2) + h->GetBinError(i-2) > h->GetBinContent(i-1) - h->GetBinError(i-1) && h->GetBinContent(i-1) > h->GetBinContent(i)) )
 	{
-		// add to the beginning
-		TGraph *gNew = new TGraph(g->GetN()+1);
-		gNew->SetPoint(0, h->GetBinCenter(i-2), h->GetBinContent(i-2));
-		Double_t pointx, pointy;
-		for ( int i=0; i<g->GetN(); i++)
+		if((upper && h->FindBin(central)<i-2)||!upper) // don't use for upper limit calculation if point is equal or below central value
 		{
-			g->GetPoint(i, pointx, pointy);
-			gNew->SetPoint(i+1, pointx, pointy);
+			// add to the beginning
+			TGraphErrors *gNew = new TGraphErrors(g->GetN()+1);
+			gNew->SetPoint(0, h->GetBinCenter(i-2), h->GetBinContent(i-2));
+			gNew->SetPointError(0, h->GetBinWidth(i-2)/2., h->GetBinError(i-2));
+			Double_t pointx, pointy;
+			Double_t pointxerr, pointyerr;
+			for ( int i=0; i<g->GetN(); i++)
+			{
+				g->GetPoint(i, pointx, pointy);
+				pointxerr = g->GetErrorX(i);
+				pointyerr = g->GetErrorY(i);
+				gNew->SetPoint(i+1, pointx, pointy);
+				gNew->SetPointError(i+1, pointxerr, pointyerr);
+			}
+			delete g;
+			g = gNew;
 		}
-		delete g;
-		g = gNew;
 	}
 
-	if ( (h->GetBinContent(i+2) < h->GetBinContent(i+1) && h->GetBinContent(i+1) < h->GetBinContent(i))
-			|| (h->GetBinContent(i+2) > h->GetBinContent(i+1) && h->GetBinContent(i+1) > h->GetBinContent(i)) )
+	if ( (h->GetBinContent(i+2) - h->GetBinError(i+2) < h->GetBinContent(i+1) + h->GetBinError(i+1)&& h->GetBinContent(i+1) < h->GetBinContent(i))
+			|| (h->GetBinContent(i+2) + h->GetBinError(i+2)> h->GetBinContent(i+1) - h->GetBinError(i+1)&& h->GetBinContent(i+1) > h->GetBinContent(i)) )
 	{
-		// add to the end
-		g->Set(g->GetN()+1);
-		g->SetPoint(g->GetN()-1, h->GetBinCenter(i+2), h->GetBinContent(i+2));
+		if((!upper && h->FindBin(central)>i+2)|| upper) // don't use for lower limit calculation if point is equal or above central value
+		{
+			// add to the end
+			g->Set(g->GetN()+1);
+			g->SetPoint(g->GetN()-1, h->GetBinCenter(i+2), h->GetBinContent(i+2));
+			g->SetPointError(g->GetN()-1, h->GetBinWidth(i+2)/2., h->GetBinError(i+2));
+		}
 	}
 
-	// debug: show fitted 1-CL histogram
-	// if ( y>0.1 )
-	// if ( methodName == TString("Plugin") && y<0.1 )
-	// {
-	//   TString debugTitle = methodName + Form(" y=%.2f ",y);
-	//   debugTitle += upper?Form("%f upper",central):Form("%f lower",central);
-	//   TCanvas *c = newNoWarnTCanvas(getUniqueRootName(), debugTitle);
-	//   g->SetMarkerStyle(3);
-	//   g->SetHistogram(h);
-	//   h->Draw();
-	//   g->Draw("p");
-	// }
 
-	TF1 *f1 = new TF1("f1", "pol2", h->GetBinCenter(i-2), h->GetBinCenter(i+2));
+	TF1 *f1 = new TF1("f1", "[0]+[1]*(x-[2])", h->GetBinCenter(i-2), h->GetBinCenter(i+2));
+	TF1 *f2 = new TF1("f2", "[0]+[1]*(x-[3])+[2]*(x-[3])**2", h->GetBinCenter(i-2), h->GetBinCenter(i+2));
+	f1->FixParameter(2,h->GetBinCenter(i));
+	f2->FixParameter(3,h->GetBinCenter(i));
+
+	f1->SetParameter(1,(h->GetBinContent(i+1)-h->GetBinContent(i))/h->GetBinWidth(i));
 	g->Fit("f1", "q");    // fit linear to get decent start parameters
-	g->Fit("f1", "qf+");  // refit with minuit to get more correct errors (TGraph fit errors bug)
-	float p[3], e[3];
-	for ( int ii=0; ii<3; ii++ )
-	{
-		p[ii] = f1->GetParameter(ii);
-		e[ii] = f1->GetParError(ii);
-	}
+	f2->SetParameter(0,f1->GetParameter(0));
+	f2->SetParameter(1,f1->GetParameter(1));
+	g->Fit("f2", "qf+");  // refit with minuit to get more correct errors (TGraph fit errors bug)
+	double p[3], e[3];
+	// for ( int ii=0; ii<3; ii++ )
+	// {
+	// 	p[ii] = f2->GetParameter(ii);
+	// 	e[ii] = f2->GetParError(ii);
+	// }
+	p[0]= f2->GetParameter(2)*(f2->GetParameter(3)*f2->GetParameter(3))-f2->GetParameter(1)*f2->GetParameter(3)+f2->GetParameter(0);
+	p[1]= f2->GetParameter(1)-2*f2->GetParameter(2)*f2->GetParameter(3);
+	p[2]= f2->GetParameter(2);
 
-	float sol0 = pq(p[0], p[1], p[2], y, 0);
-	float sol1 = pq(p[0], p[1], p[2], y, 1);
+	double sol0 = pq(p[0], p[1], p[2], y, 0);
+	double sol1 = pq(p[0], p[1], p[2], y, 1);
 	// cout << upper << " ";
 	// printf("%f %f %f\n", central, sol0, sol1);
-	if(h->GetBinCenter(i-2) > sol0 || sol0 > h->GetBinCenter(i+2) || h->GetBinCenter(i-2) > sol1 || sol1 > h->GetBinCenter(i+2))
+
+	// std::cout << central << "\t" << sol0 << "\t" <<sol1 << std::endl;
+
+	// debug: show fitted 1-CL histogram
+	if ( arg->controlplot)
 	{
-		if(arg->verbose || arg->debug) cout << "Polynomial interpolation out of bounds." << endl;
+	  TString debugTitle = methodName + Form(" y=%.2f ",y);
+	  debugTitle += upper?Form("%f upper",central):Form("%f lower",central);
+	  TCanvas *c = newNoWarnTCanvas(getUniqueRootName(), debugTitle);
+	  g->SetMarkerStyle(3);
+	  g->SetHistogram(h);
+	  h->Draw();
+	  g->Draw("p");
+	  f2->Draw("SAME");
+	  savePlot(c,TString(name+"_"+scanVar1+"_boundary_interpolation_"+methodName+"_"+TString(h->GetName())+"_"+std::to_string(y)));
+	}
+
+
+
+	if((h->GetBinCenter(i-2) > sol0 || sol0 > h->GetBinCenter(i+2)) && (h->GetBinCenter(i-2) > sol1 || sol1 > h->GetBinCenter(i+2)))
+	{
+		if(arg->verbose || arg->debug){
+			cout << "MethodAbsScan::interpolate(): Quadratic interpolation out of bounds [" << h->GetBinCenter(i-2) <<", " << h->GetBinCenter(i+2) << "]:"<< std::endl;
+			std::cout << "Solutions are "<< central << "(free fit result)\t" << sol0 << "(bound solution 0) \t" <<sol1 << "(bound solution 1)." << std::endl;
+		}
 		return false;
 	}
+	else if(sol0!=sol0 || sol1!=sol1){
+		if(arg->verbose || arg->debug){
+			cout << "MethodAbsScan::interpolate(): Quadratic interpolation leads to NaN:"<< std::endl;
+			std::cout << "Solutions are "<< central << "(free fit result)\t" << sol0 << "(bound solution 0) \t" <<sol1 << "(bound solution 1)." << std::endl;		
+		}
+		return false;
+	}
+
+
 
 	int useSol = 0;
 
@@ -748,10 +801,11 @@ void MethodAbsScan::calcCLintervals(int CLsType, bool calc_expected)
 				if ( histogramCL->GetBinContent(i) < y ){
 					if ( n>25 ){
 						bool check = interpolate(histogramCL, i, y, sol, false, CLlo[c], CLloErr[c]);
-            if(!check && (arg->verbose ||arg->debug)) cout << "MethodAbsScan::calcCLintervals(): Using linear interpolation." << endl;
+            			if(!check && (arg->verbose ||arg->debug)) cout << "MethodAbsScan::calcCLintervals(): Using linear interpolation." << endl;
 						if ( !check || CLlo[c]!=CLlo[c] ) interpolateSimple(histogramCL, i, y, CLlo[c]);
 					}
 					else{
+						cout << "MethodAbsScan::calcCLintervals(): Low number of scan points. Using linear interpolation." << endl;
 						interpolateSimple(histogramCL, i, y, CLlo[c]);
 					}
 					break;
@@ -767,6 +821,7 @@ void MethodAbsScan::calcCLintervals(int CLsType, bool calc_expected)
 						if (!check || CLhi[c]!=CLhi[c] ) interpolateSimple(histogramCL, i-1, y, CLhi[c]);
 					}
 					else{
+						cout << "MethodAbsScan::calcCLintervals(): Low number of scan points. Using linear interpolation." << endl;
 						interpolateSimple(histogramCL, i-1, y, CLhi[c]);
 					}
 					break;
