@@ -1158,9 +1158,9 @@ void GammaComboEngine::make1dProbScan(MethodProbScan *scanner, int cId)
 	cout << "\nResults:" << endl;
 	cout <<   "========\n" << endl;
 	scanner->printLocalMinima();
-  	scanner->saveLocalMinima(m_fnamebuilder->getFileNameSolution(scanner));
+  scanner->saveLocalMinima(m_fnamebuilder->getFileNameSolution(scanner));
 	scanner->computeCLvalues();
-	scanner->calcCLintervals();
+	if (!arg->confirmsols) scanner->calcCLintervals();
 	if (arg->cls.size()>0) scanner->calcCLintervals(1); // for prob method CLsType>1 doesn't exist
 	if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
 		if ( arg->plotpulls ) scanner->plotPulls();
@@ -1275,7 +1275,7 @@ void GammaComboEngine::make1dCoverageScan(MethodCoverageScan *scanner, int cId)
   }
   else {
     scanner->readScan1dTrees( arg->jmin[cId], arg->jmax[cId] );
-    scanner->saveScanner( m_fnamebuilder->getFileNameScanner( scanner ) );
+    scanner->saveScanner( m_fnamebuilder->getFileNameScanner( scanner ).ReplaceAll("Coverage",Form("id%d_Coverage",arg->id)) );
   }
 
 }

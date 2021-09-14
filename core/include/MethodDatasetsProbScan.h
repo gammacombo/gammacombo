@@ -26,7 +26,7 @@ public:
     void                loadFitResults(TString file);
     void                loadParameterLimits();
     virtual void        print();
-    virtual int         scan1d(bool fast=false, bool reverse=false);
+    virtual int         scan1d(bool fast=false, bool reverse=false, bool quiet=false);
     virtual int         scan2d();
 		virtual bool        loadScanner(TString fName);
     inline  void        setInputFile(TString name) {inputFiles.push_back(name); explicitInputFile = true;};

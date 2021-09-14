@@ -86,7 +86,7 @@ namespace Utils
 
 	RooFitResult*   fitToMin(RooAbsPdf *pdf, bool thorough, int printLevel);
 	RooFitResult*   fitToMinBringBackAngles(RooAbsPdf *pdf, bool thorough, int printLevel);
-	RooFitResult*   fitToMinForce(RooWorkspace *w, TString name, TString forceVariables="");
+	RooFitResult*   fitToMinForce(RooWorkspace *w, TString name, TString forceVariables="", bool debug=true);
 	RooFitResult*   fitToMinImprove(RooWorkspace *w, TString name);
 	double          getChi2(RooAbsPdf *pdf);
 	TH1F*           histHardCopy(const TH1F* h, bool copyContent=true, bool uniqueName=true, TString specName="");
@@ -97,6 +97,8 @@ namespace Utils
   TGraph* smoothGraph(TGraph* g, int option=0);
   TGraph* smoothHist(TH1* h, int option=0);
 
+	void addSetNamesToList( vector<string>& list, RooWorkspace *w, TString setName);
+	void makeNamedSet(RooWorkspace *w, TString mergedSet, vector<string>& names);
 	void mergeNamedSets(RooWorkspace *w, TString mergedSet, TString set1, TString set2);
 	void randomizeParameters(RooWorkspace* w, TString setname);
 	void randomizeParametersGaussian(RooWorkspace* w, TString setname, RooSlimFitResult *r);

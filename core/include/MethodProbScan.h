@@ -59,7 +59,7 @@ public:
   inline TH1F*    getHChi2min(){return hChi2min;};
   void            saveSolutions();
   void            saveSolutions2d();
-  virtual int             scan1d(bool fast=false, bool reverse=false);
+  virtual int             scan1d(bool fast=false, bool reverse=false, bool quiet=false);
   virtual int             scan2d();
   inline void     setScanDisableDragMode(bool f=true){scanDisableDragMode = f;};
 

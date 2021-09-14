@@ -183,6 +183,9 @@ void MethodAbsScan::doInitialFit(bool force)
 		p.printPulls(0.);
 		cout << "MethodAbsScan::doInitialFit() : PDF evaluated at init parameters: ";
 		cout << w->pdf(pdfName)->getVal() << endl;
+		RooFormulaVar ll("ll", "ll", "-2*log(@0)", RooArgSet(*w->pdf(pdfName)));
+		cout << "MethodAbsScan::doInitialFit() : Chi2 at init parameters: ";
+		cout << ll.getVal() << endl;
 	}
 
 	int quiet = arg->debug ? 1 : -1;
@@ -657,7 +660,7 @@ bool MethodAbsScan::interpolate(TH1F* h, int i, float y, float central, bool upp
 	else if(sol0!=sol0 || sol1!=sol1){
 		if(arg->verbose || arg->debug){
 			cout << "MethodAbsScan::interpolate(): Quadratic interpolation leads to NaN:"<< std::endl;
-			std::cout << "Solutions are "<< central << "(free fit result)\t" << sol0 << "(bound solution 0) \t" <<sol1 << "(bound solution 1)." << std::endl;		
+			std::cout << "Solutions are "<< central << "(free fit result)\t" << sol0 << "(bound solution 0) \t" <<sol1 << "(bound solution 1)." << std::endl;
 		}
 		return false;
 	}
@@ -708,7 +711,7 @@ bool MethodAbsScan::interpolate(TH1F* h, int i, float y, float central, bool upp
 /// Use a fit-based interpolation (interpolate()) if we have more than 25 bins,
 /// else revert to a straight line interpolation (interpolateSimple()).
 ///
-void MethodAbsScan::calcCLintervals(int CLsType, bool calc_expected)
+void MethodAbsScan::calcCLintervals(int CLsType, bool calc_expected, bool quiet)
 {
 	TH1F *histogramCL = this->getHCL();
 	// calc CL intervals with CLs method
@@ -766,7 +769,7 @@ void MethodAbsScan::calcCLintervals(int CLsType, bool calc_expected)
 	}
 
   if ( arg->debug ) cout << "MethodAbsScan::calcCLintervals() : ";
-  cout << "CONFIDENCE INTERVALS for combination " << name << endl << endl;
+  if (!quiet) cout << "CONFIDENCE INTERVALS for combination " << name << endl << endl;
 
 	clintervals1sigma.clear(); // clear, else calling this function twice doesn't work
 	clintervals2sigma.clear();
@@ -861,7 +864,7 @@ void MethodAbsScan::calcCLintervals(int CLsType, bool calc_expected)
 			clintervals1sigma.push_back(i);
 		}
 	}
-	printCLintervals(CLsType, calc_expected);
+	if (!quiet) printCLintervals(CLsType, calc_expected);
 
 	//
 	// scan again from the histogram boundaries
@@ -987,18 +990,18 @@ void MethodAbsScan::printCLintervals(int CLsType, bool calc_expected)
 /// Get the CL interval that includes the best-fit value.
 /// \param sigma 1,2
 ///
-CLInterval MethodAbsScan::getCLintervalCentral(int sigma)
+CLInterval MethodAbsScan::getCLintervalCentral(int sigma, bool quiet)
 {
-  return getCLinterval(0,sigma);
+  return getCLinterval(0,sigma,quiet);
 }
 
 ///
 /// Get the CL interval that includes the best-fit value.
 /// \param sigma 1,2
 ///
-CLInterval MethodAbsScan::getCLinterval(int iSol, int sigma)
+CLInterval MethodAbsScan::getCLinterval(int iSol, int sigma, bool quiet)
 {
-	if ( clintervals1sigma.size()==0 ) calcCLintervals();
+	if ( clintervals1sigma.size()==0 ) calcCLintervals(0,false,quiet);
 	if ( clintervals1sigma.size()==0 ){
 		// no constraint at 1sigma, return full range.
 		assert(hCL);
@@ -1537,6 +1540,7 @@ void MethodAbsScan::plotPulls(int nSolution)
 {
 	PullPlotter p(this);
 	p.loadParsFromSolution(nSolution);
+	p.savePulls();
 	p.plotPulls();
 }
 
