@@ -12,16 +12,16 @@
 
 SET( COMBINER_MODULES
 	tutorial
-  alphacombo
+	#alphacombo
   #biggammacombo
-  gammacombo
+	#gammacombo
   #hfag
   #belle2
   #belle2_Vub
   #Vub_Vcb
   #bsmumu
   #bs24mu
-  ReImPlots
+	#ReImPlots
   #Rd_Rdst
   #RhoEta
   #RizwaanPartIII
