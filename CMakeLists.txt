@@ -32,6 +32,11 @@ if(CCACHE_FOUND)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
 endif(CCACHE_FOUND)
 
+# find FreeType
+find_package(Freetype REQUIRED)
+MESSAGE("FREETYPE_LIBRARIES: " ${FREETYPE_LIBRARIES})
+#MESSAGE("FREETYPE_LIBRARY_DIR: " ${FREETYPE_LIBRARY})
+
 # find ROOT
 FIND_PACKAGE(ROOT REQUIRED)
 # defines:
@@ -151,7 +156,7 @@ INCLUDE_DIRECTORIES(
 	${ROOT_INCLUDE_DIR}
 )
 # declare the ROOT library path
-LINK_DIRECTORIES(${ROOT_LIBRARY_DIR})
+LINK_DIRECTORIES(${ROOT_LIBRARY_DIR} /usr/local/lib)
 
 # define the sources of the core library
 AUX_SOURCE_DIRECTORY( ./core/src          CORE_LIB_SOURCES )
@@ -193,7 +198,7 @@ ADD_SHARED_LIBRARY( ${PROJECT_NAME}Components ${CORE_LIB_SOURCES} )
 # add the ROOT dictionary to the list of dependencies
 add_dependencies( ${PROJECT_NAME}Components ${PROJECT_NAME}Dict )
 # add ROOT libraries to the linker command
-TARGET_LINK_LIBRARIES( ${PROJECT_NAME}Components ${ROOT_LIBRARIES} )
+TARGET_LINK_LIBRARIES( ${PROJECT_NAME}Components ${ROOT_LIBRARIES} ${FREETYPE_LIBRARIES} )
 install( FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Dict_rdict.pcm DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/lib )
 
 ######################################

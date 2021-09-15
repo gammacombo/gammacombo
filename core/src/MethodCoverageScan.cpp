@@ -22,7 +22,8 @@ int MethodCoverageScan::scan1d(int nRun)
     exit(1);
   }
 	nToys = arg->ncoveragetoys;
-	TString forceVariables = "dD_k3pi,dD_kpi,d_dk,g,d_dpi,r_dpi,";
+	//TString forceVariables = "dD_k3pi,dD_kpi,d_dk,g,d_dpi,r_dpi,";
+	TString forceVariables = "";
 
 	// set up a graph of chi2 of best solution
 	TCanvas* c2 = new TCanvas("c2runToys", "chi2");
@@ -81,17 +82,21 @@ int MethodCoverageScan::scan1d(int nRun)
 
 	// set up a ToyTree to save the results from the
 	// plugin toys
-	ToyTree *myTree = new ToyTree(combiner);
+	ToyTree *myTree = new ToyTree(combiner,0,true);
 	myTree->init();
 
 	// for testing purposes we can fully scan the first 10 toys, set up a plot for this
 	//OneMinusClPlot *plot = 0;
 	//if ( arg->isAction("test") ) plot = new OneMinusClPlot(arg, "coveragetest_plugin_omcl");
+	//
+	//ProgressBar *pb = new ProgressBar(arg, nToys);
 
 	// toy loop
 	for ( int i=0; i<nToys; i++ )
 	{
 		cout << "ITOY = " << i << endl;
+		//pb->progress();
+
 		tId = i;
 		RooWorkspace *w = combiner->getWorkspace();
 		TString pdfName = combiner->getPdfName();
@@ -99,7 +104,7 @@ int MethodCoverageScan::scan1d(int nRun)
 		TString varName = arg->var[0];
 
 		// set point to test the coverage at
-    int id = arg->id < 0 ? 0 : arg->id;
+    int id = arg->id;
     pCache->setPoint(combiner, id);
 
     // tree gen sol
@@ -137,14 +142,14 @@ int MethodCoverageScan::scan1d(int nRun)
 		FitResultCache frCache(arg);
 		frCache.storeParsAtFunctionCall(w->set(parName));
 
-		cout << "FREE" << endl;
+		cout << "Free Fit" << endl;
 		w->var(varName)->setConstant(false);
-		RooFitResult* rToyFreeFull = fitToMinForce(w, pdfName, forceVariables);
+		RooFitResult* rToyFreeFull = fitToMinForce(w, pdfName, forceVariables, false);
 		if ( !rToyFreeFull ) continue;
 		RooSlimFitResult *rToyFree = new RooSlimFitResult(rToyFreeFull);
 		tChi2free = rToyFree->minNll();  ///< save for tree
 		tSol = w->var(varName)->getVal();
-		rToyFree->Print();
+		if (arg->verbose) rToyFree->Print();
 		delete rToyFreeFull;
 
     // can fill values of fit parameters here
@@ -152,14 +157,14 @@ int MethodCoverageScan::scan1d(int nRun)
       paramVals[i] = w->var( combiner->getParameterNames()[i].c_str() )->getVal();
     }
 
-		cout << "SCAN" << endl;
+		cout << "Scan Point Fit" << endl;
 		setParameters(w, parName, frCache.getParsAtFunctionCall());
 		w->var(varName)->setConstant(true);
-		RooFitResult* rToyScanFull = fitToMinForce(w, pdfName, forceVariables);
+		RooFitResult* rToyScanFull = fitToMinForce(w, pdfName, forceVariables, false);
 		if ( !rToyScanFull ) continue;
 		RooSlimFitResult *rToyScan = new RooSlimFitResult(rToyScanFull);
 		tChi2scan = rToyScan->minNll();  ///< save for tree
-		rToyScan->Print();
+		if (arg->verbose) rToyScan->Print();
 		w->var(varName)->setConstant(false);
 		delete rToyScanFull;
 
@@ -176,8 +181,11 @@ int MethodCoverageScan::scan1d(int nRun)
 		//
 		// compute p-value of the Plugin method
 		//
+		cout << "PLUGIN...";
 		MethodPluginScan *scanner = new MethodPluginScan(combiner);
-		tPvalue = scanner->getPvalue1d(rToyScan, tChi2free, myTree, i);
+		scanner->initScan();
+		tPvalue = scanner->getPvalue1d(rToyScan, tChi2free, myTree, i, !arg->verbose);
+		cout << "Done" << endl;
 		cout << "P VALUE IS " << tPvalue << endl;
 		hPvalues->Fill(tPvalue);
 		c3->cd();
@@ -185,20 +193,21 @@ int MethodCoverageScan::scan1d(int nRun)
 		c3->Update();
 
     // now do the uncertainty scan for the Prob method
+		cout << "PROB" << endl;
     MethodProbScan *probScanner = new MethodProbScan( combiner );
     probScanner->initScan();
     probScanner->loadParameters( rToyFree ); // load parameters from forced fit
-    probScanner->scan1d();
+    probScanner->scan1d(false,false,true);
     //vector<RooSlimFitResult*> firstScanSolutions = probScanner->getSolutions();
     //for ( int i=0; i<firstScanSolutions.size(); i++ ){
       //probScanner->loadParameters( firstScanSolutions[i] );
       //probScanner->scan1d(true);
     //}
     probScanner->confirmSolutions();
-    probScanner->printLocalMinima();
-    CLInterval probSig1Int = probScanner->getCLintervalCentral(1);
-    CLInterval probSig2Int = probScanner->getCLintervalCentral(2);
-    CLInterval probSig3Int = probScanner->getCLintervalCentral(3);
+    if (arg->verbose) probScanner->printLocalMinima();
+    CLInterval probSig1Int = probScanner->getCLintervalCentral(1,true);
+    CLInterval probSig2Int = probScanner->getCLintervalCentral(2,true);
+    CLInterval probSig3Int = probScanner->getCLintervalCentral(3,true);
     tSolScan        = probSig1Int.central;
     tSolProbErr1Low = probSig1Int.min;
     tSolProbErr1Up  = probSig1Int.max;
@@ -256,6 +265,7 @@ void MethodCoverageScan::readScan1dTrees(int runMin, int runMax) {
   if (arg->debug) c->Print();
 
 	// initialize histograms
+	t_res           = new TTree("t_res", "Toys");
 	h_sol           = new TH1F("h_sol", "best solution", 100, 0, 180);
 	h_pvalue_plugin = new TH1F("h_pvalue_plugin", "p-value", 50, 0, 1);
 	h_pvalue_prob   = new TH1F("h_pvalue_prob",   "p-value", 50, 0, 1);
@@ -279,6 +289,15 @@ void MethodCoverageScan::readScan1dTrees(int runMin, int runMax) {
 	c->SetBranchAddress("solGen",   &tSolGen);
 	c->SetBranchAddress("pvalue",   &tPvalue);
   c->SetBranchAddress("nrun",     &tnRun);
+	float tPvalProb = 0.0;
+	float tPvalPlug = 0.0;
+	float tPvalProbNT = 0.0;
+	float tPvalPlugNT = 0.0;
+	t_res->Branch("sol", &tSol);
+	t_res->Branch("pvalue_prob", &tPvalProb);
+	t_res->Branch("pvalue_plug", &tPvalPlug);
+	t_res->Branch("pvalue_prob_notransf", &tPvalProbNT);
+	t_res->Branch("pvalue_prob_notransf", &tPvalPlugNT);
 
 	// initialize loop variables
 	nentries  = c->GetEntries();
@@ -307,6 +326,9 @@ void MethodCoverageScan::readScan1dTrees(int runMin, int runMax) {
 		// fill prob p-value distribution
 		float pvalueProb = TMath::Prob(tChi2scan-tChi2free,1);
 		h_pvalue_prob_notransf->Fill(pvalueProb);
+		// fill tree
+		tPvalProb = pvalueProb;
+		tPvalPlug = tPvalue;
 	}
 
 	// fit p-values (if transFunc=="none" don't bother)
@@ -352,6 +374,7 @@ void MethodCoverageScan::readScan1dTrees(int runMin, int runMax) {
 			tPvalue = transform(fitParamsPlugin,transFunc,tPvalue);
 		}
 		h_pvalue_plugin->Fill(tPvalue);
+		tPvalPlug = tPvalue;
 		if(tPvalue>1.-0.6827) n68plugin++;
 		if(tPvalue>1.-0.9545) n95plugin++;
 		if(tPvalue>1.-0.9973) n99plugin++;
@@ -367,9 +390,12 @@ void MethodCoverageScan::readScan1dTrees(int runMin, int runMax) {
 			pvalueProb = transform(fitParamsProb,transFunc,pvalueProb);
 		}
 		h_pvalue_prob->Fill(pvalueProb);
+		tPvalProb = pvalueProb;
 		if(pvalueProb>1.-0.6827) n68prob++;
 		if(pvalueProb>1.-0.9545) n95prob++;
 		if(pvalueProb>1.-0.9973) n99prob++;
+
+		t_res->Fill();
 	}
 }
 
@@ -388,6 +414,7 @@ void MethodCoverageScan::saveScanner(TString fName)
   h_pvalue_prob->Write();
   h_pvalue_plugin_notransf->Write();
   h_pvalue_prob_notransf->Write();
+	t_res->Write();
 
   // save result values
   TTree *outTree = new TTree("result_values","Coverage Result Values");
