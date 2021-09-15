@@ -116,7 +116,12 @@ TString FileNameBuilder::getFileNameAsimovPar(const MethodAbsScan *s)
 TString FileNameBuilder::getFileNamePar(const Combiner *c)
 {
 	TString name = "plots/par/";
-	name += getFileBaseName(c);
+	if ( m_arg->filenamechange != "" ) {
+			name += m_arg->filenamechange;
+	}
+	else{
+		name += getFileBaseName(c);
+	}
 	name += ".dat";
 	return name;
 }
@@ -182,10 +187,10 @@ TString FileNameBuilder::getFileNameSolution(const MethodAbsScan *c)
 TString FileNameBuilder::getFileNamePlot(const vector<Combiner*>& cmb)
 {
 	TString name = m_basename;
-    if ( m_arg->filenamechange != "" ) {
-        name += "_" + m_arg->filenamechange;
-        return name;
-    }
+	if ( m_arg->filenamechange != "" ) {
+			name += "_" + m_arg->filenamechange;
+			return name;
+	}
 
 	for ( int i=0; i<m_arg->combid.size(); i++ ){
 		name += "_"+cmb[m_arg->combid[i]]->getName();

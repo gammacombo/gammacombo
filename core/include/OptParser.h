@@ -66,6 +66,7 @@ class OptParser
 		vector<vector<RangePar> >   physRanges;
     vector<vector<TString> >    removeRanges;
     vector<vector<TString> >    randomizeToyVars;
+    bool            grid;
 		TString	        group;
 		TString	        groupPos;
 		TString         hfagLabel;
@@ -100,6 +101,7 @@ class OptParser
 		bool		parevol;
 		vector<int>	pevid;
 		vector<int>     plot2dcl;
+    TString         plotdate;
     TString         plotext;
 		int             plotid;
 		bool            plotlog;
@@ -110,6 +112,9 @@ class OptParser
 		float           plotlegsizey;
     TString         plotlegstyle;
     int             plotlegcols;
+    bool            plotlegbox;
+    float           plotlegboxx;
+    float           plotlegboxy;
 		float           plotgroupx;
 		float           plotgroupy;
     Double_t        plotHFAGLabelPosX;
@@ -154,9 +159,12 @@ class OptParser
 		float           scanrangeyMax;
     float           scaleerr;
     float           scalestaterr;
-		bool    smooth2d;
+		bool            smooth2d;
+    bool            square;
 		int    teststatistic;
 		vector<TString> title;
+    TString         xtitle;
+    TString         ytitle;
     TString         toyFiles;
     int             updateFreq;
 		bool            usage;
