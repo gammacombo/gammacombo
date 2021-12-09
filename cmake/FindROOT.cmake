@@ -42,7 +42,15 @@ if(ROOT_CONFIG_EXECUTABLE)
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
   # add libraries that are not spat out by rootconfig:
-  set(ROOT_LIBRARIES ${ROOT_LIBRARIES} -lRooFit -lRooFitCore -lRooFitMore -lHtml -lMinuit -lThread -lRooStats -lGui -lTreePlayer -lGenVector)
+  find_library(ROOFITMORE RooFitMore)
+  if(ROOFITMORE)
+    message(STATUS "RooFitMore found. You have the standard ROOT implementations of classes like RooHypatia2 and RooLegendre at your disposal.")
+    set(ROOT_LIBRARIES ${ROOT_LIBRARIES} -lRooFit -lRooFitCore -lRooFitMore -lHtml -lMinuit -lThread -lRooStats -lGui -lTreePlayer -lGenVector)
+  else()
+    message(WARNING "RooFitMore not found. You will not be able to use the standard ROOT implementations of classes like RooHypatia2 and RooLegendre.")
+    message("If you still need them, consider upgrading your ROOT version or use custom implementations.")
+    set(ROOT_LIBRARIES ${ROOT_LIBRARIES} -lRooFit -lRooFitCore -lHtml -lMinuit -lThread -lRooStats -lGui -lTreePlayer -lGenVector)
+  endif()
   set(ROOT_LIBRARY_DIR ${ROOTSYS}/lib)
 endif()
 
