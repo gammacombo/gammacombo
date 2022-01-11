@@ -626,13 +626,25 @@ int MethodDatasetsProbScan::computeCLvalues(){
         hCLs->SetBinContent(k,min(1.,hCL->GetBinContent(k)/CLb));
 
         if(arg->cls.size()>0){
-            double sigma_asimov = TMath::Sqrt(scanvalue*scanvalue/teststat_asimov);
-            hCLsExp->SetBinContent(k,(1.-normal_cdf(TMath::Sqrt(teststat_asimov)))/normal_cdf(0.)); //scanvalue/sigma_asimov
-            hCLsErr1Dn->SetBinContent(k,(1.-normal_cdf(TMath::Sqrt(teststat_asimov)+1))/normal_cdf(-1.)); //scanvalue/sigma_asimov
-            hCLsErr1Up->SetBinContent(k,(1.-normal_cdf(TMath::Sqrt(teststat_asimov)-1))/normal_cdf(+1.)); //scanvalue/sigma_asimov
-            hCLsErr2Dn->SetBinContent(k,(1.-normal_cdf(TMath::Sqrt(teststat_asimov)+2))/normal_cdf(-2.)); //scanvalue/sigma_asimov
-            hCLsErr2Up->SetBinContent(k,(1.-normal_cdf(TMath::Sqrt(teststat_asimov)-2))/normal_cdf(+2.)); //scanvalue/sigma_asimov
-            std::cout << hCLsErr2Dn->GetBinContent(k) << " " << hCLsErr1Dn->GetBinContent(k) << " " << hCLsExp->GetBinContent(k) << " " << hCLsErr1Up->GetBinContent(k) << " " << hCLsErr2Up->GetBinContent(k) << std::endl;
+            if(arg->teststatistic ==1){
+                hCLsExp->SetBinContent(k,(1.-normal_cdf(TMath::Sqrt(teststat_asimov)))/normal_cdf(0.));
+                hCLsErr1Dn->SetBinContent(k,(1.-normal_cdf(TMath::Sqrt(teststat_asimov)+1))/normal_cdf(-1.));
+                hCLsErr1Up->SetBinContent(k,(1.-normal_cdf(TMath::Sqrt(teststat_asimov)-1))/normal_cdf(+1.));
+                hCLsErr2Dn->SetBinContent(k,(1.-normal_cdf(TMath::Sqrt(teststat_asimov)+2))/normal_cdf(-2.));
+                hCLsErr2Up->SetBinContent(k,(1.-normal_cdf(TMath::Sqrt(teststat_asimov)-2))/normal_cdf(+2.));
+                //debug printout
+                std::cout << hCLsErr2Dn->GetBinContent(k) << " " << hCLsErr1Dn->GetBinContent(k) << " " << hCLsExp->GetBinContent(k) << " " << hCLsErr1Up->GetBinContent(k) << " " << hCLsErr2Up->GetBinContent(k) << std::endl;
+            }
+            else{
+                double Z = inv_normal_cdf(2*normal_cdf(TMath::Sqrt(teststat_asimov))-1.);
+                std::cout << "inv normal cdf arg " << 2*normal_cdf(TMath::Sqrt(teststat_asimov))-1. << std::endl; 
+                hCLsExp->SetBinContent(k,(1.-normal_cdf(Z)));
+                hCLsErr1Dn->SetBinContent(k,(1.-normal_cdf(Z+1))) ;
+                hCLsErr1Up->SetBinContent(k,(1.-normal_cdf(Z-1)));
+                hCLsErr2Dn->SetBinContent(k,(1.-normal_cdf(Z+2)));
+                hCLsErr2Up->SetBinContent(k,(1.-normal_cdf(Z-2)));                
+                std::cout << hCLsErr2Dn->GetBinContent(k) << " " << hCLsErr1Dn->GetBinContent(k) << " " << hCLsExp->GetBinContent(k) << " " << hCLsErr1Up->GetBinContent(k) << " " << hCLsErr2Up->GetBinContent(k) << std::endl;
+            }
         }
     }
     return 0;
