@@ -71,6 +71,7 @@
 	hCL2d(0),
 	hCLs2d(0),
 	hChi2min(0),
+	hChi2minAsimov(0),
 	hChi2min2d(0),
 	obsDataset(NULL),
 	startPars(0),

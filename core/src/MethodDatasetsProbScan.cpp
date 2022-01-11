@@ -70,7 +70,6 @@ void MethodDatasetsProbScan::initScan() {
 	}
     // setLimit(w, scanVar1, "scan");
 
-    if (hCL) delete hCL;
     // Titus: small change for consistency
     // float min1 = par1->getMin();
     // float max1 = par1->getMax();
@@ -82,7 +81,8 @@ void MethodDatasetsProbScan::initScan() {
         min1 = arg->scanrangeyMin;
         max1 = arg->scanrangeyMax;
     }
-
+    
+    if (hCL) delete hCL;
     hCL = new TH1F("hCL" + getUniqueRootName(), "hCL" + pdf->getPdfName(), nPoints1d, min1, max1);
     if ( hChi2min ) delete hChi2min;
     hChi2min = new TH1F("hChi2min" + getUniqueRootName(), "hChi2min" + pdf->getPdfName(), nPoints1d, min1, max1);
@@ -107,7 +107,7 @@ void MethodDatasetsProbScan::initScan() {
 
     // fill the chi2 histogram with very unlikely values such
     // that inside scan1d() the if clauses work correctly
-    for ( int i = 1; i <= nPoints1d; i++ ) hChi2min->SetBinContent(i, 1e6);
+    for ( int i = 1; i <= nPoints1d; i++ ) {hChi2min->SetBinContent(i, 1e6); hChi2minAsimov->SetBinContent(i, 1e6);}
 
     ///////////////////////////////////////////////////////////////////////////
     // setup everything for 2D scan
@@ -167,7 +167,7 @@ void MethodDatasetsProbScan::initScan() {
     RooMsgService::instance().setStreamStatus(1, kFALSE);
 
     // Perform the fits needed for later (the global minimum and the background)
-    // free data fit
+    //free data fit
     w->var(scanVar1)->setConstant(false);
     globalMin = loadAndFit(pdf); // fit on data free
     assert(globalMin);
@@ -209,7 +209,9 @@ void MethodDatasetsProbScan::initScan() {
         // generate the asimov
         Utils::setParameters(w,bkgOnlyFitResult); //set parameters to bkg fit to receive a bkg-only asimov
         // pdf->printParameters();
+        std::cout << "generating bkg asimov" << std::endl;
         pdf->generateBkgAsimov(0,arg->var[0]);
+        std::cout << "generating bkg asimov global observables" << std::endl;
         pdf->generateBkgAsimovGlobalObservables(0,0);
         RooAbsData* bkgOnlyAsimov = pdf->getBkgAsimovObservables();
         pdf->setToyData( bkgOnlyAsimov );
@@ -222,6 +224,7 @@ void MethodDatasetsProbScan::initScan() {
             exit(EXIT_FAILURE);
         };
         // then, fit the pdf while passing it the simulated toy dataset
+        std::cout << "fitting bkg asimov" << std::endl;
         GlobalBkgAsimovFitResult = pdf->fit(pdf->getBkgAsimovObservables());
         chi2minGlobalBkgAsimov = 2 * pdf->getMinNll();
 
@@ -624,11 +627,12 @@ int MethodDatasetsProbScan::computeCLvalues(){
 
         if(arg->cls.size()>0){
             double sigma_asimov = TMath::Sqrt(scanvalue*scanvalue/teststat_asimov);
-            hCLsExp->SetBinContent(k,normal_cdf(TMath::Sqrt(teststat_asimov))); //scanvalue/sigma_asimov
-            hCLsErr1Dn->SetBinContent(k,normal_cdf(TMath::Sqrt(teststat_asimov)+1)); //scanvalue/sigma_asimov
-            hCLsErr1Up->SetBinContent(k,normal_cdf(TMath::Sqrt(teststat_asimov)-1)); //scanvalue/sigma_asimov
-            hCLsErr2Dn->SetBinContent(k,normal_cdf(TMath::Sqrt(teststat_asimov)+2)); //scanvalue/sigma_asimov
-            hCLsErr2Up->SetBinContent(k,normal_cdf(TMath::Sqrt(teststat_asimov)-2)); //scanvalue/sigma_asimov
+            hCLsExp->SetBinContent(k,(1.-normal_cdf(TMath::Sqrt(teststat_asimov)))/normal_cdf(0.)); //scanvalue/sigma_asimov
+            hCLsErr1Dn->SetBinContent(k,(1.-normal_cdf(TMath::Sqrt(teststat_asimov)+1))/normal_cdf(-1.)); //scanvalue/sigma_asimov
+            hCLsErr1Up->SetBinContent(k,(1.-normal_cdf(TMath::Sqrt(teststat_asimov)-1))/normal_cdf(+1.)); //scanvalue/sigma_asimov
+            hCLsErr2Dn->SetBinContent(k,(1.-normal_cdf(TMath::Sqrt(teststat_asimov)+2))/normal_cdf(-2.)); //scanvalue/sigma_asimov
+            hCLsErr2Up->SetBinContent(k,(1.-normal_cdf(TMath::Sqrt(teststat_asimov)-2))/normal_cdf(+2.)); //scanvalue/sigma_asimov
+            std::cout << hCLsErr2Dn->GetBinContent(k) << " " << hCLsErr1Dn->GetBinContent(k) << " " << hCLsExp->GetBinContent(k) << " " << hCLsErr1Up->GetBinContent(k) << " " << hCLsErr2Up->GetBinContent(k) << std::endl;
         }
     }
     return 0;

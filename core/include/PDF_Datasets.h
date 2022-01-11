@@ -112,8 +112,8 @@ public:
     //> name of a snapshot that stores the values of the global observables in data
     const TString         globalObsToySnapshotName = "globalObsToySnapshotName";
     //> name of a snapshot that stores the latest simulated values for the global observables
-   TString         globalObsBkgToySnapshotName = "globalObsBkgToySnapshotName";
-   TString         globalObsBkgAsimovSnapshotName = "globalObsBkgAsimovSnapshotName";
+    TString               globalObsBkgToySnapshotName = "globalObsBkgToySnapshotName";
+    TString               globalObsBkgAsimovSnapshotName = "globalObsBkgAsimovSnapshotName";
     //> name of a snapshot that stores the latest simulated values for the global observables of the bkg-only toy
 
     //debug counters
@@ -121,10 +121,12 @@ public:
     int nsbfits;
 
 protected:
-    void initializeRandomGenerator(int seedShift);
-    RooWorkspace*   wspc;
-    RooDataSet*     data;
-    RooAbsData*     AsimovBkgObservables;
+    void                  initializeRandomGenerator(int seedShift);
+    RooAbsData*           generateBkgAsimovSinglePdf(const RooAbsPdf & pdf, const RooArgSet & allobs,  const RooRealVar & weightVar, RooCategory * channelCat);
+    void                  FillBinsAsimov(const RooAbsPdf & pdf, const RooArgList &obs, RooAbsData & data, int &index,  double &binVolume, int &ibin);
+    RooWorkspace*         wspc;
+    RooDataSet*           data;
+    RooAbsData*           AsimovBkgObservables;
     
     RooAbsReal*     _NLL; // possible pointer to minimization function
     RooAbsPdf*      _constraintPdf;
