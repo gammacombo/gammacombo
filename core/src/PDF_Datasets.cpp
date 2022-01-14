@@ -94,6 +94,10 @@ void  PDF_Datasets::initGlobalObservables(const TString& setName) {
     globalObsName = setName;
     // The global observables in the workspace are set to their observed value.
     // This value is saved.
+    if(!wspc->set(globalObsName)){
+        std::cerr << "FATAL in PDF_Datasets::initGlobalObservables -- RooArgSet " << setName << " not found in workspace" << std::endl;
+        exit(EXIT_FAILURE);        
+    }
     wspc->saveSnapshot(globalObsDataSnapshotName, *wspc->set(globalObsName));
 };
 
@@ -150,6 +154,14 @@ void PDF_Datasets::initMultipdfCat(const TString& name) {
         std::cout << "ERROR in PDF_Datasets::initMultipdfCat -- Multipdf category already set" << std::endl;
         exit(EXIT_FAILURE);
     }
+    if(!(isPdfSet || isMultipdfSet)){
+        std::cout << "ERROR in PDF_Datasets::initMultipdfCat -- Need to call initPDF() before initMultipdfCat()" << std::endl;
+        exit(EXIT_FAILURE);                
+    }
+    if(isPdfSet && !isMultipdfSet){
+        std::cout << "ERROR in PDF_Datasets::initMultipdfCat -- Pdf already set, but it's not a MultiPdf -> contradiction!" << std::endl;
+        exit(EXIT_FAILURE);        
+    }
     multipdfCatName = name;
     multipdfCat = wspc->cat(multipdfCatName);
     if (multipdfCat) isMultipdfCatSet = true;
@@ -184,6 +196,7 @@ void PDF_Datasets::initPDF(const TString& name) {
         }
     }
     else {
+        std::cout << "intitalising no multipdf. isPdfSet=" << isPdfSet << " isMultipdfSet=" << isMultipdfSet << "." << std::endl;
         pdf = wspc->pdf(pdfName);
     }
     if (pdf) isPdfSet  = true;
@@ -191,8 +204,9 @@ void PDF_Datasets::initPDF(const TString& name) {
         std::cout << "FATAL in PDF_Datasets::initPDF -- PDF: " << pdfName << " not found in workspace" << std::endl;
         exit(EXIT_FAILURE);
     }
+    if(isMultipdfSet) std::cout << "INFO in PDF_Datasets::initPDF -- PDF initialized (MultiPdf)" << std::endl;
+    else std::cout << "INFO in PDF_Datasets::initPDF -- PDF initialized" << std::endl;
 
-    std::cout << "INFO in PDF_Datasets::initPDF -- PDF initialized" << std::endl;
     if(data && getWorkspace()->obj(constraintName)) minNll = pdf->createNLL(*data, RooFit::Extended(kTRUE), RooFit::ExternalConstraints(*getWorkspace()->set(constraintName)))->getVal();
     return;
 };
@@ -300,7 +314,9 @@ void  PDF_Datasets::generateBkgToysGlobalObservables(int SeedShift, int index) {
 
     // generate the global observables into a RooArgSet
     // const RooArgSet* set = pdfBkg->generate(*(wspc->set(globalObsName)), 1)->get(0);
-    const RooArgSet* set = _constraintPdf->generate(*(wspc->set(globalObsName)), 1)->get(0);
+    const RooArgSet* set = wspc->set(globalObsName);
+    if(wspc->set(globalObsName)->getSize()>0) set = _constraintPdf->generate(*(wspc->set(globalObsName)), 1)->get(0);
+
     // iterate over the generated values and use them to update the actual global observables in the workspace
 
     TIterator* it =  set->createIterator();
@@ -320,7 +336,8 @@ void  PDF_Datasets::generateToysGlobalObservables(int SeedShift) {
     initializeRandomGenerator(SeedShift);
 
     // generate the global observables into a RooArgSet
-    const RooArgSet* set = _constraintPdf->generate(*(wspc->set(globalObsName)), 1)->get(0);
+    const RooArgSet* set = wspc->set(globalObsName);
+    if(wspc->set(globalObsName)->getSize()>0) set = _constraintPdf->generate(*(wspc->set(globalObsName)), 1)->get(0);
     // iterate over the generated values and use them to update the actual global observables in the workspace
 
     TIterator* it =  set->createIterator();
@@ -448,7 +465,7 @@ RooFitResult* PDF_Datasets::fitBkg(RooAbsData* dataToFit, TString signalvar) {
             }
           this->fitStatus = result->status()+(result->covQual()%3);
           if(this->fitStatus!=0) std::cout << "PDF_Datasets::fitBkg(): Imperfect fit! Fit status "<< result->status() << " cov Qual " << result->covQual() << std::endl;
-            return result;
+          return result;
         }
         else {
             RooFitResult* result  = pdfBkg->fitTo( *dataToFit, RooFit::Save() , RooFit::ExternalConstraints(*this->getWorkspace()->set(constraintName)), RooFit::Extended(kTRUE));
@@ -521,7 +538,6 @@ RooFitResult* PDF_Datasets::fitBkg(RooAbsData* dataToFit, TString signalvar) {
             getWorkspace()->var(signalvar)->setVal(parvalue);
             getWorkspace()->var(signalvar)->setConstant(isconst);    
             delete nll_bkg;
-    
             return result;
         }
     }
