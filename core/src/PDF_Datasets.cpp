@@ -532,7 +532,7 @@ void   PDF_Datasets::generateToys(int SeedShift) {
     initializeRandomGenerator(SeedShift);
     // RooDataSet* toys = this->pdf->generate(*observables, RooFit::NumEvents(wspc->data(dataName)->numEntries()), RooFit::Extended(kTRUE));
     //
-    RooDataSet* toys;
+    RooAbsData* toys;
     if (isMultipdfSet) {
         toys = multipdf->getPdf(bestIndexScan)->generate(*observables, wspc->data(dataName)->numEntries(),false,true,"",false,true);
     }
@@ -556,7 +556,7 @@ void   PDF_Datasets::generateBkgToys(int SeedShift, TString signalvar) {
     //     // exit(EXIT_FAILURE);
     // }
     // std::cout << "WARNING in PDF_Datasets::generateBkgToys -- Fitting bkg model as sig+bkg model with " << signalvar << " to zero!" << std::endl;
-    RooDataSet* toys;
+    RooAbsData* toys;
     if (isBkgMultipdfSet) {
         toys = multipdfBkg->getPdf(bestIndexBkg)->generate(*observables, wspc->data(dataName)->numEntries(),false,true,"",false,true);
     }
