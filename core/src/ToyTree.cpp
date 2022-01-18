@@ -1,6 +1,7 @@
 #include "ToyTree.h"
 
-ToyTree::ToyTree(Combiner *c, TChain* t)
+ToyTree::ToyTree(Combiner *c, TChain* t, bool _quiet):
+	quiet(_quiet)
 {
 	setCombiner(c); // load properties from the combiner
 	this->initMembers(t);
@@ -9,7 +10,9 @@ ToyTree::ToyTree(Combiner *c, TChain* t)
 	this->storeGlob = false;
 }
 
-ToyTree::ToyTree(PDF_Datasets *p, OptParser* opt, TChain* t){
+ToyTree::ToyTree(PDF_Datasets *p, OptParser* opt, TChain* t, bool _quiet):
+	quiet(_quiet)
+{
 	assert(p);
 	this->comb = NULL;
 	this->w = p->getWorkspace();
@@ -453,12 +456,13 @@ void ToyTree::computeMinMaxN()
 	if(branches->FindObject("scanpointy"))            t->SetBranchStatus("scanpointy",         1);
 	Long64_t nentries = t->GetEntries();
 	if ( nentries==0 ) return;
-	ProgressBar pb(arg, nentries);
+	ProgressBar *pb = NULL;
+	if ( !quiet) pb = new ProgressBar(arg, nentries);
 	if ( arg->debug ) cout << "ToyTree::computeMinMaxN() : ";
-	cout << "analysing toys ..." << endl;
+	if ( !quiet) cout << "analysing toys ..." << endl;
 	for (Long64_t i = 0; i < nentries; i++){
 		// status bar
-		pb.progress();
+		if (!quiet) pb->progress();
 		t->GetEntry(i);
 		// Cut away toys outside a certain range. Also check line 1167 in MethodPluginScan.cpp.
 		if ( arg->pluginPlotRangeMin!=arg->pluginPlotRangeMax

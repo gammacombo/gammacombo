@@ -419,7 +419,7 @@ void MethodDatasetsProbScan::print() {
 /// MethodDatasetsProbScan
 /// \param nRun Part of the root tree file name to facilitate parallel production.
 ///
-int MethodDatasetsProbScan::scan1d(bool fast, bool reverse)
+int MethodDatasetsProbScan::scan1d(bool fast, bool reverse, bool quiet)
 {
 	if (fast) return 0; // tmp
 
@@ -550,10 +550,10 @@ int MethodDatasetsProbScan::scan1d(bool fast, bool reverse)
         // using a multipdf, this means the values of the parameters which appear in the best
         // pdf are set to the values from the fit using that pdf, so S+B toys are generated with
         // the correct nuisance parameter values. If not using a multipdf, this command is identical
-        // to storeParsScan()        
+        // to storeParsScan()
         this->probScanTree->storeParsScan(); // \todo : figure out which one of these is semantically the right one
-        this->probScanTree->storeParsScan(); 
-        this->probScanTree->storeParsScan(result); 
+        this->probScanTree->storeParsScan();
+        this->probScanTree->storeParsScan(result);
         this->probScanTree->bestIndexScanData = pdf->getBestIndex();
 
         this->pdf->deleteNLL();

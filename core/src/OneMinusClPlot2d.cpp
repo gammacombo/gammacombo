@@ -11,8 +11,8 @@
 : OneMinusClPlotAbs(arg,name,title)
 {
   contoursOnly = false;
-  xTitle = "";
-  yTitle = "";
+  xTitle = arg->xtitle;
+  yTitle = arg->ytitle;
   ColorBuilder cb;
   m_legend = 0;
 
@@ -619,6 +619,7 @@ void OneMinusClPlot2d::drawCLcontent(bool isFull)
   float xLow, yLow;
   xLow = 0.17;
   yLow = 0.15;
+  if (arg->square) yLow = 0.11;
   if ( isFull ) {
     xLow = 0.11;
     yLow = 0.11;
@@ -660,7 +661,7 @@ void OneMinusClPlot2d::DrawFull()
     cout << "                                         scanner." << endl;
   }
   if ( m_mainCanvas==0 ){
-    m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, 600);
+    m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, arg->square ? 800 : 600);
   }
   m_mainCanvas->cd();
   m_mainCanvas->SetMargin(0.1,0.15,0.1,0.1);
@@ -728,6 +729,14 @@ void OneMinusClPlot2d::drawLegend()
   m_legend->SetFillColor(0);
   m_legend->SetFillStyle(0);
   m_legend->SetBorderSize(0);
+  if (arg->isQuickhack(35)) {
+    m_legend->SetFillColorAlpha(0,0.7);
+    m_legend->SetFillStyle(1001);
+    m_legend->SetLineStyle(1);
+    m_legend->SetLineWidth(1);
+    m_legend->SetLineColor(kGray+1);
+    m_legend->SetBorderSize(1);
+  }
   m_legend->SetTextFont(font);
   m_legend->SetTextSize(legendsize);
   if ( arg->isQuickhack(26) ) m_legend->SetTextSize(0.9*legendsize);
@@ -767,6 +776,17 @@ void OneMinusClPlot2d::drawLegend()
       }
     }
   }
+  if ( arg->plotlegbox ) {
+    TPaveText *legbox = new TPaveText(legendXmin,legendYmin,legendXmin+arg->plotlegboxx,legendYmin+arg->plotlegboxy,"ndc");
+    legbox->SetFillColorAlpha(0,0.7);
+    legbox->SetFillStyle(1001);
+    legbox->SetLineStyle(1);
+    legbox->SetLineWidth(1);
+    legbox->SetLineColor(kGray+1);
+    legbox->SetBorderSize(1);
+    legbox->SetShadowColor(0);
+    legbox->Draw();
+  }
   m_legend->Draw();
 }
 
@@ -781,16 +801,20 @@ void OneMinusClPlot2d::Draw()
     return;
   }
   if ( m_mainCanvas==0 ){
-    m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, 600);
+    m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, arg->square ? 800 : 600);
     // put this in for exponent xaxes
     if ( !arg->isQuickhack(30) ) m_mainCanvas->SetRightMargin(0.1);
     // put this in for exponent yaxes
     if ( !arg->isQuickhack(30) ) m_mainCanvas->SetTopMargin(0.07);
+    cout << m_mainCanvas->GetLeftMargin() << " " << m_mainCanvas->GetBottomMargin() << endl;
+    if ( arg->square ) m_mainCanvas->SetBottomMargin(0.14);
   }
 
   if ( arg->isQuickhack(14) ){
     m_mainCanvas->GetPad(0)->SetLeftMargin(0.16);
   }
+
+  if (arg->grid) m_mainCanvas->SetGrid();
 
   TH2F *hCL = histos[0];
   float min1 = arg->scanrangeMin  == arg->scanrangeMax  ? hCL->GetXaxis()->GetXmin() : arg->scanrangeMin;
@@ -807,6 +831,7 @@ void OneMinusClPlot2d::Draw()
   haxes->GetXaxis()->SetTitleFont(font);
   haxes->GetYaxis()->SetTitleFont(font);
   haxes->GetXaxis()->SetTitleOffset(0.85);
+  if (arg->square) haxes->GetYaxis()->SetTitleOffset(1.);
   haxes->GetXaxis()->SetLabelSize(labelsize);
   haxes->GetYaxis()->SetLabelSize(labelsize);
   haxes->GetXaxis()->SetTitleSize(titlesize);
@@ -817,6 +842,11 @@ void OneMinusClPlot2d::Draw()
   bool optimizeNdivy = arg->ndivy<0 ? true : false;
   haxes->GetXaxis()->SetNdivisions(xndiv, optimizeNdivx);
   haxes->GetYaxis()->SetNdivisions(yndiv, optimizeNdivy);
+  // for the grid
+  if (arg->grid) {
+    haxes->GetXaxis()->SetAxisColor(15);
+    haxes->GetYaxis()->SetAxisColor(15);
+  }
   haxes->Draw();
 
   // draw origin if requested
@@ -887,8 +917,21 @@ void OneMinusClPlot2d::Draw()
   float xmax = gPad->GetUxmax();
 
   // Draw new axes.
-  haxes->GetXaxis()->SetNdivisions(0);  // disable old axis
-  haxes->GetYaxis()->SetNdivisions(0);
+  if (!arg->grid) {
+    haxes->GetXaxis()->SetNdivisions(0);  // disable old axis
+    haxes->GetYaxis()->SetNdivisions(0);
+  }
+  else {
+    haxes->GetXaxis()->SetTitleSize(0);
+    haxes->GetYaxis()->SetTitleSize(0);
+    haxes->GetXaxis()->SetLabelSize(0);
+    haxes->GetYaxis()->SetLabelSize(0);
+    haxes->GetXaxis()->SetTickLength(0);
+    haxes->GetYaxis()->SetTickLength(0);
+
+    m_mainCanvas->RedrawAxis();
+  }
+
   // configure axis draw options
   TString xtchopt = "-U"; // - = downward ticks, U = unlabeled, http://root.cern.ch/root/html534/TGaxis.html
   TString xbchopt = "";
@@ -903,7 +946,7 @@ void OneMinusClPlot2d::Draw()
     yrchopt += "N";
   }
   // New X axis. For angles in units of degrees.
-  if ( isAngle(scanners[0]->getScanVar1()) ){
+  if ( isAngle(scanners[0]->getScanVar1()) || arg->isQuickhack(36) ){
     haxes->GetXaxis()->SetTitle(haxes->GetXaxis()->GetTitle() + TString(" [#circ]"));
 
     // new axis for the top ticks
@@ -926,12 +969,18 @@ void OneMinusClPlot2d::Draw()
   else
   {
     // add top axis
-    TGaxis *axist = new TGaxis(xmin, ymax, xmax, ymax, xmin, xmax, xndiv, xtchopt);
+		double nmin = xmin;
+		double nmax = xmax;
+		if (arg->isQuickhack(38)){
+		 nmin *= 100;
+		 nmax *= 100;
+		}
+    TGaxis *axist = new TGaxis(xmin, ymax, xmax, ymax, nmin, nmax, xndiv, xtchopt);
     axist->SetName("axist");
     axist->Draw();
 
     // draw a new bottom axis because the confidence contours can cover the old one
-    TGaxis *axisb = new TGaxis(xmin, ymin, xmax, ymin, xmin, xmax, xndiv, xbchopt);
+    TGaxis *axisb = new TGaxis(xmin, ymin, xmax, ymin, nmin, nmax, xndiv, xbchopt);
     axisb->SetName("axisb");
     axisb->SetLabelOffset(haxes->GetXaxis()->GetLabelOffset());
     axisb->SetLabelFont(font);
@@ -944,7 +993,7 @@ void OneMinusClPlot2d::Draw()
   }
 
   // New Y axis. For angles in units of degrees.
-  if ( isAngle(scanners[0]->getScanVar2()) ){
+  if ( isAngle(scanners[0]->getScanVar2()) || arg->isQuickhack(37) ){
     haxes->GetYaxis()->SetTitle(haxes->GetYaxis()->GetTitle() + TString(" [#circ]"));
 
     // new left axis
@@ -953,8 +1002,9 @@ void OneMinusClPlot2d::Draw()
     axisl->SetLabelOffset(haxes->GetYaxis()->GetLabelOffset());
     axisl->SetLabelFont(font);
     axisl->SetLabelSize(labelsize);
-    axisl->SetTitle(xTitle!="" ? xTitle : (TString)scanners[0]->getScanVar2()->GetTitle() + TString(" [#circ]"));
+    axisl->SetTitle(yTitle!="" ? yTitle : (TString)scanners[0]->getScanVar2()->GetTitle() + TString(" [#circ]"));
     axisl->SetTitleOffset(0.9);
+    if (arg->square) axisl->SetTitleOffset(1.2);
     axisl->SetTitleSize(titlesize);
     axisl->SetTitleFont(font);
     axisl->Draw();
@@ -967,20 +1017,27 @@ void OneMinusClPlot2d::Draw()
   else
   {
     // new left axis (so that is not covered by the plot)
+		double nmin = ymin;
+		double nmax = ymax;
+		if (arg->isQuickhack(39)){
+		 nmin *= 100;
+		 nmax *= 100;
+		}
     haxes->GetYaxis()->SetNdivisions(0);
-    TGaxis *axisl = new TGaxis(xmin, ymin, xmin, ymax, ymin, ymax, yndiv, ylchopt);
+    TGaxis *axisl = new TGaxis(xmin, ymin, xmin, ymax, nmin, nmax, yndiv, ylchopt);
     axisl->SetName("axisl");
     axisl->SetLabelOffset(haxes->GetYaxis()->GetLabelOffset());
     axisl->SetLabelFont(font);
     axisl->SetLabelSize(labelsize);
-    axisl->SetTitle(xTitle!="" ? xTitle : (TString)scanners[0]->getScanVar2()->GetTitle());
+    axisl->SetTitle(yTitle!="" ? yTitle : (TString)scanners[0]->getScanVar2()->GetTitle());
     axisl->SetTitleOffset(0.8);
+    if (arg->square) axisl->SetTitleOffset(1.2);
     axisl->SetTitleSize(titlesize);
     axisl->SetTitleFont(font);
     axisl->Draw();
 
     // new right axis
-    TGaxis *axisr = new TGaxis(xmax, ymin, xmax, ymax, ymin, ymax, yndiv, yrchopt);
+    TGaxis *axisr = new TGaxis(xmax, ymin, xmax, ymax, nmin, nmax, yndiv, yrchopt);
     axisr->SetName("axisr");
     axisr->Draw();
   }

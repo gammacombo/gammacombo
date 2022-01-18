@@ -53,7 +53,7 @@ MethodProbScan::~MethodProbScan()
 ///   When using the drag mode, this can sometimes make a difference.
 /// \return status: 2 = new global minimum found, 1 = error
 ///
-int MethodProbScan::scan1d(bool fast, bool reverse)
+int MethodProbScan::scan1d(bool fast, bool reverse, bool quiet)
 {
 	if ( arg->debug ) cout << "MethodProbScan::scan1d() : starting ... " << endl;
 	nScansDone++;
@@ -189,7 +189,7 @@ int MethodProbScan::scan1d(bool fast, bool reverse)
 
 			// status bar
 			if ( (((int)nStep % (int)(nTotalSteps/printFreq)) == 0))
-				cout << "MethodProbScan::scan1d() : scanning " << (float)nStep/(float)nTotalSteps*100. << "%   \r" << flush;
+				if (!quiet) cout << "MethodProbScan::scan1d() : scanning " << (float)nStep/(float)nTotalSteps*100. << "%   \r" << flush;
 
 			// fit!
 			RooFitResult *fr = 0;
@@ -284,6 +284,7 @@ int MethodProbScan::computeCLvalues(){
       return 1;
     }
 
+
     float bestfitpoint;
     float bestfitpointerr;
 
@@ -293,8 +294,10 @@ int MethodProbScan::computeCLvalues(){
     }
 
     if(this->getSolution()){
-      bestfitpoint    = ((RooRealVar*)this->getSolution()->floatParsFinal().find(scanVar1))->getVal();
-      bestfitpointerr = ((RooRealVar*)this->getSolution()->floatParsFinal().find(scanVar1))->getError();
+      if (this->getSolution()->floatParsFinal().find(scanVar1)) {
+        bestfitpoint    = ((RooRealVar*)this->getSolution()->floatParsFinal().find(scanVar1))->getVal();
+        bestfitpointerr = ((RooRealVar*)this->getSolution()->floatParsFinal().find(scanVar1))->getError();
+      }
     }
 
 	for (int k=1; k<=hCL->GetNbinsX(); k++){
@@ -311,6 +314,7 @@ int MethodProbScan::computeCLvalues(){
         // std::cout << "MethodProbScan::" << k << "\t" << hCL->GetBinContent(k) << "\t" << CLb << "\t" << hCLs->GetBinContent(k) <<std::endl;
 
 	}
+
 	return 0;
 }
 

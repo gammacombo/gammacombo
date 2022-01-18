@@ -37,6 +37,7 @@ OptParser::OptParser():
 	digits = -99;
 	enforcePhysRange = false;
     filenamechange = "";
+  grid = false;
 	group = "GammaCombo";
 	groupPos = "";
   hfagLabel = "";
@@ -67,6 +68,7 @@ OptParser::OptParser():
 	ntoys = -99;
 	nsmooth = 1;
 	parevol = false;
+  plotdate = "";
   plotext = "";
 	plotid = -99;
 	plotlegend = true;
@@ -75,6 +77,9 @@ OptParser::OptParser():
 	plotlegsizex = -99;
 	plotlegsizey = -99;
   plotlegcols = 1;
+  plotlegbox = false;
+  plotlegboxx = -99;
+  plotlegboxy = -99;
 	plotgroupx = -99;
 	plotgroupy = -99;
   plotHFAGLabelPosX = 0;
@@ -111,6 +116,7 @@ OptParser::OptParser():
   scaleerr = -999.;
   scalestaterr = -999.;
 	smooth2d = false;
+  square   = false;
   teststatistic = 2;
   toyFiles = "";
   updateFreq = 10;
@@ -137,6 +143,7 @@ void OptParser::defineOptions()
 	availableOptions.push_back("controlplots");
 	availableOptions.push_back("covCorrect");
 	availableOptions.push_back("covCorrectPoint");
+  availableOptions.push_back("date");
 	availableOptions.push_back("debug");
 	availableOptions.push_back("digits");
 	availableOptions.push_back("evol");
@@ -160,6 +167,8 @@ void OptParser::defineOptions()
 	availableOptions.push_back("legsize");
   availableOptions.push_back("legstyle");
   availableOptions.push_back("legcols");
+  availableOptions.push_back("legbox");
+	availableOptions.push_back("grid");
 	availableOptions.push_back("group");
 	availableOptions.push_back("grouppos");
 	availableOptions.push_back("lightfiles");
@@ -214,10 +223,13 @@ void OptParser::defineOptions()
   availableOptions.push_back("scaleerr");
   availableOptions.push_back("scalestaterr");
 	availableOptions.push_back("smooth2d");
+	availableOptions.push_back("square");
 	availableOptions.push_back("start");
   availableOptions.push_back("teststat");
   availableOptions.push_back("toyFiles");
 	availableOptions.push_back("title");
+	availableOptions.push_back("xtitle");
+	availableOptions.push_back("ytitle");
 	availableOptions.push_back("usage");
   availableOptions.push_back("updateFreq");
 	availableOptions.push_back("unoff");
@@ -252,6 +264,7 @@ void OptParser::bookPlottingOptions()
 	bookedOptions.push_back("ext");
 	bookedOptions.push_back("leg");
 	bookedOptions.push_back("legsize");
+  bookedOptions.push_back("legbox");
 	bookedOptions.push_back("group");
 	bookedOptions.push_back("grouppos");
 	bookedOptions.push_back("log");
@@ -265,6 +278,8 @@ void OptParser::bookPlottingOptions()
 	bookedOptions.push_back("ndiv");
 	bookedOptions.push_back("ndivy");
 	bookedOptions.push_back("title");
+	bookedOptions.push_back("xtitle");
+	bookedOptions.push_back("ytitle");
 	bookedOptions.push_back("unoff");
 }
 
@@ -372,6 +387,7 @@ void OptParser::parseArguments(int argc, char* argv[])
   //cmd = CmdLine("", ' ', "");
 
 	// --------------- arguments that take a value
+	TCLAP::ValueArg<string> dateArg("", "date", "Plot the date.", false, "", "string");
 	TCLAP::ValueArg<string> scanrangeArg("", "scanrange", "Restrict the scan range to a given range. "
 			"In 2D scans, this corresponds to the x variable. "
 			"Format: --scanrange min:max.", false, "default", "string");
@@ -410,6 +426,9 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::ValueArg<string> plotlegsizeArg("", "legsize", "Adjust the plot legend size.\n"
 			"2d plots: set the size of the legend. "
 			"Format: --legsize xsize:ysize in normalized coordinates [0,1]. Default: 0.38:0.15", false, "default", "string");
+	TCLAP::ValueArg<string> plotlegboxArg("", "legbox", "Make a box for the legend.\n"
+			"2d plots: set the size of the legend box. "
+			"Format: --legbox xsize:ysize in normalized coordinates [0,1]. Default: 0.38:0.15", false, "default", "string");
   TCLAP::ValueArg<string> plotlegstyleArg("", "legstyle", "Change the legend style.", false, "default", "string");
   TCLAP::ValueArg<int>    plotlegcolsArg("", "legcols", "Set the number of columns in the legend. Default: 1", false, 1, "int");
 	TCLAP::ValueArg<string> pluginplotrangeArg("", "pluginplotrange", "Restrict the Plugin plot to a given range to "
@@ -459,11 +478,14 @@ void OptParser::parseArguments(int argc, char* argv[])
   										"1: use one-sided profile likelihood ratio q\n"
   										"2: use classical profile likelihood ratio t (default)", false, 2, "int" );
   TCLAP::ValueArg<string> toyFilesArg("", "toyFiles", "Pass some different toy files, for example if you want 1D projection of 2D FC.", false, "default", "string" );
+  TCLAP::ValueArg<string> xtitleArg("", "xtitle", "Set x axis title.", false, "", "string" );
+  TCLAP::ValueArg<string> ytitleArg("", "ytitle", "Set y axis title.", false, "", "string" );
   TCLAP::ValueArg<string> saveArg("","save", "Save the workspace this file name", false, "", "string");
   TCLAP::ValueArg<int> updateFreqArg("","updateFreq", "Frequency with which to update plots when running in interactive mode (higher number will be faster). Default: 10", false, 10, "int" );
 
 	// --------------- switch arguments
   TCLAP::SwitchArg batcheosArg("","batcheos", "When submitting batch jobs (for plugin) write the output to eos", false);
+	TCLAP::SwitchArg gridArg("", "grid", "Put a grid on the canvas", false);
 	TCLAP::SwitchArg plotpluginonlyArg("", "po", "Make a 1-CL plot just showing the plugin curves.", false);
 	TCLAP::SwitchArg interactiveArg("i", "interactive", "Enables interactive mode (requires X11 session). Exit with Ctrl+c.", false);
 	TCLAP::SwitchArg intprobArg("", "intprob", "Use the internal (=Prob) chi2min histogram"
@@ -500,6 +522,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	TCLAP::SwitchArg noconfsolsArg("", "noconfsols", "Do not confirm solutions.", false);
 	TCLAP::SwitchArg printcorArg("", "printcor", "Print the correlation matrix of each solution found.", false);
 	TCLAP::SwitchArg smooth2dArg("", "smooth2d", "Smooth 2D p-value or cl histograms for nicer contour (particularly useful for 2D plugin)", false);
+	TCLAP::SwitchArg squareArg("", "square", "Make a square canvas", false);
   TCLAP::SwitchArg saveAtMinArg("","saveAtMin","Save workspace after minimization", false);
 
 	// --------------- aruments that can be given multiple times
@@ -589,6 +612,11 @@ void OptParser::parseArguments(int argc, char* argv[])
       "32: Make the text for printed solutions on 1D plots larger.\n"
       "33: Solid fill for 2D legends.\n"
       "34: Remove CL guide lines.\n"
+      "35: Legend with transparent fill.\n"
+      "36: Convert x to degrees.\n"
+      "37: Convert y to degrees.\n"
+      "38: Scale x by 100.\n"
+      "39: Scale y by 100.\n"
 			, false, "int");
   TCLAP::MultiArg<string> readfromfileArg("", "readfromfile", "Read the observables, uncertainties and correlations from a file - e.g. for reading in toys."
       "If 'default' is given, the default values are used."
@@ -698,6 +726,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "usage" ) ) cmd.add( usageArg );
   if ( isIn<TString>(bookedOptions, "updateFreq" ) ) cmd.add( updateFreqArg );
 	if ( isIn<TString>(bookedOptions, "unoff" ) ) cmd.add( plotunoffArg );
+	if ( isIn<TString>(bookedOptions, "xtitle" ) ) cmd.add( xtitleArg );
+	if ( isIn<TString>(bookedOptions, "ytitle" ) ) cmd.add( ytitleArg );
 	if ( isIn<TString>(bookedOptions, "title" ) ) cmd.add( titleArg );
   if ( isIn<TString>(bookedOptions, "toyFiles" ) ) cmd.add( toyFilesArg );
   if ( isIn<TString>(bookedOptions, "teststat" ) ) cmd.add( teststatArg );
@@ -705,6 +735,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "sn" ) ) cmd.add(snArg);
 	if ( isIn<TString>(bookedOptions, "start" ) ) cmd.add(startArg);
 	if ( isIn<TString>(bookedOptions, "smooth2d" ) ) cmd.add( smooth2dArg );
+	if ( isIn<TString>(bookedOptions, "square" ) ) cmd.add( squareArg );
 	if ( isIn<TString>(bookedOptions, "scanrangey" ) ) cmd.add( scanrangeyArg );
 	if ( isIn<TString>(bookedOptions, "scanrange" ) ) cmd.add( scanrangeArg );
 	if ( isIn<TString>(bookedOptions, "scanforce" ) ) cmd.add( scanforceArg );
@@ -766,6 +797,7 @@ void OptParser::parseArguments(int argc, char* argv[])
   if ( isIn<TString>(bookedOptions, "legstyle" ) ) cmd.add( plotlegstyleArg );
   if ( isIn<TString>(bookedOptions, "legcols" ) ) cmd.add( plotlegcolsArg );
 	if ( isIn<TString>(bookedOptions, "leg" ) ) cmd.add( plotlegArg );
+	if ( isIn<TString>(bookedOptions, "legbox" ) ) cmd.add( plotlegboxArg );
 	if ( isIn<TString>(bookedOptions, "largest" ) ) cmd.add( largestArg );
   if ( isIn<TString>(bookedOptions, "latex" ) ) cmd.add( latexArg );
 	if ( isIn<TString>(bookedOptions, "jobs" ) ) cmd.add(jobsArg);
@@ -778,6 +810,7 @@ void OptParser::parseArguments(int argc, char* argv[])
   if ( isIn<TString>(bookedOptions, "hfagLabelPos" ) ) cmd.add(hfagLabelPosArg);
 	if ( isIn<TString>(bookedOptions, "group" ) ) cmd.add( plotgroupArg );
 	if ( isIn<TString>(bookedOptions, "grouppos" ) ) cmd.add( plotgroupposArg );
+	if ( isIn<TString>(bookedOptions, "grid" ) ) cmd.add( gridArg );
 	if ( isIn<TString>(bookedOptions, "fix" ) ) cmd.add(fixArg);
   if ( isIn<TString>(bookedOptions, "filltransparency" ) ) cmd.add( filltransparencyArg );
   if ( isIn<TString>(bookedOptions, "fillstyle" ) ) cmd.add( fillstyleArg );
@@ -787,6 +820,7 @@ void OptParser::parseArguments(int argc, char* argv[])
 	if ( isIn<TString>(bookedOptions, "evol" ) ) cmd.add(parevolArg);
 	if ( isIn<TString>(bookedOptions, "digits" ) ) cmd.add(digitsArg);
 	if ( isIn<TString>(bookedOptions, "debug" ) ) cmd.add(debugArg);
+	if ( isIn<TString>(bookedOptions, "date" ) ) cmd.add( dateArg );
 	if ( isIn<TString>(bookedOptions, "covCorrectPoint" ) ) cmd.add(coverageCorrectionPointArg);
 	if ( isIn<TString>(bookedOptions, "covCorrect" ) ) cmd.add(coverageCorrectionIDArg);
 	if ( isIn<TString>(bookedOptions, "controlplots" ) ) cmd.add(controlplotArg);
@@ -842,6 +876,7 @@ void OptParser::parseArguments(int argc, char* argv[])
   linestyle         = linestyleArg.getValue();
   linecolor         = linecolorArg.getValue();
   hfagLabel         = hfagLabelArg.getValue();
+	grid              = gridArg.getValue();
 	group             = plotgroupArg.getValue();
 	id                = idArg.getValue();
 	importance        = importanceArg.getValue();
@@ -869,6 +904,7 @@ void OptParser::parseArguments(int argc, char* argv[])
   nsmooth           = nsmoothArg.getValue();
 	parevol           = parevolArg.getValue();
 	pevid             = pevidArg.getValue();
+  plotdate          = dateArg.getValue();
   plotext           = plotextArg.getValue();
 	plotid            = plotidArg.getValue();
 	plotlog           = plotlogArg.getValue();
@@ -895,8 +931,11 @@ void OptParser::parseArguments(int argc, char* argv[])
 	savenuisances1d   = snArg.getValue();
 	scanforce         = scanforceArg.getValue();
 	smooth2d          = smooth2dArg.getValue();
+	square            = squareArg.getValue();
   toyFiles          = toyFilesArg.getValue();
   teststatistic       = teststatArg.getValue();
+  xtitle            = xtitleArg.getValue();
+  ytitle            = ytitleArg.getValue();
 	usage             = usageArg.getValue();
   updateFreq        = updateFreqArg.getValue();
 	verbose           = verboseArg.getValue();
@@ -1068,6 +1107,21 @@ void OptParser::parseArguments(int argc, char* argv[])
 	usage += "  --legsize 0.4:def\n";
 	usage += "  --legsize def:0.2\n";
 	parsePosition(plotlegsizeArg.getValue(), plotlegsizex, plotlegsizey, usage);
+
+	// --legbox
+	usage = "";
+	usage += "Required format: '--legbox 0.a:0.b'\n";
+	usage += "  Examples:\n";
+	usage += "  --legbox 0.4:0.2\n";
+	usage += "  --legbox 0.4:def\n";
+	usage += "  --legbox def:0.2\n";
+	if ( TString(plotlegboxArg.getValue())==TString("default") ){
+		plotlegbox = false;
+	}
+	else{
+		plotlegbox = true;
+		parsePosition(plotlegboxArg.getValue(), plotlegboxx, plotlegboxy, usage);
+	}
 
 	// --grouppos
 	usage = "";

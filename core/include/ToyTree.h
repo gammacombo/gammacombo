@@ -34,8 +34,8 @@ class ToyTree
 {
 	public:
 
-		ToyTree(Combiner *c, TChain* t=0);
-		ToyTree(PDF_Datasets *p, OptParser* opt, TChain* t=0);
+		ToyTree(Combiner *c, TChain* t=0, bool _quiet=false);
+		ToyTree(PDF_Datasets *p, OptParser* opt, TChain* t=0, bool _quiet=false);
 		~ToyTree();
 
 		void                    activateCoreBranchesOnly();
@@ -145,6 +145,7 @@ class ToyTree
 		bool storeObs;                      ///< Boolean flag to control storing ToyTree observables, can't store these for DatasetsScans
 		bool storeTh;                       ///< Boolean flag to control storing ToyTree theory parameters. Not needed in DatasetsScans
 		bool storeGlob;               		///< Boolean flag to control storing ToyTree global observables. Extremely handy in DatasetsScans
+		bool quiet;
 };
 
 #endif

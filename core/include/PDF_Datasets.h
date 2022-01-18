@@ -54,7 +54,7 @@ public:
     OptParser*            getArg();
     TString               getConstraintName() {return constraintName;};
     TString               getDataName() {return dataName;};
-    RooDataSet*           getData() {return this->data;};
+    RooAbsData*           getData() {return this->data;};
     inline int            getFitStatus() {return fitStatus;};
     inline int            getFitStrategy() {return fitStrategy;};
     inline std::vector<TString>  getFitObs() {return fitObs;};
@@ -71,9 +71,9 @@ public:
     TString               getParName() {return parName;};
     TString               getPdfName() {return pdfName;};
     TString               getBkgPdfName() {return pdfBkgName;};
-    TString               getMultipdfCatName() {return multipdfCatName;};
     RooAbsData*           getToyObservables() {return this->toyObservables;};
     RooAbsData*           getBkgToyObservables() {return toyBkgObservables;};
+    TString               getMultipdfCatName() {return multipdfCatName;};
     RooAbsData*           getBkgAsimovObservables() {return AsimovBkgObservables;};
     RooWorkspace*         getWorkspace() {return wspc;};
     // setters
@@ -127,7 +127,6 @@ protected:
     RooWorkspace*         wspc;
     RooDataSet*           data;
     RooAbsData*           AsimovBkgObservables;
-    
     RooAbsReal*     _NLL; // possible pointer to minimization function
     RooAbsPdf*      _constraintPdf;
     TString         pdfName; //> name of the pdf in the workspace

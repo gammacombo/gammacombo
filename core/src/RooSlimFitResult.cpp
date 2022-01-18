@@ -100,7 +100,7 @@ float RooSlimFitResult::getConstParVal(TString name) const
 		if ( !_parsConst[i] ) continue;
 		if ( TString(_parsNames[i])==name ) return _parsVal[i];
 	}
-	return std::numeric_limits<double>::quiet_NaN(); // return nan
+	return std::numeric_limits<float>::quiet_NaN(); // return nan
 }
 
 ///
@@ -115,7 +115,7 @@ float RooSlimFitResult::getFloatParFinalVal(TString name) const
 		if ( _parsConst[i] ) continue;
 		if ( TString(_parsNames[i])==name ) return _parsVal[i];
 	}
-	return std::numeric_limits<double>::quiet_NaN(); // return nan
+	return std::numeric_limits<float>::quiet_NaN(); // return nan
 }
 
 ///
