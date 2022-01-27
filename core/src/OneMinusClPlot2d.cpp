@@ -386,12 +386,22 @@
   makeNewPlotStyle("#2171b5");
 
   // some other colors (should we just change this to take the color hex string directly?)
+	// 31-36
   makeOneColorPlotStyle("#bdbdbd"); // gray
   makeOneColorPlotStyle("#969696"); // dark gray
   makeOneColorPlotStyle("#525252"); // darker gray
   makeOneColorPlotStyle("#252525"); // black
   makeOneColorPlotStyle("#9c1216"); // dark red
   makeOneColorPlotStyle("#9e9ac8"); // blue
+
+	// the color blind safe option from the paper
+	// 37-42
+	makeNewPlotStyle("#74add1"); // 37 light blue
+	makeNewPlotStyle("#f46d43"); // 38 coral
+	makeNewPlotStyle("#fdae61"); // 39 orangey
+	makeNewPlotStyle("#d73027"); // 40 red
+	makeNewPlotStyle("#4575b4"); // 41 dark blue
+	makeNewPlotStyle("#fee090"); // 42 yellow
 
   // any additional scanners
   for ( int i=fillcolor[0].size(); i<arg->combid.size(); i++ ) {
@@ -738,7 +748,7 @@ void OneMinusClPlot2d::drawLegend()
     m_legend->SetBorderSize(1);
   }
   m_legend->SetTextFont(font);
-  m_legend->SetTextSize(legendsize);
+  m_legend->SetTextSize(legendsize*0.75);
   if ( arg->isQuickhack(26) ) m_legend->SetTextSize(0.9*legendsize);
 
   // build legend
@@ -763,7 +773,7 @@ void OneMinusClPlot2d::drawLegend()
       else g->SetFillStyle(fillstyle[0][i]);
       g->SetFillColor(fillcolor[0][styleId]);
       g->SetLineColor(linecolor[0][styleId]);
-      g->SetLineStyle(linestyle[0][styleId]);
+      g->SetLineStyle(linestyle[0][i]);
       g->SetLineWidth(linewidth[0][i]);
       if ( styleId < arg->filltransparency.size() ) g->SetFillColorAlpha( fillcolor[0][styleId], 1.-arg->filltransparency[styleId] );
       g->SetMarkerColor(linecolor[1][styleId]);
@@ -878,7 +888,8 @@ void OneMinusClPlot2d::Draw()
     cont->computeContours(histos[i], histosType[i], i);
     int styleId = i;
     if ( arg->color.size()>i ) styleId = arg->color[i];
-    cont->setStyle(transpose(linecolor)[styleId], transpose(linestyle)[styleId], transpose(linewidth)[i],transpose(fillcolor)[styleId], transpose(fillstyle)[i]);
+		//cout << i << " " << styleId << " " << linecolor[0][styleId] << " " << linestyle[0][i] << endl;
+    cont->setStyle(transpose(linecolor)[styleId], transpose(linestyle)[i], transpose(linewidth)[i],transpose(fillcolor)[styleId], transpose(fillstyle)[i]);
     if (i<arg->filltransparency.size()) cont->setTransparency( arg->filltransparency[i] );
     cont->setContoursToPlot( arg->contourlabels[i] );
     m_contours[i] = cont;

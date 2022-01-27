@@ -52,6 +52,7 @@ TString Utils::ConfigToTString(config s)
 	if ( s == lhcb_pipi)             return "lhcb_pipi";
 	if ( s == lhcb_md)               return "lhcb_md";
 	if ( s == lhcb_mi)               return "lhcb_mi";
+	if ( s == lhcb_r2)               return "lhcb_r2";
 	if ( s == lhcb2011 )             return "lhcb2011";
 	if ( s == lhcb2012 )             return "lhcb2012";
 	if ( s == lhcb2013 )             return "lhcb2013";
