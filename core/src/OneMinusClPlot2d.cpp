@@ -748,7 +748,7 @@ void OneMinusClPlot2d::drawLegend()
     m_legend->SetBorderSize(1);
   }
   m_legend->SetTextFont(font);
-  m_legend->SetTextSize(legendsize);
+  m_legend->SetTextSize(legendsize*0.75);
   if ( arg->isQuickhack(26) ) m_legend->SetTextSize(0.9*legendsize);
 
   // build legend
