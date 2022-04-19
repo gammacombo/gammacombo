@@ -125,7 +125,7 @@ protected:
     RooAbsData*           generateBkgAsimovSinglePdf(const RooAbsPdf & pdf, const RooArgSet & allobs,  const RooRealVar & weightVar, RooCategory * channelCat);
     void                  FillBinsAsimov(const RooAbsPdf & pdf, const RooArgList &obs, RooAbsData & data, int &index,  double &binVolume, int &ibin);
     RooWorkspace*         wspc;
-    RooDataSet*           data;
+    RooAbsData*           data;
     RooAbsData*           AsimovBkgObservables;
     RooAbsReal*     _NLL; // possible pointer to minimization function
     RooAbsPdf*      _constraintPdf;
