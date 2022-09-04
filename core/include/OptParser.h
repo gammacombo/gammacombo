@@ -59,6 +59,8 @@ class OptParser
     vector<int>     linewidth;
     vector<int>     linecolor;
     vector<int>     linestyle;
+    vector<string>  hexfillcolor;
+		vector<string>  hexlinecolor;
     TString         filenamechange;
 		TString         filenameaddition;
 		vector<vector<FixPar> >     fixParameters;

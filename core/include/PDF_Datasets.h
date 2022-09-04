@@ -27,8 +27,8 @@ public:
     ~PDF_Datasets();
     void                  deleteNLL() {if (_NLL) {delete _NLL; _NLL = NULL;}};
 
-    virtual RooFitResult* fit(RooDataSet* dataToFit);
-    virtual RooFitResult* fitBkg(RooDataSet* dataToFit, TString signalvar);
+    virtual RooFitResult* fit(RooAbsData* dataToFit);
+    virtual RooFitResult* fitBkg(RooAbsData* dataToFit, TString signalvar);
     virtual void          generateToys(int SeedShift = 0);
     virtual void          generateToysGlobalObservables(int SeedShift = 0);
     virtual void          generateBkgToys(int SeedShift = 0, TString signalvar="");
@@ -50,7 +50,7 @@ public:
     OptParser*            getArg();
     TString               getConstraintName() {return constraintName;};
     TString               getDataName() {return dataName;};
-    RooDataSet*           getData() {return this->data;};
+    RooAbsData*           getData() {return this->data;};
     inline int            getFitStatus() {return fitStatus;};
     inline int            getFitStrategy() {return fitStrategy;};
     inline std::vector<TString>  getFitObs() {return fitObs;};
@@ -67,9 +67,9 @@ public:
     TString               getParName() {return parName;};
     TString               getPdfName() {return pdfName;};
     TString               getBkgPdfName() {return pdfBkgName;};
+    RooAbsData*           getToyObservables() {return this->toyObservables;};
+    RooAbsData*           getBkgToyObservables() {return toyBkgObservables;};
     TString               getMultipdfCatName() {return multipdfCatName;};
-    RooDataSet*           getToyObservables() {return this->toyObservables;};
-    RooDataSet*           getBkgToyObservables() {return toyBkgObservables;};
     RooWorkspace*         getWorkspace() {return wspc;};
     // setters
     inline void           setFitStatus(int stat = 0) {fitStatus = stat;};
@@ -83,8 +83,8 @@ public:
     void                  setNCPU(int n) {NCPU = n;};
     void                  setVarRange(const TString &varName, const TString &rangeName,
                                       const double &rangeMin, const double &rangeMax);
-    void                  setToyData(RooDataSet* ds);
-    void                  setBkgToyData(RooDataSet* ds);
+    void                  setToyData(RooAbsData* ds);
+    void                  setBkgToyData(RooAbsData* ds);
     
     void                  setGlobalObsSnapshotBkgToy(TString snapshotname) {globalObsBkgToySnapshotName = snapshotname;};
 
@@ -117,7 +117,7 @@ public:
 protected:
     void initializeRandomGenerator(int seedShift);
     RooWorkspace*   wspc;
-    RooDataSet*     data;
+    RooAbsData*     data;
     RooAbsReal*     _NLL; // possible pointer to minimization function
     RooAbsPdf*      _constraintPdf;
     TString         pdfName; //> name of the pdf in the workspace

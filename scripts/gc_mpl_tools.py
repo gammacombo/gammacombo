@@ -3,6 +3,7 @@ import ROOT as r
 import numpy as np
 import itertools
 from scipy.stats import chi2
+from scipy.interpolate import interp1d
 
 def read1dscan(h, bf, minnll):
 
@@ -46,6 +47,10 @@ def read2dscan(h, bf, minnll):
   z = z.T - minnll
 
   return x,y,z, bf
+
+def eval1DPoint(res, x):
+    f = interp1d(res[0],res[1],kind='quadratic')
+    return f(x)
 
 def read_gc_scan(scanfile, parfile, pars):
 

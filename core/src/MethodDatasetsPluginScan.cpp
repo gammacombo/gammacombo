@@ -459,6 +459,10 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     std::map<int,std::vector<double> > sampledSchi2Values;
     std::map<int,std::vector<double> > sampledBValues;
     std::map<int,std::vector<double> > sampledSBValues;
+
+    // vector to compute significance
+    std::vector<double> sampledBTeststats;
+
     TH1F *h_pVals         = new TH1F("p", "p", 200, 0.0, 1e-2);
     Long64_t nentries     = t.GetEntries();
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : average number of toys per scanpoint: " << (double) nentries / (double)nPoints1d << endl;
@@ -550,6 +554,8 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         double teststat_measured = t.chi2min - this->chi2minGlobal;
         double sb_teststat_toy= t.chi2minToy - t.chi2minGlobalToy;
         double b_teststat_toy = t.chi2minBkgToy - t.chi2minGlobalBkgToy;
+        double sb_teststat_bkgtoy= t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy;
+
         if (arg->teststatistic ==1){ // use one-sided test statistic
             teststat_measured = bestfitpoint <= t.scanpoint ? teststat_measured : 0.; // if mu < muhat then q_mu = 0 //best fit point defined in constructor
             sb_teststat_toy = t.scanbest <= t.scanpoint ? sb_teststat_toy : 0.; // if mu < muhat then q_mu = 0
@@ -616,6 +622,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
                 // std::cout << bkgTestStatVal << std::endl;
                 bkg_pvals->Fill(TMath::Prob(b_teststat_toy,1));
                 h_sig_bkgtoys->Fill(t.scanbestBkg);
+                sampledBTeststats.push_back(sb_teststat_bkgtoy);
             }
             sampledBValues[hBin].push_back( b_teststat_toy );
             sampledSBValues[hBin].push_back( b_teststat_toy );
@@ -649,6 +656,8 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of failed background toys: " << (double)nfailedbkg / (double)nentries * 100. << "%." << endl;
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of unphysical (negative test stat) toys: " << h_background->GetEntries() / (double)nentries * 100. << "%." << endl;
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of unphysical (negative test stat) bkg toys: " << (h_negtest_bkg->GetEntries() / (double)h_all_bkg->GetEntries()) * 100. << "%." << endl;
+    double pval_significance=getVectorFracAboveValue(sampledBTeststats, chi2minBkg - chi2minGlobal);
+    cout << "MethodDatasetsPluginScan::readScan1dTrees() : signal significance: naive p-val: " << TMath::Prob(chi2minBkg - chi2minGlobal,1) << " ("<< sqrt(chi2minBkg - chi2minGlobal) <<" sigma)" << " vs. value from toys: " << pval_significance<<" (" << sqrt(2)*TMath::ErfInverse(1.-pval_significance) <<" sigma)"<<endl;
     if ( nwrongrun > 0 ) {
         cout << "\nMethodDatasetsPluginScan::readScan1dTrees() : WARNING : Read toys that differ in global chi2min (wrong run) : "
              << (double)nwrongrun / (double)(nentries - nfailed) * 100. << "%.\n" << endl;
@@ -1150,7 +1159,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
 		// if CLs toys we need to keep hold of what's going on in the bkg only case
     // there is a small overhead here but it's necessary because the bkg only hypothesis
     // might not necessarily be in the scan range (although often it will be the first point)
-	vector<RooDataSet*> cls_bkgOnlyToys;
+	vector<RooAbsData*> cls_bkgOnlyToys;
 	vector<TString> bkgOnlyGlobObsSnaphots;
     vector<float> chi2minGlobalBkgToysStore;    // Global fit to bkg-only toys
     vector<float> chi2minBkgBkgToysStore;       // Bkg fit to bkg-only toys
@@ -1174,8 +1183,8 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         // pdf->printParameters();
         pdf->generateBkgToys(0,arg->var[0]);
         pdf->generateBkgToysGlobalObservables(0,j);
-        RooDataSet* bkgOnlyToy = pdf->getBkgToyObservables();
-        cls_bkgOnlyToys.push_back( (RooDataSet*)bkgOnlyToy->Clone() ); // clone required because of deleteToys() call at end of loop
+        RooAbsData* bkgOnlyToy = pdf->getBkgToyObservables();
+        cls_bkgOnlyToys.push_back( (RooAbsData*)bkgOnlyToy->Clone() ); // clone required because of deleteToys() call at end of loop
         bkgOnlyGlobObsSnaphots.push_back(pdf->globalObsBkgToySnapshotName);
         pdf->setToyData( bkgOnlyToy );
         parameterToScan->setConstant(false);
@@ -1465,9 +1474,9 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             parameterToScan->setConstant(true);
             this->pdf->setFitStrategy(0);
             // temporarily store our current toy here so we can put it back in a minute
-            RooDataSet *tempData = (RooDataSet*)this->pdf->getToyObservables();
+            RooAbsData *tempData = (RooAbsData*)this->pdf->getToyObservables();
             // now get our background only toy (to fit under this hypothesis)
-            RooDataSet *bkgToy = (RooDataSet*)cls_bkgOnlyToys[j];
+            RooAbsData *bkgToy = (RooAbsData*)cls_bkgOnlyToys[j];
             if (arg->debug) cout << "Setting background toy as data " << bkgToy << endl;
             this->pdf->setBkgToyData( bkgToy );
             this->pdf->setGlobalObsSnapshotBkgToy( bkgOnlyGlobObsSnaphots[j] );

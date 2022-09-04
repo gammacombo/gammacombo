@@ -147,6 +147,8 @@ void OptParser::defineOptions()
 	availableOptions.push_back("debug");
 	availableOptions.push_back("digits");
 	availableOptions.push_back("evol");
+  availableOptions.push_back("hexfillcolor");
+  availableOptions.push_back("hexlinecolor");
   availableOptions.push_back("filename");
   availableOptions.push_back("fillstyle");
   availableOptions.push_back("filltransparency");
@@ -570,6 +572,8 @@ void OptParser::parseArguments(int argc, char* argv[])
       "1: Simplified CLs (deprecated version, using CLb=CLs+b(s=0). Almost always larger intervals than Standard CLs)\n"
       "2: Standard  CLs (sampling the full distribution for CLb)\n"
       , false, "int");
+  TCLAP::MultiArg<string> hexfillcolorArg("", "hexfillcolor", "Fill color of the 1D and 2D contours to be used for the combination. Default is picked up from color vector", false, "int");
+  TCLAP::MultiArg<string> hexlinecolorArg("", "hexlinecolor", "Set line color of the 1D and 2D contours to be used for the combination. Default is picked up from color vector.", false, "int");
   TCLAP::MultiArg<float> filltransparencyArg("", "filltransparency", "Fill transparency of the 1D and 2D contours to be used for the combination. Default is 0 (solid) for all.", false, "float");
   TCLAP::MultiArg<int> fillstyleArg("", "fillstyle", "Fill style of the 1D and 2D contours to be used for the combination. Default is 1001 (solid) for all.", false, "int");
   TCLAP::MultiArg<int> fillcolorArg("", "fillcolor", "Fill color of the 1D and 2D contours to be used for the combination. Default is picked up from color vector", false, "int");
@@ -815,6 +819,8 @@ void OptParser::parseArguments(int argc, char* argv[])
   if ( isIn<TString>(bookedOptions, "filltransparency" ) ) cmd.add( filltransparencyArg );
   if ( isIn<TString>(bookedOptions, "fillstyle" ) ) cmd.add( fillstyleArg );
   if ( isIn<TString>(bookedOptions, "fillcolor" ) ) cmd.add( fillcolorArg );
+  if ( isIn<TString>(bookedOptions, "hexlinecolor" ) ) cmd.add( hexlinecolorArg );
+  if ( isIn<TString>(bookedOptions, "hexfillcolor" ) ) cmd.add( hexfillcolorArg );
 	if ( isIn<TString>(bookedOptions, "ext" ) ) cmd.add(filenameadditionArg);
     if ( isIn<TString>(bookedOptions, "filename" ) ) cmd.add( filenamechangeArg );
 	if ( isIn<TString>(bookedOptions, "evol" ) ) cmd.add(parevolArg);
@@ -870,6 +876,8 @@ void OptParser::parseArguments(int argc, char* argv[])
 	filenameaddition  = filenameadditionArg.getValue();
   filenamechange    = filenamechangeArg.getValue();
   filltransparency  = filltransparencyArg.getValue();
+	hexfillcolor      = hexfillcolorArg.getValue();
+	hexlinecolor      = hexlinecolorArg.getValue();
   fillstyle         = fillstyleArg.getValue();
   fillcolor         = fillcolorArg.getValue();
   linewidth         = linewidthArg.getValue();
