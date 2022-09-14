@@ -580,9 +580,8 @@ bool PDF_Abs::test()
 	floatParameters(parameters);
 	setLimit(parameters, "free");
 	RooFormulaVar ll("ll", "ll", "-2*log(@0)", RooArgSet(*pdf));
-	RooMinuit m(ll);
+	RooMinimizer m(ll);
 	if(quiet) m.setPrintLevel(-2);
-	m.setNoWarn();
 	m.setLogFile("/dev/zero");
 	m.setErrorLevel(1.0);
 	m.setStrategy(2);

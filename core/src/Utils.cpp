@@ -38,10 +38,9 @@ RooFitResult* Utils::fitToMin(RooAbsPdf *pdf, bool thorough, int printLevel)
 	//string a;
 	//cin >> a;
 	bool quiet = printLevel<0;
-	RooMinuit m(ll);
+	RooMinimizer m(ll);
 	if (quiet){
 		m.setPrintLevel(-2);
-		m.setNoWarn();
 	}
 	else m.setPrintLevel(1);
 	// if (quiet) m.setLogFile();
@@ -294,9 +293,8 @@ RooFitResult* Utils::fitToMinImprove(RooWorkspace *w, TString name)
 	{
 		RooFormulaVar ll("ll", "ll", "-2*log(@0)", RooArgSet(*w->pdf(pdfName)));
 		// RooFitResult* r1 = fitToMin(&ll, printlevel);
-		RooMinuit m(ll);
+		RooMinimizer m(ll);
 		m.setPrintLevel(-2);
-		m.setNoWarn();
 		m.setErrorLevel(4.0); ///< define 2 sigma errors. This will make the hesse PDF 2 sigma wide!
 		int status = m.migrad();
 		r1 = m.save();
@@ -342,9 +340,8 @@ RooFitResult* Utils::fitToMinImprove(RooWorkspace *w, TString name)
 
 		RooFormulaVar ll("ll", "ll", "-2*log(@0) +16*@1", RooArgSet(*fullPdf, *hessePdf));
 		// RooFitResult *r2 = fitToMin(&ll, printlevel);
-		RooMinuit m(ll);
+		RooMinimizer m(ll);
 		m.setPrintLevel(-2);
-		m.setNoWarn();
 		m.setErrorLevel(1.0);
 		int status = m.migrad();
 		r2 = m.save();
@@ -383,9 +380,8 @@ RooFitResult* Utils::fitToMinImprove(RooWorkspace *w, TString name)
 	{
 		setParameters(w, parsName, r2);
 		RooFormulaVar ll("ll", "ll", "-2*log(@0)", RooArgSet(*w->pdf(pdfName)));
-		RooMinuit m(ll);
+		RooMinimizer m(ll);
 		m.setPrintLevel(-2);
-		m.setNoWarn();
 		m.setErrorLevel(1.0);
 		int status = m.migrad();
 		r3 = m.save();

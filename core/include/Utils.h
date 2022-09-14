@@ -26,7 +26,7 @@
 #include "RooSlimFitResult.h"
 #include "RooDataSet.h"
 #include "RooRandom.h"
-#include "RooMinuit.h"
+#include "RooMinimizer.h"
 #include "TTree.h"
 #include "TH1.h"
 #include "TGraphErrors.h"
