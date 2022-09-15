@@ -20,23 +20,23 @@ using namespace std;
 ///
 class CLInterval
 {
-	public:
+    public:
 
-		CLInterval();
-		CLInterval(const CLInterval &other);
-		~CLInterval();
-		void print();
+        CLInterval();
+        CLInterval(const CLInterval &other);
+        ~CLInterval();
+        void print();
 
-		float pvalue;						// pvalue corresponding to this interval
-		float pvalueAtCentral;	// pvalue at the central value
-		float min;							// lower interval border
-		float max;							// upper interval border
-		float central;					// central value
-		bool 	minclosed;						// true if the interval was not closed by limited scan range
-		bool 	maxclosed;						// true if the interval was not closed by limited scan range
-		TString minmethod;			// details on the algorithm that found this interval
-		TString maxmethod;			// details on the algorithm that found this interval
-		TString centralmethod;	// details on the algorithm that found the central value
+        float pvalue;           // pvalue corresponding to this interval
+        float pvalueAtCentral;  // pvalue at the central value
+        float min;              // lower interval border
+        float max;              // upper interval border
+        float central;          // central value
+        bool    minclosed;      // true if the interval was not closed by limited scan range
+        bool    maxclosed;      // true if the interval was not closed by limited scan range
+        TString minmethod;      // details on the algorithm that found this interval
+        TString maxmethod;      // details on the algorithm that found this interval
+        TString centralmethod;  // details on the algorithm that found the central value
 };
 
 #endif

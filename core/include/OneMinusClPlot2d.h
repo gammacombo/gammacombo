@@ -23,49 +23,49 @@ using namespace std;
 
 class OneMinusClPlot2d : public OneMinusClPlotAbs
 {
-	public:
+    public:
 
-		OneMinusClPlot2d(OptParser *arg, TString name="c1", TString title="c1");
+        OneMinusClPlot2d(OptParser *arg, TString name="c1", TString title="c1");
 
-		void            addScanner(MethodAbsScan* s, int CLsType=0);
-		void            addFile(TString fName);
-		void            Draw();
-		void            DrawFull();
-		void		        drawCLcontent(bool isFull=false);
-		void            drawMarker(float x, float y, int color=0, int style=3, float size=2.0);
-		void            drawGroup();
-		void            drawSolutions();
-		inline int      getNumberOfDefinedColors(){return linecolor[0].size();}
-		inline void     setContoursOnly(){contoursOnly = true;};
-		inline void     setXaxisTitle(TString s){xTitle=s;};
-		inline void     setYaxisTitle(TString s){yTitle=s;};
+        void        addScanner(MethodAbsScan* s, int CLsType=0);
+        void        addFile(TString fName);
+        void        Draw();
+        void        DrawFull();
+        void        drawCLcontent(bool isFull=false);
+        void        drawMarker(float x, float y, int color=0, int style=3, float size=2.0);
+        void        drawGroup();
+        void        drawSolutions();
+        inline int  getNumberOfDefinedColors(){return linecolor[0].size();}
+        inline void setContoursOnly(){contoursOnly = true;};
+        inline void setXaxisTitle(TString s){xTitle=s;};
+        inline void setYaxisTitle(TString s){yTitle=s;};
 
-	protected:
+    protected:
 
-		vector<TH2F*>	histos;
-		TString		xTitle;
-		TString 	yTitle;
-		bool		contoursOnly;
-		vector<vector<int> > linecolor;   ///< defines colors of 1 sigma lines and solutions of different scanners
-		vector<vector<int> > fillcolor;   ///< defines colors of 1 sigma areas of different scanners
-		vector<vector<int> > linestyle;   ///< defines the line style of 1 sigma line of different scanners
-		vector<vector<int> > fillstyle;   ///< defines the fill style of
-    vector<vector<int> > linewidth;   ///< defines the line width
-    vector<vector<float> > filltransparency; ///< defines the fill transparency
-		vector<int>          markerstyle; ///< defines marker styles of the solutions of different scanners
-		vector<float>        markersize;
+        vector<TH2F*> histos;
+        TString       xTitle;
+        TString       yTitle;
+        bool          contoursOnly;
+        vector<vector<int> > linecolor;          ///< defines colors of 1 sigma lines and solutions of different scanners
+        vector<vector<int> > fillcolor;          ///< defines colors of 1 sigma areas of different scanners
+        vector<vector<int> > linestyle;          ///< defines the line style of 1 sigma line of different scanners
+        vector<vector<int> > fillstyle;          ///< defines the fill style of
+        vector<vector<int> > linewidth;          ///< defines the line width
+        vector<vector<float> > filltransparency; ///< defines the fill transparency
+        vector<int>          markerstyle;        ///< defines marker styles of the solutions of different scanners
+        vector<float>        markersize;
 
-	private:
+    private:
 
-		void            drawLegend();
-		bool 		    hasHistoType(histogramType t);
-		void            makeNewPlotStyle(TString htmlColor, int ROOTColor=-1);
-		void            makeOneColorPlotStyle(TString htmlColor, int ROOTColor=-1);
+        void drawLegend();
+        bool hasHistoType(histogramType t);
+        void makeNewPlotStyle(TString htmlColor, int ROOTColor=-1);
+        void makeOneColorPlotStyle(TString htmlColor, int ROOTColor=-1);
 
-		vector<histogramType>       histosType; ///< defines if histogram is interpreted as p-value or chi2
-		vector<ConfidenceContours*> m_contours; ///< holds the contours for each scanner
-		vector<bool>                m_contours_computed; ///< true if the contours were computed for that scanner by computeContours()
-		TLegend*                    m_legend;   ///< pointer to the plot legend. Filled by drawLegend().
+        vector<histogramType>       histosType;          ///< defines if histogram is interpreted as p-value or chi2
+        vector<ConfidenceContours*> m_contours;          ///< holds the contours for each scanner
+        vector<bool>                m_contours_computed; ///< true if the contours were computed for that scanner by computeContours()
+        TLegend*                    m_legend;            ///< pointer to the plot legend. Filled by drawLegend().
 };
 
 #endif

@@ -29,11 +29,11 @@ public:
   virtual void  setCorrelations(config c);
 
 protected:
-	void					copyMeasurementCovariance();
-	PDF_Abs* pdf1;
-	PDF_Abs* pdf2;
-	int nObs1;
-	int nObs2;
+    void copyMeasurementCovariance();
+    PDF_Abs* pdf1;
+    PDF_Abs* pdf2;
+    int nObs1;
+    int nObs2;
 };
 
 #endif

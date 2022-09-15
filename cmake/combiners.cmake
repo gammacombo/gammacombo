@@ -1,4 +1,3 @@
-
 ###############################################
 #
 # Define your combiner modules
@@ -10,21 +9,20 @@
 #
 ###############################################
 
-SET( COMBINER_MODULES
+set(COMBINER_MODULES
 	tutorial
 	#alphacombo
-  #biggammacombo
+    #biggammacombo
 	#gammacombo
-  #hfag
-  #belle2
-  #belle2_Vub
-  #Vub_Vcb
-  #bsmumu
-  #bs24mu
+    #hfag
+    #belle2
+    #belle2_Vub
+    #Vub_Vcb
+    #bsmumu
+    #bs24mu
 	#ReImPlots
-  #Rd_Rdst
-  #RhoEta
-  #RizwaanPartIII
-  #CombinedBeautyAndCharm
+    #Rd_Rdst
+    #RhoEta
+    #RizwaanPartIII
+    #CombinedBeautyAndCharm
 )
-

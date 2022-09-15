@@ -20,25 +20,25 @@ ClassImp(RooMultiPdf)
 
 //_____________________________________________________________________________
 RooMultiPdf::RooMultiPdf(const char *name, const char *title, RooCategory& _x, const RooArgList& _c) :
-  RooAbsPdf(name, title),  //Why is this here? just to use the names to be used?
-  c("_pdfs","The list of pdfs",this),
-  x("_index","the pdf index",this,_x)
+    RooAbsPdf(name, title),  //Why is this here? just to use the names to be used?
+    c("_pdfs","The list of pdfs",this),
+    x("_index","the pdf index",this,_x)
 {
-  TIterator *pdfIter=_c.createIterator();
-  int count=0;
+    TIterator *pdfIter=_c.createIterator();
+    int count=0;
 
-  RooAbsPdf *fPdf;
-  while ( (fPdf = (RooAbsPdf*) pdfIter->Next()) ){
-	c.add(*fPdf);
-	// This is done by the user BUT is there a way to do it at construction?
-	_x.defineType(Form("_pdf%d",count),count);//(fPdf->getParameters())->getSize());
-	// Isn't there a better wat to hold on to these values?
-	RooConstVar *tmp = new RooConstVar(Form("const%s",fPdf->GetName()),"",fPdf->getVariables()->getSize());
-	corr.add(*tmp);
-	count++;
-  }
-  nPdfs=c.getSize();
-  cFactor=0.5; // correction to 2*NLL by default is -> 2*0.5 per param
+    RooAbsPdf *fPdf;
+    while ( (fPdf = (RooAbsPdf*) pdfIter->Next()) ){
+        c.add(*fPdf);
+        // This is done by the user BUT is there a way to do it at construction?
+        _x.defineType(Form("_pdf%d",count),count);//(fPdf->getParameters())->getSize());
+        // Isn't there a better wat to hold on to these values?
+        RooConstVar *tmp = new RooConstVar(Form("const%s",fPdf->GetName()),"",fPdf->getVariables()->getSize());
+        corr.add(*tmp);
+        count++;
+    }
+    nPdfs=c.getSize();
+    cFactor=0.5; // correction to 2*NLL by default is -> 2*0.5 per param
  _oldIndex=fIndex;
 
 }
@@ -56,75 +56,75 @@ RooMultiPdf::RooMultiPdf(const RooMultiPdf& other, const char* name) :
 
  RooAbsPdf *fPdf;
  while ( (fPdf = (RooAbsPdf*) pdfIter->Next()) ){
-	c.add(*fPdf);
-	RooConstVar *tmp = new RooConstVar(Form("const%s",fPdf->GetName())
-		,"",fPdf->getVariables()->getSize());
-	corr.add(*tmp);
+        c.add(*fPdf);
+        RooConstVar *tmp = new RooConstVar(Form("const%s",fPdf->GetName())
+                ,"",fPdf->getVariables()->getSize());
+        corr.add(*tmp);
  }
 
  _oldIndex=fIndex;
-  cFactor=other.cFactor; // correction to 2*NLL by default is -> 2*0.5 per param
+    cFactor=other.cFactor; // correction to 2*NLL by default is -> 2*0.5 per param
 }
 
 bool RooMultiPdf::checkIndexDirty() const {
-  return _oldIndex!=x;
+    return _oldIndex!=x;
 }
 //_____________________________________________________________________________
 void RooMultiPdf::setCorrectionFactor(PenatlyScheme penal){
-  if ( penal==AIC ){
-  	cFactor=1.0;
-  } else if ( penal==PVAL ){
-	cFactor=0.5;
-  }
+    if ( penal==AIC ){
+        cFactor=1.0;
+    } else if ( penal==PVAL ){
+        cFactor=0.5;
+    }
 }
 //_____________________________________________________________________________
 void RooMultiPdf::setCorrectionFactor(double penal){
-  cFactor=penal;
+    cFactor=penal;
 }
 //_____________________________________________________________________________
 double RooMultiPdf::getCorrection() const {
 
-  double val = ((RooAbsReal*)corr.at(x))->getVal();
-  return cFactor*val;  //PVAL correction
+    double val = ((RooAbsReal*)corr.at(x))->getVal();
+    return cFactor*val;  //PVAL correction
 }
 //_____________________________________________________________________________
 RooAbsPdf* RooMultiPdf::getCurrentPdf() const {
 
-  RooAbsPdf *cPdf = ((RooAbsPdf*)c.at(x));
-  return cPdf;
+    RooAbsPdf *cPdf = ((RooAbsPdf*)c.at(x));
+    return cPdf;
 }
 RooAbsPdf* RooMultiPdf::getPdf(int index) const {
 
-  RooAbsPdf *cPdf = ((RooAbsPdf*)c.at(index));
-  return cPdf;
+    RooAbsPdf *cPdf = ((RooAbsPdf*)c.at(index));
+    return cPdf;
 }
 
 int RooMultiPdf::getCurrentIndex() const {
-    Int_t index = x;
-    return index;
+        Int_t index = x;
+        return index;
 }
 
 //_____________________________________________________________________________
 Double_t RooMultiPdf::getValV(const RooArgSet* nset) const {
-  RooAbsPdf *cPdf = ((RooAbsPdf*)c.at(x));
-  double val = cPdf->getVal(nset);
-  _oldIndex=x;
-  return val;
+    RooAbsPdf *cPdf = ((RooAbsPdf*)c.at(x));
+    double val = cPdf->getVal(nset);
+    _oldIndex=x;
+    return val;
 }
 
 //_____________________________________________________________________________
 Double_t RooMultiPdf::evaluate() const{
-  // This is dangerous since if the underlying pdf is a RooAddPdf the meaning of the
-  // coefficients depends on the normalization set, and we don't really know
-  // how this information is propagated.
-  // So, we just forward the getVal which is anyway the contract for RooMultiPdf.
-  throw std::invalid_argument("RooMultiPdf::evaluate() called\n");
+    // This is dangerous since if the underlying pdf is a RooAddPdf the meaning of the
+    // coefficients depends on the normalization set, and we don't really know
+    // how this information is propagated.
+    // So, we just forward the getVal which is anyway the contract for RooMultiPdf.
+    throw std::invalid_argument("RooMultiPdf::evaluate() called\n");
 }
 
 //_____________________________________________________________________________
-Double_t  RooMultiPdf::getLogVal(const RooArgSet* nset) const {
-  RooAbsPdf *cPdf = ((RooAbsPdf*)c.at(x));
-  double logval = cPdf->getLogVal(nset);
-  _oldIndex=x;
-  return logval;
+Double_t RooMultiPdf::getLogVal(const RooArgSet* nset) const {
+    RooAbsPdf *cPdf = ((RooAbsPdf*)c.at(x));
+    double logval = cPdf->getLogVal(nset);
+    _oldIndex=x;
+    return logval;
 }

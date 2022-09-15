@@ -71,9 +71,9 @@ protected:
   RooListProxy c;
   RooListProxy corr;
   RooCategoryProxy x;
-  //RooFormulaVar *cval;
- // RooRealProxy nllcorr;
-//  RooAbsCatgeory *fIndex_r;
+  // RooFormulaVar *cval;
+  // RooRealProxy nllcorr;
+  // RooAbsCatgeory *fIndex_r;
 
   int fIndex; // sigh, there should be a better way than this
   int nPdfs;
@@ -81,7 +81,7 @@ protected:
 
   Double_t evaluate() const;
   Double_t getLogVal(const RooArgSet *set = 0) const;
-  //std::string createCorrectionString();	// should only do this once really
+  //std::string createCorrectionString();  // should only do this once really
   double cFactor;
 
 private:

@@ -13,10 +13,10 @@ SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 # cmake -DLIBRARY_OUTPUT_DIRECTORY:PATH=.... -DINCLUDE_OUTPUT_DIRECTORY:PATH=....
 # otherwise, set default install destinations
 IF(NOT DEFINED LIBRARY_OUTPUT_DIRECTORY)
-	set( LIBRARY_OUTPUT_DIRECTORY ./lib )
+    set( LIBRARY_OUTPUT_DIRECTORY ./lib )
 ENDIF()
 IF(NOT DEFINED INCLUDE_OUTPUT_DIRECTORY)
-	set( INCLUDE_OUTPUT_DIRECTORY ./include )
+    set( INCLUDE_OUTPUT_DIRECTORY ./include )
 ENDIF()
 
 # include cmake macros and settings
@@ -63,24 +63,24 @@ ENDIF()
 FIND_PACKAGE(Doxygen)
 
 if(DOXYGEN_FOUND)
-	# add combiner modules to Doxygen
-	set(COMBINER_MODULES_DOXYGEN_SOURCES)
-	foreach( dir ${COMBINER_MODULES} )
-		set(COMBINER_MODULES_DOXYGEN_SOURCES "${COMBINER_MODULES_DOXYGEN_SOURCES}
-			INPUT += ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/include
-			INPUT += ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/src"
-		)
-	endforeach()
-	# configure Doxygen config file
-	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/doc/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile @ONLY)
-	# add target
-	ADD_CUSTOM_TARGET(doc
-		${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile
-		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc
-		COMMENT "Generating API documentation with Doxygen" VERBATIM
-	)
+    # add combiner modules to Doxygen
+    set(COMBINER_MODULES_DOXYGEN_SOURCES)
+    foreach( dir ${COMBINER_MODULES} )
+        set(COMBINER_MODULES_DOXYGEN_SOURCES "${COMBINER_MODULES_DOXYGEN_SOURCES}
+            INPUT += ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/include
+            INPUT += ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/src"
+        )
+    endforeach()
+    # configure Doxygen config file
+    CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/doc/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile @ONLY)
+    # add target
+    ADD_CUSTOM_TARGET(doc
+        ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc
+        COMMENT "Generating API documentation with Doxygen" VERBATIM
+    )
 ELSE()
-	MESSAGE( STATUS "Doxygen not installed or found -- API documentation can't be generated!" )
+    MESSAGE( STATUS "Doxygen not installed or found -- API documentation can't be generated!" )
 ENDIF(DOXYGEN_FOUND)
 
 ######################################
@@ -96,9 +96,9 @@ ENDIF(DOXYGEN_FOUND)
 #ENDIF(NOT CMAKE_BUILD_TYPE)
 
 ## require proper c++, standard is C++03, flag reads: c++98
-#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -ansi -pedantic -Wno-long-long -Wshadow -Werror=overloaded-virtual -g3 -O3 -std=c++11"   )
-#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -ansi -pedantic -g3 -O3 -std=c++11"   )
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -O3 -std=c++11"   )
+#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -ansi -pedantic -Wno-long-long -Wshadow -Werror=overloaded-virtual -g3 -O3 -std=c++11" )
+#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -ansi -pedantic -g3 -O3 -std=c++11" )
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -O3 -std=c++11" )
 SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -g3")
 SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3")
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS} -O3 -g3")
@@ -118,27 +118,27 @@ check_cxx_compiler_flag(-std=c++17 HAS_CPP17)
 check_cxx_compiler_flag(-std=c++1z HAS_CPP17_ALTERNATIVE)
 
 if (HAS_CPP17)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 elseif (HAS_CPP17_ALTERNATIVE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
 elseif (HAS_CPP14)
-  message(WARNING "No C++17 support.")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+    message(WARNING "No C++17 support.")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 elseif (HAS_CPP14_ALTERNATIVE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
 else()
-	message(WARNING "No C++14 support.")
-	if (HAS_CPP11)
-  		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-	elseif (HAS_CPP11_ALTERNATIVE)
-  		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-	else()
-  		message(FATAL_ERROR "No C++11 support.")
-  	endif()
+    message(WARNING "No C++14 support.")
+    if (HAS_CPP11)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    elseif (HAS_CPP11_ALTERNATIVE)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+    else()
+        message(FATAL_ERROR "No C++11 support.")
+    endif()
 endif()
 
 # set additional compiler flags
-#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++11-extensions -Wno-inconsistent-missing-override"   )
+#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++11-extensions -Wno-inconsistent-missing-override")
 
 ######################################
 #
@@ -151,15 +151,15 @@ SET( CORE_INC_DIR ./core/include/ )
 
 # include directories
 INCLUDE_DIRECTORIES(
-	BEFORE
-	${CORE_INC_DIR}
-	${ROOT_INCLUDE_DIR}
+    BEFORE
+    ${CORE_INC_DIR}
+    ${ROOT_INCLUDE_DIR}
 )
 # declare the ROOT library path
 LINK_DIRECTORIES(${ROOT_LIBRARY_DIR} /usr/local/lib)
 
 # define the sources of the core library
-AUX_SOURCE_DIRECTORY( ./core/src          CORE_LIB_SOURCES )
+AUX_SOURCE_DIRECTORY( ./core/src CORE_LIB_SOURCES )
 
 ######################################
 #
@@ -168,20 +168,20 @@ AUX_SOURCE_DIRECTORY( ./core/src          CORE_LIB_SOURCES )
 ######################################
 
 SET(CORE_DICTIONARY_SOURCES
-	RooBinned2DBicubicBase.h
-	RooCrossCorPdf.h
-	#RooHistInterpol.h
-	RooHistPdfAngleVar.h
-	RooHistPdfVar.h
-	RooPoly3Var.h
-	RooPoly4Var.h
-	RooSlimFitResult.h
-  RooMultiPdf.h
+    RooBinned2DBicubicBase.h
+    RooCrossCorPdf.h
+    #RooHistInterpol.h
+    RooHistPdfAngleVar.h
+    RooHistPdfVar.h
+    RooPoly3Var.h
+    RooPoly4Var.h
+    RooSlimFitResult.h
+    RooMultiPdf.h
 )
 # add a make rule for the dictionary
 ROOT_GENERATE_DICTIONARY(${PROJECT_NAME}Dict
-	${CORE_DICTIONARY_SOURCES}
-	LINKDEF coreLinkDef.h
+    ${CORE_DICTIONARY_SOURCES}
+    LINKDEF coreLinkDef.h
 )
 # add a target calling the make rule for the dictionary
 add_custom_target( ${PROJECT_NAME}Dict DEPENDS ${PROJECT_NAME}Dict.cxx ${PROJECT_NAME}Dict.h )
@@ -208,7 +208,7 @@ install( FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Dict_rdict.pcm DESTINA
 ######################################
 
 foreach( dir ${COMBINER_MODULES} )
-	add_subdirectory(${dir})
+    add_subdirectory(${dir})
 endforeach()
 
 ######################################
@@ -221,8 +221,8 @@ endforeach()
 #ADD_CUSTOM_TARGET( tests )
 #MACRO( ADD_GENFIT_TEST _testname )
 #   ADD_EXECUTABLE( ${_testname} EXCLUDE_FROM_ALL ${ARGN} )
-#   ADD_DEPENDENCIES( tests  ${_testname} )
-#   TARGET_LINK_LIBRARIES( ${_testname} ${PROJECT_NAME}  ${ROOT_LIBS} -lGeom )
+#   ADD_DEPENDENCIES( tests ${_testname} )
+#   TARGET_LINK_LIBRARIES( ${_testname} ${PROJECT_NAME} ${ROOT_LIBS} -lGeom )
 #    #INSTALL( TARGETS ${_testname} DESTINATION ${EXECUTABLE_INSTALL_DIR})
 #ENDMACRO( ADD_GENFIT_TEST )
 #
@@ -238,4 +238,3 @@ endforeach()
 
 # generate and install following configuration files
 #GENERATE_PACKAGE_CONFIGURATION_FILES( genfitConfig.cmake genfitConfigVersion.cmake )
-

@@ -26,34 +26,34 @@ class Combiner;
 ///
 class FileNameBuilder
 {
-	public:
+    public:
 
-		FileNameBuilder(OptParser *arg, TString name="gammacombo");
-		~FileNameBuilder();
-		TString getBaseName();
-		TString getFileBaseName(const Combiner *c);
-		TString getFileBaseName(const MethodAbsScan *s);
-		TString getFileNameScanner(const MethodAbsScan *s);
-		TString getFileNameSolution(const MethodAbsScan *s);
-		TString getFileNamePar(const Combiner *c);
-		TString getFileNamePar(const MethodAbsScan *s);
-		TString getFileNamePlot(const vector<Combiner*>& cmb);
-		TString getFileNamePlotSingle(const vector<Combiner*>& cmb, int cId);
-		TString getFileNameStartPar(const Combiner *c);
-		TString getFileNameStartPar(const MethodAbsScan *s);
-		TString getFileNameAsimovPar(const Combiner *c);
-		TString getFileNameAsimovPar(const MethodAbsScan *s);
-		TString getAsimovCombinerNameAddition(int id);
-		TString getPluginNameAddition();
-		TString getPluginOnlyNameAddition();
-		TString getPreliminaryNameAddition();
+        FileNameBuilder(OptParser *arg, TString name="gammacombo");
+        ~FileNameBuilder();
+        TString getBaseName();
+        TString getFileBaseName(const Combiner *c);
+        TString getFileBaseName(const MethodAbsScan *s);
+        TString getFileNameScanner(const MethodAbsScan *s);
+        TString getFileNameSolution(const MethodAbsScan *s);
+        TString getFileNamePar(const Combiner *c);
+        TString getFileNamePar(const MethodAbsScan *s);
+        TString getFileNamePlot(const vector<Combiner*>& cmb);
+        TString getFileNamePlotSingle(const vector<Combiner*>& cmb, int cId);
+        TString getFileNameStartPar(const Combiner *c);
+        TString getFileNameStartPar(const MethodAbsScan *s);
+        TString getFileNameAsimovPar(const Combiner *c);
+        TString getFileNameAsimovPar(const MethodAbsScan *s);
+        TString getAsimovCombinerNameAddition(int id);
+        TString getPluginNameAddition();
+        TString getPluginOnlyNameAddition();
+        TString getPreliminaryNameAddition();
     TString getCLsNameAddition();
 
-	private:
+    private:
 
-		OptParser* m_arg; 		///< command line arguments
-		TString m_basename; 	///< the base name, e.g. "gammacombo"
-		TString m_asimov; 		///< literal naming Asimov combiners
+        OptParser* m_arg;       ///< command line arguments
+        TString m_basename;     ///< the base name, e.g. "gammacombo"
+        TString m_asimov;       ///< literal naming Asimov combiners
 };
 
 #endif

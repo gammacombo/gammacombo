@@ -1,5 +1,5 @@
 # This file includes the following commands into a snakemake workflow (optimised to work on LXPLUS). Any of the commands can be executed outside snakemake independently as well!
-  
+
   # 0.) Create a RooWorkspace
   #        bin/tutorial_dataset_build_workspace
   # 1.) Running a Profile Likelihood Scan with the cls option --cls 1
@@ -55,7 +55,7 @@ rule build_wspc:
   #     MaxRunHours = 1,  # defining the queue, 1 hour is more than enough
   #     request_disk = 1024000  # in kb, more than enough
   log:
-    'build_workspace.log'       
+    'build_workspace.log'
   shell:
     SETUP_LXPLUS_PREFIX+
       ' '.join([
@@ -76,7 +76,7 @@ rule run_prob:
   #     MaxRunHours = 1,  # defining the queue, 1 hour is more than enough
   #     request_disk = 1024000   # in kb, more than enough
   log:
-    'tutorial_dataset_prob_{name}_{points}p_{var}.log'       
+    'tutorial_dataset_prob_{name}_{points}p_{var}.log'
   shell:
     SETUP_LXPLUS_PREFIX+
       ' '.join([
@@ -104,7 +104,7 @@ rule run_pluginbatch:
   #     MaxRunHours = 1,  # defining the queue, the batch scan can be quite time consuming (very problem dependent), here 1h is enough
   #     request_disk = 1024000  # in kb, more than enough
   log:
-    'tutorial_dataset_pluginbatch_{name}_{var}_{jobnum}.log'       
+    'tutorial_dataset_pluginbatch_{name}_{var}_{jobnum}.log'
   shell:
     SETUP_LXPLUS_PREFIX+
       ' '.join([
@@ -136,7 +136,7 @@ rule run_plugin:
   #     MaxRunHours = 1,  # defining the queue, 1 hour is more than enough
   #     request_disk = 1024000  # in kb, more than enough
   log:
-    'tutorial_dataset_plugin_{name}_{var}.log'       
+    'tutorial_dataset_plugin_{name}_{var}.log'
   shell:
     SETUP_LXPLUS_PREFIX+
       ' '.join([

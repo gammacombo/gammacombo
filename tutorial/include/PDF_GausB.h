@@ -16,16 +16,16 @@ using namespace std;
 
 class PDF_GausB : public PDF_Abs
 {
-	public:
-		PDF_GausB(TString cObs="year2014", TString cErr="year2014", TString cCor="year2014");
-		~PDF_GausB();
-		void          buildPdf();
-		void          initObservables();
-		virtual void  initParameters();
-		virtual void  initRelations();
-		void          setCorrelations(TString c);
-		void          setObservables(TString c);
-		void          setUncertainties(TString c);
+    public:
+        PDF_GausB(TString cObs="year2014", TString cErr="year2014", TString cCor="year2014");
+        ~PDF_GausB();
+        void          buildPdf();
+        void          initObservables();
+        virtual void  initParameters();
+        virtual void  initRelations();
+        void          setCorrelations(TString c);
+        void          setObservables(TString c);
+        void          setUncertainties(TString c);
 };
 
 #endif

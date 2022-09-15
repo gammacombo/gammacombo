@@ -21,23 +21,23 @@ class ProgressBar
 {
 public:
 
-	ProgressBar(OptParser *arg, unsigned int n);
-	~ProgressBar();
+    ProgressBar(OptParser *arg, unsigned int n);
+    ~ProgressBar();
 
-	void      progress();
-	void			skipSteps(unsigned int n);
+    void progress();
+    void skipSteps(unsigned int n);
     
 private:
     
-	void      progressBar();
-	void			progressPercentage();
+    void progressBar();
+    void progressPercentage();
 
-	OptParser* _arg;			///< command line arguments
-	unsigned int _n;			///< maximum number of steps, "100%"
-	unsigned int _x;			///< current step, "78%"
-	int _width;						///< width of the progress bar
-	int _resolution;			///< update the display this many times
-	bool _batch;					///< display progress in a log-file compatible way
+    OptParser* _arg;  ///< command line arguments
+    unsigned int _n;  ///< maximum number of steps, "100%"
+    unsigned int _x;  ///< current step, "78%"
+    int _width;       ///< width of the progress bar
+    int _resolution;  ///< update the display this many times
+    bool _batch;      ///< display progress in a log-file compatible way
 };
 
 #endif

@@ -16,7 +16,7 @@ class ParametersTutorial : public ParametersAbs
 {
 public:
     ParametersTutorial();
-    
+
 protected:
     void defineParameters();
 };

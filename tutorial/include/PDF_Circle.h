@@ -21,16 +21,16 @@ using namespace Utils;
 ///
 class PDF_Circle : public PDF_Abs
 {
-	public:
-		PDF_Circle(TString cObs="year2013", TString cErr="year2013", TString cCor="year2013");
-		~PDF_Circle();
-		void          buildPdf();
-		void          initObservables();
-		virtual void  initParameters();
-		virtual void  initRelations();
-		void          setCorrelations(TString c);
-		void          setObservables(TString c);
-		void          setUncertainties(TString c);
+    public:
+        PDF_Circle(TString cObs="year2013", TString cErr="year2013", TString cCor="year2013");
+        ~PDF_Circle();
+        void          buildPdf();
+        void          initObservables();
+        virtual void  initParameters();
+        virtual void  initRelations();
+        void          setCorrelations(TString c);
+        void          setObservables(TString c);
+        void          setUncertainties(TString c);
 };
 
 #endif

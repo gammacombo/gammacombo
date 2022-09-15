@@ -7,12 +7,12 @@
 
 class FitResultDump {
 
-	public:
-		FitResultDump();
-		~FitResultDump();
+    public:
+        FitResultDump();
+        ~FitResultDump();
 
-		void dumpResult(std::string ofname, MethodAbsScan *scanner);
-		ofstream outf;
+        void dumpResult(std::string ofname, MethodAbsScan *scanner);
+        ofstream outf;
 };
 
 #endif

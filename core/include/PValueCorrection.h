@@ -17,38 +17,35 @@
 
 class PValueCorrection {
 
-	public:
+    public:
 
-		PValueCorrection(TString _transFunc="none", bool _verbose=false);
-		PValueCorrection(int id, bool _verbose=false);
-		~PValueCorrection();
+        PValueCorrection(TString _transFunc="none", bool _verbose=false);
+        PValueCorrection(int id, bool _verbose=false);
+        ~PValueCorrection();
 
-		void setTransFunc(TString tf) { transFunc = tf; }
-		void setFitParams(std::vector<double> fP) { fitParams = fP; }
-		void setFitParam(int i, double val);
-		void readFiles(TString name, int id=0, bool isPlugin=false);
-		void fitHist(TH1* h);
-		double transform(double x);
+        void setTransFunc(TString tf) { transFunc = tf; }
+        void setFitParams(std::vector<double> fP) { fitParams = fP; }
+        void setFitParam(int i, double val);
+        void readFiles(TString name, int id=0, bool isPlugin=false);
+        void fitHist(TH1* h);
+        double transform(double x);
 
-		void checkValid();
-		void checkParams();
-		void printCoverage(float,float,float,float,TString name="");
+        void checkValid();
+        void checkParams();
+        void printCoverage(float,float,float,float,TString name="");
 
-		void write(TString fname);
-		void write(TFile *f);
+        void write(TString fname);
+        void write(TFile *f);
 
-	private:
-		TString transFunc;
-		bool verbose;
-		TString fitString;
-		TF1 fitFunc;
-		std::vector<double> fitParams;
-		std::vector<TString> allowedFuncs;
-		TH1F *h_pvalue_before;
-		TH1F *h_pvalue_after;
-
-
-
+    private:
+        TString transFunc;
+        bool verbose;
+        TString fitString;
+        TF1 fitFunc;
+        std::vector<double> fitParams;
+        std::vector<TString> allowedFuncs;
+        TH1F *h_pvalue_before;
+        TH1F *h_pvalue_after;
 };
 
 #endif

@@ -15,9 +15,9 @@
 #include "TMath.h" 
 
 RooHistPdfAngleVar::RooHistPdfAngleVar(const char *name, const char *title, 
-	RooAbsReal& _xobs,
-	RooAbsReal& _xth,
-	RooAbsReal& _xshift) :
+    RooAbsReal& _xobs,
+    RooAbsReal& _xth,
+    RooAbsReal& _xshift) :
     RooAbsReal(name,title), 
     xobs("xobs","xobs",this,_xobs),
     xth("xth","xth",this,_xth),
@@ -39,9 +39,9 @@ RooHistPdfAngleVar::~RooHistPdfAngleVar() { }
 
 Double_t RooHistPdfAngleVar::evaluate() const 
 { 
-	double val = fmod(double(xth) - double(xobs) + double(xshift), 2.*TMath::Pi());
-	if ( val<0.0 ) val = val + 2.*TMath::Pi();
-	return val;	
+    double val = fmod(double(xth) - double(xobs) + double(xshift), 2.*TMath::Pi());
+    if ( val<0.0 ) val = val + 2.*TMath::Pi();
+    return val; 
 }
 
 ClassImp(RooHistPdfAngleVar)

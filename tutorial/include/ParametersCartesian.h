@@ -17,7 +17,7 @@ class ParametersCartesian : public ParametersAbs
 public:
     ParametersCartesian();
     inline ~ParametersCartesian(){};
-    
+
 protected:
     void defineParameters();
 };

@@ -26,7 +26,7 @@ class BatchScriptWriter
     void writeScripts(OptParser *arg, vector<Combiner*> *cmb);
     void writeScripts_datasets(OptParser *arg, PDF_Abs* pdf);
     void writeScript(TString fname, TString outfloc, int jobn, OptParser *arg);
-	void writeCondorScript(TString fname, OptParser *arg);
+    void writeCondorScript(TString fname, OptParser *arg);
     string exec;
     string subpkg;
 };

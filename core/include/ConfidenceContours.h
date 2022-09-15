@@ -20,32 +20,32 @@ using namespace Utils;
 
 class ConfidenceContours
 {
-	public:
+    public:
 
-		ConfidenceContours(OptParser *arg);
-		~ConfidenceContours();
-		void                     computeContours(TH2F* hist, histogramType type, int id=0);
-		void                     Draw();
-		void                     DrawDashedLine();
-		void                     setStyle(vector<int>& linecolor, vector<int>& linestyle, vector<int>& linewidth, vector<int>& fillcolor, vector<int>& fillstyle);
-		inline void              setTransparency(float percent){m_transparency = percent;};
-    inline void              setContoursToPlot( vector<int>& contstoplot ){ m_contstoplots = contstoplot;};
+        ConfidenceContours(OptParser *arg);
+        ~ConfidenceContours();
+        void        computeContours(TH2F* hist, histogramType type, int id=0);
+        void        Draw();
+        void        DrawDashedLine();
+        void        setStyle(vector<int>& linecolor, vector<int>& linestyle, vector<int>& linewidth, vector<int>& fillcolor, vector<int>& fillstyle);
+        inline void setTransparency(float percent){m_transparency = percent;};
+        inline void setContoursToPlot( vector<int>& contstoplot ){ m_contstoplots = contstoplot;};
 
-	private:
+    private:
 
-		TH2F*                    addBoundaryBins(TH2F* hist);
-		void                     addFilledPlotArea(TH2F* hist);
-		TH2F*                    transformChi2valleyToHill(TH2F* hist,float offset);
-		OptParser*               m_arg;       ///< command line arguments
-		vector<Contour*>         m_contours;  ///< container for the 1,...,N sigma contours
-		vector<int>              m_linecolor; ///< style for the 1,...,N sigma contours
-		vector<int>              m_linestyle;
-		vector<int>              m_fillcolor;
-		vector<int>              m_fillstyle;
-		vector<int>              m_linewidth;
-		float                    m_transparency;
-    vector<int>              m_contstoplots; ///< container for which contours to actually draw
-    int                      m_nMaxContours;
+        TH2F*            addBoundaryBins(TH2F* hist);
+        void             addFilledPlotArea(TH2F* hist);
+        TH2F*            transformChi2valleyToHill(TH2F* hist,float offset);
+        OptParser*       m_arg;       ///< command line arguments
+        vector<Contour*> m_contours;  ///< container for the 1,...,N sigma contours
+        vector<int>      m_linecolor; ///< style for the 1,...,N sigma contours
+        vector<int>      m_linestyle;
+        vector<int>      m_fillcolor;
+        vector<int>      m_fillstyle;
+        vector<int>      m_linewidth;
+        float            m_transparency;
+        vector<int>      m_contstoplots; ///< container for which contours to actually draw
+        int              m_nMaxContours;
 };
 
 #endif

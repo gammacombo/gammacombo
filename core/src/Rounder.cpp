@@ -13,22 +13,22 @@ Rounder::~Rounder()
 int Rounder::getNsubdigits()
 {
   if ( arg->digits>-1 ) return arg->digits;
-	return TMath::Max(calcNsubdigits(fabs(m_central-m_cllo)), calcNsubdigits(fabs(m_central-m_clhi)));
+    return TMath::Max(calcNsubdigits(fabs(m_central-m_cllo)), calcNsubdigits(fabs(m_central-m_clhi)));
 }
 
 float Rounder::CLlo()
 {
-	return Round(m_cllo, getNsubdigits());
+    return Round(m_cllo, getNsubdigits());
 }
 
 float Rounder::CLhi()
 {
-	return Round(m_clhi, getNsubdigits());
+    return Round(m_clhi, getNsubdigits());
 }
 
 float Rounder::central()
 {
-	return Round(m_central, getNsubdigits());
+    return Round(m_central, getNsubdigits());
 }
 
 ///
