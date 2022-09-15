@@ -103,7 +103,7 @@ endforeach()
 ######################################
 
 foreach( exec ${COMBINER_EXECUTABLES} )
-    INSTALL( PROGRAMS ../build/bin/${exec}
+    INSTALL( PROGRAMS ${CMAKE_BINARY_DIR}/bin/${exec}
         DESTINATION ${COMBINER_NAME}/bin/
     )
 endforeach()

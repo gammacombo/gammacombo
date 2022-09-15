@@ -1,5 +1,5 @@
 # require a certain cmake version
-CMAKE_MINIMUM_REQUIRED( VERSION 2.8 )
+CMAKE_MINIMUM_REQUIRED( VERSION 3.4 )
 
 # declare the project name
 PROJECT(gammacomboCore)
@@ -45,7 +45,6 @@ FIND_PACKAGE(ROOT REQUIRED)
 # ROOT_LIBRARIES      Most common libraries
 # ROOT_GUI_LIBRARIES  Most common gui libraries
 # ROOT_LIBRARY_DIR    PATH to the library directory
-#MESSAGE("ROOT_FOUND: " ${ROOT_FOUND})
 MESSAGE("ROOT_INCLUDE_DIR: " ${ROOT_INCLUDE_DIR})
 MESSAGE("ROOT_LIBRARIES: " ${ROOT_LIBRARIES})
 MESSAGE("ROOT_GUI_LIBRARIES: " ${ROOT_GUI_LIBRARIES})
@@ -85,30 +84,11 @@ ENDIF(DOXYGEN_FOUND)
 
 ######################################
 #
-# this stuff is not needed?
+# check for C++ version
 #
 ######################################
 
-#IF(NOT CMAKE_BUILD_TYPE)
-#  SET(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
-#      "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
-#      FORCE)
-#ENDIF(NOT CMAKE_BUILD_TYPE)
-
-## require proper c++, standard is C++03, flag reads: c++98
-#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -ansi -pedantic -Wno-long-long -Wshadow -Werror=overloaded-virtual -g3 -O3 -std=c++11" )
-#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -ansi -pedantic -g3 -O3 -std=c++11" )
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -O3 -std=c++11" )
-SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -g3")
-SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3")
-SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS} -O3 -g3")
-
-######################################
-#
-# check for C++11
-#
-######################################
-
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -O3")
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag(-std=c++11 HAS_CPP11)
 check_cxx_compiler_flag(-std=c++0x HAS_CPP11_ALTERNATIVE)
@@ -136,9 +116,6 @@ else()
         message(FATAL_ERROR "No C++11 support.")
     endif()
 endif()
-
-# set additional compiler flags
-#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++11-extensions -Wno-inconsistent-missing-override")
 
 ######################################
 #
@@ -210,31 +187,3 @@ install( FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Dict_rdict.pcm DESTINA
 foreach( dir ${COMBINER_MODULES} )
     add_subdirectory(${dir})
 endforeach()
-
-######################################
-#
-# tests
-#
-######################################
-
-## the examples, build with "make tests"
-#ADD_CUSTOM_TARGET( tests )
-#MACRO( ADD_GENFIT_TEST _testname )
-#   ADD_EXECUTABLE( ${_testname} EXCLUDE_FROM_ALL ${ARGN} )
-#   ADD_DEPENDENCIES( tests ${_testname} )
-#   TARGET_LINK_LIBRARIES( ${_testname} ${PROJECT_NAME} ${ROOT_LIBS} -lGeom )
-#    #INSTALL( TARGETS ${_testname} DESTINATION ${EXECUTABLE_INSTALL_DIR})
-#ENDMACRO( ADD_GENFIT_TEST )
-#
-#ADD_GENFIT_TEST( fitterTests               test/fitterTests/main.cc)
-#ADD_GENFIT_TEST( minimalFittingExample     test/minimalFittingExample/main.cc)
-#ADD_GENFIT_TEST( measurementFactoryExample test/measurementFactoryExample/main.cc)
-#ADD_GENFIT_TEST( streamerTest              test/streamerTest/main.cc)
-#ADD_GENFIT_TEST( unitTests                 test/unitTests/main.cc)
-#if(DEFINED RAVE)
-#  ADD_GENFIT_TEST( vertexingTest           test/vertexingTest/main.cc)
-#  ADD_GENFIT_TEST( vertexingTestRead       test/vertexingTest/read.cc)
-#endif()
-
-# generate and install following configuration files
-#GENERATE_PACKAGE_CONFIGURATION_FILES( genfitConfig.cmake genfitConfigVersion.cmake )
