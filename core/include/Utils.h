@@ -123,7 +123,7 @@ namespace Utils
     void setLimit(const RooAbsCollection* set, TString limitname);
   double getCorrelationFactor( const vector<double> &a , const vector<double> &b );
 
-    void buildCorMatrix(TMatrixDSym &cor);
+    bool buildCorMatrix(TMatrixDSym &cor);
     TMatrixDSym* buildCovMatrix(TMatrixDSym &cor, float *err);
     TMatrixDSym* buildCovMatrix(TMatrixDSym &cor, vector<double> &err);
 

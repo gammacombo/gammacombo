@@ -5,6 +5,8 @@
  *
  **/
 
+#include <string>
+
 #include "Utils.h"
 #include "RooProdPdf.h"
 
@@ -709,25 +711,104 @@ void Utils::setLimit(const RooAbsCollection* set, TString limitname)
 }
 
 ///
-/// Build a full correlation matrix by
-/// filling diagonal elements with unity
-/// and symmetrizing.
+/// Build a full correlation matrix.
 ///
-void Utils::buildCorMatrix(TMatrixDSym &cor)
+/// First, check that the input matrix has the right format.
+/// Allowed formats are:
+///
+///   1)  1.  x   y
+///       x   1.  z
+///       y   z   1.
+///
+///   2)  1.  x   y
+///       0.  1.  z
+///       0.  0.  1.
+///
+///   3)  1.  0.  0.
+///       x   1.  0.
+///       y   z   1.
+///
+///   4)  0.  x   y
+///       0.  0.  z
+///       0.  0.  0.
+///
+///   5)  0.  0.  0.
+///       x   0.  0.
+///       y   z   0.
+///
+/// If none of the formats are matched, an error is raised and the program
+/// execution is stopped.
+///
+/// In cases 2 to 5, the off-diagonal terms in the lower part of the matrix
+/// are set to the value of their symmetric element.
+/// In cases 4 and 5, the diagonal terms are set to 1.
+///
+/// @return `true` if the input matrix was well defined, otherwise `false`.
+///
+bool Utils::buildCorMatrix(TMatrixDSym &cor)
 {
-    // fill diagonals
-    for ( int i=0; i<cor.GetNcols(); i++ )
-    {
-        cor[i][i] = 1.;
-    }
+    const int n = cor.GetNcols();
+    const double tol = 1e-6;  // tolerance for float precision
+    auto ill_formed = [cor](const std::string reason) {
+        std::cerr << "FAILURE: Input correlation matrix is ill-formed:\n"
+                     "         " << reason << std::endl;
+        cor.Print();
+    };
 
-    // symmetrize
-    for ( int i=0; i<cor.GetNcols(); i++ )
-        for ( int j=0; j<cor.GetNcols(); j++ )
-        {
-            if ( cor[i][j]!=0.0 && cor[j][i]==0.0 ) cor[j][i] = cor[i][j];
-            if ( cor[i][j]==0.0 && cor[j][i]!=0.0 ) cor[i][j] = cor[j][i];
+    // --- Check the diagonal
+    const bool first_el_one = std::abs(cor[0][0] - 1.) < tol;
+    const bool first_el_zero = std::abs(cor[0][0]) < tol;
+    if (!(first_el_one || first_el_zero)) {
+        ill_formed("first element is not 0. nor 1.");
+        return false;
+    }
+    for (int i=1; i<n; ++i) {
+        if (first_el_one && std::abs(cor[i][i] - 1.) > tol) {
+            ill_formed("First element is 1, but diagonal has elements which differ from 1 (index " + std::to_string(i) + ")");
+            return false;
         }
+        if (first_el_zero && std::abs(cor[i][i]) > tol) {
+            ill_formed("First element is 0, but diagonal has elements which differ from 0 (index " + std::to_string(i) + ")");
+            return false;
+        }
+    }
+    // Fill the diagonal
+    for (int i=0; i<n; ++i) cor[i][i] = 1.;
+
+    // --- Check the off-diagonal elements
+    // Check if at least one of the two off-diagonal triangles is zero
+    bool upper_triangle_zero = true;
+    bool lower_triangle_zero = true;
+    for (int i=0; i<n-1; ++i) {
+        for (int j=i+1; j<n; ++j) {
+            if (std::abs(cor[i][j]) > tol) upper_triangle_zero = false;
+            if (std::abs(cor[j][i]) > tol) lower_triangle_zero = false;
+        }
+    }
+    // If the diagonal is zero, at least one of the two triangles should be zero
+    if (first_el_zero && !(upper_triangle_zero || lower_triangle_zero)) {
+        ill_formed("Diagonal elements are 0, but the off-diagonal elements in the lower (or upper) part of the matrix are not all 0");
+        return false;
+    }
+    // If both triangles are nonzero, the matrix should be symmetric
+    if (!upper_triangle_zero && !lower_triangle_zero) {
+        for (int i=0; i<n-1; ++i) {
+            for (int j=i+1; j<n; ++j) {
+                if (std::abs(cor[i][j] - cor[j][i]) > tol) {
+                    ill_formed("The matrix is not symmetric (element " + std::to_string(i) + "," + std::to_string(j) + ")");
+                    return false;
+                }
+            }
+        }
+    }
+    // Fill the zero triangle
+    for (int i=0; i<n-1; ++i) {
+        for (int j=i+1; j<n; ++j) {
+            if (std::abs(cor[i][j]) < tol) cor[i][j] = cor[j][i];
+            else                           cor[j][i] = cor[i][j];
+        }
+    }
+    return true;
 }
 
 ///

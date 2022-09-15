@@ -254,9 +254,52 @@ void PDF_Abs::loadExtParameters(RooFitResult *r)
 ///
 void PDF_Abs::buildCov()
 {
+    auto name = getName();
+    auto corr_source = getCorrelationSourceString();
+    auto fatal = [name, corr_source](std::string message) {
+        std::cout << "FATAL: " << message << "\n"
+                  << "       PDF name: " << name << "\n"
+                  << "       Correlation source: " << corr_source << "\n" << std::endl;
+        exit(1);
+    };
+    auto warning = [name, corr_source](std::string message) {
+        std::cout << "WARNING: " << message << "\n"
+                  << "         PDF name: " << name << "\n"
+                  << "         Correlation source: " << corr_source << "\n" << std::endl;
+    };
+
     // add diagonals, symmetrize
-    buildCorMatrix(corStatMatrix);
-    buildCorMatrix(corSystMatrix);
+    if (!buildCorMatrix(corStatMatrix)) fatal("The statistical correlation matrix is ill-formed");
+    if (!buildCorMatrix(corSystMatrix)) fatal("The systematic correlation matrix is ill-formed");
+
+    auto n = getNobs();
+    if (n > 1
+            && !corr_source.Contains("none", TString::kIgnoreCase)
+            && !corr_source.Contains("no correlation", TString::kIgnoreCase)
+            && !corr_source.Contains("correlations off", TString::kIgnoreCase)
+            && !corr_source.Contains("correlations are off", TString::kIgnoreCase))
+    {
+        // check that off-diagonal terms of the correlation matrices are not all zero
+        auto is_nonzero = [](double x){ return std::abs(x) > 1e-6; };
+        if (std::find_if(StatErr.begin(), StatErr.end(), is_nonzero) != StatErr.end()) {
+            bool warn = true;
+            for (int i=0; i<n; ++i) {
+                for (int j=0; j<n; ++j) {
+                    if (i != j && is_nonzero(corStatMatrix[i][j])) warn = false;
+                }
+            }
+            if (warn) warning("All off-diagonal elements of the stat. corr. matrix are zero. Is this OK?");
+        }
+        if (std::find_if(SystErr.begin(), SystErr.end(), is_nonzero) != SystErr.end()) {
+            bool warn = true;
+            for (int i=0; i<n; ++i) {
+                for (int j=0; j<n; ++j) {
+                    if (i != j && is_nonzero(corSystMatrix[i][j])) warn = false;
+                }
+            }
+            if (warn) warning("All off-diagonal elements of the syst. corr. matrix are zero. Is this OK?");
+        }
+    }
 
     // make total cov matrix
     TMatrixDSym *covStat = buildCovMatrix(corStatMatrix, StatErr);
