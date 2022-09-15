@@ -41,8 +41,8 @@ MethodAbsScan::MethodAbsScan(Combiner *c):
     MethodAbsScan::MethodAbsScan(OptParser* opt):
     rndm(),
     methodName("Abs"),
-    combiner(NULL),
-    w(NULL),
+    combiner(nullptr),
+    w(nullptr),
     arg(opt),
     scanVar1(opt->var[0]),
     verbose(opt->verbose),
@@ -72,7 +72,7 @@ MethodAbsScan::MethodAbsScan(Combiner *c):
     hCLs2d(0),
     hChi2min(0),
     hChi2min2d(0),
-    obsDataset(NULL),
+    obsDataset(nullptr),
     startPars(0),
     globalMin(0),
     nWarnings(0),
@@ -1645,7 +1645,7 @@ void MethodAbsScan::calcCLintervalsSimple(int CLsType, bool calc_expected)
 const std::pair<double, double> MethodAbsScan::getBorders(const TGraph& graph, const double confidence_level, bool qubic){
 
     const double p_val = 1 - confidence_level;
-    TSpline* splines = NULL;
+    TSpline* splines = nullptr;
     if(qubic) splines = new TSpline3();
 
 
@@ -1682,7 +1682,7 @@ const std::pair<double, double> MethodAbsScan::getBorders(const TGraph& graph, c
 const std::pair<double, double> MethodAbsScan::getBorders_CLs(const TGraph& graph, const double confidence_level, bool qubic){
 
     const double p_val = 1 - confidence_level;
-    TSpline* splines = NULL;
+    TSpline* splines = nullptr;
     if(qubic) splines = new TSpline3();
 
 

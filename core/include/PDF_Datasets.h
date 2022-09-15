@@ -25,7 +25,7 @@ public:
     PDF_Datasets(RooWorkspace* w, int nObs, OptParser* opt);
     PDF_Datasets(RooWorkspace* w);
     ~PDF_Datasets();
-    void                  deleteNLL() {if (_NLL) {delete _NLL; _NLL = NULL;}};
+    void                  deleteNLL() {if (_NLL) {delete _NLL; _NLL = nullptr;}};
 
     virtual RooFitResult* fit(RooAbsData* dataToFit);
     virtual RooFitResult* fitBkg(RooAbsData* dataToFit, TString signalvar);

@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
     // Load the workspace from its file
     TFile f("multipdfworkspace.root");
     RooWorkspace* workspace = (RooWorkspace*)f.Get("workspace");
-    if (workspace==NULL){
+    if (workspace == nullptr){
         std::cout<<"No workspace found:"<<std::endl;
         std::cout<<"This tutorial requires a .root file containting a special workspace before running it."<<std::endl;
         std::cout<<"You can create the workspace by calling the multipdf_build_workspace command. "<<std::endl;

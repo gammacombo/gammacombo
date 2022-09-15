@@ -24,7 +24,7 @@ PDF_Datasets::PDF_Datasets(RooWorkspace* w, int nObs, OptParser* opt)
     areObsSet       = areParsSet = areRangesSet = isPdfSet = isBkgPdfSet = isMultipdfSet = isBkgMultipdfSet = isMultipdfCatSet = isDataSet = isToyDataSet = kFALSE;
     arg             = opt;
     fitStatus       = -10;
-    _NLL            = NULL;
+    _NLL            = nullptr;
     minNllFree      = 0;
     minNllScan      = 0;
     minNll          = 0;
@@ -34,7 +34,7 @@ PDF_Datasets::PDF_Datasets(RooWorkspace* w, int nObs, OptParser* opt)
 };
 
 PDF_Datasets::PDF_Datasets(RooWorkspace* w)
-    : PDF_Datasets(w, 1, NULL)
+    : PDF_Datasets(w, 1, nullptr)
 {
     name    = "PDF_Dataset";
     title   = "PDF_Dataset";
@@ -49,7 +49,7 @@ void PDF_Datasets::initConstraints(const TString& setName) {
     constraintName = setName;
     //obtain the part of the PDF that can generate the global observables
     this->_constraintPdf  = new RooProdPdf("constraintPdf", "", *wspc->set(constraintName));
-    if (_constraintPdf == NULL) {
+    if (_constraintPdf == nullptr) {
         std::cout << "ERROR in PDF_B_MuMu::initConstraints - constraint pdf not initialized." << endl;
         exit(EXIT_FAILURE);
     }
@@ -351,7 +351,7 @@ void PDF_Datasets::generateToysGlobalObservables(int SeedShift) {
 
 RooFitResult* PDF_Datasets::fit(RooAbsData* dataToFit) {
 
-    if (this->getWorkspace()->set(constraintName) == NULL) {
+    if (this->getWorkspace()->set(constraintName) == nullptr) {
         std::cout << std::endl;
         std::cout << std::endl;
         std::cout << "ERROR: No RooArgSet with constraints found." << std::endl;
@@ -414,7 +414,7 @@ RooFitResult* PDF_Datasets::fit(RooAbsData* dataToFit) {
 
 RooFitResult* PDF_Datasets::fitBkg(RooAbsData* dataToFit, TString signalvar) {
 
-    if (this->getWorkspace()->set(constraintName) == NULL) {
+    if (this->getWorkspace()->set(constraintName) == nullptr) {
         std::cout << std::endl;
         std::cout << std::endl;
         std::cout << "ERROR: No RooArgSet with constraints found." << std::endl;
@@ -614,7 +614,7 @@ void PDF_Datasets::initializeRandomGenerator(int seedShift) {
         RooRandom::randomGenerator()->SetSeed(0);
     } else {
         // calculate unique seed for deterministic random generation
-        if (arg == NULL) {
+        if (arg == nullptr) {
             std::cerr << "Error in PDF_Datasets::initializeRandomGenerator." << std::endl;
             std::cerr << "You must pass the OptParser in the constructor in order to use this function." << std::endl;
             exit(EXIT_FAILURE);

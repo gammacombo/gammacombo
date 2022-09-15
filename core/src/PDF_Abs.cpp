@@ -14,15 +14,15 @@ PDF_Abs::PDF_Abs(int nObs):
     corSystMatrix(nObs)
 {
     this->nObs  = nObs;
-    parameters  = NULL;
-    theory      = NULL;
-    observables = NULL;
-    pdf         = NULL;
-    pdfBkg      = NULL;
-    multipdf    = NULL;
+    parameters  = nullptr;
+    theory      = nullptr;
+    observables = nullptr;
+    pdf         = nullptr;
+    pdfBkg      = nullptr;
+    multipdf    = nullptr;
     isBkgPdfSet = false;
     isBkgMultipdfSet = false;
-    toyObservables = NULL;
+    toyObservables = nullptr;
     nToyObs = 1000;
     iToyObs = 0;
     for ( int i=0; i<nObs; i++ ){

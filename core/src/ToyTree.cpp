@@ -14,7 +14,7 @@ ToyTree::ToyTree(PDF_Datasets *p, OptParser* opt, TChain* t, bool _quiet):
     quiet(_quiet)
 {
     assert(p);
-    this->comb = NULL;
+    this->comb = nullptr;
     this->w = p->getWorkspace();
     this->name = p->getName();
     this->arg = opt;
@@ -215,7 +215,7 @@ void ToyTree::init()
         // global observables
         if(this->storeGlob){
           delete it;
-          if(w->set(globName)==NULL){
+          if(w->set(globName) == nullptr){
             cerr<<"Unable to store parameters of global constraints because no set called "+globName
                 <<" is defined in the workspace. "<<endl;
                 //\todo Implement init function in PDF_Datasets to enabe the user to set the name of this set in the workspace.
@@ -452,7 +452,7 @@ void ToyTree::computeMinMaxN()
     if(branches->FindObject("scanpointy"))            t->SetBranchStatus("scanpointy",         1);
     Long64_t nentries = t->GetEntries();
     if ( nentries==0 ) return;
-    ProgressBar *pb = NULL;
+    ProgressBar *pb = nullptr;
     if ( !quiet) pb = new ProgressBar(arg, nentries);
     if ( arg->debug ) cout << "ToyTree::computeMinMaxN() : ";
     if ( !quiet) cout << "analysing toys ..." << endl;

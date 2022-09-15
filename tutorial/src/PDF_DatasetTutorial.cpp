@@ -13,7 +13,7 @@ RooFitResult* PDF_DatasetTutorial::fit(RooDataSet* dataToFit){
     //\todo: Or maybe it is smarter to make the checks elsewhere?
     //\todo: Maybe in fact we could have the fit functions in the ABS class and call other functions
     // from within these fit functions that only implement the fit, but none of the checks?
-    if (this->getWorkspace()->set(constraintName)==NULL){
+    if (this->getWorkspace()->set(constraintName) == nullptr){
         std::cout<<std::endl;
         std::cout<<std::endl;
         std::cout<< "ERROR: No RooArgSet with constraints found."<<std::endl;

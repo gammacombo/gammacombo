@@ -15,11 +15,11 @@
 MethodDatasetsProbScan::MethodDatasetsProbScan(PDF_Datasets* PDF, OptParser* opt)
     : MethodProbScan(opt),
       pdf              (PDF),
-      probPValues      (NULL),
+      probPValues      (nullptr),
       drawPlots        (false),
       explicitInputFile(false),
-      bkgOnlyFitResult (NULL),
-      probScanTree     (NULL)
+      bkgOnlyFitResult (nullptr),
+      probScanTree     (nullptr)
 {
     chi2minGlobalFound = true; // the free fit to data must be done and must be saved to the workspace before gammacombo is even called
     methodName = "DatasetsProb";
@@ -878,7 +878,7 @@ void MethodDatasetsProbScan::plotFitRes(TString fName) {
         RooPlot *plot = w->var(fitVar)->frame();
         // bkg pdf
         if ( !bkgOnlyFitResult ) {
-            cout << "MethodDatasetsProbScan::plotFitRes() : ERROR : bkgOnlyFitResult is NULL" << endl;
+            cout << "MethodDatasetsProbScan::plotFitRes() : ERROR : bkgOnlyFitResult is nullptr" << endl;
             exit(1);
         }
         setParameters(w, bkgOnlyFitResult);
@@ -898,7 +898,7 @@ void MethodDatasetsProbScan::plotFitRes(TString fName) {
         }
         // free fit
         if ( !globalMin ) {
-            cout << "MethodDatasetsProbScan::plotFitRes() : ERROR : globalMin is NULL" << endl;
+            cout << "MethodDatasetsProbScan::plotFitRes() : ERROR : globalMin is nullptr" << endl;
             exit(1);
         }
         setParameters(w, globalMin);

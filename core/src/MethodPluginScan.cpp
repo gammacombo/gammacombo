@@ -32,7 +32,7 @@ MethodPluginScan::MethodPluginScan(MethodProbScan* s)
     nPoints1d  = arg->npointstoy;
     nPoints2dx = arg->npointstoy;
     nPoints2dy = arg->npointstoy;
-    BkgToys = NULL;
+    BkgToys = nullptr;
 }
 
 ///
@@ -56,7 +56,7 @@ MethodPluginScan::MethodPluginScan(MethodProbScan* s, PDF_Datasets* pdf, OptPars
     obsDataset = new RooDataSet("obsDataset", "obsDataset", *w->set(obsName));
     obsDataset->add(*w->set(obsName));
     nToys = opt->ntoys;
-    BkgToys = NULL;
+    BkgToys = nullptr;
 };
 
 ///
@@ -79,7 +79,7 @@ MethodPluginScan::MethodPluginScan(Combiner* comb)
     nPoints1d  = arg->npointstoy;
     nPoints2dx = arg->npointstoy;
     nPoints2dy = arg->npointstoy;
-    BkgToys = NULL;
+    BkgToys = nullptr;
 }
 
 ///
@@ -476,7 +476,7 @@ double MethodPluginScan::getPvalue1d(RooSlimFitResult* plhScan, double chi2minGl
     Fitter *myFit = new Fitter(arg, w, combiner->getPdfName());
 
     // Create a progress bar
-    ProgressBar *myPb = NULL;
+    ProgressBar *myPb = nullptr;
         if (!quiet) myPb = new ProgressBar(arg, nToys);
 
     // do the work
@@ -898,7 +898,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id, bool quiet)
     Long64_t ntoysid   = 0; // if id is not -1, this will count the number of toys with that id
 
     t->activateCoreBranchesOnly(); // speeds up the event loop
-    ProgressBar *pb = NULL;
+    ProgressBar *pb = nullptr;
     if (!quiet) pb = new ProgressBar(arg, nentries);
     if ( arg->debug ) cout << "MethodPluginScan::analyseToys() : ";
     if (!quiet) cout << "building p-value histogram ..." << endl;

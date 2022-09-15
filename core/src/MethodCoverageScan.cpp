@@ -548,7 +548,7 @@ void MethodCoverageScan::plot()
     h_pvalue_plugin->SetFillColor(ci);
     h_pvalue_plugin->SetFillStyle(3004);
     h_pvalue_plugin->Draw("same");
-    TLegend *leg = new TLegend(0.6810345,0.7357294,0.9353448,0.8900634,NULL,"brNDC");
+    TLegend *leg = new TLegend(0.6810345,0.7357294,0.9353448,0.8900634,nullptr,"brNDC");
     leg->SetBorderSize(1);
     leg->SetLineColor(0);
     leg->SetLineStyle(1);

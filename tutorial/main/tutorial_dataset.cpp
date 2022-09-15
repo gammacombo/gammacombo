@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
     // Load the workspace from its file
     TFile f("workspace.root");
     RooWorkspace* workspace = (RooWorkspace*)f.Get("dataset_workspace");
-    if (workspace==NULL){
+    if (workspace == nullptr){
         std::cout<<"No workspace found:"<<std::endl;
         std::cout<<"This tutorial requires a .root file containting a special workspace before running it."<<std::endl;
         std::cout<<"You can create the workspace by calling the tutorial_dataset_build_workspace command. "<<std::endl;
