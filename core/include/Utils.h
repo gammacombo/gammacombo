@@ -8,18 +8,29 @@
 #ifndef Utils_h
 #define Utils_h
 
+#include "boost/algorithm/string.hpp"
+#include <sys/stat.h>
+
+// ROOT
 #include "TMath.h"
 #include "TObjString.h"
 #include "TString.h"
 #include "TH2F.h"
 #include "TStyle.h"
-#include "RooAbsPdf.h"
-#include "RooWorkspace.h"
 #include "TCanvas.h"
 #include "TPad.h"
 #include "TPaveText.h"
-#include "rdtsc.h"
 #include "TMatrixDSym.h"
+#include "TTree.h"
+#include "TH1.h"
+#include "TGraphErrors.h"
+#include "TGraphSmooth.h"
+#include "TMatrixDSymEigen.h"
+#include "TVectorD.h"
+
+// RooFit
+#include "RooAbsPdf.h"
+#include "RooWorkspace.h"
 #include "RooFormulaVar.h"
 #include "RooRealVar.h"
 #include "RooFitResult.h"
@@ -27,14 +38,9 @@
 #include "RooDataSet.h"
 #include "RooRandom.h"
 #include "RooMinimizer.h"
-#include "TTree.h"
-#include "TH1.h"
-#include "TGraphErrors.h"
-#include "TGraphSmooth.h"
-#include "TMatrixDSymEigen.h"
-#include "TVectorD.h"
-#include <sys/stat.h>
-#include "boost/algorithm/string.hpp"
+
+// Local
+#include "rdtsc.h"
 #include "UtilsConfig.h"
 
 using namespace std;
@@ -123,6 +129,8 @@ namespace Utils
     void setLimit(const RooAbsCollection* set, TString limitname);
   double getCorrelationFactor( const vector<double> &a , const vector<double> &b );
 
+    template<typename T>
+        TMatrixDSym buildCorMatrix(const int n, std::vector<T> data);
     bool buildCorMatrix(TMatrixDSym &cor);
     TMatrixDSym* buildCovMatrix(TMatrixDSym &cor, float *err);
     TMatrixDSym* buildCovMatrix(TMatrixDSym &cor, vector<double> &err);
@@ -175,6 +183,62 @@ namespace Utils
     std::vector<std::vector<int> > transpose(std::vector<std::vector<int> >& v);
     TCanvas* newNoWarnTCanvas(TString name="NoWarnTCanvas", TString title="NoWarnTCanvas", int width=800, int height=600);
     TCanvas* newNoWarnTCanvas(TString name, TString title, int x, int y, int width, int height);
+}
+
+/**
+ * Build a symmetric correlation matrix from a vector summarising its contents.
+ *
+ * @param n    Number of observables.
+ * @param data Summary of matrix elements.
+ *
+ * The input data can be a vector of size:
+ *
+ *   - n x n, in the following format:
+ *     
+ *      {1.,  x ,  y ,  ...
+ *       x ,  1.,  z ,  ...
+ *       y ,  z ,  1.,  ...
+ *       ...  ...  ...  ...}
+ *
+ *   - n x (n-1) / 2, in the following format:
+ *     
+ *      {1.,  x ,  y ,  ...
+ *            1.,  z ,  ...
+ *                 1.,  ...
+ *                      ...}
+ *
+ *   - (n-1) x (n-2) / 2, in the following format:
+ *     
+ *      {x,  y,  ...
+ *           z,  ...
+ *               ...}
+ */
+template<typename T>
+TMatrixDSym Utils::buildCorMatrix(const int n, std::vector<T> data) {
+    int idata = 0;
+    TMatrixDSym m{n};
+    if (data.size() == static_cast<typename std::vector<T>::size_type>(n * n)) {
+        m = TMatrixDSym(n, &data[0]);
+    } else if (data.size() == static_cast<typename std::vector<T>::size_type>(n * (n+1) / 2)) {
+        for (int i=0; i<n; ++i) {
+            for (int j=0; j<n; ++j) {
+                if (j >= i) { m[i][j] = data[idata]; ++idata; }
+                else        { m[i][j] = m[j][i];              }
+            }
+        }
+    } else if (data.size() == static_cast<typename std::vector<T>::size_type>(n * (n-1) / 2)) {
+        for (int i=0; i<n; ++i) {
+            for (int j=0; j<n; ++j) {
+                if (i == j)      { m[i][j] = 1.;                   }
+                else if (j >= i) { m[i][j] = data[idata]; ++idata; }
+                else             { m[i][j] = m[j][i];              }
+            }
+        }
+    } else {
+            std::cerr << "FAILURE (Utils::buildCorMatrix(int, std::vector<T>): inconsistent input data";
+            exit(1);
+    }
+    return m;
 }
 
 template<typename T>
