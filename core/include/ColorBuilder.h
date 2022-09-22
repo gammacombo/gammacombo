@@ -14,14 +14,14 @@
 
 class ColorBuilder
 {
-	public:
+    public:
 
-		ColorBuilder();
-		~ColorBuilder();
+        ColorBuilder();
+        ~ColorBuilder();
 
-		int             darkcolor(int n);
-		int             darklightcolor(int n, float scale);
-		int             lightcolor(int n);
+        int darkcolor(int n);
+        int darklightcolor(int n, float scale);
+        int lightcolor(int n);
 
 };
 

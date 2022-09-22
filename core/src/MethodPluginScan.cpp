@@ -32,7 +32,7 @@ MethodPluginScan::MethodPluginScan(MethodProbScan* s)
     nPoints1d  = arg->npointstoy;
     nPoints2dx = arg->npointstoy;
     nPoints2dy = arg->npointstoy;
-    BkgToys = NULL;
+    BkgToys = nullptr;
 }
 
 ///
@@ -41,24 +41,23 @@ MethodPluginScan::MethodPluginScan(MethodProbScan* s)
 MethodPluginScan::MethodPluginScan(MethodProbScan* s, PDF_Datasets* pdf, OptParser* opt)
     : MethodAbsScan(opt),
     nToys(opt->ntoys)
-    {
-        methodName = "Plugin";
-        obsName = pdf->getObsName();
-        w = pdf->getWorkspace();
-        title = s->getTitle();
-        scanVar1 = s->getScanVar1Name();
-        scanVar2 = s->getScanVar2Name();
-        profileLH = s;
-        parevolPLH = profileLH;
-        setSolutions(s->getSolutions());
-        setChi2minGlobal(s->getChi2minGlobal());
-        chi2minBkg = s->getChi2minBkg();
-        obsDataset = new RooDataSet("obsDataset", "obsDataset", *w->set(obsName));
-        obsDataset->add(*w->set(obsName));
-        nToys = opt->ntoys;
-        BkgToys = NULL;
-
-    };
+{
+    methodName = "Plugin";
+    obsName = pdf->getObsName();
+    w = pdf->getWorkspace();
+    title = s->getTitle();
+    scanVar1 = s->getScanVar1Name();
+    scanVar2 = s->getScanVar2Name();
+    profileLH = s;
+    parevolPLH = profileLH;
+    setSolutions(s->getSolutions());
+    setChi2minGlobal(s->getChi2minGlobal());
+    chi2minBkg = s->getChi2minBkg();
+    obsDataset = new RooDataSet("obsDataset", "obsDataset", *w->set(obsName));
+    obsDataset->add(*w->set(obsName));
+    nToys = opt->ntoys;
+    BkgToys = nullptr;
+};
 
 ///
 /// Initialize from a Combiner object. This is more difficult,
@@ -67,8 +66,8 @@ MethodPluginScan::MethodPluginScan(MethodProbScan* s, PDF_Datasets* pdf, OptPars
 /// But to just compute a p-value at a certain point (getPvalue1d())
 /// this is fine.
 ///
-    MethodPluginScan::MethodPluginScan(Combiner* comb)
-: MethodAbsScan(comb)
+MethodPluginScan::MethodPluginScan(Combiner* comb)
+    : MethodAbsScan(comb)
 {
     methodName = "Plugin";
     title = comb->getTitle();
@@ -80,7 +79,7 @@ MethodPluginScan::MethodPluginScan(MethodProbScan* s, PDF_Datasets* pdf, OptPars
     nPoints1d  = arg->npointstoy;
     nPoints2dx = arg->npointstoy;
     nPoints2dy = arg->npointstoy;
-    BkgToys = NULL;
+    BkgToys = nullptr;
 }
 
 ///
@@ -179,63 +178,64 @@ RooDataSet* MethodPluginScan::generateToys(int nToys)
 
     // read the generated values for one variable from the
     // first two toys
-  //
-  vector<TString> affected_var;
-  affected_var.push_back("kD_k3pi");
-  affected_var.push_back("kD_kskpi");
+    //
+    vector<TString> affected_var;
+    affected_var.push_back("kD_k3pi");
+    affected_var.push_back("kD_kskpi");
 
-  for ( vector<TString>::iterator aff_var_it = affected_var.begin(); aff_var_it != affected_var.end(); aff_var_it++) {
+    for ( vector<TString>::iterator aff_var_it = affected_var.begin(); aff_var_it != affected_var.end(); aff_var_it++) {
 
-    TString aff_obs = *aff_var_it + "_obs";
+        TString aff_obs = *aff_var_it + "_obs";
 
-    bool hasAffObs = false;
-    float generatedValues[2];
-    for ( int i=0; i<2; i++ ){
-      const RooArgSet* toyData = dataset->get(i);
-      TIterator* it = toyData->createIterator();
-      while(RooRealVar* var = (RooRealVar*)it->Next()){
-        if ( TString(var->GetName()).Contains(aff_obs) ){
-          hasAffObs = true;
-          generatedValues[i] = var->getVal();
-          continue;
+        bool hasAffObs = false;
+        float generatedValues[2];
+        for ( int i=0; i<2; i++ ){
+            const RooArgSet* toyData = dataset->get(i);
+            TIterator* it = toyData->createIterator();
+            while(RooRealVar* var = (RooRealVar*)it->Next()){
+                if ( TString(var->GetName()).Contains(aff_obs) ){
+                    hasAffObs = true;
+                    generatedValues[i] = var->getVal();
+                    continue;
+                }
+            }
+            delete it;
         }
-      }
-      delete it;
-    }
 
-    // check if they are the same, if so, fluctuate and regenerate
-    if ( hasAffObs && generatedValues[0]==generatedValues[1] ){
-      delete dataset;
-      TString dD_aff_var = *aff_var_it;
-      dD_aff_var.ReplaceAll("kD","dD");
+        // check if they are the same, if so, fluctuate and regenerate
+        if ( hasAffObs && generatedValues[0]==generatedValues[1] ){
+            delete dataset;
+            TString dD_aff_var = *aff_var_it;
+            dD_aff_var.ReplaceAll("kD","dD");
 
-      cout << aff_obs << " GENERATION ERROR AT " << *aff_var_it << "=" << w->var(*aff_var_it)->getVal()
-        << " " << dD_aff_var << "=" << w->var(dD_aff_var)->getVal() << endl;
-      TRandom3 r;
-      w->var(*aff_var_it)->setVal(r.Gaus(w->var(*aff_var_it)->getVal(),0.05));
-      w->var(dD_aff_var)->setVal(r.Gaus(w->var(dD_aff_var)->getVal(),0.04));
-      cout << aff_obs << " SECOND GENERATION AT " << *aff_var_it << "=" << w->var(*aff_var_it)->getVal()
-      << " " << dD_aff_var << "=" << w->var(dD_aff_var)->getVal() << endl;
+            cout << aff_obs << " GENERATION ERROR AT " << *aff_var_it << "=" << w->var(*aff_var_it)->getVal()
+                << " " << dD_aff_var << "=" << w->var(dD_aff_var)->getVal() << endl;
+            TRandom3 r;
+            w->var(*aff_var_it)->setVal(r.Gaus(w->var(*aff_var_it)->getVal(),0.05));
+            w->var(dD_aff_var)->setVal(r.Gaus(w->var(dD_aff_var)->getVal(),0.04));
+            cout << aff_obs << " SECOND GENERATION AT " << *aff_var_it << "=" << w->var(*aff_var_it)->getVal()
+            << " " << dD_aff_var << "=" << w->var(dD_aff_var)->getVal() << endl;
 
-      RooMsgService::instance().setStreamStatus(0,kFALSE);
-      RooMsgService::instance().setStreamStatus(1,kFALSE);
-      dataset = w->pdf(pdfName)->generate(*w->set(obsName), nToys, AutoBinned(false));
-      RooMsgService::instance().setStreamStatus(0,kTRUE);
-      RooMsgService::instance().setStreamStatus(1,kTRUE);       for ( int i=0; i<2; i++ ){
-        const RooArgSet* toyData = dataset->get(i);
-        TIterator* it = toyData->createIterator();
-        while(RooRealVar* var = (RooRealVar*)it->Next()){
-          if ( TString(var->GetName()).Contains(aff_obs) ){
-            generatedValues[i] = var->getVal();
-            continue;
-          }
+            RooMsgService::instance().setStreamStatus(0,kFALSE);
+            RooMsgService::instance().setStreamStatus(1,kFALSE);
+            dataset = w->pdf(pdfName)->generate(*w->set(obsName), nToys, AutoBinned(false));
+            RooMsgService::instance().setStreamStatus(0,kTRUE);
+            RooMsgService::instance().setStreamStatus(1,kTRUE);
+            for ( int i=0; i<2; i++ ){
+                const RooArgSet* toyData = dataset->get(i);
+                TIterator* it = toyData->createIterator();
+                while(RooRealVar* var = (RooRealVar*)it->Next()){
+                    if ( TString(var->GetName()).Contains(aff_obs) ){
+                        generatedValues[i] = var->getVal();
+                        continue;
+                    }
+                }
+                delete it;
+            }
+            cout << aff_obs << " NEW VALUES : toy 0: " << generatedValues[0] << " toy 1: " << generatedValues[1] << endl;
         }
-        delete it;
-      }
-      cout << aff_obs << " NEW VALUES : toy 0: " << generatedValues[0] << " toy 1: " << generatedValues[1] << endl;
-    }
 
-  }
+    }
 
     return dataset;
 }
@@ -277,7 +277,7 @@ void MethodPluginScan::computePvalue1d(RooSlimFitResult* plhScan, double chi2min
     assert(plhScan);
     assert(t);
     assert(f);
-		//assert(pb);
+    //assert(pb);
     if ( !plhScan->hasParameter(scanVar1) ){
         cout << "MethodPluginScan::getPvalue1d() : ERROR : scan variable not found in plhScan. Exit." << endl;
         assert(0);
@@ -294,38 +294,38 @@ void MethodPluginScan::computePvalue1d(RooSlimFitResult* plhScan, double chi2min
     // the toys need to be generated.
     setParameters(w, parsName, plhScan, true);
 
-  // Kenzie-Cousins-Highland (randomize nuisance parameters within a uniform range)
-  if ( arg->isAction("uniform") ) {
-    //   set parameter ranges to their bb range (should be something wide 95, 99% CL)
-    const RooArgSet* pars = w->set(toysName) ? w->set(toysName) : w->set(parsName);
-    TIterator* it = pars->createIterator();
-    while(RooRealVar* var = (RooRealVar*)it->Next()){
-      setLimit( var, "bboos" );
+    // Kenzie-Cousins-Highland (randomize nuisance parameters within a uniform range)
+    if ( arg->isAction("uniform") ) {
+        // set parameter ranges to their bb range (should be something wide 95, 99% CL)
+        const RooArgSet* pars = w->set(toysName) ? w->set(toysName) : w->set(parsName);
+        TIterator* it = pars->createIterator();
+        while(RooRealVar* var = (RooRealVar*)it->Next()){
+            setLimit( var, "bboos" );
+        }
+        if (verbose) {
+            cout << "Uniform generating from:" << endl;
+            pars->Print("v");
+        }
+        randomizeParameters(w, parsName);
+        if (verbose) {
+            cout << "Set:" << endl;
+            w->set(parsName)->Print("v");
+        }
     }
-    if (verbose) {
-      cout << "Uniform generating from:" << endl;
-      pars->Print("v");
-    }
-    randomizeParameters(w, parsName);
-    if (verbose) {
-      cout << "Set:" << endl;
-      w->set(parsName)->Print("v");
-    }
-  }
 
-  // Cousins-Highland (randomize nuisance parameters according to a Gaussian with their
-  // best fit value and uncertainty from the PLH scan)
-  if ( arg->isAction("gaus") ) {
-    if (verbose) {
-      cout << "Gaussian generating from:" << endl;
-      plhScan->floatParsFinal().Print("v");
+    // Cousins-Highland (randomize nuisance parameters according to a Gaussian with their
+    // best fit value and uncertainty from the PLH scan)
+    if ( arg->isAction("gaus") ) {
+        if (verbose) {
+            cout << "Gaussian generating from:" << endl;
+            plhScan->floatParsFinal().Print("v");
+        }
+        randomizeParametersGaussian(w, toysName, plhScan);
+        if (verbose) {
+            cout << "Set:" << endl;
+            w->set(parsName)->Print("v");
+        }
     }
-    randomizeParametersGaussian(w, toysName, plhScan);
-    if (verbose) {
-      cout << "Set:" << endl;
-      w->set(parsName)->Print("v");
-    }
-  }
 
     // save nuisances for start parameters
     frCache.storeParsAtGlobalMin(w->set(parsName));
@@ -393,7 +393,7 @@ void MethodPluginScan::computePvalue1d(RooSlimFitResult* plhScan, double chi2min
         else{
             t->chi2minBkgBkgToy = chi2minBkgBkgToysvector.size()<=j ? 0 : chi2minBkgBkgToysvector[j];
         }
-				//std::cout << id << "\t" << t->chi2minBkgBkgToy << std::endl;
+                //std::cout << id << "\t" << t->chi2minBkgBkgToy << std::endl;
 
 
         //
@@ -416,17 +416,17 @@ void MethodPluginScan::computePvalue1d(RooSlimFitResult* plhScan, double chi2min
         else{
             t->chi2minBkgBkgToy = chi2minBkgBkgToysvector.size()<=j ? 0 : chi2minBkgBkgToysvector[j];
         }
-				// std::cout << id << "\t" << t->chi2minGlobalBkgToy << std::endl;
+                // std::cout << id << "\t" << t->chi2minGlobalBkgToy << std::endl;
 
         //
         // Bkg.1 generate bkg-only toys (for CLs method)
         //          (or select the right one)
         //
-				if (BkgToys) {
-					const RooArgSet* toyDataBkg = BkgToys->get(j);
-					setParameters(w, obsName, toyDataBkg);
-					// t->storeObservables();
-				}
+                if (BkgToys) {
+                    const RooArgSet* toyDataBkg = BkgToys->get(j);
+                    setParameters(w, obsName, toyDataBkg);
+                    // t->storeObservables();
+                }
 
         //
         // Bkg.2 fit to bkg-only toys (for CLs method)
@@ -476,8 +476,8 @@ double MethodPluginScan::getPvalue1d(RooSlimFitResult* plhScan, double chi2minGl
     Fitter *myFit = new Fitter(arg, w, combiner->getPdfName());
 
     // Create a progress bar
-    ProgressBar *myPb = NULL;
-		if (!quiet) myPb = new ProgressBar(arg, nToys);
+    ProgressBar *myPb = nullptr;
+        if (!quiet) myPb = new ProgressBar(arg, nToys);
 
     // do the work
     if (!quiet) cout << "MethodPluginScan::getPvalue1d() : computing p-value ..." << endl;
@@ -488,13 +488,13 @@ double MethodPluginScan::getPvalue1d(RooSlimFitResult* plhScan, double chi2minGl
         ControlPlots cp(myTree);
         cp.ctrlPlotChi2();
     }
-		// if no solutions then use the plhScan passed
-		if (solutions.size()==0) {
-			if (arg->verbose || arg->debug) std::cout << "MethodPluginScan::getPvalue1d() : WARNING: setting solutions from PL scan" << std::endl;
-			vector<RooSlimFitResult*> s;
-			s.push_back(plhScan);
-			setSolutions(s);
-		}
+        // if no solutions then use the plhScan passed
+        if (solutions.size()==0) {
+            if (arg->verbose || arg->debug) std::cout << "MethodPluginScan::getPvalue1d() : WARNING: setting solutions from PL scan" << std::endl;
+            vector<RooSlimFitResult*> s;
+            s.push_back(plhScan);
+            setSolutions(s);
+        }
     TH1F *h = analyseToys(myTree, id, quiet);
     float scanpoint = plhScan->getParVal(scanVar1);
     double pvalue = h->GetBinContent(h->FindBin(scanpoint));
@@ -584,16 +584,16 @@ int MethodPluginScan::scan1d(int nRun)
 
     if ( arg->debug ) myFit->print();
     TString dirname = "root/scan1dPlugin";
-  if ( arg->isAction("bb") ) dirname += "BergerBoos";
-  if ( arg->isAction("uniform") ) dirname += "Uniform";
-  if ( arg->isAction("gaus") ) dirname += "Gaus";
-  dirname += "_"+name+"_"+scanVar1;
+    if ( arg->isAction("bb") ) dirname += "BergerBoos";
+    if ( arg->isAction("uniform") ) dirname += "Uniform";
+    if ( arg->isAction("gaus") ) dirname += "Gaus";
+    dirname += "_"+name+"_"+scanVar1;
     system("mkdir -p "+dirname);
-  TString fname = "/scan1dPlugin";
-  if ( arg->isAction("bb") ) fname += "BergerBoos";
-  if ( arg->isAction("uniform") ) fname += "Uniform";
-  if ( arg->isAction("gaus") ) fname += "Gaus";
-  fname += Form("_"+name+"_"+scanVar1+"_run%i.root",nRun);
+    TString fname = "/scan1dPlugin";
+    if ( arg->isAction("bb") ) fname += "BergerBoos";
+    if ( arg->isAction("uniform") ) fname += "Uniform";
+    if ( arg->isAction("gaus") ) fname += "Gaus";
+    fname += Form("_"+name+"_"+scanVar1+"_run%i.root",nRun);
     t.writeToFile((dirname+fname).Data());
     delete myFit;
     delete pb;
@@ -692,42 +692,42 @@ void MethodPluginScan::scan2d(int nRun)
                     }
                     extCurveResult = new RooArgList(profileLH->curveResults2d[iCurveRes1][iCurveRes2]->floatParsFinal());
 
-          // Set nuisances. This is the point in parameter space where
-          // the toys need to be generated.
-          setParameters(w, parsName, extCurveResult);
+                    // Set nuisances. This is the point in parameter space where
+                    // the toys need to be generated.
+                    setParameters(w, parsName, extCurveResult);
 
-          // Kenzie-Cousins-Highland (randomize nuisance parameters within a uniform range)
-          if ( arg->isAction("uniform") ) {
-            // set parameter ranges to their bb range (should be something wide 95, 99% CL)
-            const RooArgSet* pars = w->set(toysName) ? w->set(toysName) : w->set(parsName);
-            TIterator* it = pars->createIterator();
-            while ( RooRealVar* var = (RooRealVar*)it->Next() ) {
-              setLimit( var, "bboos" );
-            }
-            if (verbose) {
-              cout << "Uniform generating from:" << endl;
-              pars->Print("v");
-            }
-            randomizeParameters(w, parsName);
-            if (verbose) {
-              cout << "Set:" << endl;
-              w->set(parsName)->Print("v");
-            }
-          }
+                    // Kenzie-Cousins-Highland (randomize nuisance parameters within a uniform range)
+                    if ( arg->isAction("uniform") ) {
+                        // set parameter ranges to their bb range (should be something wide 95, 99% CL)
+                        const RooArgSet* pars = w->set(toysName) ? w->set(toysName) : w->set(parsName);
+                        TIterator* it = pars->createIterator();
+                        while ( RooRealVar* var = (RooRealVar*)it->Next() ) {
+                            setLimit( var, "bboos" );
+                        }
+                        if (verbose) {
+                            cout << "Uniform generating from:" << endl;
+                            pars->Print("v");
+                        }
+                        randomizeParameters(w, parsName);
+                        if (verbose) {
+                            cout << "Set:" << endl;
+                            w->set(parsName)->Print("v");
+                        }
+                    }
 
-          // Cousins-Highland (randomize nuisance parameters according to a Gaussian with their
-          // best fit value and uncertainty from the PLH scan)
-          if ( arg->isAction("gaus") ) {
-            if (verbose) {
-              cout << "Gaussian generating from:" << endl;
-              profileLH->curveResults2d[iCurveRes1][iCurveRes2]->floatParsFinal().Print("v");
-            }
-            randomizeParametersGaussian(w, toysName, profileLH->curveResults2d[iCurveRes1][iCurveRes2]);
-            if (verbose) {
-              cout << "Set:" << endl;
-              w->set(parsName)->Print("v");
-            }
-          }
+                    // Cousins-Highland (randomize nuisance parameters according to a Gaussian with their
+                    // best fit value and uncertainty from the PLH scan)
+                    if ( arg->isAction("gaus") ) {
+                        if (verbose) {
+                            cout << "Gaussian generating from:" << endl;
+                            profileLH->curveResults2d[iCurveRes1][iCurveRes2]->floatParsFinal().Print("v");
+                        }
+                        randomizeParametersGaussian(w, toysName, profileLH->curveResults2d[iCurveRes1][iCurveRes2]);
+                        if (verbose) {
+                            cout << "Set:" << endl;
+                            w->set(parsName)->Print("v");
+                        }
+                    }
 
                     t.chi2min = profileLH->curveResults2d[iCurveRes1][iCurveRes2]->minNll();
 
@@ -841,16 +841,16 @@ void MethodPluginScan::scan2d(int nRun)
 
     // save tree
     TString dirname = "root/scan2dPlugin";
-  if ( arg->isAction("bb") ) dirname += "BergerBoos";
-  if ( arg->isAction("uniform") ) dirname += "Uniform";
-  if ( arg->isAction("gaus") ) dirname += "Gaus";
-  dirname += "_"+name+"_"+scanVar1+"_"+scanVar2;
+    if ( arg->isAction("bb") ) dirname += "BergerBoos";
+    if ( arg->isAction("uniform") ) dirname += "Uniform";
+    if ( arg->isAction("gaus") ) dirname += "Gaus";
+    dirname += "_"+name+"_"+scanVar1+"_"+scanVar2;
     system("mkdir -p "+dirname);
-  TString fname = "/scan2dPlugin";
-  if ( arg->isAction("bb") ) fname += "BergerBoos";
-  if ( arg->isAction("uniform") ) fname += "Uniform";
-  if ( arg->isAction("gaus") ) fname += "Gaus";
-  fname += Form("_"+name+"_"+scanVar1+"_"+scanVar2+"_run%i.root",nRun);
+    TString fname = "/scan2dPlugin";
+    if ( arg->isAction("bb") ) fname += "BergerBoos";
+    if ( arg->isAction("uniform") ) fname += "Uniform";
+    if ( arg->isAction("gaus") ) fname += "Gaus";
+    fname += Form("_"+name+"_"+scanVar1+"_"+scanVar2+"_run%i.root",nRun);
     t.writeToFile((dirname+fname).Data());
     delete pb;
 }
@@ -883,7 +883,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id, bool quiet)
     TH1F *h_better_clb        = (TH1F*)hCL->Clone("h_better_clb");
     TH1F *h_all        = (TH1F*)hCL->Clone("h_all");
     // numbers of all bkg toys
-    TH1F *h_all_bkg           = (TH1F*)hCL->Clone("h_all_bkg");
+    TH1F *h_all_bkg    = (TH1F*)hCL->Clone("h_all_bkg");
     TH1F *h_background = (TH1F*)hCL->Clone("h_background");
     TH1F *h_gof        = (TH1F*)hCL->Clone("h_gof");
 
@@ -898,8 +898,8 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id, bool quiet)
     Long64_t ntoysid   = 0; // if id is not -1, this will count the number of toys with that id
 
     t->activateCoreBranchesOnly(); // speeds up the event loop
-    ProgressBar *pb = NULL;
-		if (!quiet) pb = new ProgressBar(arg, nentries);
+    ProgressBar *pb = nullptr;
+    if (!quiet) pb = new ProgressBar(arg, nentries);
     if ( arg->debug ) cout << "MethodPluginScan::analyseToys() : ";
     if (!quiet) cout << "building p-value histogram ..." << endl;
 
@@ -909,9 +909,9 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id, bool quiet)
         t->GetEntry(i);
 
         if (arg->debug && i%1000==0) {
-					std::cout << t->chi2minGlobalToy << "\t" << t->chi2minToy << "\t" << t->chi2min << "\t" << t->scanpoint << std::endl;
-        	std::cout << t->chi2minGlobalBkgToy  << "\t" << t->chi2minBkgBkgToy << "\t" << t->chi2minBkg << "\t" << t->scanpoint << std::endl;
-				}
+            std::cout << t->chi2minGlobalToy << "\t" << t->chi2minToy << "\t" << t->chi2min << "\t" << t->scanpoint << std::endl;
+            std::cout << t->chi2minGlobalBkgToy << "\t" << t->chi2minBkgBkgToy << "\t" << t->chi2minBkg << "\t" << t->scanpoint << std::endl;
+        }
         if ( id!=-1 && fabs(t->id-id)>0.001 ) continue; ///< only select entries with given id (unless id==-1)
         ntoysid++;
 
@@ -947,13 +947,13 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id, bool quiet)
         int iBinBestFit = hCL->GetMaximumBin();
         float bestfitpoint = hCL->GetBinCenter(iBinBestFit);
         if(getSolution()){
-						bestfitpoint = getSolution()->getFloatParFinalVal(scanVar1);
-						if (isnan(bestfitpoint)){
-							bestfitpoint = getSolution()->getConstParVal(scanVar1);
-							if (isnan(bestfitpoint)) {
-								bestfitpoint = hCL->GetBinCenter(iBinBestFit);
-							}
-						}
+            bestfitpoint = getSolution()->getFloatParFinalVal(scanVar1);
+            if (isnan(bestfitpoint)){
+                bestfitpoint = getSolution()->getConstParVal(scanVar1);
+                if (isnan(bestfitpoint)) {
+                    bestfitpoint = hCL->GetBinCenter(iBinBestFit);
+                }
+            }
         }
         else std::cout << "WARNING: No solution found, will approximate to the best scan point" << std::endl;
 
@@ -1031,10 +1031,10 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id, bool quiet)
         cout << (nentries-nfailed)/nPoints1d << " toys per scan point." << endl;
     }
     else{
-			if (!quiet) {
+            if (!quiet) {
         cout << "read ";
         cout << ntoysid << " toys at ID " << id << endl;
-			}
+            }
     }
     if ( arg->debug ) cout << "MethodPluginScan::analyseToys() : ";
     if (!quiet) cout << "fraction of failed toys: " << (double)nfailed/(double)nentries*100. << "%." << endl;
@@ -1082,27 +1082,27 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id, bool quiet)
         float dataCLb    = p_clb;
         float dataCLbErr = sqrt( dataCLb * (1.-dataCLb) / sampledBValues[i].size() );
         if ( p/dataCLb >= 1. ) {
-          hCLsFreq->SetBinContent(i, 1.);
-          hCLsFreq->SetBinError  (i, 0.);
+            hCLsFreq->SetBinContent(i, 1.);
+            hCLsFreq->SetBinError  (i, 0.);
         }
         else if ( dataTestStat == 1.e10 ) {
-          hCLsFreq->SetBinContent(i, hCL->GetBinContent(i) );
-          hCLsFreq->SetBinError  (i, hCL->GetBinError(i) );
+            hCLsFreq->SetBinContent(i, hCL->GetBinContent(i) );
+            hCLsFreq->SetBinError  (i, hCL->GetBinError(i) );
         }
         else if ( hCLsFreq->GetBinCenter(i) <= hCLsFreq->GetBinCenter(h_better->GetMaximumBin()) ) {
-          hCLsFreq->SetBinContent(i, 1.);
-          hCLsFreq->SetBinError  (i, 0.);
+            hCLsFreq->SetBinContent(i, 1.);
+            hCLsFreq->SetBinError  (i, 0.);
         }
         else {
-          hCLsFreq->SetBinContent(i, p / dataCLb);
-          hCLsFreq->SetBinError  (i, (p/dataCLb) * sqrt( sq( hCL->GetBinError(i) / hCL->GetBinContent(i) ) + sq( dataCLbErr / dataCLb ) ) );
+            hCLsFreq->SetBinContent(i, p / dataCLb);
+            hCLsFreq->SetBinError  (i, (p/dataCLb) * sqrt( sq( hCL->GetBinError(i) / hCL->GetBinContent(i) ) + sq( dataCLbErr / dataCLb ) ) );
         }
         if (arg->debug) {
-          cout << "At scanpoint " << std::scientific << hCL->GetBinCenter(i) << ": ===== number of toys for pValue calculation: " << nbetter << endl;
-          cout << "At scanpoint " << hCL->GetBinCenter(i) << ": ===== pValue:         " << p << endl;
-          cout << "At scanpoint " << hCL->GetBinCenter(i) << ": ===== pValue CLb:         " << p_clb << endl;
-          cout << "At scanpoint " << hCL->GetBinCenter(i) << ": ===== pValue CLsFreq: " << hCLsFreq->GetBinContent(i) << endl;
-          cout << "At scanpoint " << hCL->GetBinCenter(i) << ": ===== pValue CLs: " << p_bkg << endl;
+            cout << "At scanpoint " << std::scientific << hCL->GetBinCenter(i) << ": ===== number of toys for pValue calculation: " << nbetter << endl;
+            cout << "At scanpoint " << hCL->GetBinCenter(i) << ": ===== pValue:         " << p << endl;
+            cout << "At scanpoint " << hCL->GetBinCenter(i) << ": ===== pValue CLb:         " << p_clb << endl;
+            cout << "At scanpoint " << hCL->GetBinCenter(i) << ": ===== pValue CLsFreq: " << hCLsFreq->GetBinContent(i) << endl;
+            cout << "At scanpoint " << hCL->GetBinCenter(i) << ": ===== pValue CLs: " << p_bkg << endl;
         }
 
         /// Now make the histograms for the CLs banana plots
@@ -1170,33 +1170,33 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id, bool quiet)
 
         if ( arg->debug || arg->controlplot ) {
 
-          TH1F *bkg_pvals_cls  = new TH1F(Form("bkg_clsvals_bin%d",i), "bkg cls p values", 50, -0.1, 1.1);
-          bkg_pvals_cls->SetLineColor(1);
-          bkg_pvals_cls->SetLineWidth(3);
-          TH1F *bkg_pvals_clsb  = new TH1F(Form("bkg_clsbvals_bin%d",i), "bkg clsb p values", 50, -0.1, 1.1);
-          bkg_pvals_clsb->SetLineColor(2);
-          bkg_pvals_clsb->SetLineWidth(3);
-          TH1F *bkg_pvals_clb  = new TH1F(Form("bkg_clbvals_bin%d",i), "bkg clb p values", 50, -0.1, 1.1);
-          bkg_pvals_clb->SetLineColor(3);
-          bkg_pvals_clb->SetLineWidth(3);
-          for(int j=0; j<sampledBValues[i].size(); j++){
-              bkg_pvals_cls->Fill(TMath::Min( cls_vals[j] , 1.));
-              bkg_pvals_clsb->Fill(TMath::Min( clsb_vals[j] , 1.));
-              bkg_pvals_clb->Fill(TMath::Min( clb_vals[j] , 1.));
-          }
+            TH1F *bkg_pvals_cls  = new TH1F(Form("bkg_clsvals_bin%d",i), "bkg cls p values", 50, -0.1, 1.1);
+            bkg_pvals_cls->SetLineColor(1);
+            bkg_pvals_cls->SetLineWidth(3);
+            TH1F *bkg_pvals_clsb  = new TH1F(Form("bkg_clsbvals_bin%d",i), "bkg clsb p values", 50, -0.1, 1.1);
+            bkg_pvals_clsb->SetLineColor(2);
+            bkg_pvals_clsb->SetLineWidth(3);
+            TH1F *bkg_pvals_clb  = new TH1F(Form("bkg_clbvals_bin%d",i), "bkg clb p values", 50, -0.1, 1.1);
+            bkg_pvals_clb->SetLineColor(3);
+            bkg_pvals_clb->SetLineWidth(3);
+            for(int j=0; j<sampledBValues[i].size(); j++){
+                bkg_pvals_cls->Fill(TMath::Min( cls_vals[j] , 1.));
+                bkg_pvals_clsb->Fill(TMath::Min( clsb_vals[j] , 1.));
+                bkg_pvals_clb->Fill(TMath::Min( clb_vals[j] , 1.));
+            }
 
-          TCanvas *canvasdebug = newNoWarnTCanvas("canvasdebug", "canvas1", 1200, 1000);
-          bkg_pvals_cls->Draw();
-          bkg_pvals_clsb->Draw("same");
-          bkg_pvals_clb->Draw("same");
-          TLegend *leg = new TLegend(0.65,0.74,0.89,0.95);
-          leg->SetHeader("p-value distributions");
-          leg->SetFillColor(0);
-          leg->AddEntry(bkg_pvals_cls,"CLs","L");
-          leg->AddEntry(bkg_pvals_clsb,"CLs+b","L");
-          leg->AddEntry(bkg_pvals_clb,"CLb","L");
-          leg->Draw("same");
-          savePlot(canvasdebug,TString(Form("p_values%d",i))+"_"+scanVar1);
+            TCanvas *canvasdebug = newNoWarnTCanvas("canvasdebug", "canvas1", 1200, 1000);
+            bkg_pvals_cls->Draw();
+            bkg_pvals_clsb->Draw("same");
+            bkg_pvals_clb->Draw("same");
+            TLegend *leg = new TLegend(0.65,0.74,0.89,0.95);
+            leg->SetHeader("p-value distributions");
+            leg->SetFillColor(0);
+            leg->AddEntry(bkg_pvals_cls,"CLs","L");
+            leg->AddEntry(bkg_pvals_clsb,"CLs+b","L");
+            leg->AddEntry(bkg_pvals_clb,"CLb","L");
+            leg->Draw("same");
+            savePlot(canvasdebug,TString(Form("p_values%d",i))+"_"+scanVar1);
         }
 
 
@@ -1208,21 +1208,21 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id, bool quiet)
 
         // check
         if ( arg->debug ) {
-          cout << i << endl;
-          cout << "Quants: ";
-          for (int k=0; k<probs.size(); k++) cout << probs[k] << " , ";
-          cout << endl;
-          cout << "CLb: ";
-          for (int k=0; k<quantiles_clb.size(); k++) cout << quantiles_clb[k] << " , ";
-          cout << endl;
-          cout << "CLsb: ";
-          for (int k=0; k<quantiles_clsb.size(); k++) cout << quantiles_clsb[k] << " , ";
-          cout << endl;
-          cout << "CLs: ";
-          for (int k=0; k<quantiles_cls.size(); k++) cout << quantiles_cls[k] << " , ";
-          cout << endl;
-          // for (int k=0; k<quantiles_cls.size(); k++) cout << quantiles_clsb[k]/quantiles_clb[k] << " , ";
-          // cout << endl;
+            cout << i << endl;
+            cout << "Quants: ";
+            for (int k=0; k<probs.size(); k++) cout << probs[k] << " , ";
+            cout << endl;
+            cout << "CLb: ";
+            for (int k=0; k<quantiles_clb.size(); k++) cout << quantiles_clb[k] << " , ";
+            cout << endl;
+            cout << "CLsb: ";
+            for (int k=0; k<quantiles_clsb.size(); k++) cout << quantiles_clsb[k] << " , ";
+            cout << endl;
+            cout << "CLs: ";
+            for (int k=0; k<quantiles_cls.size(); k++) cout << quantiles_cls[k] << " , ";
+            cout << endl;
+            // for (int k=0; k<quantiles_cls.size(); k++) cout << quantiles_clsb[k]/quantiles_clb[k] << " , ";
+            // cout << endl;
         }
 
         // //effective method -> works robustly (cf. TLimit class), but is actually wrong
@@ -1287,19 +1287,19 @@ void MethodPluginScan::readScan1dTrees(int runMin, int runMax, TString fName)
     TChain *c = new TChain("plugin");
     int nFilesMissing = 0;
     int nFilesRead = 0;
-  // configure file name
-  TString dirname = "root/scan1dPlugin";
-  if ( arg->isAction("bb") ) dirname += "BergerBoos";
-  if ( arg->isAction("uniform") ) dirname += "Uniform";
-  if ( arg->isAction("gaus") ) dirname += "Gaus";
-  dirname += "_"+name+"_"+scanVar1;
+    // configure file name
+    TString dirname = "root/scan1dPlugin";
+    if ( arg->isAction("bb") ) dirname += "BergerBoos";
+    if ( arg->isAction("uniform") ) dirname += "Uniform";
+    if ( arg->isAction("gaus") ) dirname += "Gaus";
+    dirname += "_"+name+"_"+scanVar1;
     TString fileNameBase = dirname+"/scan1dPlugin";
-  if ( arg->isAction("bb") ) fileNameBase += "BergerBoos";
-  if ( arg->isAction("uniform") ) fileNameBase += "Uniform";
-  if ( arg->isAction("gaus") ) fileNameBase += "Gaus";
-  fileNameBase += "_"+name+"_"+scanVar1+"_run";
-  // read different files if requested
-  if ( arg->toyFiles != "" && arg->toyFiles != "default" ) fileNameBase = arg->toyFiles;
+    if ( arg->isAction("bb") ) fileNameBase += "BergerBoos";
+    if ( arg->isAction("uniform") ) fileNameBase += "Uniform";
+    if ( arg->isAction("gaus") ) fileNameBase += "Gaus";
+    fileNameBase += "_"+name+"_"+scanVar1+"_run";
+    // read different files if requested
+    if ( arg->toyFiles != "" && arg->toyFiles != "default" ) fileNameBase = arg->toyFiles;
     if ( arg->debug ) cout << "MethodPluginScan::readScan1dTrees() : ";
     cout << "reading files: " << fileNameBase+"*.root" << endl;
     for (int i=runMin; i<=runMax; i++){
@@ -1352,21 +1352,21 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
     TChain *chain = new TChain("plugin");
     int nFilesMissing = 0;
     int nFilesRead = 0;
-  // configure file name
-  TString dirname = "root/scan2dPlugin";
-  if ( arg->isAction("bb") ) dirname += "BergerBoos";
-  if ( arg->isAction("uniform") ) dirname += "Uniform";
-  if ( arg->isAction("gaus") ) dirname += "Gaus";
-  dirname += "_"+name+"_"+scanVar1+"_"+scanVar2;
-    TString fileNameBase = dirname+"/scan2dPlugin";
-  if ( arg->isAction("bb") ) fileNameBase += "BergerBoos";
-  if ( arg->isAction("uniform") ) fileNameBase += "Uniform";
-  if ( arg->isAction("gaus") ) fileNameBase += "Gaus";
-  fileNameBase += "_"+name+"_"+scanVar1+"_"+scanVar2+"_run";
-  // read different file if requested
-  if ( arg->toyFiles != "" && arg->toyFiles != "default" ) fileNameBase = arg->toyFiles;
+    // configure file name
+    TString dirname = "root/scan2dPlugin";
+    if ( arg->isAction("bb") ) dirname += "BergerBoos";
+    if ( arg->isAction("uniform") ) dirname += "Uniform";
+    if ( arg->isAction("gaus") ) dirname += "Gaus";
+    dirname += "_"+name+"_"+scanVar1+"_"+scanVar2;
+      TString fileNameBase = dirname+"/scan2dPlugin";
+    if ( arg->isAction("bb") ) fileNameBase += "BergerBoos";
+    if ( arg->isAction("uniform") ) fileNameBase += "Uniform";
+    if ( arg->isAction("gaus") ) fileNameBase += "Gaus";
+    fileNameBase += "_"+name+"_"+scanVar1+"_"+scanVar2+"_run";
+    // read different file if requested
+    if ( arg->toyFiles != "" && arg->toyFiles != "default" ) fileNameBase = arg->toyFiles;
 
-  if ( arg->debug ) cout << "MethodPluginScan::readScan2dTrees() : ";
+    if ( arg->debug ) cout << "MethodPluginScan::readScan2dTrees() : ";
     cout << "reading files: " << fileNameBase+"*.root" << endl;
     for (int i=runMin; i<=runMax; i++) {
         TString file = Form(fileNameBase+"%i.root", i);
@@ -1407,8 +1407,8 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax)
     if ( t.getScanpointN()==1 )  halfBinWidthx = 1.;
     if ( t.getScanpointyN()==1 ) halfBinWidthy = 1.;
     if ( hCL2d ) delete hCL2d;
-    hCL2d          = new TH2F(getUniqueRootName(), "hCL2d", t.getScanpointN(), t.getScanpointMin()-halfBinWidthx, t.getScanpointMax()+halfBinWidthx,
-                                                            t.getScanpointyN(), t.getScanpointyMin()-halfBinWidthx, t.getScanpointyMax()+halfBinWidthx);
+    hCL2d = new TH2F(getUniqueRootName(), "hCL2d", t.getScanpointN(), t.getScanpointMin()-halfBinWidthx, t.getScanpointMax()+halfBinWidthx,
+                                                   t.getScanpointyN(), t.getScanpointyMin()-halfBinWidthx, t.getScanpointyMax()+halfBinWidthx);
     TH2F *h_better = (TH2F*)hCL2d->Clone("h_better");
     TH2F *h_all    = (TH2F*)hCL2d->Clone("h_all");
 
@@ -1523,132 +1523,130 @@ double MethodPluginScan::importance(double pvalue)
 ///
 void MethodPluginScan::makeControlPlotsCLs(map<int, vector<double> > bVals, map<int, vector<double> > sbVals)
 {
-  // the quantiles of the CLb distribution (for expected CLs)
-  std::vector<double> probs  = { TMath::Prob(4,1), TMath::Prob(1,1), 0.5, 1.-TMath::Prob(1,1), 1.-TMath::Prob(4,1) };
-  std::vector<double> clb_vals  = { 1.-TMath::Prob(4,1), 1.-TMath::Prob(1,1), 0.5, TMath::Prob(1,1), TMath::Prob(4,1) };
+    // the quantiles of the CLb distribution (for expected CLs)
+    std::vector<double> probs = { TMath::Prob(4,1), TMath::Prob(1,1), 0.5, 1.-TMath::Prob(1,1), 1.-TMath::Prob(4,1) };
+    std::vector<double> clb_vals = { 1.-TMath::Prob(4,1), 1.-TMath::Prob(1,1), 0.5, TMath::Prob(1,1), TMath::Prob(4,1) };
 
-  for ( int i=1; i<= hCLs->GetNbinsX(); i++ ) {
+    for ( int i=1; i<= hCLs->GetNbinsX(); i++ ) {
 
-    std::vector<double> quantiles = Quantile<double>( bVals[i], probs );
-    std::vector<double> clsb_vals;
-    for (int k=0; k<quantiles.size(); k++ ){
-      clsb_vals.push_back( getVectorFracAboveValue( sbVals[i], quantiles[k] ) );
+        std::vector<double> quantiles = Quantile<double>( bVals[i], probs );
+        std::vector<double> clsb_vals;
+        for (int k=0; k<quantiles.size(); k++ ){
+            clsb_vals.push_back( getVectorFracAboveValue( sbVals[i], quantiles[k] ) );
+        }
+        TCanvas *c = newNoWarnTCanvas( Form("q%d",i), Form("q%d",i) );
+        double max = *(std::max_element( bVals[i].begin(), bVals[i].end() ) );
+        TH1F *hb = new TH1F( Form("hb%d",i), "hbq", 50,0, max );
+        TH1F *hsb = new TH1F( Form("hsb%d",i), "hsbq", 50,0, max );
+
+        for ( int j=0; j<bVals[i].size(); j++ ) hb->Fill( bVals[i][j] );
+        for ( int j=0; j<sbVals[i].size(); j++ ) hsb->Fill( sbVals[i][j] );
+
+        double dataVal = TMath::ChisquareQuantile( 1.-hCL->GetBinContent(i),1 );
+        TArrow *lD = new TArrow( dataVal, 0.6*hsb->GetMaximum(), dataVal, 0., 0.15, "|>" );
+
+        vector<TLine*> qLs;
+        for ( int k=0; k<quantiles.size(); k++ ) {
+            qLs.push_back( new TLine( quantiles[k], 0, quantiles[k], 0.8*hsb->GetMaximum() ) );
+        }
+        TLatex *lat = new TLatex();
+        lat->SetTextColor(kRed);
+        lat->SetTextSize(0.6*lat->GetTextSize());
+        lat->SetTextAlign(22);
+
+        hsb->GetXaxis()->SetTitle("Test Statistic Value");
+        hsb->GetYaxis()->SetTitle("Entries");
+        hsb->GetXaxis()->SetTitleSize(0.06);
+        hsb->GetYaxis()->SetTitleSize(0.06);
+        hsb->GetXaxis()->SetLabelSize(0.06);
+        hsb->GetYaxis()->SetLabelSize(0.06);
+        hsb->SetLineWidth(2);
+        hb->SetLineWidth(2);
+        hsb->SetFillColor(kBlue);
+        hb->SetFillColor(kRed);
+        hsb->SetFillStyle(3003);
+        hb->SetFillStyle(3004);
+        hb->SetLineColor(kRed);
+        hsb->SetLineColor(kBlue);
+
+        //TGraph *gb = Utils::smoothHist(hb, 0);
+        //TGraph *gsb = Utils::smoothHist(hsb, 1);
+
+        //gb->SetLineColor(kRed+1);
+        //gb->SetLineWidth(4);
+        //gsb->SetLineColor(kBlue+1);
+        //gsb->SetLineWidth(4);
+
+        hsb->Draw();
+        hb->Draw("same");
+        //gb->Draw("Lsame");
+        //gsb->Draw("Lsame");
+
+        qLs[0]->SetLineWidth(2);
+        qLs[0]->SetLineStyle(kDashed);
+        qLs[4]->SetLineWidth(2);
+        qLs[4]->SetLineStyle(kDashed);
+        qLs[1]->SetLineWidth(3);
+        qLs[3]->SetLineWidth(3);
+        qLs[2]->SetLineWidth(5);
+
+        for ( int k=0; k<quantiles.size(); k++ ){
+            qLs[k]->SetLineColor(kRed);
+            qLs[k]->Draw("same");
+        }
+        lat->DrawLatex( quantiles[0], hsb->GetMaximum(), "-2#sigma" );
+        lat->DrawLatex( quantiles[1], hsb->GetMaximum(), "-1#sigma" );
+        lat->DrawLatex( quantiles[2], hsb->GetMaximum(), "<B>" );
+        lat->DrawLatex( quantiles[3], hsb->GetMaximum(), "+1#sigma" );
+        lat->DrawLatex( quantiles[4], hsb->GetMaximum(), "+2#sigma" );
+
+        lD->SetLineColor(kBlack);
+        lD->SetLineWidth(5);
+        lD->Draw("same");
+
+        TLegend *leg = new TLegend(0.74,0.54,0.94,0.7);
+        leg->SetHeader(Form("p=%4.2g",hCLs->GetBinCenter(i)));
+        leg->SetFillColor(0);
+        leg->AddEntry(hb,"B-only Toys","LF");
+        leg->AddEntry(hsb,"S+B Toys","LF");
+        leg->AddEntry(lD,"Data","L");
+        leg->Draw("same");
+        c->SetLogy();
+        savePlot(c,TString(Form("cls_testStatControlPlot_p%d",i))+"_"+scanVar1 );
     }
-    TCanvas *c = newNoWarnTCanvas( Form("q%d",i), Form("q%d",i) );
-    double max = *(std::max_element( bVals[i].begin(), bVals[i].end() ) );
-    TH1F *hb = new TH1F( Form("hb%d",i), "hbq", 50,0, max );
-    TH1F *hsb = new TH1F( Form("hsb%d",i), "hsbq", 50,0, max );
 
-    for ( int j=0; j<bVals[i].size(); j++ ) hb->Fill( bVals[i][j] );
-    for ( int j=0; j<sbVals[i].size(); j++ ) hsb->Fill( sbVals[i][j] );
+    TCanvas *c = newNoWarnTCanvas( "cls_ctr", "CLs Control" );
+    hCLsFreq->SetLineColor(kBlack);
+    hCLsFreq->SetLineWidth(3);
+    hCLsExp->SetLineColor(kRed);
+    hCLsExp->SetLineWidth(3);
 
-    double dataVal = TMath::ChisquareQuantile( 1.-hCL->GetBinContent(i),1 );
-    TArrow *lD = new TArrow( dataVal, 0.6*hsb->GetMaximum(), dataVal, 0., 0.15, "|>" );
+    hCLsErr1Up->SetLineColor(kBlue+2);
+    hCLsErr1Up->SetLineWidth(2);
+    hCLsErr1Dn->SetLineColor(kBlue+2);
+    hCLsErr1Dn->SetLineWidth(2);
 
-    vector<TLine*> qLs;
-    for ( int k=0; k<quantiles.size(); k++ ) {
-      qLs.push_back( new TLine( quantiles[k], 0, quantiles[k], 0.8*hsb->GetMaximum() ) );
-    }
-    TLatex *lat = new TLatex();
-    lat->SetTextColor(kRed);
-    lat->SetTextSize(0.6*lat->GetTextSize());
-    lat->SetTextAlign(22);
+    hCLsErr2Up->SetLineColor(kBlue+2);
+    hCLsErr2Up->SetLineWidth(2);
+    hCLsErr2Up->SetLineStyle(kDashed);
+    hCLsErr2Dn->SetLineColor(kBlue+2);
+    hCLsErr2Dn->SetLineWidth(2);
+    hCLsErr2Dn->SetLineStyle(kDashed);
 
-    hsb->GetXaxis()->SetTitle("Test Statistic Value");
-    hsb->GetYaxis()->SetTitle("Entries");
-    hsb->GetXaxis()->SetTitleSize(0.06);
-    hsb->GetYaxis()->SetTitleSize(0.06);
-    hsb->GetXaxis()->SetLabelSize(0.06);
-    hsb->GetYaxis()->SetLabelSize(0.06);
-    hsb->SetLineWidth(2);
-    hb->SetLineWidth(2);
-    hsb->SetFillColor(kBlue);
-    hb->SetFillColor(kRed);
-    hsb->SetFillStyle(3003);
-    hb->SetFillStyle(3004);
-    hb->SetLineColor(kRed);
-    hsb->SetLineColor(kBlue);
+    hCLsFreq->GetXaxis()->SetTitle("POI");
+    hCLsFreq->GetYaxis()->SetTitle("Raw CLs");
+    hCLsFreq->GetXaxis()->SetTitleSize(0.06);
+    hCLsFreq->GetYaxis()->SetTitleSize(0.06);
+    hCLsFreq->GetXaxis()->SetLabelSize(0.06);
+    hCLsFreq->GetYaxis()->SetLabelSize(0.06);
 
-    //TGraph *gb = Utils::smoothHist(hb, 0);
-    //TGraph *gsb = Utils::smoothHist(hsb, 1);
+    hCLsFreq->Draw("L");
+    hCLsErr2Up->Draw("Lsame");
+    hCLsErr2Dn->Draw("Lsame");
+    hCLsErr1Up->Draw("Lsame");
+    hCLsErr1Dn->Draw("Lsame");
+    hCLsExp->Draw("Lsame");
+    hCLsFreq->Draw("Lsame");
 
-    //gb->SetLineColor(kRed+1);
-    //gb->SetLineWidth(4);
-    //gsb->SetLineColor(kBlue+1);
-    //gsb->SetLineWidth(4);
-
-    hsb->Draw();
-    hb->Draw("same");
-    //gb->Draw("Lsame");
-    //gsb->Draw("Lsame");
-
-    qLs[0]->SetLineWidth(2);
-    qLs[0]->SetLineStyle(kDashed);
-    qLs[4]->SetLineWidth(2);
-    qLs[4]->SetLineStyle(kDashed);
-    qLs[1]->SetLineWidth(3);
-    qLs[3]->SetLineWidth(3);
-    qLs[2]->SetLineWidth(5);
-
-    for ( int k=0; k<quantiles.size(); k++ ){
-      qLs[k]->SetLineColor(kRed);
-      qLs[k]->Draw("same");
-    }
-    lat->DrawLatex( quantiles[0], hsb->GetMaximum(), "-2#sigma" );
-    lat->DrawLatex( quantiles[1], hsb->GetMaximum(), "-1#sigma" );
-    lat->DrawLatex( quantiles[2], hsb->GetMaximum(), "<B>" );
-    lat->DrawLatex( quantiles[3], hsb->GetMaximum(), "+1#sigma" );
-    lat->DrawLatex( quantiles[4], hsb->GetMaximum(), "+2#sigma" );
-
-    lD->SetLineColor(kBlack);
-    lD->SetLineWidth(5);
-    lD->Draw("same");
-
-    TLegend *leg = new TLegend(0.74,0.54,0.94,0.7);
-    leg->SetHeader(Form("p=%4.2g",hCLs->GetBinCenter(i)));
-    leg->SetFillColor(0);
-    leg->AddEntry(hb,"B-only Toys","LF");
-    leg->AddEntry(hsb,"S+B Toys","LF");
-    leg->AddEntry(lD,"Data","L");
-    leg->Draw("same");
-    c->SetLogy();
-    savePlot(c,TString(Form("cls_testStatControlPlot_p%d",i))+"_"+scanVar1 );
-  }
-
-  TCanvas *c = newNoWarnTCanvas( "cls_ctr", "CLs Control" );
-  hCLsFreq->SetLineColor(kBlack);
-  hCLsFreq->SetLineWidth(3);
-  hCLsExp->SetLineColor(kRed);
-  hCLsExp->SetLineWidth(3);
-
-  hCLsErr1Up->SetLineColor(kBlue+2);
-  hCLsErr1Up->SetLineWidth(2);
-  hCLsErr1Dn->SetLineColor(kBlue+2);
-  hCLsErr1Dn->SetLineWidth(2);
-
-  hCLsErr2Up->SetLineColor(kBlue+2);
-  hCLsErr2Up->SetLineWidth(2);
-  hCLsErr2Up->SetLineStyle(kDashed);
-  hCLsErr2Dn->SetLineColor(kBlue+2);
-  hCLsErr2Dn->SetLineWidth(2);
-  hCLsErr2Dn->SetLineStyle(kDashed);
-
-  hCLsFreq->GetXaxis()->SetTitle("POI");
-  hCLsFreq->GetYaxis()->SetTitle("Raw CLs");
-  hCLsFreq->GetXaxis()->SetTitleSize(0.06);
-  hCLsFreq->GetYaxis()->SetTitleSize(0.06);
-  hCLsFreq->GetXaxis()->SetLabelSize(0.06);
-  hCLsFreq->GetYaxis()->SetLabelSize(0.06);
-
-  hCLsFreq->Draw("L");
-  hCLsErr2Up->Draw("Lsame");
-  hCLsErr2Dn->Draw("Lsame");
-  hCLsErr1Up->Draw("Lsame");
-  hCLsErr1Dn->Draw("Lsame");
-  hCLsExp->Draw("Lsame");
-  hCLsFreq->Draw("Lsame");
-
-  savePlot(c, "cls_ControlPlot_"+scanVar1);
-
+    savePlot(c, "cls_ControlPlot_"+scanVar1);
 }
-

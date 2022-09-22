@@ -25,7 +25,7 @@ public:
     PDF_Datasets(RooWorkspace* w, int nObs, OptParser* opt);
     PDF_Datasets(RooWorkspace* w);
     ~PDF_Datasets();
-    void                  deleteNLL() {if (_NLL) {delete _NLL; _NLL = NULL;}};
+    void                  deleteNLL() {if (_NLL) {delete _NLL; _NLL = nullptr;}};
 
     virtual RooFitResult* fit(RooAbsData* dataToFit);
     virtual RooFitResult* fitBkg(RooAbsData* dataToFit, TString signalvar);
@@ -116,29 +116,29 @@ public:
 
 protected:
     void initializeRandomGenerator(int seedShift);
-    RooWorkspace*   wspc;
-    RooAbsData*     data;
-    RooAbsReal*     _NLL; // possible pointer to minimization function
-    RooAbsPdf*      _constraintPdf;
-    TString         pdfName; //> name of the pdf in the workspace
-    TString         pdfBkgName; //> name of the bkg pdf in the workspace
-    TString         multipdfCatName; //> name of the multipdf category
-    TString         obsName;
-    TString         parName;
-    TString         dataName;       //> name of the data set in the workspace
-    TString         constraintName; //> name of the set with all constraint pdfs
-    TString         globalParsName; //> name of the set of global parameters in the workspace, that is, the parameters that occur (not only) in the  constraints...
-    TString         globalObsName;   //> name of the set of global observables in the workspace.
-    OptParser*      arg;
-    int             fitStrategy;
-    int             fitStatus;
-    float           minNllFree;
-    // float           minNll;
-    float           minNllBkg;
-    float           minNllScan;
-    int             bestIndex;
-    int             bestIndexBkg;
-    int             bestIndexScan;
+    RooWorkspace* wspc;
+    RooAbsData*   data;
+    RooAbsReal*   _NLL; // possible pointer to minimization function
+    RooAbsPdf*    _constraintPdf;
+    TString       pdfName; //> name of the pdf in the workspace
+    TString       pdfBkgName; //> name of the bkg pdf in the workspace
+    TString       multipdfCatName; //> name of the multipdf category
+    TString       obsName;
+    TString       parName;
+    TString       dataName;       //> name of the data set in the workspace
+    TString       constraintName; //> name of the set with all constraint pdfs
+    TString       globalParsName; //> name of the set of global parameters in the workspace, that is, the parameters that occur (not only) in the  constraints...
+    TString       globalObsName;   //> name of the set of global observables in the workspace.
+    OptParser*    arg;
+    int           fitStrategy;
+    int           fitStatus;
+    float         minNllFree;
+    // float         minNll;
+    float         minNllBkg;
+    float         minNllScan;
+    int           bestIndex;
+    int           bestIndexBkg;
+    int           bestIndexScan;
     bool areObsSet;       //> Forces user to set observables
     bool areParsSet;      //> Forces user to set parameters
     bool areRangesSet;    //> Flag deciding if necessary ranges are set

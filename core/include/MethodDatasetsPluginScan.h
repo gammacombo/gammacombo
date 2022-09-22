@@ -23,7 +23,7 @@ public:
     MethodDatasetsPluginScan(MethodProbScan* probScan, PDF_Datasets* PDF, OptParser* opt);
     void                drawDebugPlots(int runMin, int runMax, TString fileNameBaseIn = "default");
     float               getParValAtIndex(int index, TString parName);
-    MethodDatasetsProbScan*     getProfileLH() {return dynamic_cast<MethodDatasetsProbScan*>(this->profileLH);};
+    MethodDatasetsProbScan* getProfileLH() {return dynamic_cast<MethodDatasetsProbScan*>(this->profileLH);};
     virtual void        initScan();
     void                loadParameterLimits();
     void                performBootstrapTest(int nSamples = 1000, const TString& ext = "");

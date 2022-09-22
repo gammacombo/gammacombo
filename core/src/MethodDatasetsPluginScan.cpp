@@ -34,14 +34,14 @@
 ///
 MethodDatasetsPluginScan::MethodDatasetsPluginScan(MethodProbScan* probScan, PDF_Datasets* PDF, OptParser* opt):
     MethodPluginScan(probScan, PDF, opt),
-    pdf                 (PDF),
-    explicitInputFile   (false)
+    pdf(PDF),
+    explicitInputFile(false)
 {
     chi2minGlobalFound = true; // the free fit to data must be done and must be saved to the workspace before gammacombo is even called
     methodName = "DatasetsPlugin";
     w = PDF->getWorkspace();
     title = PDF->getTitle();
-    name =  PDF->getName();
+    name  = PDF->getName();
 
     if ( arg->var.size() > 1 ) scanVar2 = arg->var[1];
     inputFiles.clear();
@@ -377,7 +377,7 @@ TChain* MethodDatasetsPluginScan::readFiles(int runMin, int runMax, int &nFilesR
 /////////////
 void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString fileNameBaseIn)
 {
-		int nFilesRead, nFilesMissing;
+        int nFilesRead, nFilesMissing;
     TChain* c = this->readFiles(runMin, runMax, nFilesRead, nFilesMissing, fileNameBaseIn);
     ToyTree t(this->pdf, this->arg, c);
     t.open();
@@ -740,7 +740,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
 
             clsb_vals.push_back(clsb_val);
             clb_vals.push_back(clb_val);
-        	cls_vals.push_back(cls_val);
+            cls_vals.push_back(cls_val);
         }
 
             TH1F *bkg_pvals_cls  = new TH1F(Form("bkg_clsvals_bin%d",i), "bkg cls p values", 50, -0.01, 1.01);
@@ -1156,11 +1156,11 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
     RooDataSet* parsFunctionCall = new RooDataSet("parsFunctionCall", "parsFunctionCall", *w->set(pdf->getParName()));
     parsFunctionCall->add(*w->set(pdf->getParName()));
 
-		// if CLs toys we need to keep hold of what's going on in the bkg only case
+        // if CLs toys we need to keep hold of what's going on in the bkg only case
     // there is a small overhead here but it's necessary because the bkg only hypothesis
     // might not necessarily be in the scan range (although often it will be the first point)
-	vector<RooAbsData*> cls_bkgOnlyToys;
-	vector<TString> bkgOnlyGlobObsSnaphots;
+    vector<RooAbsData*> cls_bkgOnlyToys;
+    vector<TString> bkgOnlyGlobObsSnaphots;
     vector<float> chi2minGlobalBkgToysStore;    // Global fit to bkg-only toys
     vector<float> chi2minBkgBkgToysStore;       // Bkg fit to bkg-only toys
     vector<float> scanbestBkgToysStore;         // best fit point of gloabl fit to bkg-only toys
@@ -1310,7 +1310,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         // chi2minBkgBkgToysStore.push_back( 2 * rb->minNll() );
         chi2minBkgBkgToysStore.push_back( 2 * pdf->getMinNllBkg() );
         if(rb->floatParsFinal().find(scanVar1)){
-        	std::cout << "found signal parameter in bkg fit with value " << ((RooRealVar*)w->set(pdf->getParName())->find(scanVar1))->getVal() << std::endl;
+            std::cout << "found signal parameter in bkg fit with value " << ((RooRealVar*)w->set(pdf->getParName())->find(scanVar1))->getVal() << std::endl;
             scanbestBkgBkgToysStore.push_back( ((RooRealVar*)w->set(pdf->getParName())->find(scanVar1))->getVal() );
         }
         // if the pdf does not depend on the signal parameter, set best fit value of signal parameter for the bkg fit to 0
@@ -1328,9 +1328,9 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
     for ( int i = 0; i < nPoints1d; i++ )
     {
 
-				toyTree.npoint = i;
+                toyTree.npoint = i;
 
-				progressBar.progress();
+                progressBar.progress();
         // scanpoint is calculated using min, max, which are the hCL x-Axis limits set in this->initScan()
         // this uses the "scan" range, as expected
         // don't add half the bin size. try to solve this within plotting method
@@ -1338,10 +1338,10 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
         float scanpoint = parameterToScan_min + (parameterToScan_max - parameterToScan_min) * (double)i / ((double)nPoints1d - 1);
         toyTree.scanpoint = scanpoint;
 
-				if ( i==0 && scanpoint != 0 ) {
-					cout << "WARNING: For CLs option the first point in the scan should be zero, not: " << scanpoint << endl;
-					// exit(1);
-				}
+                if ( i==0 && scanpoint != 0 ) {
+                    cout << "WARNING: For CLs option the first point in the scan should be zero, not: " << scanpoint << endl;
+                    // exit(1);
+                }
 
         if (arg->debug) cout << "DEBUG in MethodDatasetsPluginScan::scan1d_plugin() - scanpoint in step " << i << " : " << scanpoint << endl;
 
@@ -1387,7 +1387,7 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             this->pdf->setMinNllFree(0);
             this->pdf->setMinNllScan(0);
 
-						toyTree.ntoy = j;
+                        toyTree.ntoy = j;
 
             // 1. Generate toys
 
@@ -1534,9 +1534,9 @@ int MethodDatasetsPluginScan::scan1d(int nRun)
             //setLimit(w, scanVar1, "free");
             // w->var(scanVar1)->removeRange();
 
-			// set dataset back
-			if (arg->debug) cout << "Setting toy back as data " << tempData << endl;
-			this->pdf->setToyData( tempData );
+            // set dataset back
+            if (arg->debug) cout << "Setting toy back as data " << tempData << endl;
+            this->pdf->setToyData( tempData );
             // restore MinNllScan to value from 2. (not take from 2.5) for more correct error messages
             pdf->setMinNllScan(toyTree.chi2minToy/2.);
 
@@ -2177,183 +2177,182 @@ void MethodDatasetsPluginScan::setAndPrintFitStatusFreeToys(const ToyTree& toyTr
 
 void MethodDatasetsPluginScan::makeControlPlots(map<int, vector<double> > bVals, map<int, vector<double> > sbVals)
 {
-  // the quantiles of the CLb distribution (for expected CLs)
-  std::vector<double> probs  = { TMath::Prob(4,1), TMath::Prob(1,1), 0.5, 1.-TMath::Prob(1,1), 1.-TMath::Prob(4,1) };
-  std::vector<double> clb_vals  = { 1.-TMath::Prob(4,1), 1.-TMath::Prob(1,1), 0.5, TMath::Prob(1,1), TMath::Prob(4,1) };
+    // the quantiles of the CLb distribution (for expected CLs)
+    std::vector<double> probs  = { TMath::Prob(4,1), TMath::Prob(1,1), 0.5, 1.-TMath::Prob(1,1), 1.-TMath::Prob(4,1) };
+    std::vector<double> clb_vals  = { 1.-TMath::Prob(4,1), 1.-TMath::Prob(1,1), 0.5, TMath::Prob(1,1), TMath::Prob(4,1) };
 
-  for ( int i=1; i<= hCLs->GetNbinsX(); i++ ) {
+    for ( int i=1; i<= hCLs->GetNbinsX(); i++ ) {
 
-    std::vector<double> quantiles = Quantile<double>( bVals[i], probs );
-    std::vector<double> clsb_vals;
-    for (int k=0; k<quantiles.size(); k++ ){
-      clsb_vals.push_back( getVectorFracAboveValue( sbVals[i], quantiles[k] ) );
+        std::vector<double> quantiles = Quantile<double>( bVals[i], probs );
+        std::vector<double> clsb_vals;
+        for (int k=0; k<quantiles.size(); k++ ){
+            clsb_vals.push_back( getVectorFracAboveValue( sbVals[i], quantiles[k] ) );
+        }
+        TCanvas *c = newNoWarnTCanvas( Form("q%d",i), Form("q%d",i) );
+        double max = *(std::max_element( bVals[i].begin(), bVals[i].end() ) );
+        TH1F *hb = new TH1F( Form("hb%d",i), "hbq", 50,0, max );
+        TH1F *hsb = new TH1F( Form("hsb%d",i), "hsbq", 50,0, max );
+        // fixing the range for teststat plots for private plots (DONT COMMIT THIS UNCOMMENTED)
+        // TH1F *hb = new TH1F( Form("hb%d",i), "hbq", 50,0, 5 );
+        // TH1F *hsb = new TH1F( Form("hsb%d",i), "hsbq", 50,0, 5 );
+
+        for ( int j=0; j<bVals[i].size(); j++ ) hb->Fill( bVals[i][j] );
+        for ( int j=0; j<sbVals[i].size(); j++ ) hsb->Fill( sbVals[i][j] );
+
+        // double dataVal = TMath::ChisquareQuantile( 1.-hCL->GetBinContent(i),1 );
+        double dataVal = hChi2min->GetBinContent(i);
+        // std::cout << "CLb alternative: " << getVectorFracAboveValue( bVals[i], dataVal) << std::endl;
+        TArrow *lD = new TArrow( dataVal, 0.6*hsb->GetMaximum(), dataVal, 0., 0.15, "|>" );
+
+        vector<TLine*> qLs;
+        for ( int k=0; k<quantiles.size(); k++ ) {
+            qLs.push_back( new TLine( quantiles[k], 0, quantiles[k], 0.8*hsb->GetMaximum() ) );
+        }
+        TLatex *lat = new TLatex();
+        lat->SetTextColor(kRed);
+        lat->SetTextSize(0.6*lat->GetTextSize());
+        lat->SetTextAlign(22);
+
+        hsb->GetXaxis()->SetTitle("Test Statistic Value");
+        hsb->GetYaxis()->SetTitle("Entries");
+        hsb->GetXaxis()->SetTitleSize(0.06);
+        hsb->GetYaxis()->SetTitleSize(0.06);
+        hsb->GetXaxis()->SetLabelSize(0.06);
+        hsb->GetYaxis()->SetLabelSize(0.06);
+        hsb->SetLineWidth(2);
+        hb->SetLineWidth(2);
+        hsb->SetFillColor(kBlue);
+        hb->SetFillColor(kRed);
+        hsb->SetFillStyle(3003);
+        hb->SetFillStyle(3004);
+        hb->SetLineColor(kRed);
+        hsb->SetLineColor(kBlue);
+
+        //TGraph *gb = Utils::smoothHist(hb, 0);
+        //TGraph *gsb = Utils::smoothHist(hsb, 1);
+
+        //gb->SetLineColor(kRed+1);
+        //gb->SetLineWidth(4);
+        //gsb->SetLineColor(kBlue+1);
+        //gsb->SetLineWidth(4);
+
+        hsb->Draw();
+        hb->Draw("same");
+        //gb->Draw("Lsame");
+        //gsb->Draw("Lsame");
+
+        qLs[0]->SetLineWidth(2);
+        qLs[0]->SetLineStyle(kDashed);
+        qLs[4]->SetLineWidth(2);
+        qLs[4]->SetLineStyle(kDashed);
+        qLs[1]->SetLineWidth(3);
+        qLs[3]->SetLineWidth(3);
+        qLs[2]->SetLineWidth(5);
+
+        for ( int k=0; k<quantiles.size(); k++ ){
+            qLs[k]->SetLineColor(kRed);
+            qLs[k]->Draw("same");
+        }
+        lat->DrawLatex( quantiles[0], hsb->GetMaximum(), "-2#sigma" );
+        lat->DrawLatex( quantiles[1], hsb->GetMaximum(), "-1#sigma" );
+        lat->DrawLatex( quantiles[2], hsb->GetMaximum(), "<B>" );
+        lat->DrawLatex( quantiles[3], hsb->GetMaximum(), "+1#sigma" );
+        lat->DrawLatex( quantiles[4], hsb->GetMaximum(), "+2#sigma" );
+
+        lD->SetLineColor(kBlack);
+        lD->SetLineWidth(5);
+        lD->Draw("same");
+
+        TLegend *leg = new TLegend(0.74,0.54,0.94,0.7);
+        leg->SetHeader(Form("p=%4.2g",hCLs->GetBinCenter(i)));
+        leg->SetFillColor(0);
+        leg->AddEntry(hb,"B-only Toys","LF");
+        leg->AddEntry(hsb,"S+B Toys","LF");
+        leg->AddEntry(lD,"Data","L");
+        leg->Draw("same");
+        c->SetLogy();
+        c->SetRightMargin(0.11);
+        savePlot(c,TString(Form("cls_testStatControlPlot_p%d",i))+"_"+scanVar1);
     }
-    TCanvas *c = newNoWarnTCanvas( Form("q%d",i), Form("q%d",i) );
-    double max = *(std::max_element( bVals[i].begin(), bVals[i].end() ) );
-    TH1F *hb = new TH1F( Form("hb%d",i), "hbq", 50,0, max );
-    TH1F *hsb = new TH1F( Form("hsb%d",i), "hsbq", 50,0, max );
-    // fixing the range for teststat plots for private plots (DONT COMMIT THIS UNCOMMENTED)
-    // TH1F *hb = new TH1F( Form("hb%d",i), "hbq", 50,0, 5 );
-    // TH1F *hsb = new TH1F( Form("hsb%d",i), "hsbq", 50,0, 5 );
 
-    for ( int j=0; j<bVals[i].size(); j++ ) hb->Fill( bVals[i][j] );
-    for ( int j=0; j<sbVals[i].size(); j++ ) hsb->Fill( sbVals[i][j] );
+    TCanvas *c = newNoWarnTCanvas( "cls_ctr", "CLs Control" );
+    hCLsFreq->SetLineColor(kBlack);
+    hCLsFreq->SetLineWidth(3);
+    hCLsExp->SetLineColor(kRed);
+    hCLsExp->SetLineWidth(3);
 
-    // double dataVal = TMath::ChisquareQuantile( 1.-hCL->GetBinContent(i),1 );
-    double dataVal = hChi2min->GetBinContent(i);
-    // std::cout << "CLb alternative: " << getVectorFracAboveValue( bVals[i], dataVal) << std::endl;
-    TArrow *lD = new TArrow( dataVal, 0.6*hsb->GetMaximum(), dataVal, 0., 0.15, "|>" );
+    hCLsErr1Up->SetLineColor(kBlue+2);
+    hCLsErr1Up->SetLineWidth(2);
+    hCLsErr1Dn->SetLineColor(kBlue+2);
+    hCLsErr1Dn->SetLineWidth(2);
 
-    vector<TLine*> qLs;
-    for ( int k=0; k<quantiles.size(); k++ ) {
-      qLs.push_back( new TLine( quantiles[k], 0, quantiles[k], 0.8*hsb->GetMaximum() ) );
-    }
-    TLatex *lat = new TLatex();
-    lat->SetTextColor(kRed);
-    lat->SetTextSize(0.6*lat->GetTextSize());
-    lat->SetTextAlign(22);
+    hCLsErr2Up->SetLineColor(kBlue+2);
+    hCLsErr2Up->SetLineWidth(2);
+    hCLsErr2Up->SetLineStyle(kDashed);
+    hCLsErr2Dn->SetLineColor(kBlue+2);
+    hCLsErr2Dn->SetLineWidth(2);
+    hCLsErr2Dn->SetLineStyle(kDashed);
 
-    hsb->GetXaxis()->SetTitle("Test Statistic Value");
-    hsb->GetYaxis()->SetTitle("Entries");
-    hsb->GetXaxis()->SetTitleSize(0.06);
-    hsb->GetYaxis()->SetTitleSize(0.06);
-    hsb->GetXaxis()->SetLabelSize(0.06);
-    hsb->GetYaxis()->SetLabelSize(0.06);
-    hsb->SetLineWidth(2);
-    hb->SetLineWidth(2);
-    hsb->SetFillColor(kBlue);
-    hb->SetFillColor(kRed);
-    hsb->SetFillStyle(3003);
-    hb->SetFillStyle(3004);
-    hb->SetLineColor(kRed);
-    hsb->SetLineColor(kBlue);
+    hCLsFreq->GetXaxis()->SetTitle("POI");
+    hCLsFreq->GetYaxis()->SetTitle("Raw CLs");
+    hCLsFreq->GetXaxis()->SetTitleSize(0.06);
+    hCLsFreq->GetYaxis()->SetTitleSize(0.06);
+    hCLsFreq->GetXaxis()->SetLabelSize(0.06);
+    hCLsFreq->GetYaxis()->SetLabelSize(0.06);
 
-    //TGraph *gb = Utils::smoothHist(hb, 0);
-    //TGraph *gsb = Utils::smoothHist(hsb, 1);
+    hCLsFreq->Draw("L");
+    hCLsErr2Up->Draw("Lsame");
+    hCLsErr2Dn->Draw("Lsame");
+    hCLsErr1Up->Draw("Lsame");
+    hCLsErr1Dn->Draw("Lsame");
+    hCLsExp->Draw("Lsame");
+    hCLsFreq->Draw("Lsame");
 
-    //gb->SetLineColor(kRed+1);
-    //gb->SetLineWidth(4);
-    //gsb->SetLineColor(kBlue+1);
-    //gsb->SetLineWidth(4);
-
-    hsb->Draw();
-    hb->Draw("same");
-    //gb->Draw("Lsame");
-    //gsb->Draw("Lsame");
-
-    qLs[0]->SetLineWidth(2);
-    qLs[0]->SetLineStyle(kDashed);
-    qLs[4]->SetLineWidth(2);
-    qLs[4]->SetLineStyle(kDashed);
-    qLs[1]->SetLineWidth(3);
-    qLs[3]->SetLineWidth(3);
-    qLs[2]->SetLineWidth(5);
-
-    for ( int k=0; k<quantiles.size(); k++ ){
-      qLs[k]->SetLineColor(kRed);
-      qLs[k]->Draw("same");
-    }
-    lat->DrawLatex( quantiles[0], hsb->GetMaximum(), "-2#sigma" );
-    lat->DrawLatex( quantiles[1], hsb->GetMaximum(), "-1#sigma" );
-    lat->DrawLatex( quantiles[2], hsb->GetMaximum(), "<B>" );
-    lat->DrawLatex( quantiles[3], hsb->GetMaximum(), "+1#sigma" );
-    lat->DrawLatex( quantiles[4], hsb->GetMaximum(), "+2#sigma" );
-
-    lD->SetLineColor(kBlack);
-    lD->SetLineWidth(5);
-    lD->Draw("same");
-
-    TLegend *leg = new TLegend(0.74,0.54,0.94,0.7);
-    leg->SetHeader(Form("p=%4.2g",hCLs->GetBinCenter(i)));
-    leg->SetFillColor(0);
-    leg->AddEntry(hb,"B-only Toys","LF");
-    leg->AddEntry(hsb,"S+B Toys","LF");
-    leg->AddEntry(lD,"Data","L");
-    leg->Draw("same");
-    c->SetLogy();
-    c->SetRightMargin(0.11);
-    savePlot(c,TString(Form("cls_testStatControlPlot_p%d",i))+"_"+scanVar1);
-  }
-
-  TCanvas *c = newNoWarnTCanvas( "cls_ctr", "CLs Control" );
-  hCLsFreq->SetLineColor(kBlack);
-  hCLsFreq->SetLineWidth(3);
-  hCLsExp->SetLineColor(kRed);
-  hCLsExp->SetLineWidth(3);
-
-  hCLsErr1Up->SetLineColor(kBlue+2);
-  hCLsErr1Up->SetLineWidth(2);
-  hCLsErr1Dn->SetLineColor(kBlue+2);
-  hCLsErr1Dn->SetLineWidth(2);
-
-  hCLsErr2Up->SetLineColor(kBlue+2);
-  hCLsErr2Up->SetLineWidth(2);
-  hCLsErr2Up->SetLineStyle(kDashed);
-  hCLsErr2Dn->SetLineColor(kBlue+2);
-  hCLsErr2Dn->SetLineWidth(2);
-  hCLsErr2Dn->SetLineStyle(kDashed);
-
-  hCLsFreq->GetXaxis()->SetTitle("POI");
-  hCLsFreq->GetYaxis()->SetTitle("Raw CLs");
-  hCLsFreq->GetXaxis()->SetTitleSize(0.06);
-  hCLsFreq->GetYaxis()->SetTitleSize(0.06);
-  hCLsFreq->GetXaxis()->SetLabelSize(0.06);
-  hCLsFreq->GetYaxis()->SetLabelSize(0.06);
-
-  hCLsFreq->Draw("L");
-  hCLsErr2Up->Draw("Lsame");
-  hCLsErr2Dn->Draw("Lsame");
-  hCLsErr1Up->Draw("Lsame");
-  hCLsErr1Dn->Draw("Lsame");
-  hCLsExp->Draw("Lsame");
-  hCLsFreq->Draw("Lsame");
-
-  savePlot(c, "cls_ControlPlot_"+scanVar1);
-
+    savePlot(c, "cls_ControlPlot_"+scanVar1);
 }
 
 void MethodDatasetsPluginScan::makeControlPlotsBias(map<int, vector<double> > biasVals)
 {
-  for ( int i=1; i<= hCLs->GetNbinsX(); i++ ) {
+    for ( int i=1; i<= hCLs->GetNbinsX(); i++ ) {
 
-    TCanvas *c = newNoWarnTCanvas( Form("q%d",i), Form("q%d",i));
-    c->SetRightMargin(0.11);
-    double range_max = *(std::max_element( biasVals[i].begin(), biasVals[i].end() ) );
-    double range_min = *(std::min_element( biasVals[i].begin(), biasVals[i].end() ) );
-    TH1F *hsig = new TH1F( Form("hsig%d",i), "hsig", 50,range_min+(range_max-range_min)*0.001, range_max-(range_max-range_min)*0.001); //this way we loose a little stats in the tails, but make sure the overflow bins are not used.
-    for(int j=0;j<biasVals[i].size();j++){
-        hsig->Fill(biasVals[i][j]);
+        TCanvas *c = newNoWarnTCanvas( Form("q%d",i), Form("q%d",i));
+        c->SetRightMargin(0.11);
+        double range_max = *(std::max_element( biasVals[i].begin(), biasVals[i].end() ) );
+        double range_min = *(std::min_element( biasVals[i].begin(), biasVals[i].end() ) );
+        TH1F *hsig = new TH1F( Form("hsig%d",i), "hsig", 50,range_min+(range_max-range_min)*0.001, range_max-(range_max-range_min)*0.001); //this way we loose a little stats in the tails, but make sure the overflow bins are not used.
+        for(int j=0;j<biasVals[i].size();j++){
+                hsig->Fill(biasVals[i][j]);
+        }
+
+        TFitResultPtr fitresult = hsig->Fit("gaus","LSQ","",range_min, range_max);
+        hsig->GetXaxis()->SetTitle("POI residual #hat{#alpha} #minus #alpha_{0}");
+        hsig->GetYaxis()->SetTitle("Entries");
+        hsig->GetXaxis()->SetTitleSize(0.06);
+        hsig->GetYaxis()->SetTitleSize(0.06);
+        hsig->GetXaxis()->SetLabelSize(0.06);
+        hsig->GetYaxis()->SetLabelSize(0.06);
+        hsig->SetLineWidth(2);
+        hsig->SetFillColor(kBlue);
+        hsig->SetFillStyle(3003);
+        hsig->SetLineColor(kBlue);
+
+        //TGraph *gsb = Utils::smoothHist(hsig, 1);
+
+        //gsb->SetLineColor(kBlue+1);
+        //gsb->SetLineWidth(4);
+
+        hsig->Draw();
+        //gb->Draw("Lsame");
+        //gsb->Draw("Lsame");
+
+        TLegend *leg = new TLegend(0.65,0.74,0.89,0.95);
+        leg->SetHeader(Form("p=%4.2g",hCLs->GetBinCenter(i)));
+        leg->SetFillColor(0);
+        leg->AddEntry(hsig,"POI residual","LF");
+        leg->AddEntry((TObject*)0,Form("#mu=%4.2g +/- %4.2g",fitresult->Parameter(1),fitresult->ParError(1)),"");
+        leg->AddEntry((TObject*)0,Form("#sigma=%4.2g +/- %4.2g",fitresult->Parameter(2),fitresult->ParError(2)),"");
+        leg->Draw("same");
+        savePlot(c,TString(Form("BiasControlPlot_p%d",i))+"_"+scanVar1);
     }
-
-    TFitResultPtr fitresult = hsig->Fit("gaus","LSQ","",range_min, range_max);
-    hsig->GetXaxis()->SetTitle("POI residual #hat{#alpha} #minus #alpha_{0}");
-    hsig->GetYaxis()->SetTitle("Entries");
-    hsig->GetXaxis()->SetTitleSize(0.06);
-    hsig->GetYaxis()->SetTitleSize(0.06);
-    hsig->GetXaxis()->SetLabelSize(0.06);
-    hsig->GetYaxis()->SetLabelSize(0.06);
-    hsig->SetLineWidth(2);
-    hsig->SetFillColor(kBlue);
-    hsig->SetFillStyle(3003);
-    hsig->SetLineColor(kBlue);
-
-    //TGraph *gsb = Utils::smoothHist(hsig, 1);
-
-    //gsb->SetLineColor(kBlue+1);
-    //gsb->SetLineWidth(4);
-
-    hsig->Draw();
-    //gb->Draw("Lsame");
-    //gsb->Draw("Lsame");
-
-    TLegend *leg = new TLegend(0.65,0.74,0.89,0.95);
-    leg->SetHeader(Form("p=%4.2g",hCLs->GetBinCenter(i)));
-    leg->SetFillColor(0);
-    leg->AddEntry(hsig,"POI residual","LF");
-    leg->AddEntry((TObject*)0,Form("#mu=%4.2g +/- %4.2g",fitresult->Parameter(1),fitresult->ParError(1)),"");
-    leg->AddEntry((TObject*)0,Form("#sigma=%4.2g +/- %4.2g",fitresult->Parameter(2),fitresult->ParError(2)),"");
-    leg->Draw("same");
-    savePlot(c,TString(Form("BiasControlPlot_p%d",i))+"_"+scanVar1);
-  }
-return;
+    return;
 }

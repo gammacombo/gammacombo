@@ -15,9 +15,9 @@
 #include "TMath.h" 
 
 RooHistPdfVar::RooHistPdfVar(const char *name, const char *title, 
-	RooAbsReal& _xobs,
-	RooAbsReal& _xth,
-	RooAbsReal& _xshift) :
+    RooAbsReal& _xobs,
+    RooAbsReal& _xth,
+    RooAbsReal& _xshift) :
     RooAbsReal(name,title), 
     xobs("xobs","xobs",this,_xobs),
     xth("xth","xth",this,_xth),

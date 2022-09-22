@@ -28,7 +28,7 @@ class OneMinusClPlotAbs
 {
 public:
     OneMinusClPlotAbs(OptParser *arg, TString name="c1", TString title="c1");
-	~OneMinusClPlotAbs();
+    ~OneMinusClPlotAbs();
 
     virtual void    addScanner(MethodAbsScan* s, int CLsType = 0);
     inline void     disableLegend(bool yesNo=false){plotLegend = yesNo;};
@@ -42,13 +42,13 @@ public:
     inline  void    setFont(int fnum){font = fnum;};
     inline  void    setLabelSize(int lnum){labelsize = lnum;};
     inline  void    setPlotLabel(TString &lname){label = lname;};
-	inline void     Show(){m_mainCanvas->Show();};
+    inline void     Show(){m_mainCanvas->Show();};
     virtual void    Draw();
 
-    int font;		///< font code. The last digit disables scaling with the canvas size.
-    int labelsize;	///< text size of axis labels in pixels
-    int titlesize;	///< text size of axis titles in pixels
-    int legendsize;	///< text size of legend entries in pixels
+    int font;       ///< font code. The last digit disables scaling with the canvas size.
+    int labelsize;  ///< text size of axis labels in pixels
+    int titlesize;  ///< text size of axis titles in pixels
+    int legendsize; ///< text size of legend entries in pixels
 
     vector<MethodAbsScan*> scanners;
     vector<int> do_CLs;    ///< vector, which stores the cls method type to be plotted

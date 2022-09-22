@@ -14,7 +14,7 @@ SharedArray<TYPE>* SharedArray<TYPE>::Clone(const char*) const
 
 template <class TYPE>
 SharedArray<TYPE>& SharedArray<TYPE>::operator=(
-	const SharedArray<TYPE>& other)
+    const SharedArray<TYPE>& other)
 {
     if (other.pimpl == pimpl) return *this;
     TObject::operator=(other);
@@ -39,7 +39,7 @@ SharedArrayImp<TYPE>* SharedArrayImp<TYPE>::Clone(const char*) const
 
 template <class TYPE>
 SharedArrayImp<TYPE>::SharedArrayImp(
-	const SharedArrayImp<TYPE>& other) :
+    const SharedArrayImp<TYPE>& other) :
     TObject(other), refcount(1), arr(other.arr)
 { }
 

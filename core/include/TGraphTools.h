@@ -19,9 +19,9 @@ using namespace Utils;
 
 class TGraphTools
 {
-	public:
+    public:
 
-		TGraph*         addPointToGraphAtFirstMatchingX(TGraph* g, float xNew, float yNew);
+        TGraph* addPointToGraphAtFirstMatchingX(TGraph* g, float xNew, float yNew);
 };
 
 #endif

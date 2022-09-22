@@ -15,12 +15,12 @@
 #include "TMath.h" 
 
 RooPoly4Var:: RooPoly4Var(const char *name, const char *title,
- 	      RooAbsReal& _xobs,
- 	      double& _p0,
- 	      double& _p1,
- 	      double& _p2,
- 	      double& _p3,
- 	      double& _p4) :
+          RooAbsReal& _xobs,
+          double& _p0,
+          double& _p1,
+          double& _p2,
+          double& _p3,
+          double& _p4) :
     RooAbsReal(name,title), 
     xobs("xobs","xobs",this,_xobs),
     p0(_p0),
@@ -48,8 +48,8 @@ RooPoly4Var::~RooPoly4Var() { }
 
 Double_t RooPoly4Var::evaluate() const 
 { 
-  double x = double(xobs);
-  return p0 + p1*x + p2*x*x + p3*x*x*x + p4*x*x*x*x;
+    double x = double(xobs);
+    return p0 + p1*x + p2*x*x + p3*x*x*x + p4*x*x*x*x;
 } 
 
 ClassImp(RooPoly4Var)

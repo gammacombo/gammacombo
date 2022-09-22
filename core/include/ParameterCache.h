@@ -19,25 +19,25 @@
 
 class ParameterCache {
 
-	public:
+    public:
 
-		ParameterCache(OptParser* arg);
-		~ParameterCache();
+        ParameterCache(OptParser* arg);
+        ~ParameterCache();
 
-		void cacheParameters(MethodAbsScan *scanner, TString fileName);
-		bool loadPoints(TString fileName);
-		void printFitResultToOutStream(ofstream &out, RooSlimFitResult *slimFitResult);
-		void printPoint();
-		int getNPoints();
-		void setPoint(Combiner* cmb, int i);
-		void setPoint(MethodAbsScan *scanner, int i);
-		std::vector<TString> getFixedNames(std::vector<Utils::FixPar> fixPar);
-		std::vector<std::map<TString,double> > startingValues;
+        void cacheParameters(MethodAbsScan *scanner, TString fileName);
+        bool loadPoints(TString fileName);
+        void printFitResultToOutStream(ofstream &out, RooSlimFitResult *slimFitResult);
+        void printPoint();
+        int getNPoints();
+        void setPoint(Combiner* cmb, int i);
+        void setPoint(MethodAbsScan *scanner, int i);
+        std::vector<TString> getFixedNames(std::vector<Utils::FixPar> fixPar);
+        std::vector<std::map<TString,double> > startingValues;
 
-	private:
+    private:
 
-		bool m_parametersLoaded;
-		OptParser* m_arg;
+        bool m_parametersLoaded;
+        OptParser* m_arg;
 };
 
 #endif
