@@ -49,7 +49,7 @@ class MethodAbsScan
 		MethodAbsScan(OptParser* opt);
 		~MethodAbsScan();
 
-		virtual void                    calcCLintervals(int CLsType = 0, bool calc_expected=false, bool quiet=false);
+		virtual void                    calcCLintervals(int CLsType = 0, int calc_expected=-99, bool quiet=false);
 		void                            confirmSolutions();
 		void                            doInitialFit(bool force=false);
 		inline OptParser*               getArg(){return arg;};
@@ -112,7 +112,7 @@ class MethodAbsScan
 		void                            plotOn(OneMinusClPlotAbs *plot, int CLsType=0); // CLsType: 0 (off), 1 (naive CLs t_s+b - t_b), 2 (freq CLs)
 		void                            plotPulls(int nSolution=0);
 		virtual void                    print();
-		void                            printCLintervals(int CLsType, bool calc_expected=false);
+		void                            printCLintervals(int CLsType, int calc_expected=-99);
 		void                            printLocalMinima();
     	void                            saveLocalMinima(TString fName="");
 		void                            saveScanner(TString fName="");

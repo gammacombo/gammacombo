@@ -338,8 +338,8 @@ void  PDF_Datasets::generateBkgAsimovGlobalObservables(int SeedShift, int index)
     initializeRandomGenerator(SeedShift);
 
     // generate the global observables into a RooArgSet
-    // const RooArgSet* set = pdfBkg->generate(*(wspc->set(globalObsName)), 1)->get(0);
-    const RooArgSet* set = _constraintPdf->generate(*(wspc->set(globalObsName)), 1)->get(0);
+    const RooArgSet* set = wspc->set(globalObsName);
+    if(wspc->set(globalObsName)->getSize()>0) set = _constraintPdf->generate(*(wspc->set(globalObsName)), 1)->get(0);
     // iterate over the generated values and use them to update the actual global observables in the workspace
 
     TIterator* it =  set->createIterator();

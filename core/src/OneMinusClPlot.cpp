@@ -855,7 +855,7 @@ void OneMinusClPlot::Draw()
 	m_mainCanvas->cd();
 
   // plot the CLs
-  for ( int i = 0; i < scanners.size(); i++ ) if (do_CLs[i]>0) scan1dCLsPlot(scanners[i],arg->nsmooth);
+  for ( int i = 0; i < scanners.size(); i++ )if (do_CLs[i]>0) scan1dCLsPlot(scanners[i],arg->nsmooth,scanners[i]->getMethodName().Contains("Plugin"));
 
 	// Legend:
 	// make the legend short, the text will extend over the boundary, but the symbol will be shorter
