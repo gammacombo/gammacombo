@@ -519,8 +519,15 @@ void MethodAbsScan::interpolateSimple(TH1F* h, int i, float y, float &val)
 	float p1y = h->GetBinContent(i);
 	float p2x = h->GetBinCenter(i+1);
 	float p2y = h->GetBinContent(i+1);
-	val = p2x + (y-p2y)/(p1y-p2y)*(p1x-p2x);
-	if (arg->debug) std::cout << "MethodAbsScan::interpolateSimple(): " << val << std::endl;
+	float tempval = p2x + (y-p2y)/(p1y-p2y)*(p1x-p2x);
+	if ((tempval>p1x && tempval<p2x) || (tempval>p2x && tempval<p1x)){
+		val = tempval;
+		if (arg->debug) std::cout << "MethodAbsScan::interpolateSimple(): " << val << " (in range [("<<p1x <<","<<p1y<<") , ("<<p2x<<","<<p2y<<"])"<<std::endl;
+	}
+	else{
+		std::cout << "MethodAbsScan::interpolateSimple(): " << tempval << "out of bounds! [("<<p1x <<","<<p1y<<") , ("<<p2x<<","<<p2y<<"] ";
+		std::cout << "returning "<< val << std::endl;
+	}
 	return;
 }
 
@@ -703,6 +710,8 @@ bool MethodAbsScan::interpolate(TH1F* h, int i, float y, float central, bool upp
 	// printf("%f %f %f\n", val, pq(p[0], p[1]+e[1], p[2], y, useSol), pq(p[0], p[1]-e[1], p[2], y, useSol));
 	// printf("%f %f %f\n", val, pq(p[0], p[1], p[2]+e[2], y, useSol), pq(p[0], p[1], p[2]-e[2], y, useSol));
 	err = 0.0;
+	if (arg->debug) std::cout << "MethodAbsScan::interpolate(): " << val << " (in range [ "<< h->GetBinCenter(i-2)<<" [ "<<h->GetBinCenter(i)<<" , "<<h->GetBinCenter(i+1)<<" ] "<<h->GetBinCenter(i+2)<<" ])"<<std::endl;
+	if (arg->debug) std::cout << "MethodAbsScan::interpolate(): " << val << " chosen between " << sol0 << " and " << sol1 << ", central: "<< central << std::endl;
 	return true;
 }
 
@@ -718,7 +727,7 @@ void MethodAbsScan::calcCLintervals(int CLsType, int calc_expected, bool quiet)
 {
 	TH1F *histogramCL = this->getHCL();
 	// calc CL intervals with CLs method
-	if (CLsType==1 && this->getHCLs())
+	if ((CLsType==1 && this->getHCLs())||((methodName=="DatasetsProb"||methodName=="Prob") && CLsType==2 && this->getHCLs()))
 	{
 		histogramCL =this->getHCLs();
 	}
@@ -814,8 +823,8 @@ void MethodAbsScan::calcCLintervals(int CLsType, int calc_expected, bool quiet)
 
 		for ( int c=0; c<NumOfCL; c++ )
 		{
-			CLlo[c] = histogramCL->GetXaxis()->GetXmin();
-			CLhi[c] = histogramCL->GetXaxis()->GetXmax();
+			CLlo[c] = histogramCL->GetBinCenter(1);
+			CLhi[c] = histogramCL->GetBinCenter(histogramCL->GetNbinsX());
 			float y = 1.- ConfidenceLevels[c];
 			float sol = getScanVar1Solution(iSol);
 			int sBin = histogramCL->FindBin(sol);
@@ -825,8 +834,8 @@ void MethodAbsScan::calcCLintervals(int CLsType, int calc_expected, bool quiet)
 				sBin=1;
 			}
 			else if(calc_expected>-10){
-				if(arg->debug) std::cout << "MethodAbsScan::calcCLintervals(): For expected limit at " << calc_expected << "sigma start scanning at maximum bin." << std::endl;
-				sBin=histogramCL->GetMaximumBin();
+				if(arg->debug) std::cout << "MethodAbsScan::calcCLintervals(): For expected limit at " << calc_expected << "sigma start scanning at maximum bin: "<< sBin << std::endl;
+				sBin=histogramCL->FindLastBinAbove(histogramCL->GetBinContent(histogramCL->GetMaximumBin())-0.05);
 			}
 
 			// find lower interval bound
@@ -834,7 +843,7 @@ void MethodAbsScan::calcCLintervals(int CLsType, int calc_expected, bool quiet)
 				if ( histogramCL->GetBinContent(i) < y ){
 					if ( n>25 ){
 						bool check = interpolate(histogramCL, i, y, sol, false, CLlo[c], CLloErr[c]);
-            			if(!check && (arg->verbose ||arg->debug)) cout << "MethodAbsScan::calcCLintervals(): Using linear interpolation." << endl;
+            			if(!check && (arg->verbose ||arg->debug)) cout << "MethodAbsScan::calcCLintervals(): Using linear interpolation for lower boundary." << endl;
 						if ( !check || CLlo[c]!=CLlo[c] ) interpolateSimple(histogramCL, i, y, CLlo[c]);
 					}
 					else{
@@ -849,8 +858,10 @@ void MethodAbsScan::calcCLintervals(int CLsType, int calc_expected, bool quiet)
 			for ( int i=sBin; i<n; i++ ){
 				if ( histogramCL->GetBinContent(i) < y ){
 					if ( n>25 ){
-						bool check = interpolate(histogramCL, i-1, y, sol, true, CLhi[c], CLhiErr[c]);
-						if(!check && (arg->verbose ||arg->debug)) cout << "MethodAbsScan::calcCLintervals(): Using linear interpolation." << endl;
+						bool check;
+						if(calc_expected<-10) check = interpolate(histogramCL, i-1, y, sol, true, CLhi[c], CLhiErr[c]);
+						else check = interpolate(histogramCL, i-1, y, 0, true, CLhi[c], CLhiErr[c]); // expected curves for background-only
+						if(!check && (arg->verbose ||arg->debug)) cout << "MethodAbsScan::calcCLintervals(): Using linear interpolation for upper boundary." << endl;
 						if (!check || CLhi[c]!=CLhi[c] ) interpolateSimple(histogramCL, i-1, y, CLhi[c]);
 					}
 					else{
