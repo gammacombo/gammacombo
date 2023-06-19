@@ -19,7 +19,9 @@
 	observables = NULL;
 	pdf         = NULL;
 	pdfBkg      = NULL;
+    multipdf    = NULL;
 	isBkgPdfSet = false;
+    isBkgMultipdfSet = false;
 	toyObservables = NULL;
 	nToyObs = 1000;
 	iToyObs = 0;
@@ -321,8 +323,8 @@ void PDF_Abs::printCorMatrix(TString title, TString source, const TMatrixDSym& c
 		obsName.ReplaceAll(uniqueID,"");
 		printf("      %-20s %2i ", obsName.Data(), i);
 		for ( int j=0; j<nObs; j++ ){
-			if (fabs(cor[i][j])<0.005) printf("%5s ", "-");
-			else printf("%5.2f ", cor[i][j]);
+			if (fabs(cor[i][j])<0.005) printf("%6s ", "-");
+			else printf("%6.3f ", cor[i][j]);
 		}
 		cout << endl;
 	}
@@ -388,6 +390,14 @@ void PDF_Abs::print() const
 			ostringstream stream;
 			v->printMetaArgs(stream);
 			TString formula = stream.str();
+      if ( formula.Contains("formula=") ) { // this is a RooFormulaVar
+        RooFormulaVar *form = dynamic_cast<RooFormulaVar*>(v);
+        int nFormPars = form->getVariables()->getSize();
+        for (int i=0; i<nFormPars; i++) {
+          if ( ! form->getParameter(i) ) continue;
+          formula.ReplaceAll( Form("x[%d]",i), form->getParameter(i)->GetName() );
+        }
+      }
 			formula.ReplaceAll("formula=", "");
 			formula.ReplaceAll("\"", "");
 			if ( formula=="" ) formula = v->ClassName(); // compiled custom Roo*Var classes don't have a formula

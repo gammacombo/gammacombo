@@ -15,6 +15,7 @@ parser.add_option("-n","--newLoc",default=None, help='Copy plots and html file i
 parser.add_option("-s","--sort",default=None, help='Sort files by name (ascending=an,descending=dn) or time modified (ascending=at, descending=dt)')
 parser.add_option("-z","--zip",default=None, help='Make zip')
 parser.add_option("-a","--add",default=None, help='Add additional html file at front')
+parser.add_option("-C","--convert",default=False, action="store_true", help='Convert pdfs to high resolution pngs (will overwrite existing pngs)')
 (opts,args) = parser.parse_args()
 
 import os
@@ -157,12 +158,13 @@ def writeHtml( location, title, links, plots, isHome=False ):
 
   # make zip
   if opts.zip:
-    zf = zipfile.ZipFile("plots/%s.zip"%opts.zip, mode="w")
+    zf = zipfile.ZipFile("%s.zip"%opts.zip, mode="w")
     for ext, paths in plots.items():
       for path in paths:
         zf.write(path)
     zf.close()
-    html.write('<div><b>Download all: <a href=%s.zip>%s.zip</a></b></div>\n'%(opts.zip,opts.zip))
+    if opts.newLoc: html.write('<div><b>Download all: <a href=%s.zip>%s.zip</a></b></div>\n'%(opts.zip,opts.zip))
+    else: html.write('<div><b>Download all: <a href=%s.zip>%s.zip</a></b></div>\n'%(os.path.basename(opts.zip),os.path.basename(opts.zip)))
     html.write('<br>\n')
 
   # additional material
@@ -189,6 +191,11 @@ def writeHtml( location, title, links, plots, isHome=False ):
       pdf_path = pdf_path.replace('.png','.pdf')
       if os.path.join( location, pdf_path ) in plots['pdf']:
         link_path = pdf_path
+
+      # convert to high res if asked
+      if opts.convert:
+        cmd = 'sips -s format png plots/%s --out plots/%s > /dev/null'%(pdf_path,png_path)
+        os.system(cmd)
 
     html.write('<div style=\"display:inline-block;border-style:groove;border-width:5px;color:%s;width:%s;word-break:break-all;word-wrap:break-all;\">\n'%(opts.colorScheme,opts.width))
     html.write('\t<center>\n')
@@ -221,7 +228,10 @@ def writeHtml( location, title, links, plots, isHome=False ):
           os.system('cp %s %s/%s/'%(f,opts.newLoc,ext))
 
     if opts.zip:
-      os.system('cp plots/%s.zip %s'%(opts.zip,opts.newLoc))
+      os.system('cp %s.zip %s'%(opts.zip,opts.newLoc))
+  else:
+    if opts.zip:
+      os.system('cp %s.zip %s'%(opts.zip,opts.zip))
 
   # print message
   outloc = opts.newLoc if opts.newLoc else opts.dir

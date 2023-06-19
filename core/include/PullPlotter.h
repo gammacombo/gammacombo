@@ -16,7 +16,7 @@
 #include "TPaveText.h"
 
 class MethodAbsScan;
- 
+
 using namespace std;
 using namespace Utils;
 
@@ -26,17 +26,18 @@ public:
 
   PullPlotter(MethodAbsScan *cmb);
   ~PullPlotter();
-  
+
   bool hasPullsAboveNsigma(float nsigma);
   void loadParsFromSolution(int n);
+	void savePulls();
   void plotPulls();
   void printPulls(float aboveNsigma = -1.);
-  
+
 private:
-  
+
   void defineOrder();
   void plotPullsCanvas(vector<TString>& observables, int currentid, int maxid, int nObs);
-  
+
   MethodAbsScan *cmb;       // the scanner to plot pulls for
   OptParser *arg;           // command line arguments
   vector<TString> obsOrder; // contains observable names in the desired plot order

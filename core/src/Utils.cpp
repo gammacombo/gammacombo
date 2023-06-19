@@ -6,6 +6,7 @@
  **/
 
 #include "Utils.h"
+#include "RooProdPdf.h"
 
 int Utils::countFitBringBackAngle;      ///< counts how many times an angle needed to be brought back
 int Utils::countAllFitBringBackAngle;   ///< counts how many times fitBringBackAngle() was called
@@ -20,7 +21,22 @@ RooFitResult* Utils::fitToMin(RooAbsPdf *pdf, bool thorough, int printLevel)
 {
 	RooMsgService::instance().setGlobalKillBelow(ERROR);
 
+	//pdf->Print("v");
+	//const RooProdPdf *prod = (RooProdPdf*)pdf;
+	//const RooArgList& pdflist = prod->pdfList();
+	//double chi2=0;
+	//for (int i=0; i<pdflist.getSize(); i++){
+		//const RooAbsPdf *ipdf = (RooAbsPdf*)pdflist.at(i);
+		//chi2 += -2*TMath::Log(ipdf->getVal());
+		//cout << ipdf->GetName() << " " << -2*TMath::Log(ipdf->getVal()) << " " << chi2 << endl;
+		//////ipdf->Print("v");
+	//}
+	//cout << chi2 << endl;
+
 	RooFormulaVar ll("ll", "ll", "-2*log(@0)", RooArgSet(*pdf));
+	//cout << ll.getVal() << endl;
+	//string a;
+	//cin >> a;
 	bool quiet = printLevel<0;
 	RooMinuit m(ll);
 	if (quiet){
@@ -135,10 +151,8 @@ RooFitResult* Utils::fitToMinBringBackAngles(RooAbsPdf *pdf, bool thorough, int 
 /// "var1,var2,var3," (list must end with comma). Default is to apply for all angles,
 /// all ratios except rD_k3pi and rD_kpi, and the k3pi coherence factor.
 ///
-RooFitResult* Utils::fitToMinForce(RooWorkspace *w, TString name, TString forceVariables)
+RooFitResult* Utils::fitToMinForce(RooWorkspace *w, TString name, TString forceVariables, bool debug)
 {
-	bool debug = true;
-
 	TString parsName = "par_"+name;
 	TString obsName  = "obs_"+name;
 	TString pdfName  = "pdf_"+name;
@@ -494,6 +508,7 @@ void Utils::setParameters(RooWorkspace* w, RooFitResult* values){
 			var->setVal(p->getVal());
 		}
 	}
+  delete it;
 	return;
 };
 
@@ -582,13 +597,12 @@ void Utils::setParameters(RooWorkspace* w, TString parname, RooFitResult* r, boo
 
 void Utils::setParameters(RooWorkspace* w, TString parname, RooSlimFitResult* r, bool constAndFloat)
 {
-	if ( constAndFloat ){
-		RooArgList list = r->floatParsFinal();
-		list.add(r->constPars());
-		setParameters(w, parname, &list);
-		return;
-	}
-	setParameters(w, parname, &(r->floatParsFinal()));
+  // avoid calls to floatParsFinal on a RooSlimFitResult - errgh!
+	vector<string> &names = r->_parsNames;
+  for ( int i=0; i<names.size(); i++ ) {
+    RooRealVar *var = (RooRealVar*)w->var(names[i].c_str());
+    if (var) var->setVal( r->_parsVal[i] );
+  }
 }
 
 ///
@@ -749,6 +763,54 @@ TMatrixDSym* Utils::buildCovMatrix(TMatrixDSym &cor, vector<double> &err)
 			cov[i][j] = err[i] * cor[i][j] * err[j];
 		}
 	return new TMatrixDSym(cov);
+}
+
+///
+/// Make a theory var in which the parmaeter list gets slimmed down to only
+/// contain the relevant dependents.
+/// This is a workaround for changes in RooFormulaVar that break things when
+/// making subset pdfs
+RooFormulaVar* Utils::makeTheoryVar(TString name, TString title, TString formula, RooArgList* pars)
+{
+  RooArgList *explicitDependents = new RooArgList();
+  for ( int i=0; i<pars->getSize(); i++ ) {
+    if ( formula.Contains( TString( pars->at(i)->GetName() ) ) ) {
+      explicitDependents->add( *(pars->at(i)) );
+    }
+  }
+  return new RooFormulaVar( name, title, formula, *explicitDependents );
+}
+
+void Utils::addSetNamesToList( vector<string>& list, RooWorkspace *w, TString setName ) {
+
+	TIterator* it = w->set(setName)->createIterator();
+	while ( RooRealVar* p = (RooRealVar*)it->Next() ) list.push_back(p->GetName());
+	delete it;
+}
+
+///
+/// Make a named set from a list of strings of object names
+/// Duplicates will only be contained once
+void Utils::makeNamedSet(RooWorkspace *w, TString mergedSet, vector<string>& names){
+
+	// 1. remove duplicates
+	sort(names.begin(), names.end());
+	vector<string> vars;
+	vars.push_back(names[0]);
+	string previous = names[0];
+	for ( int i=1; i<names.size(); i++ ){
+		if ( previous==names[i] ) continue;
+		vars.push_back(names[i]);
+		previous=names[i];
+	}
+
+	// 2. make new, combined set on the workspace
+	TString varsCommaList = "";
+	for ( int i=0; i<vars.size(); i++ ){
+		varsCommaList.Append(vars[i]);
+		if ( i<vars.size()-1 ) varsCommaList.Append(",");
+	}
+	w->defineSet(mergedSet, varsCommaList);
 }
 
 ///
@@ -947,9 +1009,10 @@ TGraph* Utils::smoothHist(TH1* h, int option)
 /// \param uniqueName - true: append a unique string to the histogram name
 /// \return a new histogram. Caller assumes ownership.
 ///
-TH1F* Utils::histHardCopy(const TH1F* h, bool copyContent, bool uniqueName)
+TH1F* Utils::histHardCopy(const TH1F* h, bool copyContent, bool uniqueName, TString specName)
 {
 	TString name = h->GetTitle();
+  if ( specName != "" ) name = specName;
 	if ( uniqueName ) name += getUniqueRootName();
 	TH1F* hNew = new TH1F(name, h->GetTitle(),
 			h->GetNbinsX(),
@@ -966,9 +1029,10 @@ TH1F* Utils::histHardCopy(const TH1F* h, bool copyContent, bool uniqueName)
 /// Creates a fresh, independent copy of the input histogram.
 /// 2d version of TH1F* Utils::histHardCopy().
 ///
-TH2F* Utils::histHardCopy(const TH2F* h, bool copyContent, bool uniqueName)
+TH2F* Utils::histHardCopy(const TH2F* h, bool copyContent, bool uniqueName, TString specName)
 {
 	TString name = h->GetTitle();
+  if ( specName != "" ) name = specName;
 	if ( uniqueName ) name += getUniqueRootName();
 	TH2F* hNew = new TH2F(name, h->GetTitle(),
 			h->GetNbinsX(),
@@ -1008,6 +1072,18 @@ bool Utils::isPosDef(TMatrixDSym* c)
 bool Utils::isAngle(RooRealVar* v)
 {
 	return v->getUnit()==TString("Rad") || v->getUnit()==TString("rad");
+}
+
+int Utils::makeNewColor(string hex) {
+	int ci = TColor::GetFreeColorIndex();
+	int ri,gi,bi;
+	sscanf(hex.c_str(), "#%02x%02x%02x", &ri, &gi, &bi);
+	float r = float(ri)/255.;
+	float g = float(gi)/255.;
+	float b = float(bi)/255.;
+	TColor *col = new TColor(ci, r, g, b);
+	cout << ci << " " << hex << " " << r << " " << g << " " << b << endl;
+	return col->GetNumber();
 }
 
 ///

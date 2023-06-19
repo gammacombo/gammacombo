@@ -36,17 +36,17 @@ public:
     inline  void        addFile(TString name) {inputFiles.push_back(name);};
 
     PDF_Datasets*           pdf;
-    bool                    drawPlots;
     bool                    explicitInputFile;
     std::vector<TString>    inputFiles;
     std::vector<double>     bootstrapPVals;
     TChain*                 chain;
-    RooFitResult*           dataFreeFitResult;
+    // RooFitResult*           dataFreeFitResult;
     RooFitResult*           dataBkgFitResult;
 
 protected:
     RooSlimFitResult*   getParevolPoint(float scanpoint);
     void                setParevolPointByIndex(int index);
+    double              bestfitpoint;
 
 private:
     RooFitResult*       loadAndFit(PDF_Datasets* pdf); // in this Plugin class, this fits to toy!!

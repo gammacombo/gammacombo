@@ -53,7 +53,7 @@ MethodProbScan::~MethodProbScan()
 ///   When using the drag mode, this can sometimes make a difference.
 /// \return status: 2 = new global minimum found, 1 = error
 ///
-int MethodProbScan::scan1d(bool fast, bool reverse)
+int MethodProbScan::scan1d(bool fast, bool reverse, bool quiet)
 {
 	if ( arg->debug ) cout << "MethodProbScan::scan1d() : starting ... " << endl;
 	nScansDone++;
@@ -189,7 +189,7 @@ int MethodProbScan::scan1d(bool fast, bool reverse)
 
 			// status bar
 			if ( (((int)nStep % (int)(nTotalSteps/printFreq)) == 0))
-				cout << "MethodProbScan::scan1d() : scanning " << (float)nStep/(float)nTotalSteps*100. << "%   \r" << flush;
+				if (!quiet) cout << "MethodProbScan::scan1d() : scanning " << (float)nStep/(float)nTotalSteps*100. << "%   \r" << flush;
 
 			// fit!
 			RooFitResult *fr = 0;
@@ -279,8 +279,26 @@ int MethodProbScan::computeCLvalues(){
     std::cout << "Computing CL values based on test statistic decision" << std::endl;
     std::cout << "Using "<< arg->teststatistic <<"-sided test statistic" << std::endl;
 
-	float bestfitpoint = ((RooRealVar*)getSolution()->floatParsFinal().find(scanVar1))->getVal();
-	float bestfitpointerr = ((RooRealVar*)getSolution()->floatParsFinal().find(scanVar1))->getError();
+    if ( !globalMin && !this->getSolution() ) {
+      std::cout << "Could not find a solution so can't redefine the test statistics appropriately" << std::endl;
+      return 1;
+    }
+
+
+    float bestfitpoint;
+    float bestfitpointerr;
+
+    if ( globalMin ) {
+      bestfitpoint    = ((RooRealVar*)globalMin->floatParsFinal().find(scanVar1))->getVal();
+      bestfitpointerr = ((RooRealVar*)globalMin->floatParsFinal().find(scanVar1))->getError();
+    }
+
+    if(this->getSolution()){
+      if (this->getSolution()->floatParsFinal().find(scanVar1)) {
+        bestfitpoint    = ((RooRealVar*)this->getSolution()->floatParsFinal().find(scanVar1))->getVal();
+        bestfitpointerr = ((RooRealVar*)this->getSolution()->floatParsFinal().find(scanVar1))->getError();
+      }
+    }
 
 	for (int k=1; k<=hCL->GetNbinsX(); k++){
 		float scanvalue=hChi2min->GetBinCenter( k );
@@ -296,6 +314,7 @@ int MethodProbScan::computeCLvalues(){
         // std::cout << "MethodProbScan::" << k << "\t" << hCL->GetBinContent(k) << "\t" << CLb << "\t" << hCLs->GetBinContent(k) <<std::endl;
 
 	}
+
 	return 0;
 }
 
@@ -451,13 +470,13 @@ int MethodProbScan::scan2d()
 	cDbg->SetMargin(0.1,0.15,0.1,0.1);
 	float hChi2min2dMin = hChi2min2d->GetMinimum();
 	bool firstScanDone = hChi2min2dMin<1e5;
-	TH2F *hDbgChi2min2d = histHardCopy(hChi2min2d, firstScanDone);
+	TH2F *hDbgChi2min2d = histHardCopy(hChi2min2d, firstScanDone, true, TString(hChi2min2d->GetName())+TString("_Dbg"));
 	hDbgChi2min2d->SetTitle(Form("#Delta#chi^{2} for scan %i, %s",nScansDone,title.Data()));
 	if ( firstScanDone ) hDbgChi2min2d->GetZaxis()->SetRangeUser(hChi2min2dMin,hChi2min2dMin+81);
 	hDbgChi2min2d->GetXaxis()->SetTitle(par1->GetTitle());
 	hDbgChi2min2d->GetYaxis()->SetTitle(par2->GetTitle());
 	hDbgChi2min2d->GetZaxis()->SetTitle("#Delta#chi^{2}");
-	TH2F *hDbgStart = histHardCopy(hChi2min2d, false);
+	TH2F *hDbgStart = histHardCopy(hChi2min2d, false, true, TString(hChi2min2d->GetName())+TString("_DbgSt"));
 
 	// start coordinates
 	// don't allow the under/overflow bins
@@ -620,6 +639,11 @@ int MethodProbScan::scan2d()
 		cout << "MethodProbScan::scan2d() :          min chi2 found in scan: " << bestMinFoundInScan << ", old min chi2: " << bestMinOld << endl;
 		return 1;
 	}
+
+  // cleanup
+  if (hDbgChi2min2d) delete hDbgChi2min2d;
+  if (hDbgStart) delete hDbgStart;
+
 	return 0;
 }
 

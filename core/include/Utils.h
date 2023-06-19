@@ -9,6 +9,7 @@
 #define Utils_h
 
 #include "TMath.h"
+#include "TObjString.h"
 #include "TString.h"
 #include "TH2F.h"
 #include "TStyle.h"
@@ -19,6 +20,7 @@
 #include "TPaveText.h"
 #include "rdtsc.h"
 #include "TMatrixDSym.h"
+#include "RooFormulaVar.h"
 #include "RooRealVar.h"
 #include "RooFitResult.h"
 #include "RooSlimFitResult.h"
@@ -81,20 +83,23 @@ namespace Utils
 	double        angularDifference(double angle1, double angle2);
 	bool          isPosDef(TMatrixDSym* c);
 	bool          isAngle(RooRealVar* v);
+	int           makeNewColor(string hex);
 
 	RooFitResult*   fitToMin(RooAbsPdf *pdf, bool thorough, int printLevel);
 	RooFitResult*   fitToMinBringBackAngles(RooAbsPdf *pdf, bool thorough, int printLevel);
-	RooFitResult*   fitToMinForce(RooWorkspace *w, TString name, TString forceVariables="");
+	RooFitResult*   fitToMinForce(RooWorkspace *w, TString name, TString forceVariables="", bool debug=true);
 	RooFitResult*   fitToMinImprove(RooWorkspace *w, TString name);
 	double          getChi2(RooAbsPdf *pdf);
-	TH1F*           histHardCopy(const TH1F* h, bool copyContent=true, bool uniqueName=true);
-	TH2F*           histHardCopy(const TH2F* h, bool copyContent=true, bool uniqueName=true);
+	TH1F*           histHardCopy(const TH1F* h, bool copyContent=true, bool uniqueName=true, TString specName="");
+	TH2F*           histHardCopy(const TH2F* h, bool copyContent=true, bool uniqueName=true, TString specName="");
 
 	TTree*  convertRooDatasetToTTree(RooDataSet *d);
   TGraph* convertTH1ToTGraph(TH1* h, bool withErrors=false);
   TGraph* smoothGraph(TGraph* g, int option=0);
   TGraph* smoothHist(TH1* h, int option=0);
 
+	void addSetNamesToList( vector<string>& list, RooWorkspace *w, TString setName);
+	void makeNamedSet(RooWorkspace *w, TString mergedSet, vector<string>& names);
 	void mergeNamedSets(RooWorkspace *w, TString mergedSet, TString set1, TString set2);
 	void randomizeParameters(RooWorkspace* w, TString setname);
 	void randomizeParametersGaussian(RooWorkspace* w, TString setname, RooSlimFitResult *r);
@@ -121,6 +126,8 @@ namespace Utils
 	void buildCorMatrix(TMatrixDSym &cor);
 	TMatrixDSym* buildCovMatrix(TMatrixDSym &cor, float *err);
 	TMatrixDSym* buildCovMatrix(TMatrixDSym &cor, vector<double> &err);
+
+  RooFormulaVar* makeTheoryVar(TString name, TString title, TString formula, RooArgList* pars);
 
 	void savePlot(TCanvas *c1, TString name);
 	bool FileExists( TString strFilename );

@@ -1,6 +1,7 @@
 #include "ToyTree.h"
 
-ToyTree::ToyTree(Combiner *c, TChain* t)
+ToyTree::ToyTree(Combiner *c, TChain* t, bool _quiet):
+	quiet(_quiet)
 {
 	setCombiner(c); // load properties from the combiner
 	this->initMembers(t);
@@ -9,7 +10,9 @@ ToyTree::ToyTree(Combiner *c, TChain* t)
 	this->storeGlob = false;
 }
 
-ToyTree::ToyTree(PDF_Datasets *p, OptParser* opt, TChain* t){
+ToyTree::ToyTree(PDF_Datasets *p, OptParser* opt, TChain* t, bool _quiet):
+	quiet(_quiet)
+{
 	assert(p);
 	this->comb = NULL;
 	this->w = p->getWorkspace();
@@ -79,6 +82,7 @@ void ToyTree::initMembers(TChain* t){
 	chi2minToyPDF       = 0.;
 	chi2minGlobalToyPDF = 0.;
 	chi2minBkgToyPDF    = 0.;
+    bestIndexScanData   = 0;
 };
 
 ///
@@ -177,6 +181,7 @@ void ToyTree::init()
 	t->Branch("statusFreeBkg",       &statusFreeBkg,   		"statusFreeBkg/F");
 	t->Branch("statusScanBkg",       &statusScanBkg,    	"statusScanBkg/F");
 	t->Branch("statusBkgBkg",        &statusBkgBkg,        	"statusBkgBkg/F");
+    t->Branch("bestIndexScanData",   &bestIndexScanData,    "bestIndexScanData/I");
 	if ( !arg->lightfiles )
 	{
 		TIterator* it = w->set(parsName)->createIterator();
@@ -271,6 +276,7 @@ void ToyTree::open()
 	if(branches->FindObject("statusFreePDF"      )) t->SetBranchAddress("statusFreePDF",      &statusFreePDF);
 	// if(branches->FindObject("statusScanData"     )) t->SetBranchAddress("statusScanData",     &statusScanData);
 	if(branches->FindObject("statusScanPDF"      )) t->SetBranchAddress("statusScanPDF",      &statusScanPDF);
+    if(branches->FindObject("bestIndexScanData"  )) t->SetBranchAddress("bestIndexScanData",  &bestIndexScanData);
 }
 
 ///
@@ -380,6 +386,21 @@ void ToyTree::storeParsScan()
 }
 
 ///
+/// Store the fit result parameters as the
+/// scan fit result.
+///
+void ToyTree::storeParsScan(RooFitResult* values)
+{
+    RooArgList list = values->floatParsFinal();
+    list.add(values->constPars());
+	TIterator* it = list.createIterator();
+	while ( RooRealVar* p = (RooRealVar*)it->Next() ) {
+        parametersScan[p->GetName()] = p->getVal();
+    }
+	delete it;
+}
+
+///
 /// Store the current workspace theory parameters.
 ///
 void ToyTree::storeTheory()
@@ -431,12 +452,13 @@ void ToyTree::computeMinMaxN()
 	if(branches->FindObject("scanpointy"))            t->SetBranchStatus("scanpointy",         1);
 	Long64_t nentries = t->GetEntries();
 	if ( nentries==0 ) return;
-	ProgressBar pb(arg, nentries);
+	ProgressBar *pb = NULL;
+	if ( !quiet) pb = new ProgressBar(arg, nentries);
 	if ( arg->debug ) cout << "ToyTree::computeMinMaxN() : ";
-	cout << "analysing toys ..." << endl;
+	if ( !quiet) cout << "analysing toys ..." << endl;
 	for (Long64_t i = 0; i < nentries; i++){
 		// status bar
-		pb.progress();
+		if (!quiet) pb->progress();
 		t->GetEntry(i);
 		// Cut away toys outside a certain range. Also check line 1167 in MethodPluginScan.cpp.
 		if ( arg->pluginPlotRangeMin!=arg->pluginPlotRangeMax

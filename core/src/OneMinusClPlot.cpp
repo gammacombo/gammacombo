@@ -42,7 +42,7 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 		cout << s->getName() << " (" << s->getMethodName() << ")" << endl;
 	}
 	if ( m_mainCanvas==0 ){
-		m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, 600);
+		m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, arg->square ? 800 : 600);
 	}
 	m_mainCanvas->cd();
 	bool plotPoints = ( s->getMethodName()=="Plugin" || s->getMethodName()=="BergerBoos" || s->getMethodName()=="DatasetsPlugin" ) && plotPluginMarkers;
@@ -73,7 +73,7 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	}
 
 	// add solution -- this does not make sense for the one-sided test statistic, which only gives non-default values for mu > muhat
-	if(! arg->teststatistic==1){
+	if( arg->teststatistic!=1){
 		if ( ! s->getSolutions().empty() ){
 			TGraphTools t;
 			TGraph *gNew = t.addPointToGraphAtFirstMatchingX(g, s->getScanVar1Solution(0), 1.0);
@@ -174,7 +174,8 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	float max = arg->scanrangeMin == arg->scanrangeMax ? hCL->GetXaxis()->GetXmax() : arg->scanrangeMax;
 	TH1F *haxes = new TH1F("haxes"+getUniqueRootName(), "", 100, min, max);
 	haxes->SetStats(0);
-	haxes->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
+  if ( arg->xtitle == "" ) haxes->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
+  else haxes->GetXaxis()->SetTitle(arg->xtitle);
 	haxes->GetYaxis()->SetTitle("1#minusCL");
 	haxes->GetXaxis()->SetLabelFont(font);
 	haxes->GetYaxis()->SetLabelFont(font);
@@ -226,7 +227,8 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 
 	// for the angles, draw a new axis in units of degrees
 	if ( isAngle(s->getScanVar1()) ){
-		haxes->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle() + TString(" [#circ]"));
+    if ( arg->xtitle == "" ) haxes->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle() + TString(" [#circ]"));
+    else haxes->GetXaxis()->SetTitle(arg->xtitle);
 		haxes->GetXaxis()->SetNdivisions(0);  // disable old axis
 		if ( last ){
 			// new top axis
@@ -249,7 +251,8 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 			axisb->SetName("axisb");
 			axisb->SetLabelFont(font);
 			axisb->SetLabelSize(labelsize);
-      axisb->SetTitle(s->getScanVar1()->GetTitle() + TString(" [#circ]"));
+      if ( arg->xtitle == "" ) axisb->SetTitle(s->getScanVar1()->GetTitle() + TString(" [#circ]"));
+      else axisb->SetTitle(arg->xtitle);
       axisb->SetTitleOffset(0.85);
       axisb->SetTitleSize(titlesize);
       axisb->SetTitleFont(font);
@@ -332,7 +335,8 @@ void OneMinusClPlot::scan1dPlotSimple(MethodAbsScan* s, bool first, int CLsType)
 	hCL->SetMarkerStyle(8);
 	hCL->SetMarkerSize(0.6);
 	hCL->GetYaxis()->SetNdivisions(407, true);
-	hCL->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
+  if ( arg->xtitle == "" ) hCL->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
+  else hCL->GetXaxis()->SetTitle(arg->xtitle);
 	hCL->GetYaxis()->SetTitle("1#minusCL");
 	hCL->GetXaxis()->SetLabelFont(font);
 	hCL->GetYaxis()->SetLabelFont(font);
@@ -425,31 +429,33 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
 
     //alternative smoothing option, needs more fiddling
     // gExp    = (TGraph*)smoother->SmoothKern( gExpRaw   ,"normal",hExp->GetBinWidth(1)*4)->Clone("gExp");
-    gErr1Up = (TGraph*)smoother->SmoothKern( gErr1UpRaw,"normal",hErr1Up->GetBinWidth(1)*2)->Clone("gErr1Up");
+    gErr1Up = (TGraph*)smoother->SmoothKern( gErr1UpRaw,"normal",hErr1Up->GetBinWidth(1)*2, hErr1Up->GetNbinsX())->Clone("gErr1Up");
     // gErr1Dn = (TGraph*)smoother->SmoothKern( gErr1DnRaw,"normal",hErr1Dn->GetBinWidth(1)*4)->Clone("gErr1Dn");
-    gErr2Up = (TGraph*)smoother->SmoothKern( gErr2UpRaw,"normal",hErr2Up->GetBinWidth(1)*2)->Clone("gErr2Up");
+    gErr2Up = (TGraph*)smoother->SmoothKern( gErr2UpRaw,"normal",hErr2Up->GetBinWidth(1)*2, hErr1Up->GetNbinsX())->Clone("gErr2Up");
     // gErr2Dn = (TGraph*)smoother->SmoothKern( gErr2DnRaw,"normal",hErr2Dn->GetBinWidth(1)*4)->Clone("gErr2Dn");
 
     // //make sure the CLs=1 points do NOT get smoothed away
 
-    // double *xvals = gExp->GetX();
-    // double *xvalsRaw = gExpRaw->GetX();
-    // double *yvalsRawExp = gExpRaw->GetY();
-    // double *yvalsRawExpErr1Up = gErr1UpRaw->GetY();
-    // double *yvalsRawExpErr2Up = gErr2UpRaw->GetY();
+    double *xvals = gExp->GetX();
+    double *xvalsRaw = gExpRaw->GetX();
+    double *yvalsRawExp = gExpRaw->GetY();
+    double *yvalsRawExpErr1Up = gErr1UpRaw->GetY();
+    double *yvalsRawExpErr2Up = gErr2UpRaw->GetY();
 
-    // for (int i=0; i<gExp->GetN(); i++){
-    // 	std::cout << xvalsRaw[i] << "\t" <<xvals[i] << std::endl;
-    // 	if(yvalsRawExp[i]>0.99){
-    // 		gExp->SetPoint(i,xvals[i], 1.0);
-    // 	}
-    // 	if(yvalsRawExpErr1Up[i]>0.99){
-    // 		gErr1Up->SetPoint(i,xvals[i], 1.0);
-    // 	}
-    // 	if(yvalsRawExpErr2Up[i]>0.99){
-    // 		gErr2Up->SetPoint(i,xvals[i], 1.0);
-    // 	}
-    // }
+    if(arg->teststatistic == 1){
+	    for (int i=0; i<gExp->GetN(); i++){
+	    	// std::cout << xvalsRaw[i] << "\t" <<xvals[i] << std::endl;
+	    	// if(yvalsRawExp[i]>0.99){
+	    	// 	gExp->SetPoint(i,xvals[i], 1.0);
+	    	// }
+	    	if(yvalsRawExpErr1Up[i]>0.99){
+	    		gErr1Up->SetPoint(i,xvals[i], 1.0);
+	    	}
+	    	if(yvalsRawExpErr2Up[i]>0.99){
+	    		gErr2Up->SetPoint(i,xvals[i], 1.0);
+	    	}
+	    }
+	}
 
     // fix point 0 to CLs=1 for all expected curves
 
@@ -464,14 +470,16 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
 	    if(arg->debug) std::cout<< "OneMinusClPlot::scan1dCLsPlot() : remove all observed lines with mu<muhat in CLs plot" <<std::endl;
 	    double* xvalsobs = gObs->GetX();
 	    double* yvalsobs = gObs->GetY();
+	    double* xerrsobs = gObs->GetEX();
+	    double* yerrsobs = gObs->GetEY();
 	    int valabove = gObs->GetN();
 	    int nentries = gObs->GetN();
 	    for (int i=0; i<gObs->GetN(); i++){
 	    	if (xvalsobs[i]<(xCentral+(hObs->GetBinWidth(1)/2.))) valabove--;
-	    }  
+	    }
 	    // std::cout << "Found entries for obs " << valabove << "\t" << nentries << std::endl;
 
-	    TGraph* gObs_new = new TGraph(valabove);
+	    TGraphErrors* gObs_new = new TGraphErrors(valabove);
 	    int k=0;
 	    for (int i=0; i < nentries; i++){
 	    	if(xvalsobs[i]<(xCentral+(hObs->GetBinWidth(1)/2.))){
@@ -481,6 +489,7 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
 	    	else {
 	    		// std::cout << "SetPoint " << k << "\t" << xvalsobs[i] << "\t" << yvalsobs[i] << std::endl;
 	    		gObs_new->SetPoint(k, xvalsobs[i],yvalsobs[i]);
+	    		gObs_new->SetPointError(k, xerrsobs[i],yerrsobs[i]);
 	    		k++;
 	    	}
 	    }
@@ -560,7 +569,8 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
 	float max = arg->scanrangeMin == arg->scanrangeMax ? hObs->GetXaxis()->GetXmax() : arg->scanrangeMax;
 	TH1F *haxes = new TH1F("haxes"+getUniqueRootName(), "", 100, min, max);
 	haxes->SetStats(0);
-	haxes->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
+  if ( arg->xtitle == "" ) haxes->GetXaxis()->SetTitle(s->getScanVar1()->GetTitle());
+  else haxes->GetXaxis()->SetTitle(arg->xtitle);
 	haxes->GetYaxis()->SetTitle("CL_{S}");
 	haxes->GetXaxis()->SetLabelFont(font);
 	haxes->GetYaxis()->SetLabelFont(font);
@@ -819,8 +829,8 @@ void OneMinusClPlot::drawCLguideLine(float pvalue)
 void OneMinusClPlot::drawCLguideLines()
 {
 	if ( arg->CL.size()==0){
-		drawCLguideLine(0.3173);
-		drawCLguideLine(4.55e-2);
+		drawCLguideLine(0.31731);
+		drawCLguideLine(4.550026e-2);
 		if ( arg->plotlog ){
 			drawCLguideLine(2.7e-3);
 			if ( arg->plotymin < 6.3e-5 ) {
@@ -850,7 +860,7 @@ void OneMinusClPlot::Draw()
 	///< which directly plots the 1-CL histograms without beautification
 
   if ( m_mainCanvas==0 ){
-		m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, 600);
+		m_mainCanvas = newNoWarnTCanvas(name+getUniqueRootName(), title, 800, arg->square ? 800 : 600);
     // put this in for exponent xaxes
     if ( !arg->isQuickhack(30) ) m_mainCanvas->SetRightMargin(0.1);
 	}
@@ -876,6 +886,14 @@ void OneMinusClPlot::Draw()
   leg->SetFillStyle(0);
 	leg->SetLineColor(kWhite);
 	leg->SetBorderSize(0);
+  if (arg->isQuickhack(35)) {
+    leg->SetFillColorAlpha(0,0.4);
+    leg->SetFillStyle(1001);
+    leg->SetLineStyle(1);
+    leg->SetLineWidth(1);
+    leg->SetLineColor(kGray+1);
+    leg->SetBorderSize(1);
+  }
 	leg->SetTextFont(font);
 	leg->SetTextSize(legendsize*0.75);
   vector<TString> legTitles;
@@ -925,7 +943,7 @@ void OneMinusClPlot::Draw()
        }
 		}
 	}
-  
+
 	// lines only
 	if ( !plotSimple )
 	for ( int i = 0; i < scanners.size(); i++ )

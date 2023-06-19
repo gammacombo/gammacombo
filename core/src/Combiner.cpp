@@ -201,25 +201,60 @@ void Combiner::combine()
 	// sort pdfs alphabetically
 	sort( pdfNames.begin(), pdfNames.end() );
 
-	// combine
-	pdfName = pdfNames[0];
-	for (int i=1; i<pdfNames.size(); i++ )
+	// new thing here
+	pdfName = "comb";
+	RooArgList *pdfList = new RooArgList();
+	vector<string> parStr;
+	vector<string> obsStr;
+	vector<string> thStr;
+
+	for (int i=0; i<pdfNames.size(); i++)
 	{
-		// build name of combined pdf
-		TString newName = pdfName+"_"+pdfNames[i];
-		if ( w->pdf("pdf_"+newName) ) continue;
+		// add to pdf name
+		pdfName += "_"+pdfNames[i];
 
-		// combine pdfs by multiplying them one by one:
-		w->factory("PROD::pdf_"+newName+"(pdf_"+pdfName+", pdf_"+pdfNames[i]+")");
+		// add to pdf list
+		pdfList->add( *w->pdf( TString("pdf_"+pdfNames[i]) ) );
 
-		// define sets of combined parameters
-		parsName = "par_"+newName;
-		obsName = "obs_"+newName;
-		mergeNamedSets(w, parsName, "par_"+pdfName, "par_"+pdfNames[i]);
-		mergeNamedSets(w, obsName,  "obs_"+pdfName, "obs_"+pdfNames[i]);
-		mergeNamedSets(w, "th_"+newName, "th_" +pdfName, "th_" +pdfNames[i]);
-		pdfName = newName;
+		// now add to set strings
+		addSetNamesToList( parStr, w, "par_"+pdfNames[i] );
+		addSetNamesToList( obsStr, w, "obs_"+pdfNames[i] );
+		addSetNamesToList( thStr , w, "th_" +pdfNames[i] );
+
 	}
+
+	// make the product
+	RooProdPdf *prod = new RooProdPdf("pdf_"+pdfName, "pdf_"+pdfName, *pdfList);
+
+	// import it into the ws
+	RooMsgService::instance().setGlobalKillBelow(WARNING);
+	w->import(*prod);
+
+	// define sets of combined parameters
+	makeNamedSet( w, "par_"+pdfName, parStr);
+	makeNamedSet( w, "obs_"+pdfName, obsStr);
+	makeNamedSet( w, "th_" +pdfName, thStr );
+
+	// old thing
+	// combine
+	//pdfName = pdfNames[0];
+	//for (int i=1; i<pdfNames.size(); i++ )
+	//{
+		//// build name of combined pdf
+		//TString newName = pdfName+"_"+pdfNames[i];
+		//if ( w->pdf("pdf_"+newName) ) continue;
+
+		//// combine pdfs by multiplying them one by one:
+		//w->factory("PROD::pdf_"+newName+"(pdf_"+pdfName+", pdf_"+pdfNames[i]+")");
+
+		//// define sets of combined parameters
+		//parsName = "par_"+newName;
+		//obsName = "obs_"+newName;
+		//mergeNamedSets(w, parsName, "par_"+pdfName, "par_"+pdfNames[i]);
+		//mergeNamedSets(w, obsName,  "obs_"+pdfName, "obs_"+pdfNames[i]);
+		//mergeNamedSets(w, "th_"+newName, "th_" +pdfName, "th_" +pdfNames[i]);
+		//pdfName = newName;
+	//}
 	setParametersConstant();
 	_isCombined = true;
 }
@@ -357,13 +392,53 @@ void Combiner::print()
 {
 	if ( pdfs.size()==0 ) return;
 	cout << "\nCombiner Configuration: " << title << endl;
-	cout <<   "=======================\n" << endl;
+	cout <<   "=======================" << endl;
 	// consice summary
 	for (int i=0; i<pdfs.size(); i++ ){
 		TString name = pdfs[i]->getName();
 		name.ReplaceAll(pdfs[i]->getUniqueID(),"");
 		printf("%2i. [measurement %3i] %-65s\n", i+1, pdfs[i]->getGcId(), (pdfs[i]->getTitle()).Data());
 	}
+  //if ( arg->verbose ) {
+    cout <<   "=======================" << endl;
+    // print observables of the combination
+    vector<string>& olist = getObservableNames();
+    TString obslist = "";
+    obslist += Form("%4d input observables: (",int(olist.size()));
+    int indent_length = obslist.Length();
+    int cur_length = obslist.Length();
+    for (int o=0; o<olist.size()-1; o++) {
+      obslist += " "+olist[o]+",";
+      cur_length += olist[o].length()+2;
+      if ( cur_length > 100 ) {
+        cur_length = indent_length;
+        obslist += "\n";
+        for (int i=0; i<indent_length; i++) obslist += " ";
+      }
+    }
+    obslist += " "+olist[olist.size()-1] + " )";
+    cout << obslist << endl;
+
+    // print free parameters of the combination
+    vector<string>& plist = getParameterNames();
+    TString parlist = "";
+    parlist += Form("%4d free parameters:   (",int(plist.size()));
+    indent_length = parlist.Length();
+    cur_length = parlist.Length();
+    for (int p=0; p<plist.size()-1; p++) {
+      parlist += " "+plist[p]+",";
+      cur_length += plist[p].length()+2;
+      if ( cur_length > 100 ) {
+        cur_length = indent_length;
+        parlist += "\n";
+        for (int i=0; i<indent_length; i++) parlist += " ";
+      }
+    }
+    parlist += " "+plist[plist.size()-1] + " )";
+    cout << parlist << endl;
+    //}
+	cout <<   "=======================" << endl;
+
 	// verbose printout
 	if ( arg->verbose ){
 		cout << "\nDetailed Configuration:" << endl;

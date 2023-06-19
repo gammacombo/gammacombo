@@ -89,6 +89,7 @@ class MethodCoverageScan : public MethodAbsScan
     TH1F *h_pvalue_prob;
     TH1F *h_pvalue_plugin_notransf;
     TH1F *h_pvalue_prob_notransf;
+		TTree *t_res;
 
     // result values
     Long64_t nentries;

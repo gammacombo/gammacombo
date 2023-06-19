@@ -49,7 +49,7 @@ class MethodAbsScan
 		MethodAbsScan(OptParser* opt);
 		~MethodAbsScan();
 
-		virtual void                    calcCLintervals(int CLsType = 0, bool calc_expected=false);
+		virtual void                    calcCLintervals(int CLsType = 0, bool calc_expected=false, bool quiet=false);
 		void                            confirmSolutions();
 		void                            doInitialFit(bool force=false);
 		inline OptParser*               getArg(){return arg;};
@@ -58,8 +58,8 @@ class MethodAbsScan
 		inline float                    getChi2minGlobal(){return chi2minGlobal;}
 		inline float                    getChi2minBkg(){return chi2minBkg;}
 		float                           getCL(double val);
-		CLInterval                      getCLintervalCentral(int sigma=1);
-		CLInterval                      getCLinterval(int iSol=0, int sigma=1);
+		CLInterval                      getCLintervalCentral(int sigma=1, bool quiet=false);
+		CLInterval                      getCLinterval(int iSol=0, int sigma=1, bool quiet=false);
 		inline Combiner* 				getCombiner() const {return combiner;};
 		int                             getDrawSolution();
 		inline bool                     getFilled(){return drawFilled;};
@@ -153,12 +153,13 @@ class MethodAbsScan
 		///< Index is the gobal bin number of hCL2d -1.
 		vector<RooSlimFitResult*> solutions;            ///< Local minima filled by saveSolutions() and saveSolutions2d().
 
-		///< The names of the CL interval vectors might be misleading. They correspond to the default CL intervals. 
+		///< The names of the CL interval vectors might be misleading. They correspond to the default CL intervals.
 		///< If the option --CL is given, the 1-3 sigma correspond to the first, second,... given value of the CL.
 		vector<CLInterval> clintervals1sigma;           ///< all 1 sigma intervals that were found by calcCLintervals()
 		vector<CLInterval> clintervals2sigma;           ///< all 2 sigma intervals that were found by calcCLintervals()
 		vector<CLInterval> clintervals3sigma;           ///< all 3 sigma intervals that were found by calcCLintervals()
 		vector<CLInterval> clintervalsuser;           ///< all intervals with an additional user specific CL that were found by calcCLintervals()
+		RooFitResult* globalMin;    ///< parameter values at a global minimum
 
 	protected:
 
@@ -185,7 +186,6 @@ class MethodAbsScan
 		RooWorkspace* w;
 		RooDataSet* obsDataset;     ///< save the nominal observables so we can restore them after we have fitted toys
 		RooDataSet* startPars;      ///< save the start parameter values before any scan
-		RooFitResult* globalMin;    ///< parameter values at a global minimum
 		TH1F* hCL;                  ///< 1-CL curve
 		TH1F* hCLs;                 ///< 1-CL curve
     TH1F* hCLsFreq;             ///< 1-CL curve

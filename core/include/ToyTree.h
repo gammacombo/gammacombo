@@ -34,8 +34,8 @@ class ToyTree
 {
 	public:
 
-		ToyTree(Combiner *c, TChain* t=0);
-		ToyTree(PDF_Datasets *p, OptParser* opt, TChain* t=0);
+		ToyTree(Combiner *c, TChain* t=0, bool _quiet=false);
+		ToyTree(PDF_Datasets *p, OptParser* opt, TChain* t=0, bool _quiet=false);
 		~ToyTree();
 
 		void                    activateCoreBranchesOnly();
@@ -60,6 +60,7 @@ class ToyTree
 		void                    storeParsPll();
 		void                    storeParsFree();
 		void                    storeParsScan();
+		void                    storeParsScan(RooFitResult* values);
 		void                    storeTheory();
 		void                    storeObservables();
 		void                    writeToFile(TString fName);
@@ -100,6 +101,7 @@ class ToyTree
 		float covQualBkgBkg;
 		float statusScanData;
 		float covQualScanData;
+        int   bestIndexScanData;
 		float nBergerBoos;
 		float BergerBoos_id;
 		float genericProbPValue;
@@ -141,6 +143,7 @@ class ToyTree
 		bool storeObs;                      ///< Boolean flag to control storing ToyTree observables, can't store these for DatasetsScans
 		bool storeTh;                       ///< Boolean flag to control storing ToyTree theory parameters. Not needed in DatasetsScans
 		bool storeGlob;               		///< Boolean flag to control storing ToyTree global observables. Extremely handy in DatasetsScans
+		bool quiet;
 };
 
 #endif

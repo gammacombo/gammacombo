@@ -277,7 +277,7 @@ void MethodPluginScan::computePvalue1d(RooSlimFitResult* plhScan, double chi2min
     assert(plhScan);
     assert(t);
     assert(f);
-    assert(pb);
+		//assert(pb);
     if ( !plhScan->hasParameter(scanVar1) ){
         cout << "MethodPluginScan::getPvalue1d() : ERROR : scan variable not found in plhScan. Exit." << endl;
         assert(0);
@@ -349,7 +349,7 @@ void MethodPluginScan::computePvalue1d(RooSlimFitResult* plhScan, double chi2min
     if ( arg->importance ){
         float plhPvalue = TMath::Prob(t->chi2min - t->chi2minGlobal,1);
         nActualToys = nToys*importance(plhPvalue);
-        pb->skipSteps(nToys-nActualToys);
+        if (pb) pb->skipSteps(nToys-nActualToys);
     }
 
     // Draw all toy datasets in advance. This is much faster.
@@ -359,7 +359,7 @@ void MethodPluginScan::computePvalue1d(RooSlimFitResult* plhScan, double chi2min
     for ( int j = 0; j<nActualToys; j++ )
     {
         // status bar
-        pb->progress();
+        if (pb) pb->progress();
 
         //
         // 1. Generate toys
@@ -389,12 +389,12 @@ void MethodPluginScan::computePvalue1d(RooSlimFitResult* plhScan, double chi2min
         if(id==0){
             t->chi2minBkgBkgToy = f->getChi2();
             chi2minBkgBkgToysvector.push_back(f->getChi2());
-            // std::cout << id << "\t" << t->chi2minBkgBkgToy << std::endl;
         }
         else{
-            t->chi2minBkgBkgToy = chi2minBkgBkgToysvector[j];
-            // std::cout << id << "\t" << t->chi2minBkgBkgToy << std::endl;
+            t->chi2minBkgBkgToy = chi2minBkgBkgToysvector.size()<=j ? 0 : chi2minBkgBkgToysvector[j];
         }
+				//std::cout << id << "\t" << t->chi2minBkgBkgToy << std::endl;
+
 
         //
         // 3. free fit
@@ -414,22 +414,23 @@ void MethodPluginScan::computePvalue1d(RooSlimFitResult* plhScan, double chi2min
             // std::cout << id << "\t" << t->chi2minGlobalBkgToy << std::endl;
         }
         else{
-            t->chi2minGlobalBkgToy = chi2minGlobalBkgToysvector[j];
-            // std::cout << id << "\t" << t->chi2minGlobalBkgToy << std::endl;
+            t->chi2minBkgBkgToy = chi2minBkgBkgToysvector.size()<=j ? 0 : chi2minBkgBkgToysvector[j];
         }
+				// std::cout << id << "\t" << t->chi2minGlobalBkgToy << std::endl;
 
         //
         // Bkg.1 generate bkg-only toys (for CLs method)
         //          (or select the right one)
         //
-        const RooArgSet* toyDataBkg = BkgToys->get(j);
-        setParameters(w, obsName, toyDataBkg);
-        // t->storeObservables();
+				if (BkgToys) {
+					const RooArgSet* toyDataBkg = BkgToys->get(j);
+					setParameters(w, obsName, toyDataBkg);
+					// t->storeObservables();
+				}
 
         //
         // Bkg.2 fit to bkg-only toys (for CLs method)
         //
-
         par->setVal(scanpoint);
         par->setConstant(true);
         f->setStartparsFirstFit(frCache.getRoundRobinNminus(0));
@@ -457,14 +458,14 @@ void MethodPluginScan::computePvalue1d(RooSlimFitResult* plhScan, double chi2min
     delete toyDataSet;
 }
 
-double MethodPluginScan::getPvalue1d(RooSlimFitResult* plhScan, double chi2minGlobal, ToyTree* t, int id)
+double MethodPluginScan::getPvalue1d(RooSlimFitResult* plhScan, double chi2minGlobal, ToyTree* t, int id, bool quiet)
 {
     // Create a ToyTree to store the results of all toys
     // (or use the supplied one so we can have a ToyTree
     // that holds a full scan).
     ToyTree *myTree = 0;
     if ( !t ){
-        myTree = new ToyTree(combiner);
+        myTree = new ToyTree(combiner,0,quiet);
         myTree->init();
     }
     else{
@@ -475,10 +476,11 @@ double MethodPluginScan::getPvalue1d(RooSlimFitResult* plhScan, double chi2minGl
     Fitter *myFit = new Fitter(arg, w, combiner->getPdfName());
 
     // Create a progress bar
-    ProgressBar *myPb = new ProgressBar(arg, nToys);
+    ProgressBar *myPb = NULL;
+		if (!quiet) myPb = new ProgressBar(arg, nToys);
 
     // do the work
-    cout << "MethodPluginScan::getPvalue1d() : computing p-value ..." << endl;
+    if (!quiet) cout << "MethodPluginScan::getPvalue1d() : computing p-value ..." << endl;
     computePvalue1d(plhScan, chi2minGlobal, myTree, id, myFit, myPb);
 
     // compute p-value
@@ -486,7 +488,14 @@ double MethodPluginScan::getPvalue1d(RooSlimFitResult* plhScan, double chi2minGl
         ControlPlots cp(myTree);
         cp.ctrlPlotChi2();
     }
-    TH1F *h = analyseToys(myTree, id);
+		// if no solutions then use the plhScan passed
+		if (solutions.size()==0) {
+			if (arg->verbose || arg->debug) std::cout << "MethodPluginScan::getPvalue1d() : WARNING: setting solutions from PL scan" << std::endl;
+			vector<RooSlimFitResult*> s;
+			s.push_back(plhScan);
+			setSolutions(s);
+		}
+    TH1F *h = analyseToys(myTree, id, quiet);
     float scanpoint = plhScan->getParVal(scanVar1);
     double pvalue = h->GetBinContent(h->FindBin(scanpoint));
     delete h;
@@ -859,14 +868,13 @@ void MethodPluginScan::scan2d(int nRun)
 ///             Default is -1 which uses all entries regardless of their id.
 /// \return     A new histogram that contains the p-values vs the scanpoint.
 ///
-TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
+TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id, bool quiet)
 {
     /// \todo replace this such that there's always one bin per scan point, but still the range is the scan range.
     /// \todo Also, if we use the min/max from the tree, we have the problem that they are not exactly
     /// the scan range, so that the axis won't show the lowest and highest number.
     /// \todo If the scan range was changed after the toys were generate, we absolutely have
     /// to derive the range from the root files - else we'll have bining effects.
-
     float halfBinWidth = (t->getScanpointMax()-t->getScanpointMin())/(float)t->getScanpointN()/2;
     if ( t->getScanpointN()==1 ) halfBinWidth = 1.;
     TH1F *hCL          = new TH1F(getUniqueRootName(), "hCL", t->getScanpointN(), t->getScanpointMin()-halfBinWidth, t->getScanpointMax()+halfBinWidth);
@@ -890,17 +898,20 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
     Long64_t ntoysid   = 0; // if id is not -1, this will count the number of toys with that id
 
     t->activateCoreBranchesOnly(); // speeds up the event loop
-    ProgressBar pb(arg, nentries);
+    ProgressBar *pb = NULL;
+		if (!quiet) pb = new ProgressBar(arg, nentries);
     if ( arg->debug ) cout << "MethodPluginScan::analyseToys() : ";
-    cout << "building p-value histogram ..." << endl;
+    if (!quiet) cout << "building p-value histogram ..." << endl;
 
     for (Long64_t i = 0; i < nentries; i++)
     {
-        pb.progress();
+        if (!quiet) pb->progress();
         t->GetEntry(i);
 
-        // std::cout << t->chi2minGlobalToy << "\t" << t->chi2minToy << "\t" << t->chi2min << "\t" << t->scanpoint << std::endl;
-        // std::cout << t->chi2minGlobalBkgToy  << "\t" << t->chi2minBkgBkgToy << "\t" << t->chi2minBkg << "\t" << t->scanpoint << std::endl;
+        if (arg->debug && i%1000==0) {
+					std::cout << t->chi2minGlobalToy << "\t" << t->chi2minToy << "\t" << t->chi2min << "\t" << t->scanpoint << std::endl;
+        	std::cout << t->chi2minGlobalBkgToy  << "\t" << t->chi2minBkgBkgToy << "\t" << t->chi2minBkg << "\t" << t->scanpoint << std::endl;
+				}
         if ( id!=-1 && fabs(t->id-id)>0.001 ) continue; ///< only select entries with given id (unless id==-1)
         ntoysid++;
 
@@ -932,11 +943,17 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
         // Check if toys are in physical region.
         // Don't enforce t.chi2min-t.chi2minGlobal>0, else it can be hard because due
         // to little fluctuaions the best fit point can be missing from the plugin plot...
-        bool inPhysicalRegion = t->chi2minToy - t->chi2minGlobalToy>0; //&& t.chi2min-t.chi2minGlobal>0
+        bool inPhysicalRegion = t->chi2minToy - t->chi2minGlobalToy>=0; //&& t.chi2min-t.chi2minGlobal>0
         int iBinBestFit = hCL->GetMaximumBin();
         float bestfitpoint = hCL->GetBinCenter(iBinBestFit);
         if(getSolution()){
-            bestfitpoint= ((RooRealVar*) getSolution()->floatParsFinal().find(scanVar1))->getVal();
+						bestfitpoint = getSolution()->getFloatParFinalVal(scanVar1);
+						if (isnan(bestfitpoint)){
+							bestfitpoint = getSolution()->getConstParVal(scanVar1);
+							if (isnan(bestfitpoint)) {
+								bestfitpoint = hCL->GetBinCenter(iBinBestFit);
+							}
+						}
         }
         else std::cout << "WARNING: No solution found, will approximate to the best scan point" << std::endl;
 
@@ -952,7 +969,6 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
             b_teststat_toy = t->scanbestBkg <= t->scanpoint ? b_teststat_toy : 0.;  // if mu < muhat then q_mu = 0
         }
         // the usage of the two-sided test statistic is default
-
 
         if ( inPhysicalRegion && sb_teststat_toy > teststat_measured ){
             h_better->Fill(t->scanpoint);
@@ -992,7 +1008,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
             sampledSchi2Values[hBin].push_back(sb_teststat_toy);
         }
 
-        if(b_teststat_toy<0&&b_teststat_toy>-1.e-4) b_teststat_toy=0.0;
+        // if(b_teststat_toy<0&&b_teststat_toy>-1.e-4) b_teststat_toy=0.0;
 
         if( inPhysicalRegion ){
             // bkgTestStatVal = t->scanbestBkgfitBkg <= 0. ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
@@ -1015,13 +1031,15 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
         cout << (nentries-nfailed)/nPoints1d << " toys per scan point." << endl;
     }
     else{
+			if (!quiet) {
         cout << "read ";
         cout << ntoysid << " toys at ID " << id << endl;
+			}
     }
     if ( arg->debug ) cout << "MethodPluginScan::analyseToys() : ";
-    cout << "fraction of failed toys: " << (double)nfailed/(double)nentries*100. << "%." << endl;
+    if (!quiet) cout << "fraction of failed toys: " << (double)nfailed/(double)nentries*100. << "%." << endl;
     if ( arg->debug ) cout << "MethodPluginScan::analyseToys() : ";
-    cout << "fraction of background toys: " << h_background->GetEntries()/(double)nentries*100. << "%." << endl;
+    if (!quiet) cout << "fraction of negative test stat toys: " << h_background->GetEntries()/(double)nentries*100. << "%." << endl;
     if ( id==-1 && nwrongrun>0 ){
         cout << "\nMethodPluginScan::analyseToys() : WARNING : Read toys that differ in global chi2min (wrong run) : "
             << (double)nwrongrun/(double)(nentries-nfailed)*100. << "%.\n" << endl;
@@ -1119,7 +1137,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
         //   for (int k=0; k<clsb_vals.size(); k++) cout << clsb_vals[k]/clb_vals[k] << " , ";
         //   // for (int k=0; k<clsb_vals.size(); k++) cout << clsb_vals[k]/probs[k] << " , ";
         //   cout << endl;
-        // }       
+        // }
 
         // // Matt's idea
         // hCLsExp->SetBinContent   ( i, TMath::Min( clsb_vals[2] / clb_vals[2] , 1.) );
@@ -1140,16 +1158,6 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
             exit(EXIT_FAILURE);
         }
 
-        TH1F *bkg_pvals_cls  = new TH1F("bkg_clsvals", "bkg cls p values", 50, -0.1, 1.1);
-        bkg_pvals_cls->SetLineColor(1);
-        bkg_pvals_cls->SetLineWidth(3);
-        TH1F *bkg_pvals_clsb  = new TH1F("bkg_clsbvals", "bkg clsb p values", 50, -0.1, 1.1);
-        bkg_pvals_clsb->SetLineColor(2);
-        bkg_pvals_clsb->SetLineWidth(3);
-        TH1F *bkg_pvals_clb  = new TH1F("bkg_clbvals", "bkg clb p values", 50, -0.1, 1.1);
-        bkg_pvals_clb->SetLineColor(3);
-        bkg_pvals_clb->SetLineWidth(3);
-
         for(int j=0; j<sampledBValues[i].size(); j++){
             double clsb_val = getVectorFracAboveValue( sampledSchi2Values[i], sampledSBValues[i][j]); // p_cls+b value for each bkg-only toy
             double clb_val = getVectorFracAboveValue( sampledBValues[i], sampledSBValues[i][j]); // p_clb value for each bkg-only toy CAUTION: duplicate use of sampledBValues
@@ -1157,20 +1165,39 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
 
             clsb_vals.push_back(clsb_val);
             clb_vals.push_back(clb_val);
-            // if(cls_val<=1.){
             cls_vals.push_back(cls_val);
-            bkg_pvals_cls->Fill(TMath::Min( cls_val , 1.));
-            bkg_pvals_clsb->Fill(TMath::Min( clsb_val , 1.));
-            bkg_pvals_clb->Fill(TMath::Min( clb_val , 1.));
-            // }
         }
-        TCanvas *canvasdebug = new TCanvas("canvasdebug", "canvas1", 1200, 1000);
-        bkg_pvals_cls->Draw();
-        bkg_pvals_clsb->Draw("same");
-        bkg_pvals_clb->Draw("same");
-        std::string pvalue_outstream;
-        pvalue_outstream ="p_values" + std::to_string(i) + ".pdf";
-        canvasdebug->SaveAs(pvalue_outstream.c_str());
+
+        if ( arg->debug || arg->controlplot ) {
+
+          TH1F *bkg_pvals_cls  = new TH1F(Form("bkg_clsvals_bin%d",i), "bkg cls p values", 50, -0.1, 1.1);
+          bkg_pvals_cls->SetLineColor(1);
+          bkg_pvals_cls->SetLineWidth(3);
+          TH1F *bkg_pvals_clsb  = new TH1F(Form("bkg_clsbvals_bin%d",i), "bkg clsb p values", 50, -0.1, 1.1);
+          bkg_pvals_clsb->SetLineColor(2);
+          bkg_pvals_clsb->SetLineWidth(3);
+          TH1F *bkg_pvals_clb  = new TH1F(Form("bkg_clbvals_bin%d",i), "bkg clb p values", 50, -0.1, 1.1);
+          bkg_pvals_clb->SetLineColor(3);
+          bkg_pvals_clb->SetLineWidth(3);
+          for(int j=0; j<sampledBValues[i].size(); j++){
+              bkg_pvals_cls->Fill(TMath::Min( cls_vals[j] , 1.));
+              bkg_pvals_clsb->Fill(TMath::Min( clsb_vals[j] , 1.));
+              bkg_pvals_clb->Fill(TMath::Min( clb_vals[j] , 1.));
+          }
+
+          TCanvas *canvasdebug = newNoWarnTCanvas("canvasdebug", "canvas1", 1200, 1000);
+          bkg_pvals_cls->Draw();
+          bkg_pvals_clsb->Draw("same");
+          bkg_pvals_clb->Draw("same");
+          TLegend *leg = new TLegend(0.65,0.74,0.89,0.95);
+          leg->SetHeader("p-value distributions");
+          leg->SetFillColor(0);
+          leg->AddEntry(bkg_pvals_cls,"CLs","L");
+          leg->AddEntry(bkg_pvals_clsb,"CLs+b","L");
+          leg->AddEntry(bkg_pvals_clb,"CLb","L");
+          leg->Draw("same");
+          savePlot(canvasdebug,TString(Form("p_values%d",i))+"_"+scanVar1);
+        }
 
 
         std::vector<double> probs  = {TMath::Prob(4,1)/2., TMath::Prob(1,1)/2., 0.5, 1.-(TMath::Prob(1,1)/2.), 1.-(TMath::Prob(4,1)/2.) };
@@ -1196,7 +1223,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
           cout << endl;
           // for (int k=0; k<quantiles_cls.size(); k++) cout << quantiles_clsb[k]/quantiles_clb[k] << " , ";
           // cout << endl;
-        }       
+        }
 
         // //effective method -> works robustly (cf. TLimit class), but is actually wrong
         // hCLsExp->SetBinContent   ( i, TMath::Min( quantiles_clsb[2]/quantiles_clb[2] , 1.) );
@@ -1207,11 +1234,22 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id)
 
         // //ideal method, but prone to fluctuations
         hCLsExp->SetBinContent   ( i, TMath::Min( quantiles_cls[2] , 1.) );
+        hCLsExp->SetBinError   ( i, sqrt((1.-TMath::Min( quantiles_cls[2] , 1.))*TMath::Min( quantiles_cls[2] , 1.)/sampledBValues[i].size()) );
         hCLsErr1Up->SetBinContent( i, TMath::Min( quantiles_cls[3] , 1.) );
         hCLsErr1Dn->SetBinContent( i, TMath::Min( quantiles_cls[1] , 1.) );
         hCLsErr2Up->SetBinContent( i, TMath::Min( quantiles_cls[4] , 1.) );
         hCLsErr2Dn->SetBinContent( i, TMath::Min( quantiles_cls[0] , 1.) );
 
+        // std::cout << "non-parameric median errors for bin " << i << std::endl;
+        // std::sort (cls_vals.begin(), cls_vals.begin()+cls_vals.size());
+        // int k =0;
+        // do{
+        //     k++;
+        //     // std::cout << "Binomial: " << TMath::BinomialI(0.5, cls_vals.size(), cls_vals.size()/2-k) - TMath::BinomialI(0.5, cls_vals.size(), cls_vals.size()/2+k) << std::endl;
+        // // }while( ROOT::Math::binomial_cdf(cls_vals.size()/2+k,0.5, cls_vals.size()) - ROOT::Math::binomial_cdf(cls_vals.size()/2-k,0.5, cls_vals.size()) <=0.68);
+        // }while(TMath::BetaIncomplete(0.5,cls_vals.size()/2-k+1, cls_vals.size()-(cls_vals.size()/2-k)) - TMath::BetaIncomplete(0.5,cls_vals.size()/2+k+1, cls_vals.size()-(cls_vals.size()/2+k))<=0.68);
+
+        // hCLsExp->SetBinError(i , (cls_vals[cls_vals.size()/2+k-1] - cls_vals[cls_vals.size()/2-k-1])/2.);
     }
 
     if ( arg->controlplot && arg->cls.size()>0) makeControlPlotsCLs( sampledBValues, sampledSchi2Values );
@@ -1482,7 +1520,7 @@ double MethodPluginScan::importance(double pvalue)
 /// make control plots for the CLs method. ToDo: this does not really belong here, but in the ControlPlots class,
 /// but for the moment I don't see a way how to put it there.
 /// The Chisquare quantile plots have to be updated as well.
-/// 
+///
 void MethodPluginScan::makeControlPlotsCLs(map<int, vector<double> > bVals, map<int, vector<double> > sbVals)
 {
   // the quantiles of the CLb distribution (for expected CLs)
@@ -1574,7 +1612,7 @@ void MethodPluginScan::makeControlPlotsCLs(map<int, vector<double> > bVals, map<
     leg->AddEntry(lD,"Data","L");
     leg->Draw("same");
     c->SetLogy();
-    savePlot(c,Form("cls_testStatControlPlot_p%d",i) );
+    savePlot(c,TString(Form("cls_testStatControlPlot_p%d",i))+"_"+scanVar1 );
   }
 
   TCanvas *c = newNoWarnTCanvas( "cls_ctr", "CLs Control" );
@@ -1610,7 +1648,7 @@ void MethodPluginScan::makeControlPlotsCLs(map<int, vector<double> > bVals, map<
   hCLsExp->Draw("Lsame");
   hCLsFreq->Draw("Lsame");
 
-  savePlot(c, "cls_ControlPlot");
+  savePlot(c, "cls_ControlPlot_"+scanVar1);
 
 }
 
