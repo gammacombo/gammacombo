@@ -144,6 +144,7 @@ rule run_plugin:
           '--var {wildcards.var}',
           '--npoints '+str(nscanpoints),
           '--scanrange '+scanrange,
+          '--teststat 1',
           '-a plugin',
           '-j 0-'+str(nruns-1),
           '--cls 2', # calculates the cls method
