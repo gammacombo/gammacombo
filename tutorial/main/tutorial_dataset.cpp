@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
 	workspace->var("branchingRatio")->setRange(-1.e-6,2.5e-6);
 	workspace->var("Nbkg")->SetTitle("N_{bkg}");
 	workspace->var("Nbkg")->setVal(5000);
-	workspace->var("Nbkg")->setRange(0,6000);
+	workspace->var("Nbkg")->setRange(4000,6000);
 
   // Construct the PDF and pass the workspace to it
   //    note that you can write your own PDF_DatasetsTutorial Class which defines your own fitting procedure etc.
