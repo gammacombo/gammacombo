@@ -69,21 +69,26 @@ def read2dscan(h, bf, minnll):
 
   return x,y,z
 
-def read_gc_scan(fname):
+def read_gc_scan(fname, pars=None):
+  
+  pars = pars or opts.vars
   if not os.path.exists(fname):
     raise RuntimeError('No such file', fname)
 
   # get best fit point
   bf = []
   minnll = None
-  pf = open(fname.replace('scanner/','par/').replace('_scanner','').replace('.root','.dat'))
+  bffile = fname.replace('scanner/','par/').replace('_scanner','').replace('.root','.dat')
+  if not os.path.exists(bffile):
+    raise RuntimeError('No such file', bffile)
+  pf = open(bffile)
   ls = pf.readlines()
   for l in ls:
     if 'SOLUTION 1' in l: break ## only read the first solution
     if l.startswith('### FCN'):
       minnll = float(l.split()[2].strip(','))
-    for var in opts.var:
-      if l.startswith(var+' '):
+    for par in pars:
+      if l.startswith(par+' '):
         bf.append( float(l.split()[1]) )
   pf.close()
 
@@ -98,9 +103,9 @@ def read_gc_scan(fname):
   print(fname)
   print(h, type(h), h.InheritsFrom('TH2'))
   if h.InheritsFrom('TH2'):
-    res = read2dscan(h, bf, minnll)
+    res = read2dscan(h, bf, minnll, pars)
   elif h.InheritsFrom('TH1'):
-    res = read1dscan(h, bf, minnll)
+    res = read1dscan(h, bf, minnll, pars[0])
   else:
     raise RuntimeError('hchi2min does not appear to inherit from TH1')
 
@@ -143,7 +148,7 @@ def setPlotStyle(fig,ax):
 def addLHCbLogo(ax, x=0.8, y=0.88 ):
   ax.text(x,y,'LHCb', transform=ax.transAxes, fontsize=26, fontname="Times New Roman", fontweight="bold" )
 
-def plot1d(fname, scans, xvar, fill=True):
+def plot1d(fname, scans, xvar, fill=True, interactive=False):
 
   fig = plt.gcf()
   ax  = plt.gca()
@@ -164,7 +169,8 @@ def plot1d(fname, scans, xvar, fill=True):
   setPlotStyle(fig,ax)
   fig.tight_layout()
   fig.savefig(fname+'.pdf')
-  plt.show()
+  if interactive:
+      plt.show()
 
 def plot2d(fname, scans, xvar, yvar, xlim=None, ylim=None, ncontours=2, cl2d=False):
 
@@ -350,13 +356,13 @@ def plot2d(fname, scans, xvar, yvar, xlim=None, ylim=None, ncontours=2, cl2d=Fal
 
 #plt.show()
 
-scans = []
-for scf in opts.scan:
-  pl = scan(scf, {'color':'slateblue'}, {'color':'slateblue'})
-  scans.append(pl)
+# scans = []
+# for scf in opts.scan:
+#   pl = scan(scf, {'color':'slateblue'}, {'color':'slateblue'})
+#   scans.append(pl)
 
 #plot1d( 'plot', scans, r'$\gamma\;[^\circ]$' )
 
 #if opts
-plot2d( 'plot', scans, r'$|q/p|$', r'$\phi$')
+# plot2d( 'plot', scans, r'$|q/p|$', r'$\phi$')
 

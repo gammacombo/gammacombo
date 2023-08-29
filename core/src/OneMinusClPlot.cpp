@@ -182,7 +182,7 @@ TGraph* OneMinusClPlot::scan1dPlot(MethodAbsScan* s, bool first, bool last, bool
 	haxes->GetXaxis()->SetTitleFont(font);
 	haxes->GetYaxis()->SetTitleFont(font);
 	haxes->GetXaxis()->SetTitleOffset(0.9);
-	haxes->GetYaxis()->SetTitleOffset(0.85);
+	haxes->GetYaxis()->SetTitleOffset(1.0);
 	haxes->GetXaxis()->SetLabelSize(labelsize);
 	haxes->GetYaxis()->SetLabelSize(labelsize);
 	haxes->GetXaxis()->SetTitleSize(titlesize);
@@ -343,7 +343,7 @@ void OneMinusClPlot::scan1dPlotSimple(MethodAbsScan* s, bool first, int CLsType)
 	hCL->GetXaxis()->SetTitleFont(font);
 	hCL->GetYaxis()->SetTitleFont(font);
 	hCL->GetXaxis()->SetTitleOffset(0.9);
-	hCL->GetYaxis()->SetTitleOffset(0.85);
+	hCL->GetYaxis()->SetTitleOffset(1.0);
 	hCL->GetXaxis()->SetLabelSize(labelsize);
 	hCL->GetYaxis()->SetLabelSize(labelsize);
 	hCL->GetXaxis()->SetTitleSize(titlesize);
@@ -577,7 +577,7 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
 	haxes->GetXaxis()->SetTitleFont(font);
 	haxes->GetYaxis()->SetTitleFont(font);
 	haxes->GetXaxis()->SetTitleOffset(0.9);
-	haxes->GetYaxis()->SetTitleOffset(0.85);
+	haxes->GetYaxis()->SetTitleOffset(1.0);
 	haxes->GetXaxis()->SetLabelSize(labelsize);
 	haxes->GetYaxis()->SetLabelSize(labelsize);
 	haxes->GetXaxis()->SetTitleSize(titlesize);

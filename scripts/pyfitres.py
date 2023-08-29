@@ -158,6 +158,7 @@ def compare(meas1, meas2, indices=[], inter_corr=0.):
 
   duvals = duvals1
   dcov   = dcov1
+  dcor   = dcor1
 
   # print differences
   print('Comparison differences (%dD):'%dim)
@@ -169,6 +170,8 @@ def compare(meas1, meas2, indices=[], inter_corr=0.):
       prstr += '{:3d} | '.format(i)
 
     prstr += '{:6.4f}'.format(duval)
+
+    prstr += ' | {:4.2f}'.format(duval.n/duval.s)
 
     print(prstr)
 
@@ -192,6 +195,8 @@ def compare(meas1, meas2, indices=[], inter_corr=0.):
   print('\t -2DLL:', dnll2)
   print('\t p-val:', prob)
   print('\t sig:  ', sig)
+
+  return duvals, dcor, [dnll2,prob,sig]
 
 def point_compare(meas, point):
 
