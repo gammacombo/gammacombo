@@ -71,6 +71,7 @@
 	hCL2d(0),
 	hCLs2d(0),
 	hChi2min(0),
+	hChi2minAsimov(0),
 	hChi2min2d(0),
 	obsDataset(NULL),
 	startPars(0),
@@ -518,7 +519,16 @@ void MethodAbsScan::interpolateSimple(TH1F* h, int i, float y, float &val)
 	float p1y = h->GetBinContent(i);
 	float p2x = h->GetBinCenter(i+1);
 	float p2y = h->GetBinContent(i+1);
-	val = p2x + (y-p2y)/(p1y-p2y)*(p1x-p2x);
+	float tempval = p2x + (y-p2y)/(p1y-p2y)*(p1x-p2x);
+	if ((tempval>p1x && tempval<p2x) || (tempval>p2x && tempval<p1x)){
+		val = tempval;
+		if (arg->debug) std::cout << "MethodAbsScan::interpolateSimple(): " << val << " (in range [("<<p1x <<","<<p1y<<") , ("<<p2x<<","<<p2y<<"])"<<std::endl;
+	}
+	else{
+		std::cout << "MethodAbsScan::interpolateSimple(): " << tempval << "out of bounds! [("<<p1x <<","<<p1y<<") , ("<<p2x<<","<<p2y<<"] ";
+		std::cout << "returning "<< val << std::endl;
+	}
+	return;
 }
 
 ///
@@ -700,6 +710,8 @@ bool MethodAbsScan::interpolate(TH1F* h, int i, float y, float central, bool upp
 	// printf("%f %f %f\n", val, pq(p[0], p[1]+e[1], p[2], y, useSol), pq(p[0], p[1]-e[1], p[2], y, useSol));
 	// printf("%f %f %f\n", val, pq(p[0], p[1], p[2]+e[2], y, useSol), pq(p[0], p[1], p[2]-e[2], y, useSol));
 	err = 0.0;
+	if (arg->debug) std::cout << "MethodAbsScan::interpolate(): " << val << " (in range [ "<< h->GetBinCenter(i-2)<<" [ "<<h->GetBinCenter(i)<<" , "<<h->GetBinCenter(i+1)<<" ] "<<h->GetBinCenter(i+2)<<" ])"<<std::endl;
+	if (arg->debug) std::cout << "MethodAbsScan::interpolate(): " << val << " chosen between " << sol0 << " and " << sol1 << ", central: "<< central << std::endl;
 	return true;
 }
 
@@ -711,11 +723,11 @@ bool MethodAbsScan::interpolate(TH1F* h, int i, float y, float central, bool upp
 /// Use a fit-based interpolation (interpolate()) if we have more than 25 bins,
 /// else revert to a straight line interpolation (interpolateSimple()).
 ///
-void MethodAbsScan::calcCLintervals(int CLsType, bool calc_expected, bool quiet)
+void MethodAbsScan::calcCLintervals(int CLsType, int calc_expected, bool quiet)
 {
 	TH1F *histogramCL = this->getHCL();
 	// calc CL intervals with CLs method
-	if (CLsType==1 && this->getHCLs())
+	if ((CLsType==1 && this->getHCLs())||((methodName=="DatasetsProb"||methodName=="Prob") && CLsType==2 && this->getHCLs()))
 	{
 		histogramCL =this->getHCLs();
 	}
@@ -723,10 +735,28 @@ void MethodAbsScan::calcCLintervals(int CLsType, bool calc_expected, bool quiet)
   	{
     	histogramCL = this->getHCLsFreq();
   	}
-  	if (CLsType==2 && calc_expected && hCLsExp)
+  	if (CLsType==2 && calc_expected>-10)
   	{
-    	histogramCL = hCLsExp;
-    	std::cout << "Determine expected upper limit:" << std::endl;
+  		if(calc_expected==-2 && hCLsErr2Dn){
+    		histogramCL = hCLsErr2Dn;
+    		std::cout << "Determine expected upper limit at -2 std dev:" << std::endl;  			
+  		}
+  		else if(calc_expected==-1 && hCLsErr1Dn){
+    		histogramCL = hCLsErr1Dn;
+    		std::cout << "Determine expected upper limit at -1 std dev:" << std::endl;  			
+  		}
+  		else if(calc_expected==0 && hCLsExp){
+    		histogramCL = hCLsExp;
+    		std::cout << "Determine upper limit:" << std::endl;  			
+  		}
+  		else if(calc_expected==1 && hCLsErr1Up){
+    		histogramCL = hCLsErr1Up;
+    		std::cout << "Determine upper limit at 1 std dev:" << std::endl;  			
+  		}
+  		else if(calc_expected==2 && hCLsErr2Up){
+    		histogramCL = hCLsErr2Up;
+    		std::cout << "Determine upper limit at 2 std dev:" << std::endl;  			
+  		}
   	}
 
   	if(CLsType!=0){
@@ -747,8 +777,13 @@ void MethodAbsScan::calcCLintervals(int CLsType, bool calc_expected, bool quiet)
 		// print
 		TString unit = w->var(scanVar1)->getUnit();
 		CLIntervalPrinter clp(arg, name, scanVar1, unit, methodName);
-		if(calc_expected){
-			clp = CLIntervalPrinter(arg, name, scanVar1, unit, methodName+TString("_expected_standardCLs"));
+		switch (calc_expected){
+			case -2: clp = CLIntervalPrinter(arg, name, scanVar1, unit, methodName+TString("_expected_2StdDown_standardCLs")); break;
+			case -1: clp = CLIntervalPrinter(arg, name, scanVar1, unit, methodName+TString("_expected_1StdDown_standardCLs")); break;
+			case 0: clp = CLIntervalPrinter(arg, name, scanVar1, unit, methodName+TString("_expected_standardCLs")); break;
+			case 1: clp = CLIntervalPrinter(arg, name, scanVar1, unit, methodName+TString("_expected_1StdUp_standardCLs")); break;
+			case 2: clp = CLIntervalPrinter(arg, name, scanVar1, unit, methodName+TString("_expected_2StdUp_standardCLs")); break;
+			default: break;
 		}
 		clp.setDegrees(isAngle(w->var(scanVar1)));
 		clp.addIntervals(clm.getClintervals1sigma());
@@ -788,8 +823,8 @@ void MethodAbsScan::calcCLintervals(int CLsType, bool calc_expected, bool quiet)
 
 		for ( int c=0; c<NumOfCL; c++ )
 		{
-			CLlo[c] = histogramCL->GetXaxis()->GetXmin();
-			CLhi[c] = histogramCL->GetXaxis()->GetXmax();
+			CLlo[c] = histogramCL->GetBinCenter(1);
+			CLhi[c] = histogramCL->GetBinCenter(histogramCL->GetNbinsX());
 			float y = 1.- ConfidenceLevels[c];
 			float sol = getScanVar1Solution(iSol);
 			int sBin = histogramCL->FindBin(sol);
@@ -798,13 +833,17 @@ void MethodAbsScan::calcCLintervals(int CLsType, bool calc_expected, bool quiet)
 				std::cout << "MethodAbsScan::calcCLintervals(): WARNING: no solution in scanrange found, will use lowest bin!" << std::endl;
 				sBin=1;
 			}
+			else if(calc_expected>-10){
+				if(arg->debug) std::cout << "MethodAbsScan::calcCLintervals(): For expected limit at " << calc_expected << "sigma start scanning at maximum bin: "<< sBin << std::endl;
+				sBin=histogramCL->FindLastBinAbove(histogramCL->GetBinContent(histogramCL->GetMaximumBin())-0.05);
+			}
 
 			// find lower interval bound
 			for ( int i=sBin; i>0; i-- ){
 				if ( histogramCL->GetBinContent(i) < y ){
 					if ( n>25 ){
 						bool check = interpolate(histogramCL, i, y, sol, false, CLlo[c], CLloErr[c]);
-            			if(!check && (arg->verbose ||arg->debug)) cout << "MethodAbsScan::calcCLintervals(): Using linear interpolation." << endl;
+            			if(!check && (arg->verbose ||arg->debug)) cout << "MethodAbsScan::calcCLintervals(): Using linear interpolation for lower boundary." << endl;
 						if ( !check || CLlo[c]!=CLlo[c] ) interpolateSimple(histogramCL, i, y, CLlo[c]);
 					}
 					else{
@@ -819,8 +858,10 @@ void MethodAbsScan::calcCLintervals(int CLsType, bool calc_expected, bool quiet)
 			for ( int i=sBin; i<n; i++ ){
 				if ( histogramCL->GetBinContent(i) < y ){
 					if ( n>25 ){
-						bool check = interpolate(histogramCL, i-1, y, sol, true, CLhi[c], CLhiErr[c]);
-						if(!check && (arg->verbose ||arg->debug)) cout << "MethodAbsScan::calcCLintervals(): Using linear interpolation." << endl;
+						bool check;
+						if(calc_expected<-10) check = interpolate(histogramCL, i-1, y, sol, true, CLhi[c], CLhiErr[c]);
+						else check = interpolate(histogramCL, i-1, y, 0, true, CLhi[c], CLhiErr[c]); // expected curves for background-only
+						if(!check && (arg->verbose ||arg->debug)) cout << "MethodAbsScan::calcCLintervals(): Using linear interpolation for upper boundary." << endl;
 						if (!check || CLhi[c]!=CLhi[c] ) interpolateSimple(histogramCL, i-1, y, CLhi[c]);
 					}
 					else{
@@ -952,13 +993,19 @@ void MethodAbsScan::calcCLintervals(int CLsType, bool calc_expected, bool quiet)
 ///
 /// Print CL intervals.
 ///
-void MethodAbsScan::printCLintervals(int CLsType, bool calc_expected)
+void MethodAbsScan::printCLintervals(int CLsType, int calc_expected)
 {
 	TString unit = w->var(scanVar1)->getUnit();
 	CLIntervalPrinter clp(arg, name, scanVar1, unit, methodName, CLsType);
-	if(calc_expected){
-		clp = CLIntervalPrinter(arg, name, scanVar1, unit, methodName+TString("_expected_standardCLs"));
+	switch (calc_expected){
+		case -2: clp = CLIntervalPrinter(arg, name, scanVar1, unit, methodName+TString("_expected_2StdDown_standardCLs")); break;
+		case -1: clp = CLIntervalPrinter(arg, name, scanVar1, unit, methodName+TString("_expected_1StdDown_standardCLs")); break;
+		case 0: clp = CLIntervalPrinter(arg, name, scanVar1, unit, methodName+TString("_expected_standardCLs")); break;
+		case 1: clp = CLIntervalPrinter(arg, name, scanVar1, unit, methodName+TString("_expected_1StdUp_standardCLs")); break;
+		case 2: clp = CLIntervalPrinter(arg, name, scanVar1, unit, methodName+TString("_expected_2StdUp_standardCLs")); break;
+		default: break;
 	}
+
 	clp.setDegrees(isAngle(w->var(scanVar1)));
 	clp.addIntervals(clintervals1sigma);
 	clp.addIntervals(clintervals2sigma);

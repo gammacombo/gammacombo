@@ -9,6 +9,7 @@
 
 #include "PDF_Datasets.h"
 #include "TIterator.h"
+#include "RooSimultaneous.h"
 
 PDF_Datasets::PDF_Datasets(RooWorkspace* w, int nObs, OptParser* opt)
     : PDF_Abs(nObs) {
@@ -137,7 +138,7 @@ void  PDF_Datasets::initParameters(const vector<TString>& parNames) {
     Utils::fillArgList(parameters, wspc, parNames);
     wspc->defineSet(parName, *parameters);//, RooFit::Silence());
     areParsSet = true;
-    if (arg->debug) std::cout << "DEBUG in PDF_Generic_Abs::initParameters --pars filled" << std::endl;
+    // std::cout << "DEBUG in PDF_Generic_Abs::initParameters --pars filled" << std::endl;
 };
 
 void  PDF_Datasets::initParameters() {
@@ -328,6 +329,29 @@ void  PDF_Datasets::generateBkgToysGlobalObservables(int SeedShift, int index) {
     // take a snapshot of the global variables in the workspace so they can be loaded later
     globalObsBkgToySnapshotName = index_string;
     wspc->saveSnapshot(globalObsBkgToySnapshotName, *wspc->set(globalObsName));
+    return;
+};
+
+
+void  PDF_Datasets::generateBkgAsimovGlobalObservables(int SeedShift, int index) {
+
+    initializeRandomGenerator(SeedShift);
+
+    // generate the global observables into a RooArgSet
+    const RooArgSet* set = wspc->set(globalObsName);
+    if(wspc->set(globalObsName)->getSize()>0) set = _constraintPdf->generate(*(wspc->set(globalObsName)), 1)->get(0);
+    // iterate over the generated values and use them to update the actual global observables in the workspace
+
+    TIterator* it =  set->createIterator();
+    while (RooRealVar* genVal = dynamic_cast<RooRealVar*>(it->Next())) {
+        wspc->var(genVal->GetName())->setVal(genVal->getVal());
+    }
+    TString index_string;
+    index_string.Form("globalObsBkgAsimovSnapshotName%d",index);
+    // take a snapshot of the global variables in the workspace so they can be loaded later
+    globalObsBkgAsimovSnapshotName = index_string;
+    wspc->saveSnapshot(globalObsBkgAsimovSnapshotName, *wspc->set(globalObsName));
+    return;
 };
 
 
@@ -347,6 +371,7 @@ void  PDF_Datasets::generateToysGlobalObservables(int SeedShift) {
 
     // take a snapshot of the global variables in the workspace so they can be loaded later
     wspc->saveSnapshot(globalObsToySnapshotName, *wspc->set(globalObsName));
+    return;
 };
 
 
@@ -561,6 +586,7 @@ void   PDF_Datasets::generateToys(int SeedShift) {
     // if(this->toyObservables) delete this->toyObservables;
     this->toyObservables  = toys;
     this->isToyDataSet    = kTRUE;
+    return;
 };
 
 void   PDF_Datasets::generateBkgToys(int SeedShift, TString signalvar) {
@@ -597,7 +623,216 @@ void   PDF_Datasets::generateBkgToys(int SeedShift, TString signalvar) {
         getWorkspace()->var(signalvar)->setConstant(isconst);    
     }
     this->toyBkgObservables  = toys;
+    return;
 };
+
+
+////////////////////////////////////////////////////////////////////////////////////
+// generate a bkg asimov data set
+// Idea: approximate the unbinned data set from a binning the pdf (how many bins is "fine"?),
+// where for each bin a point is added to the asimov data set
+// with a weight that corresponds to the expected number of events in that bin. -> implementation taken from RooStats
+void   PDF_Datasets::generateBkgAsimov(int SeedShift, TString signalvar) {
+
+    initializeRandomGenerator(SeedShift);
+
+    double parvalue = getWorkspace()->var(signalvar)->getVal();
+    bool isconst = getWorkspace()->var(signalvar)->isConstant();
+    getWorkspace()->var(signalvar)->setVal(0.0);
+    getWorkspace()->var(signalvar)->setConstant(true);
+
+    RooAbsData* toys;
+
+    RooAbsPdf* bestpdf = NULL;
+    if (isBkgMultipdfSet) {
+        bestpdf = multipdfBkg->getPdf(bestIndexBkg);
+    }
+    else if(pdfBkg && !isMultipdfSet){
+        bestpdf = pdfBkg;
+    }
+    else
+    {
+        if (isMultipdfSet) {
+            bestpdf = multipdf->getPdf(bestIndexBkg);
+        }
+        else {
+            bestpdf = pdf;
+        }
+    }
+
+    unique_ptr<RooRealVar> weightVar (new RooRealVar("binWeightAsimov", "binWeightAsimov", 1., 0., 1.E30 ));
+
+    // check whether simultaneous or not
+    const RooSimultaneous* simPdf = dynamic_cast<const RooSimultaneous*>(bestpdf);
+
+    if(!simPdf){
+    // generate data for non-simultaneous pdf
+        toys = generateBkgAsimovSinglePdf(*bestpdf, *observables, *weightVar, 0);
+    }
+    else{
+        std::map<std::string, RooDataSet*> asimovDataMap;
+        // retrieve category var
+        RooCategory& channelCat = const_cast<RooCategory&>(dynamic_cast<const RooCategory&>(simPdf->indexCat()));
+        int nrIndices = channelCat.numTypes();
+        if( nrIndices == 0 ) {
+            std::cout << "PDF_Datasets::generateBkgAsimov(): Simultaneous pdf does not contain any categories." << endl;
+            assert(0);
+        }
+        // iterate category
+        // for each category generate single pdf
+        for (int i=0;i<nrIndices;i++){
+            channelCat.setIndex(i);
+            // Get pdf associated with state from simpdf
+            RooAbsPdf* pdftmp = simPdf->getPdf(channelCat.getCurrentLabel()) ;
+            assert(pdftmp != 0);
+
+            std::cout << "PDF_Datasets::generateBkgAsimov(): on type " << channelCat.getCurrentLabel() << " " << channelCat.getCurrentIndex() << endl;
+
+            RooAbsData * dataSinglePdf = generateBkgAsimovSinglePdf( *pdftmp, *observables, *weightVar, &channelCat);
+            if (!dataSinglePdf) {
+                std::cout << "PDF_Datasets::generateBkgAsimov(): Error generating an Asimov data set for pdf " << pdftmp->GetName() << endl;
+                assert(0);
+            }
+            if (asimovDataMap.count(string(channelCat.getCurrentLabel())) != 0) {
+                std::cout << "PDF_Datasets::generateBkgAsimov(): The PDF for " << channelCat.getCurrentLabel()
+                << " was already defined. It will be overridden. The faulty category definitions follow:" << endl;
+                channelCat.Print("V");
+            }
+            asimovDataMap[string(channelCat.getCurrentLabel())] = (RooDataSet*) dataSinglePdf;
+
+            cout << "channel: " << channelCat.getCurrentLabel() << ", data: ";
+            dataSinglePdf->Print();
+            cout << endl;
+        }
+
+        RooArgSet obsAndWeight(*observables);
+        obsAndWeight.add(*weightVar);
+
+        RooDataSet* asimovData = new RooDataSet("asimovDataFullModel","asimovDataFullModel",RooArgSet(obsAndWeight),
+                                          RooFit::Index(channelCat),RooFit::Import(asimovDataMap),RooFit::WeightVar(*weightVar));
+
+        for (auto &element : asimovDataMap) {
+            delete element.second;
+        }
+
+        toys = asimovData;
+    }
+
+    // reset signal parameter
+    getWorkspace()->var(signalvar)->setVal(parvalue);
+    getWorkspace()->var(signalvar)->setConstant(isconst);    
+
+    this->AsimovBkgObservables  = toys;
+    return;
+};
+
+ ////////////////////////////////////////////////////////////////////////////////
+ /// fill bins by looping recursively on observables, taken from RooStats
+ RooAbsData * PDF_Datasets::generateBkgAsimovSinglePdf(const RooAbsPdf & pdf, const RooArgSet & allobs,  const RooRealVar & weightVar, RooCategory * channelCat) {
+    // Get observables defined by the pdf associated with this state
+    
+    std::unique_ptr<RooArgSet> obs(pdf.getObservables(allobs) );
+
+    RooArgSet obsAndWeight(*obs);
+    obsAndWeight.add(weightVar);
+
+    RooDataSet* asimovData = 0;
+    if (channelCat) {
+        int icat = channelCat->getCurrentIndex();
+        asimovData = new RooDataSet((std::string("AsimovData") + std::to_string(icat)).c_str(),
+            (std::string("combAsimovData") + std::to_string(icat)).c_str(),
+            RooArgSet(obsAndWeight),RooFit::WeightVar(weightVar));
+    }
+    else
+        asimovData = new RooDataSet("AsimovData","AsimovData",RooArgSet(obsAndWeight),RooFit::WeightVar(weightVar));
+
+    RooArgList obsList(*obs);
+    
+    // loop on observables and on the bins
+    // this needs to be in a recursive manner to automatically take into account the (in principle unconstrained) number of observables
+    cout << "PDF_Datasets::generateBkgAsimovSinglePdf(): Generating bkg asimov data for pdf " << pdf.GetName() << endl;
+    cout << "PDF_Datasets::generateBkgAsimovSinglePdf(): list of observables  " << endl;
+    obsList.Print();
+ 
+    int obsIndex = 0;
+    double binVolume = 1;
+    int nbins = 0;
+    FillBinsAsimov(pdf, obsList, *asimovData, obsIndex, binVolume, nbins);
+
+    cout << "PDF_Datasets::generateBkgAsimovSinglePdf(): filled from " << pdf.GetName() << "   " << nbins << " nbins " << " volume is " << binVolume << endl;
+ 
+    asimovData->Print();
+
+    if( TMath::IsNaN(asimovData->sumEntries()) ){
+      cout << "sum entries is nan"<<endl;
+      assert(0);
+      delete asimovData;
+      asimovData = 0;
+    } 
+    return asimovData;
+
+ };
+
+
+
+ ////////////////////////////////////////////////////////////////////////////////
+ /// fill bins by looping recursively on observables, taken from RooStats
+ void PDF_Datasets::FillBinsAsimov(const RooAbsPdf & pdf, const RooArgList &obs, RooAbsData & data, int &index,  double &binVolume, int &ibin) {
+    
+    RooRealVar * v = dynamic_cast<RooRealVar*>( &(obs[index]) );
+    if (!v) return;
+  
+    v->Print("v");
+
+    RooArgSet obstmp(obs);
+    double expectedEvents = pdf.expectedEvents(obstmp);
+
+    std::cout << "PDF_Datasets::FillBinsAsimov(): expected events = " << expectedEvents << std::endl;
+    std::cout << "PDF_Datasets::FillBinsAsimov(): looping on observable " << v->GetName() << endl;
+
+    std::cout << v->GetName() << " has " << v->getBins() << " bins." << std::endl;
+    for (int i = 0; i < v->getBins(); ++i) {
+       v->setBin(i);
+       if (index < obs.getSize() -1) {
+          index++;  // increase index
+          double prevBinVolume = binVolume;
+          binVolume *= v->getBinWidth(i); // increase bin volume
+          FillBinsAsimov(pdf, obs, data, index,  binVolume, ibin);
+          index--; // decrease index
+          binVolume = prevBinVolume; // decrease also bin volume
+       }
+       else {
+          // this is now a new bin - compute the pdf in this bin
+          double totBinVolume = binVolume * v->getBinWidth(i);
+          double fval = pdf.getVal(&obstmp)*totBinVolume;
+  
+          std::cout << "PDF_Datasets::FillBinsAsimov(): pdf value in the bin " << fval << " bin volume = " << totBinVolume << "   " << fval*expectedEvents << std::endl;
+          if (fval*expectedEvents <= 0)
+          {
+             if (fval*expectedEvents < 0)
+                cout << "PDF_Datasets::FillBinsAsimov(): WARNING::Detected a bin with negative expected events! Please check your inputs." << endl;
+             else
+                cout << "PDF_Datasets::FillBinsAsimov(): WARNING::Detected a bin with zero expected events- skip it" << endl;
+          }
+          // have a cut off for overflows ??
+          else
+             data.add(obs, fval*expectedEvents);
+  
+          cout << "bin " << ibin << "\t";
+          for (int j=0; j < obs.getSize(); ++j) { cout << "  " <<  ((RooRealVar&) obs[j]).getVal(); }
+          cout << " w = " << fval*expectedEvents;
+          cout << endl;
+
+          ibin++;
+       }
+    }
+    //reset bin values
+    cout << "ending loop on .. " << v->GetName() << endl;
+
+    v->setBin(0);
+  
+ };
+
 
 /*! \brief Initializes the random generator
  *

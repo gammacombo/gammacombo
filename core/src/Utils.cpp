@@ -965,13 +965,12 @@ TTree* Utils::convertRooDatasetToTTree(RooDataSet *d)
 /// doesn't take responsibilty for ownership
 TGraph* Utils::convertTH1ToTGraph(TH1* h, bool withErrors)
 {
-  TGraph *g;
-  if (withErrors) g = new TGraphErrors( h->GetNbinsX() );
-  else            g = new TGraph( h->GetNbinsX() );
+  TGraph *g = new TGraphErrors( h->GetNbinsX() );
   g->SetName(getUniqueRootName());
   for ( int i=0; i<h->GetNbinsX(); i++ ) {
     g->SetPoint(i, h->GetBinCenter(i+1), h->GetBinContent(i+1) );
     if (withErrors) ((TGraphErrors*)g)->SetPointError(i, 0.0, h->GetBinError(i+1) );
+    else ((TGraphErrors*)g)->SetPointError(i, 0.0, 0.0);
   }
   return g;
 }

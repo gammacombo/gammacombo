@@ -157,6 +157,8 @@ void ToyTree::init()
 	t->Branch("chi2minBkgBkgToy", 	 &chi2minBkgBkgToy,    "chi2minBkgBkgToy/F");
 	t->Branch("chi2minBkg",    	     &chi2minBkg,		   "chi2minBkg/F");
 	t->Branch("chi2minBkgToy", 	     &chi2minBkgToy,       "chi2minBkgToy/F");
+	t->Branch("chi2minGlobalBkgAsimov",&chi2minGlobalBkgAsimov,       "chi2minGlobalBkgAsimov/F");
+	t->Branch("chi2minAsimov", 	     &chi2minAsimov,       "chi2minAsimov/F");
 	t->Branch("covQualFree",         &covQualFree,         "covQualFree/F");
 	t->Branch("covQualScan",         &covQualScan,         "covQualScan/F");
 	t->Branch("covQualFreeBkg",      &covQualFreeBkg,      "covQualFreeBkg/F");
@@ -247,6 +249,8 @@ void ToyTree::open()
 	if(branches->FindObject("chi2minBkgBkgToy"	 )) t->SetBranchAddress("chi2minBkgBkgToy",	  &chi2minBkgBkgToy);
 	if(branches->FindObject("chi2minBkg"      	 )) t->SetBranchAddress("chi2minBkg",      	  &chi2minBkg);
 	if(branches->FindObject("chi2minBkgToy"   	 )) t->SetBranchAddress("chi2minBkgToy",   	  &chi2minBkgToy);
+	if(branches->FindObject("chi2minGlobalBkgAsimov"   	 )) t->SetBranchAddress("chi2minGlobalBkgAsimov",   	  &chi2minGlobalBkgAsimov);
+	if(branches->FindObject("chi2minAsimov"   	 )) t->SetBranchAddress("chi2minAsimov",   	  &chi2minAsimov);
 	if(branches->FindObject("covQualFree"        )) t->SetBranchAddress("covQualFree",        &covQualFree);
 	if(branches->FindObject("covQualScan"        )) t->SetBranchAddress("covQualScan",        &covQualScan);
 	if(branches->FindObject("covQualScanData"    )) t->SetBranchAddress("covQualScanData",    &covQualScanData);

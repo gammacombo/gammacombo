@@ -165,6 +165,7 @@ namespace Utils
     static inline double stddev(const std::vector<T>& vec);
 
     static inline double normal_cdf (double x);
+    static inline double inv_normal_cdf (double x);
 
 	void dump_vector(const std::vector<int>& l);
 	void dump_vector(const std::vector<float>& l);
@@ -272,5 +273,13 @@ double Utils::stddev(const std::vector<T> &vec){
 }
 
 double 		Utils::normal_cdf(double x) { return 0.5*(1.+TMath::Erf(x/TMath::Sqrt(2)));}
+
+double 		Utils::inv_normal_cdf(double x) {
+	// protect against definition boundaries as the function is only defined in (0,1)
+	if(x==0) x=1e-12;
+	if(x==1) x=1.-1e-12;
+
+	return (-1)*TMath::Sqrt(2)*TMath::ErfcInverse(2*x);
+}
 
 #endif

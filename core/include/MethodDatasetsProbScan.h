@@ -56,6 +56,10 @@ private:
     void                setAndPrintFitStatusConstrainedToys(const ToyTree& toyTree);
     void                setAndPrintFitStatusFreeToys(const ToyTree& toyTree);
     void                sethCLFromProbScanTree();
+
+    RooFitResult*       GlobalBkgAsimovFitResult;
+    double              chi2minGlobalBkgAsimov;
+
 };
 
 #endif
