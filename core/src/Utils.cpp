@@ -1073,6 +1073,18 @@ bool Utils::isAngle(RooRealVar* v)
 	return v->getUnit()==TString("Rad") || v->getUnit()==TString("rad");
 }
 
+int Utils::makeNewColor(string hex) {
+	int ci = TColor::GetFreeColorIndex();
+	int ri,gi,bi;
+	sscanf(hex.c_str(), "#%02x%02x%02x", &ri, &gi, &bi);
+	float r = float(ri)/255.;
+	float g = float(gi)/255.;
+	float b = float(bi)/255.;
+	TColor *col = new TColor(ci, r, g, b);
+	cout << ci << " " << hex << " " << r << " " << g << " " << b << endl;
+	return col->GetNumber();
+}
+
 ///
 /// function filling a RooArgList with parameters within a Workspace
 /// parameter names given by an vector with TStrings

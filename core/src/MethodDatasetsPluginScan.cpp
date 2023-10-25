@@ -459,6 +459,10 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     std::map<int,std::vector<double> > sampledSchi2Values;
     std::map<int,std::vector<double> > sampledBValues;
     std::map<int,std::vector<double> > sampledSBValues;
+
+    // vector to compute significance
+    std::vector<double> sampledBTeststats;
+
     TH1F *h_pVals         = new TH1F("p", "p", 200, 0.0, 1e-2);
     Long64_t nentries     = t.GetEntries();
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : average number of toys per scanpoint: " << (double) nentries / (double)nPoints1d << endl;
@@ -550,6 +554,8 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
         double teststat_measured = t.chi2min - this->chi2minGlobal;
         double sb_teststat_toy= t.chi2minToy - t.chi2minGlobalToy;
         double b_teststat_toy = t.chi2minBkgToy - t.chi2minGlobalBkgToy;
+        double sb_teststat_bkgtoy= t.chi2minBkgBkgToy - t.chi2minGlobalBkgToy;
+
         if (arg->teststatistic ==1){ // use one-sided test statistic
             teststat_measured = bestfitpoint <= t.scanpoint ? teststat_measured : 0.; // if mu < muhat then q_mu = 0 //best fit point defined in constructor
             sb_teststat_toy = t.scanbest <= t.scanpoint ? sb_teststat_toy : 0.; // if mu < muhat then q_mu = 0
@@ -616,6 +622,7 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
                 // std::cout << bkgTestStatVal << std::endl;
                 bkg_pvals->Fill(TMath::Prob(b_teststat_toy,1));
                 h_sig_bkgtoys->Fill(t.scanbestBkg);
+                sampledBTeststats.push_back(sb_teststat_bkgtoy);
             }
             sampledBValues[hBin].push_back( b_teststat_toy );
             sampledSBValues[hBin].push_back( b_teststat_toy );
@@ -649,6 +656,8 @@ void MethodDatasetsPluginScan::readScan1dTrees(int runMin, int runMax, TString f
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of failed background toys: " << (double)nfailedbkg / (double)nentries * 100. << "%." << endl;
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of unphysical (negative test stat) toys: " << h_background->GetEntries() / (double)nentries * 100. << "%." << endl;
     cout << "MethodDatasetsPluginScan::readScan1dTrees() : fraction of unphysical (negative test stat) bkg toys: " << (h_negtest_bkg->GetEntries() / (double)h_all_bkg->GetEntries()) * 100. << "%." << endl;
+    double pval_significance=getVectorFracAboveValue(sampledBTeststats, chi2minBkg - chi2minGlobal);
+    cout << "MethodDatasetsPluginScan::readScan1dTrees() : signal significance: naive p-val: " << TMath::Prob(chi2minBkg - chi2minGlobal,1) << " ("<< sqrt(chi2minBkg - chi2minGlobal) <<" sigma)" << " vs. value from toys: " << pval_significance<<" (" << sqrt(2)*TMath::ErfInverse(1.-pval_significance) <<" sigma)"<<endl;
     if ( nwrongrun > 0 ) {
         cout << "\nMethodDatasetsPluginScan::readScan1dTrees() : WARNING : Read toys that differ in global chi2min (wrong run) : "
              << (double)nwrongrun / (double)(nentries - nfailed) * 100. << "%.\n" << endl;

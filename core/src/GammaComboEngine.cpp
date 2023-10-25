@@ -958,10 +958,10 @@ void GammaComboEngine::defineColors()
 	//if ( arg->color.size()==0 )
 	//{
 		// define line colors for 1-CL curves
-		colorsLine.push_back(arg->combid.size()<=1 ? kBlue-8 : kBlue-5);
-		colorsLine.push_back(kGreen-8);
-		colorsLine.push_back(kOrange-8);
-		colorsLine.push_back(kMagenta-6);
+		colorsLine.push_back(arg->combid.size()<=1 ? kBlue-8 : kBlue-5); // 0
+		colorsLine.push_back(kGreen-8);                                  // 1
+		colorsLine.push_back(kOrange-8);                                 // 2
+		colorsLine.push_back(kMagenta-6);                                // 3
 
 		// define text colors for drawn central values
 		colorsText.push_back(arg->combid.size()==1 ? kBlack : TColor::GetColor("#23236b"));
@@ -971,16 +971,24 @@ void GammaComboEngine::defineColors()
 	//}
 	//else
 	//{
-		colorsLine.push_back(TColor::GetColor("#1b9e77")); // sea green
-		colorsLine.push_back(TColor::GetColor("#d95f02")); // dark orange
-		colorsLine.push_back(TColor::GetColor("#7570b3")); // medium purple
-		colorsLine.push_back(TColor::GetColor("#e7298a")); // medium violet red
-		colorsLine.push_back(TColor::GetColor("#66a61e")); // forest green
-		colorsLine.push_back(TColor::GetColor("#e6ab02")); // goldenrod
-    colorsLine.push_back(TColor::GetColor("#a6761d")); // chocolate
-    colorsLine.push_back(TColor::GetColor("#e31a1c")); // red
-    colorsLine.push_back(TColor::GetColor("#984ea3")); // darkish purple
-    colorsLine.push_back(kBlack); 										 // black
+		colorsLine.push_back(TColor::GetColor("#1b9e77")); // 4 sea green
+		colorsLine.push_back(TColor::GetColor("#d95f02")); // 5 dark orange
+		colorsLine.push_back(TColor::GetColor("#7570b3")); // 6 medium purple
+		colorsLine.push_back(TColor::GetColor("#e7298a")); // 7 medium violet red
+		colorsLine.push_back(TColor::GetColor("#66a61e")); // 8 forest green
+		colorsLine.push_back(TColor::GetColor("#e6ab02")); // 9 goldenrod
+    colorsLine.push_back(TColor::GetColor("#a6761d")); // 10 chocolate
+    colorsLine.push_back(TColor::GetColor("#e31a1c")); // 11 red
+    colorsLine.push_back(TColor::GetColor("#984ea3")); // 12 darkish purple
+    colorsLine.push_back(kBlack); 										 // 13 black
+
+		// some color blind safe options
+		colorsLine.push_back(TColor::GetColor("#74add1")); // 14 light blue
+		colorsLine.push_back(TColor::GetColor("#f46d43")); // 15 coral
+		colorsLine.push_back(TColor::GetColor("#fdae61")); // 16 orangey
+		colorsLine.push_back(TColor::GetColor("#d73027")); // 17 red
+		colorsLine.push_back(TColor::GetColor("#4575b4")); // 18 dark blue
+		colorsLine.push_back(TColor::GetColor("#fee090")); // 19 yellow
 
 		// from http://colorbrewer2.org with:
 		//   number of data classes: 6
@@ -1001,21 +1009,21 @@ void GammaComboEngine::defineColors()
 		colorsText.push_back(kBlue-2 + i);
 	}
 
-  // sort out the fill style vector
+	// sort out the fill style vector
   for ( int i=0; i<arg->combid.size(); i++ ) {
     if ( i>= arg->fillstyle.size() ) fillStyles.push_back( 1001 );
     else fillStyles.push_back( arg->fillstyle[i] );
   }
   // sort out the fill color vector
   for ( int i=0; i<arg->combid.size(); i++ ) {
+    // if --hexfillcolor passed use this
+		if ( i < arg->hexfillcolor.size() ) fillColors.push_back( TColor::GetColor( TString(arg->hexfillcolor[i]) ) );
     // if --fillcolor passed use this
-    if ( i>= arg->fillcolor.size() ) fillColors.push_back( colorsLine[i] );
-    else fillColors.push_back( arg->fillcolor[i] );
+		else if ( i < arg->fillcolor.size() ) fillColors.push_back( arg->fillcolor[i] );
     // if --color passed use this
-    if ( i < arg->color.size() ) {
-      if ( arg->color[i] < colorsLine.size() ) fillColors[i] = colorsLine[arg->color[i]];
-      else fillColors[i] = colorsLine[i];
-    }
+		else if ( i < arg->color.size() ) fillColors.push_back( colorsLine[arg->color[i]] );
+		// otherwise use default
+		else fillColors.push_back( colorsLine[i] );
   }
   // sort out the fill transparency vector
   for ( int i=0; i<arg->combid.size(); i++ ) {
@@ -1035,14 +1043,14 @@ void GammaComboEngine::defineColors()
   }
   // sort out the line color vector
   for ( int i=0; i<arg->combid.size(); i++ ) {
+    // if --hexlinecolor passed use this
+		if ( i < arg->hexlinecolor.size() ) lineColors.push_back( TColor::GetColor( TString(arg->hexlinecolor[i]) ) );
     // if --linecolor passed use this
-    if ( i>= arg->linecolor.size() ) lineColors.push_back( colorsLine[i] );
-    else lineColors.push_back( arg->linecolor[i] );
+		else if ( i < arg->linecolor.size() ) lineColors.push_back( arg->linecolor[i] );
     // if --color passed use this
-    if ( i < arg->color.size() ) {
-      if ( arg->color[i] < colorsLine.size() ) lineColors[i] = colorsLine[arg->color[i]];
-      else lineColors[i] = colorsLine[i];
-    }
+		else if ( i < arg->color.size() ) lineColors.push_back( colorsLine[arg->color[i]] );
+		// otherwise use default
+		else lineColors.push_back( colorsLine[i] );
   }
 	// catch for datasets
 	if ( arg->combid.size()==0 ) {

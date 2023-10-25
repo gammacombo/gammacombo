@@ -83,6 +83,7 @@ namespace Utils
 	double        angularDifference(double angle1, double angle2);
 	bool          isPosDef(TMatrixDSym* c);
 	bool          isAngle(RooRealVar* v);
+	int           makeNewColor(string hex);
 
 	RooFitResult*   fitToMin(RooAbsPdf *pdf, bool thorough, int printLevel);
 	RooFitResult*   fitToMinBringBackAngles(RooAbsPdf *pdf, bool thorough, int printLevel);
