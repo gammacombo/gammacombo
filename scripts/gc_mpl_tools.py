@@ -198,11 +198,11 @@ def get_mopts( nscans, mopts, dim=1 ):
     return ret
 
 def addLHCbLogo(ax, x=0.02, y=0.95, prelim=False):
-    ax.text(x, y, 'LHCb', transform=ax.transAxes, fontname='Times New Roman', fontsize=26, ha="left", va="top")
+    ax.text(x, y, 'LHCb', transform=ax.transAxes, fontname='Times New Roman', fontsize=24, ha="left", va="top")
     if prelim:
-        ax.text(x, y-0.08, 'Preliminary', transform=ax.transAxes, fontname='Times New Roman', fontsize=18, ha="left", va="top")
+        ax.text(x, y-0.08, 'Preliminary', transform=ax.transAxes, fontname='Times New Roman', fontsize=14, ha="left", va="top")
 
-def addConoursLine(ax, x=0.01, y=0.01, nlevs=2, etc=False, cl2d=False):
+def addContoursLine(ax, x=0.01, y=0.01, nlevs=2, etc=False, cl2d=False):
     text = "contours hold"
     for lev in range(nlevs):
         if cl2d:
@@ -392,7 +392,7 @@ def plot2d( scanpoints, lopts=[], fopts=[], mopts=[], title=[None,None], levels=
     if logo:
         addLHCbLogo(ax, prelim=prelim)
     if contourline:
-        addConoursLine(nlevs=len(levels), cl2d=cl2d)
+        addContoursLine(ax, nlevs=len(levels), cl2d=cl2d)
 
     if save:
         fig = plt.gcf()

@@ -1,0 +1,22 @@
+axes.labelsize : 16
+
+xtick.labelsize : 14
+ytick.labelsize : 14
+xtick.top : True
+ytick.right : True
+xtick.minor.visible : True
+ytick.minor.visible : True
+
+font.size : 14
+
+text.usetex : True
+
+errorbar.capsize : 2
+
+legend.fontsize : 14
+legend.edgecolor : "1"
+legend.handleheight : 1.0
+legend.handlelength : 1.8
+
+figure.autolayout : True
+
