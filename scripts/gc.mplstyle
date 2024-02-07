@@ -1,13 +1,13 @@
-axes.labelsize : 16
+axes.labelsize : 22
 
-xtick.labelsize : 14
-ytick.labelsize : 14
+xtick.labelsize : 16
+ytick.labelsize : 16
 xtick.top : True
 ytick.right : True
 xtick.minor.visible : True
 ytick.minor.visible : True
 
-font.size : 14
+font.size : 16
 
 text.usetex : True
 
@@ -15,8 +15,13 @@ errorbar.capsize : 2
 
 legend.fontsize : 14
 legend.edgecolor : "1"
+legend.borderpad : 0.1
 legend.handleheight : 1.0
 legend.handlelength : 1.8
+legend.frameon : False
+legend.handletextpad : 0.4
+legend.labelspacing : 0.3
 
-figure.autolayout : True
+hatch.linewidth : 0.3
 
+figure.constrained_layout.use : True

@@ -81,7 +81,7 @@ def read_gc_scan(scanfile, parfile, pars):
   pf.close()
 
   if not len(bf)==len(pars):
-    raise RuntimeError('Did not find a best fit value for all the parameters passed', pars)
+    raise RuntimeError('Did not find a best fit value for all the parameters passed', pars, 'in', parfile)
 
   # get chi2 distribution
   tf = r.TFile(scanfile)
@@ -125,15 +125,17 @@ def_lopts_2d = [
         { 'colors' : ((0.09,0.66,0.91),(0.35,0.33,0.85))   , 'zorder': 1 },
         { 'colors' : ((0.8,0.6,0.2)   ,(0.6,0.2,0.0)   )   , 'zorder': 3 },
         { 'colors' : ((0.84,0.00,0.99),(0.82,0.04,0.82))   , 'zorder': 5 },
-        { 'colors' : ((0.90,0.20,0.20),(0.70,0.00,0.00))   , 'zorder': 7 },
-        { 'colors' : ((0.0,0.4,0.0)   ,(0.2,0.4,0.2)   )   , 'zorder': 9 }
+        { 'colors' : ((0.55,0.28,0.10),(0.60,0.30,0.10))   , 'zorder': 7 },
+        { 'colors' : ((0.0,0.4,0.0)   ,(0.2,0.4,0.2)   )   , 'zorder': 9 } 
+        # { 'colors' : ((0.90,0.20,0.20),(0.70,0.00,0.00))   , 'zorder': 7 },
+        # { 'colors' : ((0.0,0.4,0.0)   ,(0.2,0.4,0.2)   )   , 'zorder': 9 }
                ]
 
 def_fopts_2d = [
         { 'colors' : ('#bee7fd'       ,'#d3e9ff'       ) , 'alpha': 0.9, 'zorder': 0 },
         { 'colors' : ((0.90,0.78,0.60),(0.99,0.87,0.71)) , 'alpha': 0.9, 'zorder': 2 },
         { 'colors' : ((0.96,0.48,1.00),(1.00,0.60,1.00)) , 'alpha': 0.9, 'zorder': 4 },
-        { 'colors' : ('#d95f02'       ,'#d95f02'       ) , 'alpha': 0.9, 'zorder': 6 },
+        { 'colors' : ('#d95f02'       ,'#df823b'       ) , 'alpha': 0.9, 'zorder': 6 },
         { 'colors' : ((0.40,1.00,0.40),(0.40,0.80,0.40)) , 'alpha': 0.9, 'zorder': 8 }
                ]
 
@@ -145,6 +147,24 @@ def_mopts_2d = [
         { 'marker': 'o', 'color' : (0.0,0.4,0.0)   , 'zorder': 14 }
 
                ]
+
+hflav_cols = {
+    'b': (116,112,174),
+    'r': (209,53,54),
+    'g': (74,155,122),
+    'p': (142,81,159),
+    'y': (221,173,58),
+    'lg': (117,165,57),
+    'k': 'k'
+}
+
+keys = hflav_cols.keys()
+
+for key in keys:
+    item = hflav_cols[key]
+    if type(item)!=str:
+        newval = tuple( [ float(v)/255. for v in item] )
+        hflav_cols[key] = newval
 
 def get_lopts( nscans, lopts, dim=1 ):
 
@@ -217,7 +237,7 @@ def addContoursLine(ax, x=0.01, y=0.01, nlevs=2, etc=False, cl2d=False):
     ax.text(x, y, text, transform=ax.transAxes, ha="left", va="bottom", fontsize=13, fontname='Times New Roman', color='0.5')
 
 
-def plot1d( scanpoints, lopts=[], fopts=[], xtitle=None, legtitles=None, angle=False, ax=None, save=None, logo=False, prelim=False ):
+def plot1d( scanpoints, lopts=[], fopts=[], xtitle=None, legtitles=None, angle=False, ax=None, save=None, logo=False, prelim=False, legopts={} ):
     """ parameters
     scanpoints : 2D array-like
         - expect an array of (x,y) points for each scanner [ (x1,y1), (x2,y2), ... , (xn,yn) ]
@@ -231,7 +251,7 @@ def plot1d( scanpoints, lopts=[], fopts=[], xtitle=None, legtitles=None, angle=F
     nscanners = len(scanpoints)
     fopts = get_fopts( nscanners, fopts, dim=1 )
     lopts = get_lopts( nscanners, lopts, dim=1 )
-    
+
     # convert if angle
     if angle:
         scanpoints = [ [np.degrees(x), y] for x, y in scanpoints ]
@@ -266,7 +286,7 @@ def plot1d( scanpoints, lopts=[], fopts=[], xtitle=None, legtitles=None, angle=F
 
             leg_els.append( patches.Patch( **leg_opts ) )
 
-        ax.legend( handles=leg_els )
+        ax.legend( handles=leg_els, **legopts )
     
     # style
     ax.set_ylim(0,1)
@@ -277,7 +297,7 @@ def plot1d( scanpoints, lopts=[], fopts=[], xtitle=None, legtitles=None, angle=F
         ax.set_xlabel(xtitle)
 
     # yaxis label
-    ax.set_ylabel('$p$')
+    ax.set_ylabel('$p=1-CL$')
     
     # add logos
     if logo:
@@ -287,7 +307,7 @@ def plot1d( scanpoints, lopts=[], fopts=[], xtitle=None, legtitles=None, angle=F
         fig = plt.gcf()
         fig.savefig(save)
         
-def plot2d( scanpoints, lopts=[], fopts=[], mopts=[], title=[None,None], levels=1, legtitles=None, angle=[False,False], ax=None, save=None, bf=None, cl2d=False, logo=False, prelim=False, contourline=False ):
+def plot2d( scanpoints, lopts=[], fopts=[], mopts=[], title=[None,None], levels=1, legtitles=None, angle=[False,False], ax=None, save=None, bf=None, cl2d=False, logo=False, prelim=False, contourline=False, legopts={} ):
     """ parameters
     scanpoints : 2D array-like
         - expect an array of (x,y,z) points for each scanner [ (x1,y1,z1), (x2,y2,z2), ... , (xn,yn,zn) ]
@@ -330,12 +350,16 @@ def plot2d( scanpoints, lopts=[], fopts=[], mopts=[], title=[None,None], levels=
     # convert if angle
     if angle[0]:
         scanpoints = [ [np.degrees(x), y, z] for x, y, z in scanpoints ]
-        if bf:
-            bf = [ [np.degrees(x), y] for x, y in bf ]
+        if bf is not None:
+            for i, pt in enumerate(bf):
+                if pt is not None:
+                    bf[i] = [np.degrees(pt[0]), pt[1] ]
     if angle[1]:
         scanpoints = [ [x, np.degrees(y), z] for x, y, z in scanpoints ]
-        if bf:
-            bf = [ [x, np.degrees(y)] for x, y in bf ]
+        if bf is not None:
+            for i, pt in enumerate(bf):
+                if pt is not None:
+                    bf[i] = [pt[0], np.degrees(pt[1])]
 
     # do the fills first
     for i, (x, y, z) in enumerate(scanpoints):
@@ -350,9 +374,10 @@ def plot2d( scanpoints, lopts=[], fopts=[], mopts=[], title=[None,None], levels=
         ax.contour( x, y, z, levels=levels, **lopts[i] )
 
     # add the best fit
-    if bf:
-        for i, (x, y) in enumerate(bf):
-            ax.plot( x, y, **mopts[i] )
+    if bf is not None:
+        for i, pt in enumerate(bf):
+            if pt is not None:
+                ax.plot( pt[0], pt[1], **mopts[i] )
     
     # add legend 
     leg_els = []
@@ -378,9 +403,10 @@ def plot2d( scanpoints, lopts=[], fopts=[], mopts=[], title=[None,None], levels=
 
             leg_opts = { **lopt, **fopt, **dict(label=ltitle) }
             
-            leg_els.append( patches.Patch( **leg_opts ) )
-
-        ax.legend( handles=leg_els )
+            if ltitle is not None:
+                leg_els.append( patches.Patch( **leg_opts ) )
+        
+        ax.legend( handles=leg_els, **legopts )
         
     # style
     if title[0]:
@@ -397,4 +423,33 @@ def plot2d( scanpoints, lopts=[], fopts=[], mopts=[], title=[None,None], levels=
     if save:
         fig = plt.gcf()
         fig.savefig(save)
-        
+
+def hflav_logo(subtitle, pos=[0.02,0.98], ax=None, scale=1):
+    
+    ax = ax or plt.gca()
+    
+    xwidth = 0.22 # width of logo in units of axis
+    yratio = 0.7  # relative height of y to xwidth (in axis units)
+    ysub = 0.8    # relative size of subtitle to HFLAV title
+    fontsize = 16 # font size of HFLAV bit
+    fontsub = 0.7 # relative size of subtitle font
+    font = {'family': 'sans-serif', 'style': 'italic', 'color': 'white', 'weight': 500, 'size': scale * fontsize, 'stretch': 'condensed'}
+    
+    fraction = 1 - ysub / (1 + ysub)
+
+    # black part with white HFLAV
+    x = (pos[0], pos[0]+xwidth)
+    y = (pos[1]-yratio*fraction*xwidth, pos[1])
+    xc = (x[0]+x[1])/2
+    yc = (y[0]+y[1])/2
+    ax.fill( [x[0],x[1],x[1],x[0]], [y[0],y[0],y[1],y[1]], 'k', ec='k', lw=0.5, transform=ax.transAxes, zorder=100 )
+    ax.text( xc, yc-0.01, 'HFLAV', fontdict=font, ha='center', va='center', transform=ax.transAxes, usetex=False, zorder=110 ) 
+
+    # white part with black subtitle
+    y = (pos[1]-yratio*xwidth, pos[1]-yratio*fraction*xwidth)
+    yc = (y[0]+y[1])/2
+    font['color'] = 'black'
+    font['size'] *= fontsub
+    ax.fill( [x[0],x[1],x[1],x[0]], [y[0],y[0],y[1],y[1]], 'w', ec='k', lw=0.5, transform=ax.transAxes, zorder=120 )
+    ax.text( xc, yc-0.005, subtitle, fontdict=font, ha='center', va='center', transform=ax.transAxes, usetex=False, zorder=130 ) 
+

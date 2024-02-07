@@ -17,6 +17,7 @@ TString Utils::ConfigToTString(config s)
 	if ( s == babar_dpi0 )           return "babar_dpi0";
 	if ( s == babar_dg )             return "babar_dg";
   if ( s == belle )                return "belle";
+  if ( s == belle2 )                return "belle2";
   if ( s == belle_md )             return "belle_md";
 	if ( s == belle2006 )            return "belle2006";
 	if ( s == belle2007 )            return "belle2007";
@@ -62,6 +63,9 @@ TString Utils::ConfigToTString(config s)
 	if ( s == lhcb2014 )             return "lhcb2014";
 	if ( s == lhcb2018KK_extrap )    return "lhcb2018KK_extrap";
 	if ( s == lhcb_upgrade_extrap )  return "lhcb_upgrade_extrap";
+    if ( s == lhcb_9fb )             return "lhcb_9fb";
+    if ( s == lhcb_pr_9fb )          return "lhcb_pr_9fb";
+    if ( s == lhcb_fr_9fb )          return "lhcb_fr_9fb";
 	if ( s == lhcbcomb )  					 return "lhcbcomb";
 	if ( s == lhcbphis ) 						 return "lhcbphis";
 	if ( s == lumi1fb )	             return "lumi1fb";
