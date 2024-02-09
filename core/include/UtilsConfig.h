@@ -110,6 +110,7 @@ namespace Utils
     hfagCKM2016,
 		hflav,
 		hflavMoriond19,
+		hflavMoriond24,
 		hflavMor19,
 		highrb,
 		highstattoy,
