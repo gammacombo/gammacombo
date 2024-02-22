@@ -1,5 +1,6 @@
 import os
 import sys
+import importlib
 import ROOT as r
 import numpy as np
 import itertools
@@ -8,6 +9,43 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 plt.style.use(os.path.dirname( os.getcwd() ) + '/scripts/gc.mplstyle')
+from tabulate import tabulate
+
+def load_interval(fname):
+  if not os.path.exists(fname):
+    raise RuntimeError('No such file', fname)
+  #print('Loading configuration from file', fname)
+  spec = importlib.util.spec_from_file_location('module',fname)
+  module = importlib.util.module_from_spec(spec)
+  spec.loader.exec_module(module)
+  if hasattr(module,'intervals'):
+    return module.intervals
+  return None
+
+def print_interval(fname, nsigma=1):
+    intervals = load_interval(fname)
+    print_rows = []
+    for cl, cfgs in intervals.items():
+        ns = 0
+        conf = 0
+        if cl=='0.68':
+            ns = 1
+        elif cl=='0.95':
+            ns = 2
+        elif cl=='1.00':
+            ns = 3
+        else:
+            continue
+        
+        if ns>nsigma:
+            continue 
+
+        conf = f'{chi2.cdf(ns**2, 1):4.1%}'
+        
+        for sol in cfgs:
+            print_rows.append( [ ns, conf, sol['central'], sol['neg'], sol['pos'], sol['min'], sol['max'] ] )
+
+    print( tabulate( print_rows, headers=['nSig','cl','val','-err','+err','min','max'], floatfmt=' .1f' ) )   
 
 def read1dscan(h, bf, minnll):
 
@@ -442,14 +480,14 @@ def hflav_logo(subtitle, pos=[0.02,0.98], ax=None, scale=1):
     y = (pos[1]-yratio*fraction*xwidth, pos[1])
     xc = (x[0]+x[1])/2
     yc = (y[0]+y[1])/2
-    ax.fill( [x[0],x[1],x[1],x[0]], [y[0],y[0],y[1],y[1]], 'k', ec='k', lw=0.5, transform=ax.transAxes, zorder=100 )
-    ax.text( xc, yc-0.01, 'HFLAV', fontdict=font, ha='center', va='center', transform=ax.transAxes, usetex=False, zorder=110 ) 
+    ax.fill( [x[0],x[1],x[1],x[0]], [y[0],y[0],y[1],y[1]], 'k', ec='k', lw=0.5, transform=ax.transAxes, clip_on=False, zorder=100 )
+    ax.text( xc, yc-0.01, 'HFLAV', fontdict=font, ha='center', va='center', transform=ax.transAxes, usetex=False, clip_on=False, zorder=110 ) 
 
     # white part with black subtitle
     y = (pos[1]-yratio*xwidth, pos[1]-yratio*fraction*xwidth)
     yc = (y[0]+y[1])/2
     font['color'] = 'black'
     font['size'] *= fontsub
-    ax.fill( [x[0],x[1],x[1],x[0]], [y[0],y[0],y[1],y[1]], 'w', ec='k', lw=0.5, transform=ax.transAxes, zorder=120 )
-    ax.text( xc, yc-0.005, subtitle, fontdict=font, ha='center', va='center', transform=ax.transAxes, usetex=False, zorder=130 ) 
+    ax.fill( [x[0],x[1],x[1],x[0]], [y[0],y[0],y[1],y[1]], 'w', ec='k', lw=0.5, transform=ax.transAxes, clip_on=False, zorder=120 )
+    ax.text( xc, yc-0.005, subtitle, fontdict=font, ha='center', va='center', transform=ax.transAxes, usetex=False, clip_on=False, zorder=130 ) 
 
