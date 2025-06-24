@@ -34,6 +34,10 @@ public:
     virtual void          generateBkgToys(int SeedShift = 0, TString signalvar="");
     virtual void          generateBkgToysGlobalObservables(int SeedShift = 0, int index = 0);
 
+    virtual void          generateBkgAsimov(int SeedShift = 0, TString signalvar="");
+    virtual void          generateBkgAsimovGlobalObservables(int SeedShift = 0, int index = 0);
+
+
     void                  initConstraints(const TString& setName);
     void                  initData(const TString& name);
     void                  initObservables(const TString& setName);
@@ -70,6 +74,7 @@ public:
     RooAbsData*           getToyObservables() {return this->toyObservables;};
     RooAbsData*           getBkgToyObservables() {return toyBkgObservables;};
     TString               getMultipdfCatName() {return multipdfCatName;};
+    RooAbsData*           getBkgAsimovObservables() {return AsimovBkgObservables;};
     RooWorkspace*         getWorkspace() {return wspc;};
     // setters
     inline void           setFitStatus(int stat = 0) {fitStatus = stat;};
@@ -107,7 +112,8 @@ public:
     //> name of a snapshot that stores the values of the global observables in data
     const TString         globalObsToySnapshotName = "globalObsToySnapshotName";
     //> name of a snapshot that stores the latest simulated values for the global observables
-   TString         globalObsBkgToySnapshotName = "globalObsBkgToySnapshotName";
+    TString               globalObsBkgToySnapshotName = "globalObsBkgToySnapshotName";
+    TString               globalObsBkgAsimovSnapshotName = "globalObsBkgAsimovSnapshotName";
     //> name of a snapshot that stores the latest simulated values for the global observables of the bkg-only toy
 
     //debug counters
@@ -115,30 +121,33 @@ public:
     int nsbfits;
 
 protected:
-    void initializeRandomGenerator(int seedShift);
-    RooWorkspace* wspc;
-    RooAbsData*   data;
-    RooAbsReal*   _NLL; // possible pointer to minimization function
-    RooAbsPdf*    _constraintPdf;
-    TString       pdfName; //> name of the pdf in the workspace
-    TString       pdfBkgName; //> name of the bkg pdf in the workspace
-    TString       multipdfCatName; //> name of the multipdf category
-    TString       obsName;
-    TString       parName;
-    TString       dataName;       //> name of the data set in the workspace
-    TString       constraintName; //> name of the set with all constraint pdfs
-    TString       globalParsName; //> name of the set of global parameters in the workspace, that is, the parameters that occur (not only) in the  constraints...
-    TString       globalObsName;   //> name of the set of global observables in the workspace.
-    OptParser*    arg;
-    int           fitStrategy;
-    int           fitStatus;
-    float         minNllFree;
-    // float         minNll;
-    float         minNllBkg;
-    float         minNllScan;
-    int           bestIndex;
-    int           bestIndexBkg;
-    int           bestIndexScan;
+    void                  initializeRandomGenerator(int seedShift);
+    RooAbsData*           generateBkgAsimovSinglePdf(const RooAbsPdf & pdf, const RooArgSet & allobs,  const RooRealVar & weightVar, RooCategory * channelCat);
+    void                  FillBinsAsimov(const RooAbsPdf & pdf, const RooArgList &obs, RooAbsData & data, int &index,  double &binVolume, int &ibin);
+    RooWorkspace*         wspc;
+    RooAbsData*           data;
+    RooAbsData*           AsimovBkgObservables;
+    RooAbsReal*     _NLL; // possible pointer to minimization function
+    RooAbsPdf*      _constraintPdf;
+    TString         pdfName; //> name of the pdf in the workspace
+    TString         pdfBkgName; //> name of the bkg pdf in the workspace
+    TString         multipdfCatName; //> name of the multipdf category
+    TString         obsName;
+    TString         parName;
+    TString         dataName;       //> name of the data set in the workspace
+    TString         constraintName; //> name of the set with all constraint pdfs
+    TString         globalParsName; //> name of the set of global parameters in the workspace, that is, the parameters that occur (not only) in the  constraints...
+    TString         globalObsName;   //> name of the set of global observables in the workspace.
+    OptParser*      arg;
+    int             fitStrategy;
+    int             fitStatus;
+    float           minNllFree;
+    // float           minNll;
+    float           minNllBkg;
+    float           minNllScan;
+    int             bestIndex;
+    int             bestIndexBkg;
+    int             bestIndexScan;
     bool areObsSet;       //> Forces user to set observables
     bool areParsSet;      //> Forces user to set parameters
     bool areRangesSet;    //> Flag deciding if necessary ranges are set

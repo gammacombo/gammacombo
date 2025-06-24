@@ -48,14 +48,18 @@ public:
 protected:
 
 private:
-    TChain*        readFiles(TString fileNameBaseIn = "default");
-    void           readScan1dTrees(TString fileNameBaseIn = "default");
-    RooFitResult*  loadAndFit(PDF_Datasets* pdf);
-    double         getPValueTTestStatistic(double test_statistic_value, bool isCLs=false);
-    void           sanityChecks();
-    void           setAndPrintFitStatusConstrainedToys(const ToyTree& toyTree);
-    void           setAndPrintFitStatusFreeToys(const ToyTree& toyTree);
-    void           sethCLFromProbScanTree();
+    TChain*             readFiles(TString fileNameBaseIn = "default");
+    void                readScan1dTrees(TString fileNameBaseIn = "default");
+    RooFitResult*       loadAndFit(PDF_Datasets* pdf);
+    double              getPValueTTestStatistic(double test_statistic_value, bool isCLs=false);
+    void                sanityChecks();
+    void                setAndPrintFitStatusConstrainedToys(const ToyTree& toyTree);
+    void                setAndPrintFitStatusFreeToys(const ToyTree& toyTree);
+    void                sethCLFromProbScanTree();
+
+    RooFitResult*       GlobalBkgAsimovFitResult;
+    double              chi2minGlobalBkgAsimov;
+
 };
 
 #endif

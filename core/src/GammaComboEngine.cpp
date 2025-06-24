@@ -1160,30 +1160,37 @@ void GammaComboEngine::make1dProbScan(MethodProbScan *scanner, int cId)
     ParameterCache *pCache = new ParameterCache(arg);
     loadStartParameters(scanner, pCache, cId);
 
-    scanner->initScan();
-    scanStrategy1d(scanner, pCache);
-    cout << "\nResults:" << endl;
-    cout <<   "========\n" << endl;
-    scanner->printLocalMinima();
-    scanner->saveLocalMinima(m_fnamebuilder->getFileNameSolution(scanner));
-    scanner->computeCLvalues();
-    if (!arg->confirmsols) scanner->calcCLintervals();
-    if (arg->cls.size()>0) scanner->calcCLintervals(1); // for prob method CLsType>1 doesn't exist
-    if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
-        if ( arg->plotpulls ) scanner->plotPulls();
-        if ( arg->parevol ){
-            ParameterEvolutionPlotter plotter(scanner);
-            plotter.plotParEvolution();
-        }
-        if ( isScanVarObservable(scanner->getCombiner(), arg->var[0]) ){
-            ParameterEvolutionPlotter plotter(scanner);
-            plotter.plotObsScanCheck();
-        }
-        if (!arg->isAction("plugin")){
-            scanner->saveScanner(m_fnamebuilder->getFileNameScanner(scanner));
-            pCache->cacheParameters(scanner,m_fnamebuilder->getFileNamePar(scanner));
-        }
-    }
+	scanner->initScan();
+	scanStrategy1d(scanner, pCache);
+	cout << "\nResults:" << endl;
+	cout <<   "========\n" << endl;
+	scanner->printLocalMinima();
+  scanner->saveLocalMinima(m_fnamebuilder->getFileNameSolution(scanner));
+	scanner->computeCLvalues();
+	if (!arg->confirmsols) scanner->calcCLintervals();
+	if (arg->cls.size()>0){
+		scanner->calcCLintervals(arg->cls[0], -99);
+		scanner->calcCLintervals(arg->cls[0], -2); //calculate expected upper limit 2 sigma down
+		scanner->calcCLintervals(arg->cls[0], -1); //calculate expected upper limit 1 sigma down
+		scanner->calcCLintervals(arg->cls[0], 0); //calculate expected upper limit
+		scanner->calcCLintervals(arg->cls[0], 1); //calculate expected upper limit 1 sigma up
+		scanner->calcCLintervals(arg->cls[0], 2); //calculate expected upper limit 2 sigma up
+	}
+	if (!arg->isAction("pluginbatch") && !arg->plotpluginonly){
+		if ( arg->plotpulls ) scanner->plotPulls();
+		if ( arg->parevol ){
+			ParameterEvolutionPlotter plotter(scanner);
+			plotter.plotParEvolution();
+		}
+		if ( isScanVarObservable(scanner->getCombiner(), arg->var[0]) ){
+			ParameterEvolutionPlotter plotter(scanner);
+			plotter.plotObsScanCheck();
+		}
+		if (!arg->isAction("plugin")){
+			scanner->saveScanner(m_fnamebuilder->getFileNameScanner(scanner));
+			pCache->cacheParameters(scanner,m_fnamebuilder->getFileNamePar(scanner));
+		}
+	}
 }
 
 ///
@@ -1195,21 +1202,27 @@ void GammaComboEngine::make1dProbScan(MethodProbScan *scanner, int cId)
 ///
 void GammaComboEngine::make1dPluginScan(MethodPluginScan *scannerPlugin, int cId)
 {
-    scannerPlugin->initScan();
-    if ( arg->isAction("pluginbatch") ){
-        scannerPlugin->scan1d(arg->nrun);
-    }
-    else {
-        scannerPlugin->readScan1dTrees(arg->jmin[cId],arg->jmax[cId]);
-        scannerPlugin->calcCLintervals();
-        for (int i=0; i<arg->cls.size(); i++){
-            scannerPlugin->calcCLintervals(arg->cls[i]);
-            if (arg->cls[i]==2) scannerPlugin->calcCLintervals(arg->cls[i], true); //calculate expected upper limit
-        }
-    }
-    if ( !arg->isAction("pluginbatch") ){
-        scannerPlugin->saveScanner(m_fnamebuilder->getFileNameScanner(scannerPlugin));
-    }
+	scannerPlugin->initScan();
+	if ( arg->isAction("pluginbatch") ){
+		scannerPlugin->scan1d(arg->nrun);
+	}
+	else {
+		scannerPlugin->readScan1dTrees(arg->jmin[cId],arg->jmax[cId]);
+		scannerPlugin->calcCLintervals();
+		for (int i=0; i<arg->cls.size(); i++){
+			scannerPlugin->calcCLintervals(arg->cls[i], -99);
+			if (arg->cls[i]==2){
+				scannerPlugin->calcCLintervals(arg->cls[i], -2); //calculate expected upper limit 2 sigma down
+				scannerPlugin->calcCLintervals(arg->cls[i], -1); //calculate expected upper limit 1 sigma down
+				scannerPlugin->calcCLintervals(arg->cls[i], 0); //calculate expected upper limit
+				scannerPlugin->calcCLintervals(arg->cls[i], 1); //calculate expected upper limit 1 sigma up
+				scannerPlugin->calcCLintervals(arg->cls[i], 2); //calculate expected upper limit 2 sigma up
+			}
+		}
+	}
+	if ( !arg->isAction("pluginbatch") ){
+		scannerPlugin->saveScanner(m_fnamebuilder->getFileNameScanner(scannerPlugin));
+	}
 }
 
 ///

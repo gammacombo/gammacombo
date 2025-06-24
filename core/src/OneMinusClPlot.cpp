@@ -382,12 +382,22 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
           return;
     }
 
+<<<<<<< HEAD
+  TH1F *hObs 		=	(TH1F*)s->getHCLs()->Clone(getUniqueRootName());
+  if(s->getMethodName().Contains("Plugin")){delete hObs; hObs=(TH1F*)s->getHCLsFreq()->Clone(getUniqueRootName());}
+  TH1F *hExp    = (TH1F*)s->getHCLsExp()->Clone(getUniqueRootName());
+  TH1F *hErr1Up = (TH1F*)s->getHCLsErr1Up()->Clone(getUniqueRootName());
+  TH1F *hErr1Dn = (TH1F*)s->getHCLsErr1Dn()->Clone(getUniqueRootName());
+  TH1F *hErr2Up = (TH1F*)s->getHCLsErr2Up()->Clone(getUniqueRootName());
+  TH1F *hErr2Dn = (TH1F*)s->getHCLsErr2Dn()->Clone(getUniqueRootName());
+=======
     TH1F *hObs    = (TH1F*)s->getHCLsFreq()->Clone(getUniqueRootName());
     TH1F *hExp    = (TH1F*)s->getHCLsExp()->Clone(getUniqueRootName());
     TH1F *hErr1Up = (TH1F*)s->getHCLsErr1Up()->Clone(getUniqueRootName());
     TH1F *hErr1Dn = (TH1F*)s->getHCLsErr1Dn()->Clone(getUniqueRootName());
     TH1F *hErr2Up = (TH1F*)s->getHCLsErr2Up()->Clone(getUniqueRootName());
     TH1F *hErr2Dn = (TH1F*)s->getHCLsErr2Dn()->Clone(getUniqueRootName());
+>>>>>>> origin/development
 
     if ( !hObs ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - can't find histogram hObs" << endl;
     if ( !hExp ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - can't find histogram hExp" << endl;
@@ -414,6 +424,42 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
     TGraph *gErr2Up;
     TGraph *gErr2Dn;
 
+<<<<<<< HEAD
+  TGraphSmooth *smoother = new TGraphSmooth();
+  if (smooth) {
+    if ( arg->debug ) cout << "OneMinusClPlot::scan1dCLsPlot() : smoothing graphs" << endl;
+    gExp    = (TGraph*)smoother->SmoothSuper( gExpRaw   )->Clone("gExp");
+    // gErr1Up = (TGraph*)smoother->SmoothSuper( gErr1UpRaw )->Clone("gErr1Up");
+    gErr1Dn = (TGraph*)smoother->SmoothSuper( gErr1DnRaw )->Clone("gErr1Dn");
+    // gErr2Up = (TGraph*)smoother->SmoothSuper( gErr2UpRaw )->Clone("gErr2Up");
+    gErr2Dn = (TGraph*)smoother->SmoothSuper( gErr2DnRaw )->Clone("gErr2Dn");
+
+    ////alternative smoothing option, needs more fiddling
+    gErr1Up = (TGraph*)smoother->SmoothKern( gErr1UpRaw,"normal",hErr1Up->GetBinWidth(1)*2, hErr1Up->GetNbinsX())->Clone("gErr1Up");
+    gErr2Up = (TGraph*)smoother->SmoothKern( gErr2UpRaw,"normal",hErr2Up->GetBinWidth(1)*2, hErr1Up->GetNbinsX())->Clone("gErr2Up");
+
+    ////make sure the CLs=1 points do NOT get smoothed away
+    double *xvals = gExp->GetX();
+    double *yvalsRawExpErr1Up = gErr1UpRaw->GetY();
+    double *yvalsRawExpErr2Up = gErr2UpRaw->GetY();
+
+    if(arg->teststatistic == 1){
+	    for (int i=0; i<gExp->GetN(); i++){
+	    	if(yvalsRawExpErr1Up[i]>0.9999){
+	    		gErr1Up->SetPoint(i,xvals[i], 1.0);
+	    	}
+	    	if(yvalsRawExpErr2Up[i]>0.9999){
+	    		gErr2Up->SetPoint(i,xvals[i], 1.0);
+	    	}
+	    }
+	    // fix point 0 to CLs=1 for all expected curves
+	    gExp->SetPoint(0,0.,1.);
+	    gErr1Up->SetPoint(0,0.,1.);
+	    gErr1Dn->SetPoint(0,0.,1.);
+	    gErr2Up->SetPoint(0,0.,1.);
+	    gErr2Dn->SetPoint(0,0.,1.);
+	  }
+=======
     TGraphSmooth *smoother = new TGraphSmooth();
     if (smooth) {
         if ( arg->debug ) cout << "OneMinusClPlot::scan1dCLsPlot() : smoothing graphs" << endl;
@@ -497,6 +543,7 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
             delete gObs;
             gObs = gObs_new;
         }
+>>>>>>> origin/development
 
     if ( arg->debug ) cout << "OneMinusClPlot::scan1dCLsPlot() : done smoothing graphs" << endl;
     }
@@ -508,12 +555,53 @@ void OneMinusClPlot::scan1dCLsPlot(MethodAbsScan *s, bool smooth, bool obsError)
         gErr2Dn = gErr2DnRaw;
     }
 
+<<<<<<< HEAD
+  if(arg->teststatistic ==1){
+    // remove all observed lines with x<xmeas
+    if(arg->debug) std::cout<< "OneMinusClPlot::scan1dCLsPlot() : remove all observed lines with mu<muhat in CLs plot" <<std::endl;
+    double* xvalsobs = gObs->GetX();
+    double* yvalsobs = gObs->GetY();
+    double* xerrsobs = gObs->GetEX();
+    double* yerrsobs = gObs->GetEY();
+    int valabove = gObs->GetN();
+    int nentries = gObs->GetN();
+    for (int i=0; i<gObs->GetN(); i++){
+    	if (xvalsobs[i]<(xCentral+(hObs->GetBinWidth(1)/2.))) valabove--;
+    }
+    // std::cout << "Found entries for obs " << valabove << "\t" << nentries << std::endl;
+
+    TGraphErrors* gObs_new = new TGraphErrors(valabove);
+    int k=0;
+    for (int i=0; i < nentries; i++){
+    	if(xvalsobs[i]<(xCentral+(hObs->GetBinWidth(1)/2.))){
+    		// std::cout << "Ignoring " << xvalsobs[i] << "\t" << yvalsobs[i] << std::endl;
+    		continue;
+    	}
+    	else {
+    		// std::cout << "SetPoint " << k << "\t" << xvalsobs[i] << "\t" << yvalsobs[i] << std::endl;
+    		gObs_new->SetPoint(k, xvalsobs[i],yvalsobs[i]);
+    		gObs_new->SetPointError(k, xerrsobs[i],yerrsobs[i]);
+    		k++;
+    	}
+    }
+    delete gObs;
+    gObs = gObs_new;
+	}
+
+  if ( !gObs ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - null graph gObs" << endl;
+  if ( !gExp ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - null graph gExp" << endl;
+  if ( !gErr1Up ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - null graph gErr1Up" << endl;
+  if ( !gErr1Dn ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - null graph gErr1Dn" << endl;
+  if ( !gErr2Up ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - null graph gErr2Up" << endl;
+  if ( !gErr2Dn ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - null graph gErr2Dn" << endl;
+=======
     if ( !gObs ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - null graph gObs" << endl;
     if ( !gExp ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - null graph gExp" << endl;
     if ( !gErr1Up ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - null graph gErr1Up" << endl;
     if ( !gErr1Dn ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - null graph gErr1Dn" << endl;
     if ( !gErr2Up ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - null graph gErr2Up" << endl;
     if ( !gErr2Dn ) cout << "OneMinusClPlot::scan1dCLsPlot() : problem - null graph gErr2Dn" << endl;
+>>>>>>> origin/development
 
     gObs->SetName("gObs");
     gExp->SetName("gExp");
@@ -871,8 +959,13 @@ void OneMinusClPlot::Draw()
     }
     m_mainCanvas->cd();
 
+<<<<<<< HEAD
+  // plot the CLs
+  for ( int i = 0; i < scanners.size(); i++ )if (do_CLs[i]>0) scan1dCLsPlot(scanners[i],arg->nsmooth,scanners[i]->getMethodName().Contains("Plugin"));
+=======
     // plot the CLs
     for ( int i = 0; i < scanners.size(); i++ ) if (do_CLs[i]==2) scan1dCLsPlot(scanners[i],arg->nsmooth);
+>>>>>>> origin/development
 
     // Legend:
     // make the legend short, the text will extend over the boundary, but the symbol will be shorter
