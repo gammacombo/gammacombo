@@ -1,6 +1,4 @@
 *.root
-**.swp
-build/
 doc/html/
 doc/latex/
 tutorial/bin/
@@ -26,12 +24,60 @@ ReImPlots/
 RhoEta/
 RizwaanPartIII/
 CombinedBeautyAndCharm/
-commit_msg
 fullModel.dot
 scripts/*_C.d
 scripts/*_C.so
 scripts/*_rdict.pcm
 scripts/__pycache__
-nbproject
-.cproject
+
+# backup files
+*~
+.*.swp
+
+# build products
+InstallArea/
+
+# Centrally managed files and helpers
+cache_preload.cmake
+toolchain.cmake
+Makefile
+
+# CMake temporary files
+build*/
+.build/
+CMakeFiles/
+CTestTestfile.cmake
+CPackSourceConfig.cmake
+CPackConfig.cmake
+cmake_install.cmake
+Testing/
+
+# common byproducts
+*.pyc
+*.pyo
+DoxyWarnings.log
+.gdb_history
+*.new
+.coverage
+*.patch
+*.launch
+*.launch.py
+*.launch.opts
+*_cache
+
+# QMTest byproducts
+**/tests/qmtest/*.*
+!**/tests/qmtest/*.qms
+!**/tests/qmtest/*.qmt
+
+# Metadata used by IDEs
+# - Eclipse
 .project
+.cproject
+.settings
+.pydevproject
+.eclipse/
+# - QtCreator
+CMakeLists.txt.user
+# - VSCode
+.vscode/
