@@ -4,7 +4,6 @@
 #include <RooExponential.h>
 #include <RooExtendPdf.h>
 #include <RooFitResult.h>
-#include <RooFormula.h>
 #include <RooFormulaVar.h>
 #include <RooGaussian.h>
 #include <RooLognormal.h>

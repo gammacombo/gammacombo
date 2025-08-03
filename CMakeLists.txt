@@ -1,153 +1,190 @@
-# require a certain cmake version
-cmake_minimum_required(VERSION 3.4)
+cmake_minimum_required(VERSION 3.19)
 
-# declare the project name
-project(gammacomboCore)
+# Project configuration -------------------------------------------------------
 
-# set project version
-set(${PROJECT_NAME}_VERSION_MAJOR 1)
-set(${PROJECT_NAME}_VERSION_MINOR 0)
-set(${PROJECT_NAME}_VERSION_PATCH 0)
+project(
+  GammaCombo
+  VERSION 1.0.0
+  DESCRIPTION "LHCb frequentist combiner"
+  HOMEPAGE_URL "https://gammacombo.github.io/"
+  LANGUAGES CXX)
 
-# install destinations can be passed via the command line: cmake
-# -DLIBRARY_OUTPUT_DIRECTORY:PATH=.... -DINCLUDE_OUTPUT_DIRECTORY:PATH=....
-# otherwise, set default install destinations
-if(NOT DEFINED LIBRARY_OUTPUT_DIRECTORY)
-  set(LIBRARY_OUTPUT_DIRECTORY ./lib)
+# Build Doxygen documentation by configuring cmake with -DBUILD_DOCUMENTATION=ON
+option(BUILD_DOCUMENTATION
+       "Create and install the HTML based API documentation (requires Doxygen)"
+       OFF)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+# Set build destinations. Cannot use CMAKE_LIBRARY_OUTPUT_DIRECTORY due to
+# root_generate_dictionary
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
+if(NOT LIBRARY_OUTPUT_DIRECTORY)
+  set(LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 endif()
-if(NOT DEFINED INCLUDE_OUTPUT_DIRECTORY)
-  set(INCLUDE_OUTPUT_DIRECTORY ./include)
-endif()
-
-# include cmake macros and settings
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-include(settings)
-include(macros)
-include(combiners)
-
-# use ccache if available
-find_program(CCACHE_FOUND ccache)
-if(CCACHE_FOUND)
-  set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
-  set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
-endif(CCACHE_FOUND)
-
-# find FreeType
-find_package(Freetype REQUIRED)
-message("FREETYPE_LIBRARIES: " ${FREETYPE_LIBRARIES})
-# MESSAGE("FREETYPE_LIBRARY_DIR: " ${FREETYPE_LIBRARY})
-
-# Find ROOT ROOT 6.24.06 ensures that the compiler is at least C++17
-find_package(ROOT 6.24.06 REQUIRED)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -O3 ${ROOT_CXX_FLAGS}")
-message("ROOT_INCLUDE_DIR: " ${ROOT_INCLUDE_DIR})
-message("ROOT_LIBRARIES: " ${ROOT_LIBRARIES})
-message("ROOT_GUI_LIBRARIES: " ${ROOT_GUI_LIBRARIES})
-message("ROOT_LIBRARY_DIR: " ${ROOT_LIBRARY_DIR})
-message("CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}")
-
-# find Boost
-set(Boost_NO_BOOST_CMAKE
-    ON
-    CACHE BOOL "Enable fix for FindBoost.cmake")
-find_package(Boost REQUIRED)
-if(Boost_FOUND)
-  message(STATUS "Boost is found at: ${Boost_INCLUDE_DIR}")
-  include_directories(${Boost_INCLUDE_DIR})
+# Set default for install destination
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE ${PROJECT_SOURCE_DIR})
 endif()
 
-# find Doxygen
-find_package(Doxygen)
+# Find required packages ------------------------------------------------------
 
-if(DOXYGEN_FOUND)
-  # add combiner modules to Doxygen
-  set(COMBINER_MODULES_DOXYGEN_SOURCES)
-  foreach(dir ${COMBINER_MODULES})
-    set(COMBINER_MODULES_DOXYGEN_SOURCES
-        "${COMBINER_MODULES_DOXYGEN_SOURCES}
-            INPUT += ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/include
-            INPUT += ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/src")
-  endforeach()
-  # configure Doxygen config file
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/Doxyfile.in
-                 ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile @ONLY)
-  # add target
-  add_custom_target(
-    doc
-    ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc
-    COMMENT "Generating API documentation with Doxygen"
-    VERBATIM)
+# Use Ccache if available
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+  set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
+  set(CMAKE_CXX_LINKER_LAUNCHER ${CCACHE_PROGRAM})
+  message(STATUS "Found Ccache: ${CCACHE_PROGRAM}")
 else()
+  message(STATUS "Could NOT find Ccache")
+endif()
+
+find_package(Freetype REQUIRED)
+
+find_package(Boost REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
+
+# Find ROOT (see https://root.cern/manual/integrate_root_into_my_cmake_project/,
+# https://cliutils.gitlab.io/modern-cmake/chapters/packages/ROOT.html)
+find_package(ROOT 6.18 CONFIG REQUIRED)
+message(STATUS "Found ROOT: ${ROOT_INCLUDE_DIRS}")
+# ROOT does not support specifying maximum version in find_package
+find_program(ROOT_CONFIG_EXECUTABLE root-config PATHS $ENV{ROOTSYS}/bin)
+execute_process(
+  COMMAND ${ROOT_CONFIG_EXECUTABLE} --version
+  OUTPUT_VARIABLE ROOT_VERSION
+  OUTPUT_STRIP_TRAILING_WHITESPACE)
+if(${ROOT_VERSION} GREATER_EQUAL 6.34)
   message(
-    STATUS
-      "Doxygen not installed or found -- API documentation can't be generated!")
-endif(DOXYGEN_FOUND)
+    FATAL_ERROR
+      "ROOT ${ROOT_VERSION} is not supported (createIterator() method was removed from RooFit in ROOT 6.34)"
+  )
+endif()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -O3 ${ROOT_CXX_FLAGS}")
+message(STATUS "CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}")
 
-# ##############################################################################
-#
-# set includes
-#
-# ##############################################################################
+if(BUILD_DOCUMENTATION)
+  find_package(Doxygen REQUIRED)
+  set(DOXYGEN_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/doxygen)
+  doxygen_add_docs(doc core ALL
+                   COMMENT "Generate doxygen pages for the core library")
+endif()
 
-# Set core include directory
-set(CORE_INC_DIR ./core/include/)
+# Build the core library ------------------------------------------------------
 
-# include directories
-include_directories(BEFORE ${CORE_INC_DIR} ${ROOT_INCLUDE_DIR})
-# declare the ROOT library path
-link_directories(${ROOT_LIBRARY_DIR} /usr/local/lib)
+set(CORE_INC_DIR core/include)
+include_directories(BEFORE ${CORE_INC_DIR})
+configure_file(${CORE_INC_DIR}/VersionConfig.h.in VersionConfig.h)
 
-# define the sources of the core library
-aux_source_directory(./core/src CORE_LIB_SOURCES)
+set(CORE_LIB_SOURCES
+    ./core/src/BatchScriptWriter.cpp
+    ./core/src/CLInterval.cpp
+    ./core/src/CLIntervalMaker.cpp
+    ./core/src/CLIntervalPrinter.cpp
+    ./core/src/ColorBuilder.cpp
+    ./core/src/Combiner.cpp
+    ./core/src/ConfidenceContours.cpp
+    ./core/src/Contour.cpp
+    ./core/src/ControlPlots.cpp
+    ./core/src/FileNameBuilder.cpp
+    ./core/src/FitResultCache.cpp
+    ./core/src/FitResultDump.cpp
+    ./core/src/Fitter.cpp
+    ./core/src/GammaComboEngine.cpp
+    ./core/src/Graphviz.cpp
+    ./core/src/LatexMaker.cpp
+    ./core/src/MethodAbsScan.cpp
+    ./core/src/MethodBergerBoosScan.cpp
+    ./core/src/MethodCoverageScan.cpp
+    ./core/src/MethodDatasetsPluginScan.cpp
+    ./core/src/MethodDatasetsProbScan.cpp
+    ./core/src/MethodPluginScan.cpp
+    ./core/src/MethodProbScan.cpp
+    ./core/src/OneMinusClPlot2d.cpp
+    ./core/src/OneMinusClPlotAbs.cpp
+    ./core/src/OneMinusClPlot.cpp
+    ./core/src/OptParser.cpp
+    ./core/src/ParameterCache.cpp
+    ./core/src/Parameter.cpp
+    ./core/src/ParameterEvolutionPlotter.cpp
+    ./core/src/ParametersAbs.cpp
+    ./core/src/PDF_Abs.cpp
+    ./core/src/PDF_Datasets.cpp
+    ./core/src/ProgressBar.cpp
+    ./core/src/PullPlotter.cpp
+    ./core/src/PValueCorrection.cpp
+    ./core/src/RooBinned2DBicubicBase.cpp
+    ./core/src/RooCrossCorPdf.cpp
+    ./core/src/RooHistPdfAngleVar.cpp
+    ./core/src/RooHistPdfVar.cpp
+    ./core/src/RooMultiPdf.cpp
+    ./core/src/RooPoly3Var.cpp
+    ./core/src/RooPoly4Var.cpp
+    ./core/src/RooSlimFitResult.cpp
+    ./core/src/Rounder.cpp
+    ./core/src/SharedArray.cpp
+    ./core/src/TGraphTools.cpp
+    ./core/src/ToyTree.cpp
+    ./core/src/UtilsConfig.cpp
+    ./core/src/Utils.cpp)
 
-# ##############################################################################
-#
-# generate ROOT dictionaries
-#
-# ##############################################################################
+set(ROOT_REQUIRED_LIBS
+    ROOT::Core
+    ROOT::Core
+    ROOT::Graf
+    ROOT::Gui
+    ROOT::Hist
+    ROOT::RIO
+    ROOT::RooFit
+    ROOT::Tree)
 
+set(CORE_LIB "${PROJECT_NAME}Core")
+add_library(${CORE_LIB} SHARED ${CORE_LIB_SOURCES})
+target_link_libraries(${CORE_LIB} ${FREETYPE_LIBRARIES} ${ROOT_REQUIRED_LIBS})
+# For finding ConfigVersion.h
+target_include_directories(${CORE_LIB} PUBLIC ${CMAKE_BINARY_DIR})
+
+# Add ROOT dictionaries to the core library, see:
+# https://cliutils.gitlab.io/modern-cmake/chapters/packages/ROOT.html#dictionary-generation
+# (but now RootNewMacros has been renamed RootMacros and is automatically
+# included with find_package(ROOT))
 set(CORE_DICTIONARY_SOURCES
     RooBinned2DBicubicBase.h
     RooCrossCorPdf.h
-    # RooHistInterpol.h
     RooHistPdfAngleVar.h
     RooHistPdfVar.h
     RooPoly3Var.h
     RooPoly4Var.h
     RooSlimFitResult.h
     RooMultiPdf.h)
-# add a make rule for the dictionary
-root_generate_dictionary(${PROJECT_NAME}Dict ${CORE_DICTIONARY_SOURCES} LINKDEF
-                         coreLinkDef.h)
-# add a target calling the make rule for the dictionary
-add_custom_target(${PROJECT_NAME}Dict DEPENDS ${PROJECT_NAME}Dict.cxx
-                                              ${PROJECT_NAME}Dict.h)
-# add the dictionary to the list of library sources
-set(CORE_LIB_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Dict.cxx
-                     ${CORE_LIB_SOURCES})
+root_generate_dictionary(G__${CORE_LIB} ${CORE_DICTIONARY_SOURCES} MODULE
+                         ${CORE_LIB} LINKDEF core/include/coreLinkDef.h)
 
-# ##############################################################################
-#
-# build core library
-#
-# ##############################################################################
+install(FILES ${CMAKE_BINARY_DIR}/lib${CORE_LIB}_rdict.pcm
+        DESTINATION ${LIBRARY_OUTPUT_DIRECTORY})
 
-add_shared_library(${PROJECT_NAME}Components ${CORE_LIB_SOURCES})
-# add the ROOT dictionary to the list of dependencies
-add_dependencies(${PROJECT_NAME}Components ${PROJECT_NAME}Dict)
-# add ROOT libraries to the linker command
-target_link_libraries(${PROJECT_NAME}Components ${ROOT_LIBRARIES}
-                      ${FREETYPE_LIBRARIES})
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Dict_rdict.pcm
-        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/lib)
+# Add combiner modules to the build -------------------------------------------
 
-# ##############################################################################
-#
-# subdirectorys for the combiners
-#
-# ##############################################################################
+# Get the list of combiner modules
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+include(combiners)
 
 foreach(dir ${COMBINER_MODULES})
   add_subdirectory(${dir})
 endforeach()
+
+# Set the list of output folders that should be created by each submodule
+set(OUTPUT_FOLDERS
+    root
+    plots
+    plots/C
+    plots/cl
+    plots/dot
+    plots/eps
+    plots/par
+    plots/pdf
+    plots/png
+    plots/root
+    plots/scanner)

@@ -4,6 +4,9 @@
 #include <PDF_Datasets.h>
 #include <TLatex.h>
 
+// Needed to define GAMMACOMBO_VERSION. Header created during CMake generation
+#include <VersionConfig.h>
+
 GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[]) : runOnDataSet(false) {
   // time the program
   t.Start();
@@ -2320,9 +2323,8 @@ void GammaComboEngine::runApplication() {
 /// print the initial banner
 ///
 void GammaComboEngine::printBanner() {
-  const char* VTAG = "1.3";
   cout << endl
-       << "\033[1mGammaCombo v" << VTAG << " \033[0m"
+       << "\033[1mGammaCombo v" << GAMMACOMBO_VERSION << " \033[0m"
        << "-- All rights reserved under GPLv3, http://www.gnu.org/licenses/gpl.txt" << endl
        << endl;
 }
