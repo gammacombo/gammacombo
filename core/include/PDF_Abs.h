@@ -162,6 +162,7 @@ class PDF_Abs {
   unsigned long long uniqueGlobalID;  // Used only in the Combiner::delPdf() mechanism. Uses the counter, so will depend
                                       // on creation order.
        int a ;   
+       int b ;   
 };
 
 #endif
