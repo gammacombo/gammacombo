@@ -161,9 +161,9 @@ class PDF_Abs {
   static unsigned long long counter;  // Counts the total number of PDF_Abs objects that are created.
   unsigned long long uniqueGlobalID;  // Used only in the Combiner::delPdf() mechanism. Uses the counter, so will depend
                                       // on creation order.
-       int a ;   
-       int b ;   
-    int c ;   
+  int a;
+  int b;
+  int c;
 };
 
 #endif
