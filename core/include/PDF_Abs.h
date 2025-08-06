@@ -163,6 +163,7 @@ class PDF_Abs {
                                       // on creation order.
        int a ;   
        int b ;   
+    int c ;   
 };
 
 #endif
