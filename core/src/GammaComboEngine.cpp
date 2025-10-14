@@ -2,6 +2,7 @@
 
 #include <BatchScriptWriter.h>
 #include <Combiner.h>
+#include <ExternalScanWrapper.h>
 #include <FileNameBuilder.h>
 #include <Graphviz.h>
 #include <LatexMaker.h>
@@ -862,6 +863,121 @@ void GammaComboEngine::makeAddDelCombinations() {
     arg->combid[i] = cmb.size() - 1;
   }
 }
+/// Funtionality for external scan
+ExternalScanWrapper* GammaComboEngine::createExternalScanner(TString filename, TString label) {
+  auto info = [](std::string msg) { return Utils::msgBase("GammaComboEngine::createExternalScanner() : ", msg); };
+  auto error = [](std::string msg) {
+    return Utils::errBase("GammaComboEngine::createExternalScanner() : ERROR : ", msg);
+  };
+
+  if (filename == "") return nullptr;
+
+  TFile* extFile = TFile::Open(filename);
+  if (!extFile || extFile->IsZombie()) {
+    error(std::format("Cannot open external scan file {:s}", std::string(filename)));
+    return nullptr;
+  }
+
+  ExternalScanWrapper* extScanner = nullptr;
+  TObject* hCL_obj = extFile->Get("hCL");
+  if (!hCL_obj) {
+    error(std::format("No hCL histogram found in file {:s}", std::string(filename)));
+    extFile->Close();
+    return nullptr;
+  }
+
+  TH2F* hCL2d = dynamic_cast<TH2F*>(hCL_obj);
+  bool is2D = (hCL2d != nullptr);
+
+  if (is2D) {
+    info("Loading 2D external scan...");
+    using Utils::getUniqueRootName;
+
+    // Load 2D histograms (now using same names as 1D)
+    TH2F* hCLs2d = (TH2F*)extFile->Get("hCLs");
+    TH2F* hChi2min2d = (TH2F*)extFile->Get("hChi2min");
+
+    // Clone to avoid issues when file closes
+    hCL2d = (TH2F*)hCL2d->Clone("hCL_external" + getUniqueRootName());
+    hCL2d->SetDirectory(0);
+
+    if (hCL2d) {
+      TH2F* originalPtr = hCL2d;
+      hCL2d = (TH2F*)hCL2d->Clone("hCL_external" + getUniqueRootName());
+      hCL2d->SetDirectory(0);  // Detach from file
+    }
+
+    if (hCLs2d) {
+      hCLs2d = (TH2F*)hCLs2d->Clone("hCLs_external" + getUniqueRootName());
+      hCLs2d->SetDirectory(0);
+    }
+
+    if (hChi2min2d) {
+      hChi2min2d = (TH2F*)hChi2min2d->Clone("hChi2min_external" + getUniqueRootName());
+      hChi2min2d->SetDirectory(0);
+    }
+
+    // Close file AFTER cloning
+    extFile->Close();
+    delete extFile;
+
+    if (!hCL2d) {
+      error("Failed to load or clone hCL histogram");
+      return nullptr;
+    }
+    extScanner = new ExternalScanWrapper(hCL2d, hCLs2d, "external_" + label, label, arg);
+
+    // Infer from histogram axis names for common angular variables
+    TString xName = hCL2d->GetXaxis()->GetName();
+    TString yName = hCL2d->GetYaxis()->GetName();
+    if (xName.Contains("gamma") || xName.Contains("delta") || xName.Contains("phi") || xName.Contains("theta") ||
+        xName.Contains("alpha") || xName.Contains("beta")) {
+      extScanner->getScanVar1()->setUnit("Rad");
+    }
+    if (yName.Contains("gamma") || yName.Contains("delta") || yName.Contains("phi") || yName.Contains("theta") ||
+        yName.Contains("alpha") || yName.Contains("beta")) {
+      extScanner->getScanVar2()->setUnit("Rad");
+    }
+
+  } else {
+    info("Loading 1D external scan...");
+    // Cast to 1D histograms
+    TH1F* hCL1d = dynamic_cast<TH1F*>(hCL_obj);
+    TH1F* hCLs1d = (TH1F*)extFile->Get("hCLs");
+    TH1F* hChi2min1d = (TH1F*)extFile->Get("hChi2min");
+
+    if (!hCL1d) {
+      error("hCL exists but is not TH1F or TH2F");
+      extFile->Close();
+      return nullptr;
+    }
+
+    // Clone histograms
+    using Utils::getUniqueRootName;
+    hCL1d = (TH1F*)hCL1d->Clone("hCL_external" + getUniqueRootName());
+    hCL1d->SetDirectory(0);
+
+    if (hCLs1d) {
+      hCLs1d = (TH1F*)hCLs1d->Clone("hCLs_external" + getUniqueRootName());
+      hCLs1d->SetDirectory(0);
+    }
+
+    if (hChi2min1d) {
+      hChi2min1d = (TH1F*)hChi2min1d->Clone("hChi2min_external" + getUniqueRootName());
+      hChi2min1d->SetDirectory(0);
+    }
+    extScanner = new ExternalScanWrapper(hCL1d, hCLs1d, "external_" + label, label, arg);
+
+    // Infer from histogram axis name for common angular variables
+    TString xName = hCL1d->GetXaxis()->GetName();
+    if (xName.Contains("gamma") || xName.Contains("delta") || xName.Contains("phi") || xName.Contains("theta") ||
+        xName.Contains("alpha") || xName.Contains("beta")) {
+      extScanner->getScanVar1()->setUnit("Rad");
+    }
+  }
+
+  return extScanner;
+}
 
 ///
 /// print parameter structure of the combinations into
@@ -1279,10 +1395,29 @@ void GammaComboEngine::make1dProbPlot(MethodProbScan* scanner, int cId) {
     scanner->setDrawSolution(arg->plotsolutions[cId]);
     if (arg->isAction("plugin") || arg->isAction("plot"))
       scanner->computeCLvalues();  // compute new CL values depending on test stat, even if not a rescan is wished
-    if (arg->cls.size() > 0) {
-      if (runOnDataSet) ((MethodDatasetsProbScan*)scanner)->plotFitRes(m_fnamebuilder->getFileNamePlot(cmb) + "_fit");
-      scanner->plotOn(plot, 1);  // for prob ClsType>1 doesn't exist
+    if (!arg->externalScanOnly) {
+      if (arg->cls.size() > 0) {
+        if (runOnDataSet) ((MethodDatasetsProbScan*)scanner)->plotFitRes(m_fnamebuilder->getFileNamePlot(cmb) + "_fit");
+        scanner->plotOn(plot, 1);  // for prob ClsType>1 doesn't exist
+      }
     }
+
+    // Add external scanner if requested and only do it after last internal scanner
+    if (arg->externalScanFiles.size() > 1 && cId == arg->combid.size() - 1) {
+      int files_len = arg->externalScanFiles.size();
+      int labels_len = arg->externalScanLabels.size();
+      if (files_len != labels_len) { std::cout << "WARNING: More external files provided than labels" << std::endl; }
+      for (int i = 1; i < files_len; i++) {
+        ExternalScanWrapper* extScanner =
+            (i < labels_len)
+                ? createExternalScanner(arg->externalScanFiles[i], arg->externalScanLabels[i])
+                : createExternalScanner(arg->externalScanFiles[i], TString("External " + std::to_string(i)));
+
+        if (arg->debug) extScanner->getHCL2d();
+        if (extScanner) { ((OneMinusClPlot*)plot)->addScanner(extScanner, 0); }
+      }
+    }
+
     scanner->plotOn(plot);
     int colorId = cId;
     if (arg->color.size() > cId) colorId = arg->color[cId];
@@ -1294,7 +1429,7 @@ void GammaComboEngine::make1dProbPlot(MethodProbScan* scanner, int cId) {
     scanner->setFillColor(fillColors[cId]);
     scanner->setFillStyle(fillStyles[cId]);
     scanner->setFillTransparency(fillTransparencies[cId]);
-    plot->Draw();
+    if (!arg->externalScanOnly) plot->Draw();
   }
 }
 
@@ -1507,12 +1642,31 @@ void GammaComboEngine::make2dProbPlot(MethodProbScan* scanner, int cId) {
   scanner->setFillColor(fillColors[cId]);
   scanner->setFillStyle(fillStyles[cId]);
   scanner->setFillTransparency(fillTransparencies[cId]);
-  if (arg->cls.size() > 0) scanner->plotOn(plot, 1);
-  scanner->plotOn(plot, 0);
+  if (!arg->externalScanOnly) {
+    if (arg->cls.size() > 0) scanner->plotOn(plot, 1);
+    scanner->plotOn(plot, 0);
+  }
   // only draw the plot once when multiple scanners are plotted,
   // else we end up with too many graphs, and the transparency setting
   // gets screwed up
   // Titus: also draw the plot, if no combiner is set (datasets case)
+  if (cId == arg->combid.size() - 1 || arg->combid.empty()) {
+    plot->Draw();
+    plot->Show();
+  }
+  // Add external scanner if requested, and only do it after last scanner
+  if (arg->externalScanFiles.size() > 1 && cId == arg->combid.size() - 1) {
+    int files_len = arg->externalScanFiles.size();
+    int labels_len = arg->externalScanLabels.size();
+    if (files_len != labels_len) { std::cout << "WARNING: More external files provided than labels" << std::endl; }
+    for (int i = 1; i < files_len; ++i) {
+      ExternalScanWrapper* extScanner =
+          (i < labels_len) ? createExternalScanner(arg->externalScanFiles[i], arg->externalScanLabels[i])
+                           : createExternalScanner(arg->externalScanFiles[i], TString("External " + std::to_string(i)));
+      if (arg->debug) extScanner->getHCL2d();
+      if (extScanner) { ((OneMinusClPlot2d*)plot)->addScanner(extScanner, 0); }
+    }
+  }
   if (cId == arg->combid.size() - 1 || arg->combid.empty()) {
     plot->Draw();
     plot->Show();
@@ -1943,11 +2097,21 @@ void GammaComboEngine::runToys(Combiner* c) {
 /// scan engine
 ///
 void GammaComboEngine::scan() {
+  auto debug = [](std::string msg) { return Utils::msgBase("GammaComboEngine::scan() : DEBUG : ", msg); };
+
+  if (arg->debug) {
+    debug(std::format("runOnDataSet = {:s}", runOnDataSet ? "true" : "false"));
+    debug(std::format("arg->var.size() = {:d}", arg->var.size()));
+  }
+
   // if we're running with the dataset option then we go off and do that somewhere else
   if (runOnDataSet) {
+    if (arg->debug) debug("Taking dataset path");
     scanDataSet();
     return;
   }
+
+  if (arg->debug) debug(std::format("Taking combiner path, number of combiners: {:d}", arg->combid.size()));
 
   // combination scanning action happens here
   for (int i = 0; i < arg->combid.size(); i++) {
@@ -2032,10 +2196,13 @@ void GammaComboEngine::scan() {
       // 2D SCANS
       else if (arg->var.size() == 2) {
         if (arg->isAction("plot")) {
+          if (arg->debug) debug("Loading scanner for 2D plot");
           scannerProb->loadScanner(m_fnamebuilder->getFileNameScanner(scannerProb));
         } else {
+          if (arg->debug) debug("Running 2D prob scan");
           make2dProbScan(scannerProb, i);
         }
+        if (arg->debug) debug("About to call make2dProbPlot");
         make2dProbPlot(scannerProb, i);
       }
     }

@@ -297,6 +297,9 @@ void OptParser::defineOptions() {
   availableOptions.push_back("debug");
   availableOptions.push_back("digits");
   availableOptions.push_back("evol");
+  availableOptions.push_back("externalscan");
+  availableOptions.push_back("externallabel");
+  availableOptions.push_back("externalscanonly");
   availableOptions.push_back("hexfillcolor");
   availableOptions.push_back("hexlinecolor");
   availableOptions.push_back("filename");
@@ -411,6 +414,9 @@ void OptParser::bookPlottingOptions() {
   bookedOptions.push_back("color");
   bookedOptions.push_back("digits");
   bookedOptions.push_back("ext");
+  bookedOptions.push_back("externalscan");
+  bookedOptions.push_back("externalscanonly");
+  bookedOptions.push_back("externalscanlabel");
   bookedOptions.push_back("leg");
   bookedOptions.push_back("legsize");
   bookedOptions.push_back("legbox");
@@ -770,6 +776,15 @@ void OptParser::parseArguments(int argc, char* argv[]) {
       false);
   TCLAP::SwitchArg squareArg("", "square", "Make a square canvas", false);
   TCLAP::SwitchArg saveAtMinArg("", "saveAtMin", "Save workspace after minimization", false);
+
+  TCLAP::MultiArg<std::string> externalScanArg("", "externalscan",
+                                               "Load external scan data from ROOT file for overlay plotting. "
+                                               "Format: --externalscan path/to/external_scan1.root",
+                                               false, "string");
+  TCLAP::MultiArg<std::string> externalLabelArg("", "externallabel", "Label for external scan in legend", false,
+                                                "string");
+  TCLAP::SwitchArg externalScanOnlyArg("", "externalscanonly",
+                                       "Suppress primary combiner (hack to plot external scans alone)", false);
 
   // --------------- aruments that can be given multiple times
   std::vector<std::string> vAction;
@@ -1146,6 +1161,9 @@ void OptParser::parseArguments(int argc, char* argv[]) {
   if (isIn<TString>(bookedOptions, "hexlinecolor")) cmd.add(hexlinecolorArg);
   if (isIn<TString>(bookedOptions, "hexfillcolor")) cmd.add(hexfillcolorArg);
   if (isIn<TString>(bookedOptions, "ext")) cmd.add(filenameadditionArg);
+  if (isIn<TString>(bookedOptions, "externalscan")) cmd.add(externalScanArg);
+  if (isIn<TString>(bookedOptions, "externalscanonly")) cmd.add(externalScanOnlyArg);
+  if (isIn<TString>(bookedOptions, "externallabel")) cmd.add(externalLabelArg);
   if (isIn<TString>(bookedOptions, "filename")) cmd.add(filenamechangeArg);
   if (isIn<TString>(bookedOptions, "evol")) cmd.add(parevolArg);
   if (isIn<TString>(bookedOptions, "digits")) cmd.add(digitsArg);
@@ -1199,6 +1217,12 @@ void OptParser::parseArguments(int argc, char* argv[]) {
   confirmsols = !noconfsolsArg.getValue();
   digits = digitsArg.getValue();
   enforcePhysRange = prArg.getValue();
+  std::vector<std::string> extScan_tmp = externalScanArg.getValue();  ///< can't assign directly because of TString cast
+  for (int i = 0; i < extScan_tmp.size(); ++i) externalScanFiles.push_back(extScan_tmp[i]);
+  std::vector<std::string> extLabel_tmp =
+      externalLabelArg.getValue();  ///< can't assign directly because of TString cast
+  for (int i = 0; i < extLabel_tmp.size(); ++i) externalScanLabels.push_back(extLabel_tmp[i]);
+  externalScanOnly = externalScanOnlyArg.getValue();
   filenameaddition = filenameadditionArg.getValue();
   filenamechange = filenamechangeArg.getValue();
   filltransparency = filltransparencyArg.getValue();
