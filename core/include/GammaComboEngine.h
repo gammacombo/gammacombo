@@ -15,6 +15,7 @@
 
 class BatchScriptWriter;
 class Combiner;
+class ExternalScanWrapper;
 class FileNameBuilder;
 class MethodBergerBoosScan;
 class MethodCoverageScan;
@@ -132,6 +133,7 @@ class GammaComboEngine {
   void makeLatex(Combiner* c);
   void saveWorkspace(Combiner* c, int i);
   void runToys(Combiner* c);
+  ExternalScanWrapper* createExternalScanner(TString filename, TString label);
 
   OptParser* arg = nullptr;
   std::vector<Combiner*> cmb;
