@@ -633,8 +633,8 @@ void OptParser::parseArguments(int argc, char* argv[]) {
       false, "default", "string");
   TCLAP::ValueArg<std::string> plotgroupArg("", "group",
                                             "Set the group logo. Use '--group off' to disable the logo. "
-                                            "See also --grouppos. Default: GammaCombo",
-                                            false, "GammaCombo", "string");
+                                            "See also --grouppos. Default: CharmFitter",
+                                            false, "CharmFitter", "string");
   TCLAP::ValueArg<std::string> plotgroupposArg(
       "", "grouppos",
       "Set the position of the group logo. "

@@ -12,6 +12,7 @@
 # This is the CI/CD pipeline for the repository mirror in Gitlab.
 
 stages:
+  - .pre
   - build
   - test
 
@@ -22,6 +23,16 @@ variables:
   tags:
     - cvmfs
   image: gitlab-registry.cern.ch/lhcb-docker/os-base/alma9-devel:latest
+
+prebuild:
+  stage: .pre
+  script:
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@github.com/tpajero/charm-fitter.git charm-fitter
+  artifacts:
+    when: on_success
+    paths:
+      - charm-fitter
+    expire_in: 1 days
 
 build_gcc:
   extends: .select_runner
