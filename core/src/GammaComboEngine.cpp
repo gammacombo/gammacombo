@@ -335,6 +335,17 @@ Combiner* GammaComboEngine::getCombiner(int id) {
 }
 
 ///
+/// Get a vector with the indices of all non-trivial combiners created.
+///
+std::vector<int> GammaComboEngine::getCombinersIds() const {
+  std::vector<int> ids;
+  for (int id = 0; id < cmb.size(); ++id) {
+    if (combinerExists(id)) ids.push_back(id);
+  }
+  return ids;
+}
+
+///
 /// Get a PDF.
 /// \param id - PDF ID, set when adding the PDF using addPdf()
 ///
