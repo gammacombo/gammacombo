@@ -384,7 +384,7 @@ def get_lopts(nscans, lopts, dim=1):
     else:
         defs = def_lopts_2d
 
-    ret = [None for i in range(nscans)]
+    ret = [None for i in range(max(nscans, len(lopts)))]
     for i in range(nscans):
         if i < len(lopts):
             ret[i] = lopts[i]
@@ -392,6 +392,11 @@ def get_lopts(nscans, lopts, dim=1):
             ret[i] = defs[i]
         else:
             raise RuntimeError(f"Can't find a default lopt for iscanner = {i}")
+
+    # Additional options for e.g. lines, markers
+    for i in range(nscans, len(lopts)):
+        ret[i] = lopts[i]
+
     return ret
 
 
@@ -401,7 +406,7 @@ def get_fopts(nscans, fopts, dim=1):
     else:
         defs = def_fopts_2d
 
-    ret = [None for i in range(nscans)]
+    ret = [None for i in range(max(nscans, len(fopts)))]
     for i in range(nscans):
         if i < len(fopts):
             ret[i] = fopts[i]
@@ -409,6 +414,11 @@ def get_fopts(nscans, fopts, dim=1):
             ret[i] = defs[i]
         else:
             raise RuntimeError(f"Can't find a default fopt for iscanner = {i}")
+
+    # Additional options for e.g. lines, markers
+    for i in range(nscans, len(fopts)):
+        ret[i] = fopts[i]
+
     return ret
 
 
@@ -418,7 +428,7 @@ def get_mopts(nscans, mopts, dim=1):
     else:
         defs = def_mopts_2d
 
-    ret = [None for i in range(nscans)]
+    ret = [None for i in range(max(nscans, len(mopts)))]
     for i in range(nscans):
         if i < len(mopts):
             ret[i] = mopts[i]
@@ -426,6 +436,11 @@ def get_mopts(nscans, mopts, dim=1):
             ret[i] = defs[i]
         else:
             raise RuntimeError(f"Can't find a default fopt for iscanner = {i}")
+
+    # Additional options for e.g. lines, markers
+    for i in range(nscans, len(mopts)):
+        ret[i] = mopts[i]
+
     return ret
 
 
@@ -600,7 +615,7 @@ def plot2d(
     prelim=False,
     contourline=False,
     legopts={},
-    axes_origin=(0.14, 0.16),
+    axes_origin=(0.17, 0.16),
     righttop_padding=(0.04, 0.04),
 ):
     """parameters
@@ -689,6 +704,7 @@ def plot2d(
     leg_labels = []
     if legtitles:
         for i, ltitle in enumerate(legtitles):
+            lopt_original = dict(**lopts[i])
             lopt = dict(**lopts[i])
             fopt = dict(**fopts[i])
             mopt = dict(**mopts[i])
@@ -717,12 +733,18 @@ def plot2d(
 
             if ltitle is not None:
                 leg_labels.append(ltitle)
-                leg_opts = {**lopt, **fopt}
-                leg_handle = (
-                    (patches.Patch(**leg_opts), Line2D([0], [0], lw=0, **mopt))
-                    if mopt
-                    else patches.Patch(**leg_opts)
-                )
+                if fopt == {}:
+                    if mopt == {}:
+                        leg_handle = Line2D([0], [0], **lopt_original)
+                    else:
+                        leg_handle = Line2D([0], [0], lw=0, **mopt)
+                else:
+                    leg_opts = {**lopt, **fopt}
+                    leg_handle = (
+                        (patches.Patch(**leg_opts), Line2D([0], [0], lw=0, **mopt))
+                        if mopt
+                        else patches.Patch(**leg_opts)
+                    )
                 leg_handles.append(leg_handle)
 
         # if 'prop' not in legopts:
