@@ -16,7 +16,7 @@ class TObject;
 class RooMultiPdf : public RooAbsPdf {
  public:
   enum PenatlyScheme { PVAL, AIC };
-  RooMultiPdf(){};
+  RooMultiPdf() {};
   RooMultiPdf(const char* name, const char* title, RooCategory&, const RooArgList& _c);
   RooMultiPdf(const RooMultiPdf& other, const char* name = 0);
   virtual TObject* clone(const char* newname) const { return new RooMultiPdf(*this, newname); }

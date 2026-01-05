@@ -14,7 +14,7 @@ class TObject;
 
 class RooPoly4Var : public RooAbsReal {
  public:
-  RooPoly4Var(){};
+  RooPoly4Var() {};
   RooPoly4Var(const char* name, const char* title, RooAbsReal& _xobs, double& _p0, double& _p1, double& _p2,
               double& _p3, double& _p4);
   RooPoly4Var(const RooPoly4Var& other, const char* name = 0);
