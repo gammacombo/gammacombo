@@ -564,8 +564,8 @@ bool PDF_Abs::checkConsistency() const {
     if (pObsName != base + "_obs") {
       std::cout << "PDF_Abs::checkConsistency() : " << name << " : " << pTh->GetName()
                 << " doesn't match its observable." << std::endl;
-      std::cout << "                              Expected '" << base + "_obs"
-                << "'. Found '" << pObsName << "'." << std::endl;
+      std::cout << "                              Expected '" << base + "_obs" << "'. Found '" << pObsName << "'."
+                << std::endl;
       std::cout << "                              Check ordering of the 'theory' and 'observables' lists!" << std::endl;
       allOk = false;
     }
