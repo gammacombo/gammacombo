@@ -14,7 +14,7 @@ class TObject;
 
 class RooHistPdfVar : public RooAbsReal {
  public:
-  RooHistPdfVar(){};
+  RooHistPdfVar() {};
   RooHistPdfVar(const char* name, const char* title, RooAbsReal& _xobs, RooAbsReal& _xth, RooAbsReal& _xshift);
   RooHistPdfVar(const RooHistPdfVar& other, const char* name = 0);
   virtual TObject* clone(const char* newname) const { return new RooHistPdfVar(*this, newname); }
