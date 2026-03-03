@@ -23,7 +23,7 @@ ExternalScanWrapper::ExternalScanWrapper(TH1F* hCL_ext, TH1F* hCLs_ext, TString 
   double xMax = hCL_ext->GetXaxis()->GetXmax();
   double xCenter = (xMin + xMax) / 2.;
 
-  scanVar1Dummy = new RooRealVar(xName.IsNull() ? "x" : xName, xTitle.IsNull() ? "x" : xTitle, xCenter, xMin, xMax);
+  scanVar1 = new RooRealVar(xName.IsNull() ? "x" : xName, xTitle.IsNull() ? "x" : xTitle, xCenter, xMin, xMax);
 }
 
 // Constructor for 2D data
@@ -49,6 +49,6 @@ ExternalScanWrapper::ExternalScanWrapper(TH2F* hCL2d_ext, TH2F* hCLs2d_ext, TStr
   double yMax = hCL2d_ext->GetYaxis()->GetXmax();
   double yCenter = (yMin + yMax) / 2.;
 
-  scanVar1Dummy = new RooRealVar(xName.IsNull() ? "x" : xName, xTitle.IsNull() ? "x" : xTitle, xCenter, xMin, xMax);
-  scanVar2Dummy = new RooRealVar(yName.IsNull() ? "y" : yName, yTitle.IsNull() ? "y" : yTitle, yCenter, yMin, yMax);
+  scanVar1 = new RooRealVar(xName.IsNull() ? "x" : xName, xTitle.IsNull() ? "x" : xTitle, xCenter, xMin, xMax);
+  scanVar2 = new RooRealVar(yName.IsNull() ? "y" : yName, yTitle.IsNull() ? "y" : yTitle, yCenter, yMin, yMax);
 }

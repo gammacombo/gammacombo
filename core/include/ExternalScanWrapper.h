@@ -7,8 +7,6 @@
 
 #include <TString.h>
 
-#include <vector>
-
 class OptParser;
 
 class TH1F;
@@ -20,8 +18,8 @@ class TH2F;
 class ExternalScanWrapper : public MethodAbsScan {
  private:
   bool is2D = false;
-  RooRealVar* scanVar1Dummy = nullptr;
-  RooRealVar* scanVar2Dummy = nullptr;
+  RooRealVar* scanVar1 = nullptr;
+  RooRealVar* scanVar2 = nullptr;
 
  public:
   /// Constructor for 1D scan.
@@ -29,15 +27,15 @@ class ExternalScanWrapper : public MethodAbsScan {
   /// Constructor for 2D scan.
   ExternalScanWrapper(TH2F* hCL2d, TH2F* hCLs2d, TString name, TString title, const OptParser* arg);
 
-  ~ExternalScanWrapper() {
-    if (scanVar1Dummy) delete scanVar1Dummy;
-    if (scanVar2Dummy) delete scanVar2Dummy;
+  ~ExternalScanWrapper() override {
+    if (scanVar1) delete scanVar1;
+    if (scanVar2) delete scanVar2;
   }
 
-  RooRealVar* getScanVar1() override { return scanVar1Dummy; }
-  RooRealVar* getScanVar2() override { return scanVar2Dummy; }
-  const RooRealVar* getScanVar1() const override { return scanVar1Dummy; }
-  const RooRealVar* getScanVar2() const override { return scanVar2Dummy; }
+  RooRealVar* getScanVar1() override { return scanVar1; }
+  RooRealVar* getScanVar2() override { return scanVar2; }
+  const RooRealVar* getScanVar1() const override { return scanVar1; }
+  const RooRealVar* getScanVar2() const override { return scanVar2; }
 
   int scan1d() override { return 0; }
   int scan2d() override { return 0; }

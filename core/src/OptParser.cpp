@@ -1208,6 +1208,8 @@ void OptParser::parseArguments(int argc, char* argv[]) {
   //
   // copy over parsed values into data members
   //
+  std::vector<std::string> tmp;  // for variables that cannot be assigned directly due to TString cast
+
   asimov = asimovArg.getValue();
   cls = clsArg.getValue();
   CL = CLArg.getValue();
@@ -1217,11 +1219,10 @@ void OptParser::parseArguments(int argc, char* argv[]) {
   confirmsols = !noconfsolsArg.getValue();
   digits = digitsArg.getValue();
   enforcePhysRange = prArg.getValue();
-  std::vector<std::string> extScan_tmp = externalScanArg.getValue();  ///< can't assign directly because of TString cast
-  for (int i = 0; i < extScan_tmp.size(); ++i) externalScanFiles.push_back(extScan_tmp[i]);
-  std::vector<std::string> extLabel_tmp =
-      externalLabelArg.getValue();  ///< can't assign directly because of TString cast
-  for (int i = 0; i < extLabel_tmp.size(); ++i) externalScanLabels.push_back(extLabel_tmp[i]);
+  tmp = externalScanArg.getValue();
+  for (int i = 0; i < tmp.size(); ++i) externalScanFiles.push_back(tmp[i]);
+  tmp = externalLabelArg.getValue();
+  for (int i = 0; i < tmp.size(); ++i) externalScanLabels.push_back(tmp[i]);
   externalScanOnly = externalScanOnlyArg.getValue();
   filenameaddition = filenameadditionArg.getValue();
   filenamechange = filenamechangeArg.getValue();
@@ -1320,7 +1321,7 @@ void OptParser::parseArguments(int argc, char* argv[]) {
   // for ( int i=0; i<resultAddPdf.size(); i++){cout << "resultAddPdf " << resultAddPdf[i] << std::endl;}
   // for ( int i=0; i<resultDelPdf.size(); i++){cout << "resultDelPdf " << resultDelPdf[i] << std::endl;}
   // std::exit(0);
-  std::vector<std::string> tmp = combidArg.getValue();
+  tmp = combidArg.getValue();
   for (int i = 0; i < tmp.size(); i++) {
     int resultCmbId = 0;
     std::vector<int> resultAddDelPdf;
