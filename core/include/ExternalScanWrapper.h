@@ -42,4 +42,15 @@ class ExternalScanWrapper : public MethodAbsScan {
   void initScan() override {}
 };
 
+/**
+ * Creates an ExternalScanWrapper by loading the specified file and looking for likelihood-scan TH1F/TH2F histograms
+ * named `hCL` (and optionally `hCLs`).
+ *
+ * :param filename: Path to the file containing the histograms.
+ * :param label: Name and title of the ExternalScanWrapper.
+ *
+ * :return: A pointer to the created ExternalScanWrapper, or nullptr if there was an error. Caller takes ownership.
+ */
+ExternalScanWrapper* createExternalScanner(TString filename, TString label, const OptParser* opts);
+
 #endif
