@@ -120,10 +120,11 @@ set(CORE_LIB_SOURCES
 
 set(ROOT_REQUIRED_LIBS
     ROOT::Core
-    ROOT::Core
     ROOT::Graf
     ROOT::Gui
     ROOT::Hist
+    ROOT::MathCore
+    ROOT::Matrix
     ROOT::RIO
     ROOT::RooFit
     ROOT::Tree)
