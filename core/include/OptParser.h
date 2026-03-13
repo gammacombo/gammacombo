@@ -67,9 +67,9 @@ class OptParser {
   std::vector<std::vector<TString>> randomizeToyVars;
   bool grid = false;
   TString group = "GammaCombo";
-  TString groupPos = "";
-  TString hfagLabel = "";
-  TString hfagLabelPos = "";
+  TString groupPos;
+  TString hfagLabel;
+  TString hfagLabelPos;
   int id = -99;
   bool importance = false;
   bool info = false;
@@ -91,6 +91,7 @@ class OptParser {
   int ndiv = 407;
   int ndivy = 407;
   bool nosyst = false;
+  double errtol = 5e-2;
   int npoints1d = -99;
   int npoints2dx = -99;
   int npoints2dy = -99;

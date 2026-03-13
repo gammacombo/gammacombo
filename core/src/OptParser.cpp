@@ -296,6 +296,7 @@ void OptParser::defineOptions() {
   availableOptions.push_back("date");
   availableOptions.push_back("debug");
   availableOptions.push_back("digits");
+  availableOptions.push_back("errtol");
   availableOptions.push_back("evol");
   availableOptions.push_back("hexfillcolor");
   availableOptions.push_back("hexlinecolor");
@@ -524,6 +525,8 @@ bool OptParser::isQuickhack(int id) const { return Utils::isIn<int>(qh, id); }
 /// it will assume the default value given here.
 ///
 void OptParser::parseArguments(int argc, char* argv[]) {
+  auto warning = [](const std::string& msg) { Utils::msgBase("OptParser::parseArguments() : WARNING : ", msg); };
+  auto error = [](const std::string& msg) { Utils::errBase("OptParser::parseArguments() : ERROR : ", msg); };
 
   // --------------- arguments that take a value
   TCLAP::ValueArg<std::string> dateArg("", "date", "Plot the date.", false, "", "string");
@@ -667,6 +670,10 @@ void OptParser::parseArguments(int argc, char* argv[]) {
                                   1, "int");
   TCLAP::ValueArg<int> ntoysArg("", "ntoys", "number of toy experiments per job. Default: 25", false, 25, "int");
   TCLAP::ValueArg<int> nrunArg("", "nrun", "Number of toy run. To be used with --action pluginbatch.", false, 1, "int");
+  TCLAP::ValueArg<double> errtolArg("", "errtol",
+                                    "Tolerance on the relative uncertainty on the Confidence-Interval error. \n"
+                                    "Default: 10% (normalised to the 1 sigma interval)",
+                                    false, 10e-2, "double");
   TCLAP::ValueArg<int> npointsArg("", "npoints",
                                   "Number of scan points used by the Prob method. \n"
                                   "1D plots: Default 100 points. \n"
@@ -1105,6 +1112,7 @@ void OptParser::parseArguments(int argc, char* argv[]) {
   if (isIn<TString>(bookedOptions, "nrun")) cmd.add(nrunArg);
   if (isIn<TString>(bookedOptions, "npointstoy")) cmd.add(npointstoyArg);
   if (isIn<TString>(bookedOptions, "ncoveragetoys")) cmd.add(ncoveragetoysArg);
+  if (isIn<TString>(bookedOptions, "errtol")) cmd.add(errtolArg);
   if (isIn<TString>(bookedOptions, "npoints2dy")) cmd.add(npoints2dyArg);
   if (isIn<TString>(bookedOptions, "npoints2dx")) cmd.add(npoints2dxArg);
   if (isIn<TString>(bookedOptions, "npoints")) cmd.add(npointsArg);
@@ -1231,6 +1239,9 @@ void OptParser::parseArguments(int argc, char* argv[]) {
   ndiv = ndivArg.getValue();
   ndivy = ndivyArg.getValue();
   nosyst = nosystArg.getValue();
+  errtol = errtolArg.getValue();
+  if (errtol < 0.) error("Error tolerance must be more than zero.");
+  if (errtol >= 1.) warning("Are you sure that you want to set the error tolerance to a value greater than unity?");
   npoints1d = npointsArg.getValue() == -1 ? 100 : npointsArg.getValue();
   npoints2dx = npoints2dxArg.getValue() == -1 ? (npointsArg.getValue() == -1 ? 50 : npointsArg.getValue())
                                               : npoints2dxArg.getValue();
