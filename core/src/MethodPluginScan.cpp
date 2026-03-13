@@ -71,9 +71,9 @@ MethodPluginScan::MethodPluginScan(MethodProbScan* s) : MethodAbsScan(s->getComb
 /// Constructor, mainly to ensure compatibility with MethodDatasetsPluginScan
 ///
 MethodPluginScan::MethodPluginScan(MethodProbScan* s, PDF_Datasets* pdf, const OptParser* opt) : MethodAbsScan(opt) {
-  constructorHelper(s);
   obsName = pdf->getObsName();
   w = pdf->getWorkspace();
+  constructorHelper(s);
 };
 
 ///
