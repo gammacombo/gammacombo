@@ -173,6 +173,102 @@ def read_gc_scan(scanfile, parfile, pars):
     return res
 
 
+def read_external_scan(rootfile, scanvar1=None, scanvar2=None):
+    """
+    Read an external scan from a ROOT file containing hCL histogram
+
+    Parameters
+    ----------
+    rootfile : str
+        Path to the ROOT file
+    scanvar1 : str, optional
+        Name of x-axis variable (for axis labels)
+    scanvar2 : str, optional
+        Name of y-axis variable (for axis labels)
+
+    Returns
+    -------
+    tuple
+        (x, y, z, bf) where bf is [bfx] for 1D or [bfx, bfy] for 2D
+    """
+    if not os.path.exists(rootfile):
+        raise FileNotFoundError(f"Cannot find external scan file {rootfile}")
+
+    tf = r.TFile(rootfile)
+    hCL = tf.Get("hCL")
+
+    if hCL is None:
+        raise RuntimeError(f"No hCL histogram found in {rootfile}")
+
+    # Determine if 1D or 2D scan first
+    is2D = hCL.InheritsFrom("TH2")
+
+    # Try to read best-fit points
+    bf = None
+    bfX_obj = tf.Get("bestfit_x")
+
+    if bfX_obj and hasattr(bfX_obj, "GetTitle"):
+        try:
+            bfX = float(bfX_obj.GetTitle())
+            bf = [bfX]
+            print(f"Found best-fit X: {bfX}")
+
+            # Only try to read Y for 2D scans
+            if is2D:
+                bfY_obj = tf.Get("bestfit_y")
+                if bfY_obj and hasattr(bfY_obj, "GetTitle"):
+                    try:
+                        bfY = float(bfY_obj.GetTitle())
+                        bf.append(bfY)
+                        print(f"Found best-fit Y: {bfY}")
+                    except (ValueError, ReferenceError, TypeError) as e:
+                        print(f"Warning: Could not read best-fit Y value: {e}")
+        except (ValueError, ReferenceError, TypeError) as e:
+            print(f"Warning: Could not read best-fit X value: {e}")
+            bf = None
+    else:
+        print("Warning: No best-fit point found in external scan file")
+
+    # Process histogram data
+    if is2D:
+        # 2D case
+        xcenters = np.array(
+            [hCL.GetXaxis().GetBinCenter(b) for b in range(1, hCL.GetNbinsX() + 1)]
+        )
+        ycenters = np.array(
+            [hCL.GetYaxis().GetBinCenter(b) for b in range(1, hCL.GetNbinsY() + 1)]
+        )
+
+        # Get bin contents (already as p-values)
+        entries = np.array(
+            [
+                hCL.GetBinContent(xbin + 1, ybin + 1)
+                for xbin, ybin in itertools.product(
+                    range(hCL.GetNbinsX()), range(hCL.GetNbinsY())
+                )
+            ]
+        )
+
+        # Convert to meshgrid format
+        x, y = np.meshgrid(xcenters, ycenters)
+        z = entries.reshape((hCL.GetNbinsX(), hCL.GetNbinsY())).T
+
+        # Convert p-value to chi2 for contour plotting
+        z = chi2.isf(z, 2)  # inverse survival function
+
+    elif hCL.InheritsFrom("TH1"):
+        # 1D case
+        x = np.array([hCL.GetBinCenter(b) for b in range(1, hCL.GetNbinsX() + 1)])
+        y = np.array([hCL.GetBinContent(b) for b in range(1, hCL.GetNbinsX() + 1)])
+        z = None
+    else:
+        raise RuntimeError("hCL is not a TH1 or TH2")
+
+    tf.Close()
+
+    return x, y, z, bf
+
+
 def getfnames(prefix, xpar, ypar=None):
     """
     For a given prefix and one or two parameter names find the scan file and the best-fit file
@@ -338,6 +434,10 @@ lhcb_2d_cols = {
     "g": [
         (157, 196, 193),
         (132, 181, 178),
+    ],
+    "p": [
+        (203, 176, 197),
+        (186, 150, 178),
     ],
 }
 

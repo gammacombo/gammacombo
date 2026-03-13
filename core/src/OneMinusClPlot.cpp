@@ -27,7 +27,9 @@
 #include <TPaveText.h>
 #include <TString.h>
 
+#include <format>
 #include <iostream>
+#include <string>
 #include <vector>
 
 OneMinusClPlot::OneMinusClPlot(const OptParser* arg, TString name, TString title)
@@ -893,8 +895,17 @@ void OneMinusClPlot::drawCLguideLines() {
 }
 
 void OneMinusClPlot::Draw() {
-  bool plotSimple = false;  // arg->debug; ///< set to true to use a simpler plot function
-                            ///< which directly plots the 1-CL histograms without beautification
+  auto debug = [](const std::string& msg) { Utils::msgBase("OneMinusClPlot::Draw() : DEBUG : ", msg); };
+
+  if (arg->debug) {
+    debug(std::format("Number of scanners: {:d}", scanners.size()));
+    for (int i = 0; i < scanners.size(); ++i)
+      debug(std::format("Scanner {:d} ({:s}) - Fill: {:d}, Color: {:d}", i, std::string(scanners[i]->getTitle()),
+                        scanners[i]->getFillStyle(), scanners[i]->getFillColor()));
+  }
+
+  // Set to true to use a simpler plot function that directly plots the 1-CL histograms without beautification
+  bool plotSimple = false;
 
   if (m_mainCanvas == 0) {
     m_mainCanvas = Utils::newNoWarnTCanvas(name + Utils::getUniqueRootName(), title, 800, arg->square ? 800 : 600);

@@ -78,6 +78,7 @@ set(CORE_LIB_SOURCES
     ./core/src/ConfidenceContours.cpp
     ./core/src/Contour.cpp
     ./core/src/ControlPlots.cpp
+    ./core/src/ExternalScanWrapper.cpp
     ./core/src/FileNameBuilder.cpp
     ./core/src/FitResultCache.cpp
     ./core/src/Fitter.cpp
