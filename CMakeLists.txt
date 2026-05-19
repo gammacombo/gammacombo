@@ -41,8 +41,8 @@ else()
   message(STATUS "Could NOT find Ccache")
 endif()
 
-# Prefer dependencies from the active conda environment, or from the ROOT
-# prefix when ROOT_DIR is provided explicitly.
+# Prefer dependencies from the active conda environment, or from the ROOT prefix
+# when ROOT_DIR is provided explicitly.
 if(DEFINED ENV{CONDA_PREFIX} AND EXISTS "$ENV{CONDA_PREFIX}/lib")
   list(PREPEND CMAKE_PREFIX_PATH "$ENV{CONDA_PREFIX}")
 endif()
