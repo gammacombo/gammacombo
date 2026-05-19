@@ -10,6 +10,8 @@
 #include <RooSlimFitResult.h>
 #include <rdtsc.h>
 
+#include <RooAbsPdf.h>
+#include <RooDataSet.h>
 #include <RooFitResult.h>
 #include <RooFormulaVar.h>
 #include <RooMinimizer.h>

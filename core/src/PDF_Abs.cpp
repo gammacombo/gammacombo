@@ -9,6 +9,8 @@
 
 #include <Utils.h>
 
+#include <RooAbsData.h>
+#include <RooAbsPdf.h>
 #include <RooFitResult.h>
 #include <RooFormulaVar.h>
 #include <RooMinimizer.h>

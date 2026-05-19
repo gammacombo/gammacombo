@@ -132,7 +132,8 @@ set(ROOT_REQUIRED_LIBS
 
 set(CORE_LIB "${PROJECT_NAME}Core")
 add_library(${CORE_LIB} SHARED ${CORE_LIB_SOURCES})
-target_link_libraries(${CORE_LIB} ${FREETYPE_LIBRARIES} ${ROOT_REQUIRED_LIBS})
+target_link_libraries(${CORE_LIB} PUBLIC ${FREETYPE_LIBRARIES}
+                                         ${ROOT_REQUIRED_LIBS})
 # For finding ConfigVersion.h
 target_include_directories(${CORE_LIB} PUBLIC ${CMAKE_BINARY_DIR})
 

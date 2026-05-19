@@ -49,7 +49,7 @@ set(COMBINER_LIB_SOURCES
 
 set(COMBINER_LIB ${COMBINER_NAME}Components)
 add_library(${COMBINER_LIB} SHARED ${COMBINER_LIB_SOURCES})
-target_link_libraries(${COMBINER_LIB} ${CORE_LIB})
+target_link_libraries(${COMBINER_LIB} PRIVATE ${CORE_LIB})
 if(HAS_CUSTOMROOTOBJECTS)
   root_generate_dictionary(
     G__${COMBINER_LIB} ${COMBINER_DICTIONARY_SOURCES} MODULE ${COMBINER_LIB}
@@ -63,7 +63,7 @@ endif()
 set(COMBINER_LIBS ${COMBINER_LIB} ${CORE_LIB})
 foreach(exec ${COMBINER_EXECUTABLES})
   add_executable(${exec} ${COMBINER_MAIN_DIR}/${exec}.cpp)
-  target_link_libraries(${exec} ${COMBINER_LIBS})
+  target_link_libraries(${exec} PRIVATE ${COMBINER_LIBS})
 endforeach()
 
 # -----------------------------------------------------------------------------

@@ -3,11 +3,11 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.9
+  - python=3.12
   - numpy
   - scipy
   - matplotlib
-  - root>=6.34
+  - root=6.38.04
   - freetype
   - cmake>=3.30
   - boost
