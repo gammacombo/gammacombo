@@ -41,18 +41,38 @@ else()
   message(STATUS "Could NOT find Ccache")
 endif()
 
-find_package(Freetype REQUIRED)
+# Prefer dependencies from the active conda environment, or from the ROOT
+# prefix when ROOT_DIR is provided explicitly.
+if(DEFINED ENV{CONDA_PREFIX} AND EXISTS "$ENV{CONDA_PREFIX}/lib")
+  list(PREPEND CMAKE_PREFIX_PATH "$ENV{CONDA_PREFIX}")
+endif()
+if(ROOT_DIR)
+  get_filename_component(ROOT_PREFIX "${ROOT_DIR}/.." ABSOLUTE)
+  if(EXISTS "${ROOT_PREFIX}/lib")
+    list(PREPEND CMAKE_PREFIX_PATH "${ROOT_PREFIX}")
+  endif()
+endif()
 
 if(POLICY CMP0167)
   cmake_policy(SET CMP0167 NEW)
 endif()
-find_package(Boost 1.70 REQUIRED)
-include_directories(${Boost_INCLUDE_DIRS})
 
 # Find ROOT (see https://root.cern/manual/integrate_root_into_my_cmake_project/,
 # https://cliutils.gitlab.io/modern-cmake/chapters/packages/ROOT.html)
 find_package(ROOT 6.30 CONFIG REQUIRED)
 message(STATUS "Found ROOT: ${ROOT_INCLUDE_DIRS}")
+
+# ROOT from conda-forge depends on the graphics stack from the same prefix.  If
+# CMake finds the system Freetype first, linking mixes host and conda libraries.
+get_filename_component(ROOT_PREFIX "${ROOT_DIR}/.." ABSOLUTE)
+if(EXISTS "${ROOT_PREFIX}/lib")
+  list(PREPEND CMAKE_PREFIX_PATH "${ROOT_PREFIX}")
+endif()
+
+find_package(Freetype REQUIRED)
+find_package(Boost 1.70 REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -O3 ${ROOT_CXX_FLAGS}")
 message(STATUS "CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}")
 
@@ -132,7 +152,7 @@ set(ROOT_REQUIRED_LIBS
 
 set(CORE_LIB "${PROJECT_NAME}Core")
 add_library(${CORE_LIB} SHARED ${CORE_LIB_SOURCES})
-target_link_libraries(${CORE_LIB} PUBLIC ${FREETYPE_LIBRARIES}
+target_link_libraries(${CORE_LIB} PUBLIC Freetype::Freetype
                                          ${ROOT_REQUIRED_LIBS})
 # For finding ConfigVersion.h
 target_include_directories(${CORE_LIB} PUBLIC ${CMAKE_BINARY_DIR})
