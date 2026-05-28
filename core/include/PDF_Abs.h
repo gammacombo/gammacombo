@@ -16,6 +16,7 @@
 #include <vector>
 
 class ParametersAbs;
+class ParameterCache;
 class RooMultiPdf;
 
 class RooAbsData;
@@ -72,6 +73,7 @@ class PDF_Abs {
   virtual void initRelations();
   virtual void initObservables();
   void loadExtParameters(const RooFitResult* r);
+  void loadExtParameters(const ParameterCache* pc);
   void print() const;
   void printParameters() const;
   void printObservables() const;

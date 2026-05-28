@@ -349,6 +349,12 @@ PDF_Abs* GammaComboEngine::getPdf(int id) {
   return pdf[id];
 }
 
+std::vector<PDF_Abs*> GammaComboEngine::getPdfs() {
+  std::vector<PDF_Abs*> rt;
+  std::ranges::copy_if(pdf, std::back_inserter(rt), [](PDF_Abs* p) { return p; });
+  return rt;
+}
+
 PDF_Abs* GammaComboEngine::operator[](int idx) { return getPdf(idx); }
 
 // const PDF_Abs* GammaComboEngine::operator[](int idx) const

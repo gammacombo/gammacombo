@@ -74,6 +74,7 @@ class GammaComboEngine {
 
   Combiner* getCombiner(int id);
   PDF_Abs* getPdf(int id);
+  std::vector<PDF_Abs*> getPdfs();
   inline OptParser* getArg() const { return arg; };
   void print() const;
   void printPdfs() const;

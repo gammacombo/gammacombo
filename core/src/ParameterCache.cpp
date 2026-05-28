@@ -29,10 +29,7 @@
 ///
 /// \param arg - command line options
 ///
-ParameterCache::ParameterCache(const OptParser* arg) {
-  assert(arg);
-  m_arg = arg;
-}
+ParameterCache::ParameterCache(const OptParser* arg) : m_arg{arg} {}
 
 void ParameterCache::printFitResultToOutStream(std::ofstream& out, const RooSlimFitResult* slimFitRes) const {
 
@@ -56,7 +53,7 @@ void ParameterCache::cacheParameters(MethodAbsScan* scanner, TString fileName) {
 
   // cache default solutions
   //
-  if (m_arg->debug) std::cout << "ParameterCache::cacheParameters() : ";
+  if (m_arg && m_arg->debug) std::cout << "ParameterCache::cacheParameters() : ";
   std::cout << "saving parameters to: " << fileName << std::endl;
 
   std::ofstream outfile;
@@ -79,13 +76,13 @@ void ParameterCache::cacheParameters(MethodAbsScan* scanner, TString fileName) {
     printFitResultToOutStream(outfile, slimFitRes);
     totalCachedPoints++;
   }
-  if (m_arg->debug)
+  if (m_arg && m_arg->debug)
     std::cout << "ParameterCache::cacheParameters() : cached " << solutions.size() << " solutions" << std::endl;
 
   // cache also any specifically requested points
   //
   // 1D
-  if (m_arg->savenuisances1d.size() > 0) {
+  if (m_arg && m_arg->savenuisances1d.size() > 0) {
     const auto& points = m_arg->savenuisances1d;
     for (int i = 0; i < points.size(); i++) {
 
@@ -106,7 +103,7 @@ void ParameterCache::cacheParameters(MethodAbsScan* scanner, TString fileName) {
                 << " further points" << std::endl;
   }
   // 2D
-  if (m_arg->savenuisances2dx.size() > 0) {
+  if (m_arg && m_arg->savenuisances2dx.size() > 0) {
     const auto& pointsx = m_arg->savenuisances2dx;
     const auto& pointsy = m_arg->savenuisances2dy;
 
@@ -136,7 +133,7 @@ void ParameterCache::cacheParameters(MethodAbsScan* scanner, TString fileName) {
       printFitResultToOutStream(outfile, r);
       totalCachedPoints++;
     }
-    if (m_arg->debug)
+    if (m_arg && m_arg->debug)
       std::cout << "ParameterCache::cacheParameters() : cached " << totalCachedPoints - solutions.size()
                 << " further points" << std::endl;
   }
@@ -156,7 +153,7 @@ bool ParameterCache::loadPoints(TString fileName) {
 
   std::ifstream infile(fileName.Data());
   if (infile) {  // file exists
-    if (m_arg->debug)
+    if (m_arg && m_arg->debug)
       std::cout << "ParameterCache::loadPoints() -- loading parameters from file " << fileName << std::endl;
     std::string line;
     if (infile.is_open()) {
@@ -180,7 +177,7 @@ bool ParameterCache::loadPoints(TString fileName) {
     }
     m_parametersLoaded = true;
     successfullyLoaded = true;
-    if (m_arg->debug) printPoint();
+    if (m_arg && m_arg->debug) printPoint();
   } else {
     std::cout << "ParameterCache::loadPoints() : ERROR : file not found: " << fileName << std::endl;
   }
@@ -218,28 +215,28 @@ void ParameterCache::setPoint(Combiner* cmb, int i) {
     std::exit(1);
   }
   if (i >= getNPoints()) {
-    if (m_arg->debug) std::cout << "ParameterCache::setPoint() : ";
+    if (m_arg && m_arg->debug) std::cout << "ParameterCache::setPoint() : ";
     std::cout << "  ERROR : parameter point number " << i + 1 << " not found in file. Exit." << std::endl;
     std::exit(1);
   }
   std::vector<TString> fixNames = getFixedNames(cmb->getConstVars());
 
   RooWorkspace* w = cmb->getWorkspace();
-  if (m_arg->debug)
+  if (m_arg && m_arg->debug)
     std::cout << "ParameterCache::setPoint() : Setting parameter values for point " << i + 1 << std::endl;
 
   for (std::map<TString, double>::iterator it = startingValues[i].begin(); it != startingValues[i].end(); it++) {
     TString name = it->first;
     double val = it->second;
     if (find(fixNames.begin(), fixNames.end(), name) != fixNames.end()) {
-      if (m_arg->debug)
+      if (m_arg && m_arg->debug)
         std::cout << "\tLeft " << Form("%-15s", name.Data()) << " = " << Form("%12.6f", w->var(name)->getVal())
                   << " constant" << std::endl;
       continue;
     }
     if (w->var(name)) {
       w->var(name)->setVal(val);
-      if (m_arg->debug)
+      if (m_arg && m_arg->debug)
         std::cout << "\tSet  " << Form("%-15s", name.Data()) << " = " << Form("%12.6f", w->var(name)->getVal())
                   << std::endl;
     }
