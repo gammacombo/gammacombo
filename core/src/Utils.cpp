@@ -869,7 +869,13 @@ RooFormulaVar* Utils::makeTheoryVar(TString name, TString title, TString formula
   for (int i = 0; i < pars->getSize(); i++) {
     if (formula.Contains(TString(pars->at(i)->GetName()))) { explicitDependents->add(*(pars->at(i))); }
   }
-  return new RooFormulaVar(name, title, formula, *explicitDependents);
+
+  // Remove redundant spaces from the formula
+  auto formula_str = std::string(formula.Data());
+  const auto ret = std::ranges::unique(formula_str, [](char a, char b) { return a == b && a == ' '; });
+  formula_str.erase(ret.begin(), ret.end());
+
+  return new RooFormulaVar(name, title, TString(formula_str), *explicitDependents);
 }
 
 void Utils::addSetNamesToList(std::vector<std::string>& list, RooWorkspace* w, TString setName) {
