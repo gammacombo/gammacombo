@@ -64,6 +64,10 @@ DoxyWarnings.log
 *.launch.py
 *.launch.opts
 *_cache
+finalise add submodule
+
+# Python packaging
+*.egg-info/
 
 # QMTest byproducts
 **/tests/qmtest/*.*

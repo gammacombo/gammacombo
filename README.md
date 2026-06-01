@@ -29,6 +29,7 @@ or `AlmaLinux 9`:
     cmake -B <build-dir>
     cmake --build <build-dir> [-j <n-cores>]
     cmake --install <build-dir>
+    python -m pip install -e .
 
 Then, you will need to source `scripts/setup-env-cvmfs.sh` in each new shell
 session before running any executables.
