@@ -30,8 +30,15 @@ or `AlmaLinux 9`:
     cmake --build <build-dir> [-j <n-cores>]
     cmake --install <build-dir>
 
-Then, you will need to source `scripts/setup-env-cvmfs.sh` in each new shell
-session before running any executables.
+The Python helpers require Python 3.10+. As the LCG view's `site-packages` is
+read-only, install them in a virtual environment:
+
+    python -m venv --system-site-packages <venv-dir>
+    source <venv-dir>/bin/activate
+    python -m pip install -e . -e charm
+
+Then, you will need to source `scripts/setup-env-cvmfs.sh` (and activate the
+virtual environment) in each new shell session before running any executables.
 If `CVMFS` is not available or your OS is not supported,
 `scripts/setup-env-cvmfs.sh` will not work and you will have to setup a suitable
 working environment yourself (requires `CMake` 3.19 or higher, `ROOT` higher
