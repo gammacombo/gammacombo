@@ -1,3 +1,4 @@
+import copy
 import importlib
 import itertools
 import os
@@ -479,53 +480,35 @@ lhcb_ls = {
 
 
 def get_lopts(nscans, lopts, dim=1):
-    if dim == 1:
-        defs = def_lopts_1d
-    else:
-        defs = def_lopts_2d
-
-    ret = [None for i in range(nscans)]
-    for i in range(nscans):
-        if i < len(lopts):
-            ret[i] = lopts[i]
-        elif i < len(defs):
-            ret[i] = defs[i]
+    defs = def_lopts_1d if dim == 1 else def_lopts_2d
+    ret = lopts
+    for i in range(len(lopts), nscans):
+        if i < len(defs):
+            ret.append(defs[i])
         else:
             raise RuntimeError(f"Can't find a default lopt for iscanner = {i}")
     return ret
 
 
 def get_fopts(nscans, fopts, dim=1):
-    if dim == 1:
-        defs = def_fopts_1d
-    else:
-        defs = def_fopts_2d
-
-    ret = [None for i in range(nscans)]
-    for i in range(nscans):
-        if i < len(fopts):
-            ret[i] = fopts[i]
-        elif i < len(defs):
-            ret[i] = defs[i]
+    defs = def_fopts_1d if dim == 1 else def_fopts_2d
+    ret = fopts
+    for i in range(len(fopts), nscans):
+        if i < len(defs):
+            ret.append(defs[i])
         else:
             raise RuntimeError(f"Can't find a default fopt for iscanner = {i}")
     return ret
 
 
 def get_mopts(nscans, mopts, dim=1):
-    if dim == 1:
-        defs = def_mopts_1d
-    else:
-        defs = def_mopts_2d
-
-    ret = [None for i in range(nscans)]
-    for i in range(nscans):
-        if i < len(mopts):
-            ret[i] = mopts[i]
-        elif i < len(defs):
-            ret[i] = defs[i]
+    defs = def_mopts_1d if dim == 1 else def_mopts_2d
+    ret = mopts
+    for i in range(len(mopts), nscans):
+        if i < len(defs):
+            ret.append(defs[i])
         else:
-            raise RuntimeError(f"Can't find a default fopt for iscanner = {i}")
+            raise RuntimeError(f"Can't find a default mopt for iscanner = {i}")
     return ret
 
 
@@ -792,13 +775,6 @@ def plot2d(
             lopt = dict(**lopts[i])
             fopt = dict(**fopts[i])
             mopt = dict(**mopts[i])
-            if "c" in lopt.keys():
-                lopt["ec"] = lopt.pop("c")
-            if "color" in lopt.keys():
-                lopt["ec"] = lopt.pop("color")
-            if "colors" in lopt.keys():
-                c = lopt.pop("colors")
-                lopt["ec"] = c[0]
             if "linewidths" in lopt.keys():
                 lw = lopt.pop("linewidths")
                 if lw is not None:
@@ -807,6 +783,17 @@ def plot2d(
                 ls = lopt.pop("linestyles")
                 if ls is not None:
                     lopt["linestyle"] = ls[0]
+            lopt_for_line = copy.copy(lopt)
+            if "colors" in lopt_for_line.keys():
+                c = lopt_for_line.pop("colors")
+                lopt_for_line["color"] = c[0]
+            if "c" in lopt.keys():
+                lopt["ec"] = lopt.pop("c")
+            if "color" in lopt.keys():
+                lopt["ec"] = lopt.pop("color")
+            if "colors" in lopt.keys():
+                c = lopt.pop("colors")
+                lopt["ec"] = c[0]
             if "c" in fopt.keys():
                 fopt["fc"] = fopt.pop("c")
             if "color" in fopt.keys():
@@ -818,11 +805,13 @@ def plot2d(
             if ltitle is not None:
                 leg_labels.append(ltitle)
                 leg_opts = {**lopt, **fopt}
-                leg_handle = (
-                    (patches.Patch(**leg_opts), Line2D([0], [0], lw=0, **mopt))
-                    if mopt
-                    else patches.Patch(**leg_opts)
-                )
+                leg_handle = ()
+                if fopt:
+                    leg_handle += (patches.Patch(**leg_opts),)
+                elif lopt_for_line:
+                    leg_handle += (Line2D([0], [0], **lopt_for_line),)
+                if mopt:
+                    leg_handle += (Line2D([0], [0], lw=0, **mopt),)
                 leg_handles.append(leg_handle)
 
         # if 'prop' not in legopts:
