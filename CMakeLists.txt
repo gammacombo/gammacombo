@@ -41,8 +41,6 @@ else()
   message(STATUS "Could NOT find Ccache")
 endif()
 
-find_package(Freetype REQUIRED)
-
 if(POLICY CMP0167)
   cmake_policy(SET CMP0167 NEW)
 endif()
@@ -132,7 +130,7 @@ set(ROOT_REQUIRED_LIBS
 
 set(CORE_LIB "${PROJECT_NAME}Core")
 add_library(${CORE_LIB} SHARED ${CORE_LIB_SOURCES})
-target_link_libraries(${CORE_LIB} ${FREETYPE_LIBRARIES} ${ROOT_REQUIRED_LIBS})
+target_link_libraries(${CORE_LIB} ${ROOT_REQUIRED_LIBS})
 # For finding ConfigVersion.h
 target_include_directories(${CORE_LIB} PUBLIC ${CMAKE_BINARY_DIR})
 
