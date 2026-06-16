@@ -1580,7 +1580,11 @@ void GammaComboEngine::adjustRanges(Combiner* c, int cId) {
   if (cId < arg->removeRanges.size()) {
     for (int j = 0; j < arg->removeRanges[cId].size(); j++) {
       if (arg->removeRanges[cId][j] == "all") {
-        for (const auto& par : *c->getParameters()) static_cast<RooRealVar*>(par)->removeRange();
+        for (const auto& par : *c->getParameters()) {
+          auto p = static_cast<RooRealVar*>(par);
+          p->removeMin();
+          p->removeMax();
+        }
       } else {
         c->adjustPhysRange(arg->removeRanges[cId][j], -999, -999);
       }
