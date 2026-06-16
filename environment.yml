@@ -8,7 +8,6 @@ dependencies:
   - scipy
   - matplotlib
   - root>=6.34
-  - freetype
   - cmake>=3.30
   - boost
   - doxygen
