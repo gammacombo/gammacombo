@@ -13,11 +13,14 @@
 
 stages:
   - pre-commit
+  - initialisation
   - build
   - test
 
 variables:
   NO_LBLOGIN: "1"
+  GIT_SUBMODULE_STRATEGY: none
+  GAMMACOMBO_BRANCH: master
 
 check-formatting:
   stage: pre-commit
@@ -37,6 +40,30 @@ check-formatting:
   script:
     - pre-commit run --all-files --show-diff-on-failure
 
+gammacombo-init:
+  stage: initialisation
+  tags:
+    - cvmfs
+  image: gitlab-registry.cern.ch/lhcb-docker/os-base/alma9-devel:latest
+  script:
+    - |
+      echo "Initialise gammacombo repository..."
+      git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.cern.ch/gammacombo/gammacombo.git
+      cd gammacombo
+      git fetch origin
+      echo "Checking out branch ${GAMMACOMBO_BRANCH}..."
+      git checkout $GAMMACOMBO_BRANCH
+      git pull origin $GAMMACOMBO_BRANCH
+      cd ..
+      source scripts/setup-env-cvmfs.sh -c || exit 1
+  artifacts:
+    when: on_success
+    untracked: true
+    paths:
+      - gammacombo
+    access: all
+    expire_in: 1 days
+
 build_gcc:
   tags:
     - cvmfs
@@ -44,6 +71,8 @@ build_gcc:
   before_script:
     - source scripts/setup-env-cvmfs.sh || exit 1
   stage: build
+  dependencies:
+    - gammacombo-init
   script:
     - |
       cmake -B build
@@ -60,6 +89,8 @@ build_gcc:
 build_clang:
   extends: .select_runner
   stage: build
+  dependencies:
+    - gammacombo-init
   script:
     - |
       cmake -B build
@@ -71,6 +102,7 @@ build_clang:
     paths:
       - build
       - tutorial
+      - gammacombo
     access: all
     expire_in: 1 days
 
@@ -92,4 +124,29 @@ test-tutorial:
       - tutorial/plots
       - tutorial/root
       - tutorial/workspace.root
+    expire_in: 1 days
+
+test-gammacombo:
+  extends: .test
+  stage: test
+  dependencies:
+    - build_clang
+  tags:
+    - cvmfs
+  image: gitlab-registry.cern.ch/lhcb-docker/os-base/alma9-devel:latest
+  before_script:
+    - |
+      source scripts/setup-env-cvmfs.sh -c || exit 1
+      python -m venv venvs/gammacombo
+      source venvs/gammacombo/bin/activate
+      python -m pip install --upgrade pip
+      python -m pip install -e . -e gammacombo
+      cd gammacombo
+  script:
+    - bin/gammacharm_lhcb -c 605 --var g --ps 1 --scanrange 0.87:1.40
+  artifacts:
+    when: always
+    paths:
+      - gammacombo/plots/par
+      - gammacombo/plots/scanner
     expire_in: 1 days
