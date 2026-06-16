@@ -157,7 +157,6 @@ install(FILES ${CMAKE_BINARY_DIR}/lib${CORE_LIB}_rdict.pcm
 
 # Set the list of output folders that should be created by each submodule
 set(OUTPUT_FOLDERS
-    root
     plots
     plots/C
     plots/cl
