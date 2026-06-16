@@ -28,8 +28,6 @@ set(COMBINER_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(COMBINER_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(COMBINER_MAIN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/main)
 
-include_directories(BEFORE ${CORE_INC_DIR} ${COMBINER_INCLUDE_DIR})
-
 # -----------------------------------------------------------------------------
 # Build the library
 # -----------------------------------------------------------------------------
@@ -49,7 +47,8 @@ set(COMBINER_LIB_SOURCES
 
 set(COMBINER_LIB ${COMBINER_NAME}Components)
 add_library(${COMBINER_LIB} SHARED ${COMBINER_LIB_SOURCES})
-target_link_libraries(${COMBINER_LIB} ${CORE_LIB})
+target_link_libraries(${COMBINER_LIB} PUBLIC ${CORE_LIB})
+target_include_directories(${COMBINER_LIB} PUBLIC ${COMBINER_INCLUDE_DIR})
 if(HAS_CUSTOMROOTOBJECTS)
   root_generate_dictionary(
     G__${COMBINER_LIB} ${COMBINER_DICTIONARY_SOURCES} MODULE ${COMBINER_LIB}
@@ -60,10 +59,9 @@ endif()
 # Build the executables
 # -----------------------------------------------------------------------------
 
-set(COMBINER_LIBS ${COMBINER_LIB} ${CORE_LIB})
 foreach(exec ${COMBINER_EXECUTABLES})
   add_executable(${exec} ${COMBINER_MAIN_DIR}/${exec}.cpp)
-  target_link_libraries(${exec} ${COMBINER_LIBS})
+  target_link_libraries(${exec} PUBLIC ${COMBINER_LIB})
 endforeach()
 
 # -----------------------------------------------------------------------------
