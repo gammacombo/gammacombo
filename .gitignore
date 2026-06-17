@@ -29,6 +29,8 @@ scripts/*_C.d
 scripts/*_C.so
 scripts/*_rdict.pcm
 scripts/__pycache__
+plots/*
+zenodo/*
 
 # backup files
 *~
