@@ -307,6 +307,7 @@ void OptParser::defineOptions() {
   availableOptions.push_back("filltransparency");
   availableOptions.push_back("fillcolor");
   availableOptions.push_back("fix");
+  availableOptions.push_back("fix-from-parfile");
   availableOptions.push_back("ext");
   availableOptions.push_back("hfagLabel");
   availableOptions.push_back("hfagLabelPos");
@@ -331,6 +332,7 @@ void OptParser::defineOptions() {
   availableOptions.push_back("linestyle");
   availableOptions.push_back("linecolor");
   availableOptions.push_back("loadParamsFile");
+  availableOptions.push_back("loadFixParamsFile");
   availableOptions.push_back("log");
   availableOptions.push_back("magnetic");
   availableOptions.push_back("nbatchjobs");
@@ -496,6 +498,7 @@ void OptParser::bookFlowcontrolOptions() {
   bookedOptions.push_back("action");
   bookedOptions.push_back("combid");
   bookedOptions.push_back("fix");
+  bookedOptions.push_back("fix-from-parfile");
   bookedOptions.push_back("start");
   // bookedOptions.push_back("jobdir");
   bookedOptions.push_back("nosyst");
@@ -948,12 +951,23 @@ void OptParser::parseArguments(int argc, char* argv[]) {
       "To fix just the parameters in the second combination, do\n"
       "Example: --fix none --fix 'g=1.7,r_dk=0.09' \n",
       false, "string");
+  TCLAP::MultiArg<std::string> fixFromParfileArg(
+      "", "fix-from-parfile",
+      "Fix one or more parameters in a combination based on the value of the parameter file passed through "
+      "--fix-parfile or, when not passed, --parfile. "
+      "If 'none' is given, all parameters are floated (default). "
+      "If given multiple times, the first --fix-from-parfile argument refers to the first combination, "
+      "the second one to the second and so on. "
+      "If given a single time, it is applied to all combinations, eg, \"--fix-from-parfile 'g,r_dk'\"\n"
+      "To fix just the parameters in the second combination use, eg, "
+      "\"--fix-from-parfile none --fix-from-parfile 'g=1.7,r_dk=0.09'\"\n",
+      false, "string");
   TCLAP::MultiArg<std::string> physrangeArg(
       "", "prange",
       "Adjust the physical range of one or more parameters in a combination. "
       "The ranges are enforced through the --pr option. "
       "If 'def' is given, the default ranges are used. "
-      "If given multiple times, the first --fix argument refers to the first combination, "
+      "If given multiple times, the first --prange argument refers to the first combination, "
       "the second one to the second and so on. "
       "If given a single time, it is applied to all combinations. \n"
       "Example: --prange 'g=1.7:1.9,r_dk=0.09:0.2' \n"
@@ -1003,6 +1017,13 @@ void OptParser::parseArguments(int argc, char* argv[]) {
       "If 'default' is given, the default file for that combination is used, which is found in "
       "plots/par/*_start.dat ."
       "Example: --parfile parsForFirstCombination.dat --parfile parsForSecondCombination.dat",
+      false, "string");
+  TCLAP::MultiArg<std::string> loadFixParamsFileArg(
+      "", "fix-parfile",
+      "Load fixed parameters for the corresponding combination from this particular file. "
+      "If 'default' is given, the default file for that combination is used, which is found in "
+      "plots/par/*_start.dat ."
+      "Example: --fix-parfile parsForFirstCombination.dat --fix-parfile parsForSecondCombination.dat",
       false, "string");
   TCLAP::MultiArg<int> asimovArg(
       "", "asimov",
@@ -1132,6 +1153,7 @@ void OptParser::parseArguments(int argc, char* argv[]) {
   if (isIn<TString>(bookedOptions, "magnetic")) cmd.add(plotmagneticArg);
   if (isIn<TString>(bookedOptions, "log")) cmd.add(plotlogArg);
   if (isIn<TString>(bookedOptions, "loadParamsFile")) cmd.add(loadParamsFileArg);
+  if (isIn<TString>(bookedOptions, "loadFixParamsFile")) cmd.add(loadFixParamsFileArg);
   if (isIn<TString>(bookedOptions, "linewidth")) cmd.add(linewidthArg);
   if (isIn<TString>(bookedOptions, "linestyle")) cmd.add(linestyleArg);
   if (isIn<TString>(bookedOptions, "linecolor")) cmd.add(linecolorArg);
@@ -1155,6 +1177,7 @@ void OptParser::parseArguments(int argc, char* argv[]) {
   if (isIn<TString>(bookedOptions, "grouppos")) cmd.add(plotgroupposArg);
   if (isIn<TString>(bookedOptions, "grid")) cmd.add(gridArg);
   if (isIn<TString>(bookedOptions, "fix")) cmd.add(fixArg);
+  if (isIn<TString>(bookedOptions, "fix-from-parfile")) cmd.add(fixFromParfileArg);
   if (isIn<TString>(bookedOptions, "filltransparency")) cmd.add(filltransparencyArg);
   if (isIn<TString>(bookedOptions, "fillstyle")) cmd.add(fillstyleArg);
   if (isIn<TString>(bookedOptions, "fillcolor")) cmd.add(fillcolorArg);
@@ -1377,6 +1400,10 @@ void OptParser::parseArguments(int argc, char* argv[]) {
   tmp = loadParamsFileArg.getValue();
   for (int i = 0; i < tmp.size(); i++) loadParamsFile.push_back(tmp[i]);
 
+  // --fix-parfile
+  tmp = loadFixParamsFileArg.getValue();
+  for (const auto& fname : tmp) loadFixParamsFile.push_back(fname);
+
   // --asimovfile
   tmp = asimovFileArg.getValue();
   for (int i = 0; i < tmp.size(); i++) asimovfile.push_back(tmp[i]);
@@ -1593,6 +1620,17 @@ void OptParser::parseArguments(int argc, char* argv[]) {
       }
     }
     fixParameters.push_back(assignments);
+  }
+
+  // --fix-from-parfile
+  tmp = fixFromParfileArg.getValue();
+  for (auto arg : tmp) {
+    std::vector<std::string> pars;
+    if (TString(arg) != TString("none")) {
+      auto parsArray = TString(arg).Tokenize(",");
+      for (auto ptr : *parsArray) pars.push_back(std::string(dynamic_cast<TObjString*>(ptr)->GetString().Data()));
+    }
+    fixParametersFromParfile.push_back(pars);
   }
 
   // --start
