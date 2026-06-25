@@ -1556,13 +1556,35 @@ void GammaComboEngine::make2dProbPlot(MethodProbScan* scanner, int cId) {
 }
 
 ///
-/// Helper function for scan(). Fixes parameters, if requested
-/// (only possible before combining).
+/// Fix parameters according to command-line arguments (only possible before combining).
 ///
 void GammaComboEngine::fixParameters(Combiner* c, int cId) {
-  if (cId < arg->fixParameters.size()) {
-    for (int j = 0; j < arg->fixParameters[cId].size(); j++) {
-      c->fixParameter(arg->fixParameters[cId][j].name, arg->fixParameters[cId][j].value);
+  auto error = [](std::string msg) { return Utils::errBase("GammaComboEngine::fixParameters ERROR ", msg); };
+  // Parameters relying on --fix
+  if (!arg->fixParameters.empty()) {
+    const auto nargs = arg->fixParameters.size();
+    if (cId < nargs || nargs == 1) {
+      const int index = (cId < nargs) ? cId : 0;
+      for (const auto fixedParam : arg->fixParameters[index]) c->fixParameter(fixedParam.name, fixedParam.value);
+    }
+  }
+  // Parameters relying on --fix-from-parfile
+  if (!arg->fixParametersFromParfile.empty()) {
+    const auto nargs = arg->fixParametersFromParfile.size();
+    if (cId < nargs || nargs == 1) {
+      const auto fileNames = arg->loadFixParamsFile.empty() ? arg->loadParamsFile : arg->loadFixParamsFile;
+      const auto nParfiles = fileNames.size();
+      const TString parfile = (nargs == 1 && nParfiles == 1) ? fileNames.front() : getStartParFileName(cId);
+      const int index = (cId < nargs) ? cId : 0;
+      auto pCache = std::make_unique<ParameterCache>(arg);
+      pCache->loadPoints(parfile);
+      for (const auto fixedParam : arg->fixParametersFromParfile[index]) {
+        try {
+          c->fixParameter(fixedParam, pCache->startingValues[0].at(TString(fixedParam)));
+        } catch (const std::out_of_range& ex) {
+          error(std::format("Could not find parameter \"{}\" in start file \"{}\"", fixedParam, parfile.Data()));
+        }
+      }
     }
   }
 }
