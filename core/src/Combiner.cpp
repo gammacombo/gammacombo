@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdlib>
+#include <format>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -204,12 +205,12 @@ void Combiner::combine() {
 /// to the "const" set. Later, they are fixed in MethodAbsScan::doInitialFit().
 ///
 void Combiner::setParametersConstant() {
+  auto warning = [](std::string msg) { return Utils::msgBase("Combiner::setParametersConstant WARNING ", msg); };
   for (int i = 0; i < constVars.size(); i++) {
     if (!w->var(constVars[i].name)) {
-      std::cout << "Combiner::setParametersConstant() : ERROR : requesting to set a parameter constant\n"
-                   "  which is not in the workspace: "
-                << constVars[i].name << " . Exit." << std::endl;
-      std::exit(1);
+      warning(std::format("Ignoring the request to set the parameter \"{}\" constant, since it is not in the workspace",
+                          constVars[i].name.Data()));
+      continue;
     }
     // add parameter to the list of constant paramters; create the list, if necessary
     if (w->set("const") == 0)
