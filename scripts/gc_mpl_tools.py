@@ -672,6 +672,7 @@ def plot2d(
     fopts=[],
     mopts=[],
     title=[None, None],
+    labelpad: tuple[float, float] | float = (4.0, 4.0),
     levels=1,
     legtitles=None,
     angle=[False, False],
@@ -820,9 +821,11 @@ def plot2d(
 
     # style
     if title[0]:
-        ax.set_xlabel(title[0])
+        ax.set_xlabel(
+            title[0], labelpad=labelpad if isinstance(labelpad, int) else labelpad[0]
+        )
     if title[1]:
-        ax.set_ylabel(title[1])
+        ax.set_ylabel(title[1], labelpad=labelpad[1])
 
     # add logos
     if logo:
