@@ -5,14 +5,9 @@
 
 if grep -q "Red Hat Enterprise Linux 9\|AlmaLinux 9" /etc/os-release; then
   OS="RHEL9/Alma9"
-  LCG_VERSION_DEFAULT=LCG_105
-  BINARY_TAG_GCC_DEFAULT=x86_64-el9-gcc13-opt
-  BINARY_TAG_CLANG_DEFAULT=x86_64-el9-clang16-opt
-elif grep -q "Red Hat Enterprise Linux 8" /etc/os-release; then
-  OS="Centos8"
-  BINARY_TAG_CLANG_DEFAULT=NONE
-  LCG_VERSION_DEFAULT=LCG_101
-  BINARY_TAG_GCC_DEFAULT=x86_64-centos8-gcc11-opt
+  LCG_VERSION_DEFAULT=LCG_109
+  BINARY_TAG_GCC_DEFAULT=x86_64-el9-gcc15-opt
+  BINARY_TAG_CLANG_DEFAULT=x86_64-el9-clang19-opt
 else
   echo "The operating system of this computer is not supported by this script."
   return 1

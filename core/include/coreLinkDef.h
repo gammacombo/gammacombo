@@ -38,6 +38,5 @@
 #pragma link C++ class RooSlimFitResult + ;
 #pragma link C++ class RooPoly3Var + ;
 #pragma link C++ class RooPoly4Var + ;
-#pragma link C++ class RooMultiPdf + ;
 
 #endif

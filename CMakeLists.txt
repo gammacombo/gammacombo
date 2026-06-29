@@ -46,9 +46,10 @@ if(POLICY CMP0167)
 endif()
 find_package(Boost 1.70 REQUIRED)
 
-# Find ROOT (see https://root.cern/manual/integrate_root_into_my_cmake_project/,
-# https://cliutils.gitlab.io/modern-cmake/chapters/packages/ROOT.html)
-find_package(ROOT 6.30 CONFIG REQUIRED)
+# Find ROOT, minimum version 6.38 required to have RooMultiPdf in RooFit. See
+# https://root.cern/manual/integrate_root_into_my_cmake_project/,
+# https://cliutils.gitlab.io/modern-cmake/root/ for docs
+find_package(ROOT 6.38 CONFIG REQUIRED)
 message(STATUS "Found ROOT: ${ROOT_INCLUDE_DIRS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -O3 ${ROOT_CXX_FLAGS}")
 message(STATUS "CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}")
@@ -104,7 +105,6 @@ set(CORE_LIB_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/core/src/RooCrossCorPdf.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/src/RooHistPdfAngleVar.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/src/RooHistPdfVar.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/core/src/RooMultiPdf.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/src/RooPoly3Var.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/src/RooPoly4Var.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/src/RooSlimFitResult.cpp
@@ -144,12 +144,12 @@ set(CORE_DICTIONARY_SOURCES
     RooHistPdfVar.h
     RooPoly3Var.h
     RooPoly4Var.h
-    RooSlimFitResult.h
-    RooMultiPdf.h)
+    RooSlimFitResult.h)
 root_generate_dictionary(
   G__${CORE_LIB} ${CORE_DICTIONARY_SOURCES} MODULE ${CORE_LIB} LINKDEF
   ${CMAKE_CURRENT_SOURCE_DIR}/core/include/coreLinkDef.h)
 
+install(TARGETS ${CORE_LIB} DESTINATION ${LIBRARY_OUTPUT_DIRECTORY})
 install(FILES ${CMAKE_BINARY_DIR}/lib${CORE_LIB}_rdict.pcm
         DESTINATION ${LIBRARY_OUTPUT_DIRECTORY})
 

@@ -7,7 +7,7 @@ dependencies:
   - numpy
   - scipy
   - matplotlib
-  - root>=6.34
+  - root>=6.38
   - cmake>=3.30
   - boost
   - doxygen
