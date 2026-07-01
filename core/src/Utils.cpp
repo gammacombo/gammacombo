@@ -10,6 +10,9 @@
 #include <RooSlimFitResult.h>
 #include <rdtsc.h>
 
+#include <RooAbsPdf.h>
+#include <RooArgSet.h>
+#include <RooDataSet.h>
 #include <RooFitResult.h>
 #include <RooFormulaVar.h>
 #include <RooMinimizer.h>
@@ -679,9 +682,10 @@ void Utils::floatParameters(const RooAbsCollection* set) {
 
 namespace {
   inline void setLimitHelper(RooRealVar* v, const TString limitname) {
-    if (limitname == "free")
-      v->removeRange();
-    else
+    if (limitname == "free") {
+      v->removeMin();
+      v->removeMax();
+    } else
       v->setRange(v->getMin(limitname), v->getMax(limitname));
   }
 }  // namespace

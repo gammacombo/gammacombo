@@ -393,7 +393,8 @@ void Combiner::adjustPhysRange(TString varName, double min, double max) {
     return;
   }
   if (min <= -999. && max <= -999.) {
-    w->var(varName)->removeRange();
+    w->var(varName)->removeMin();
+    w->var(varName)->removeMax();
   } else {
     w->var(varName)->setRange("phys", min, max);
   }

@@ -12,34 +12,59 @@
 # This is the CI/CD pipeline for the repository mirror in Gitlab.
 
 stages:
+  - pre-commit
   - build
   - test
 
 variables:
   NO_LBLOGIN: "1"
 
+check-formatting:
+  stage: pre-commit
+  image: gitlab-registry.cern.ch/lhcb-docker/os-base/alma9-devel:latest
+  variables:
+    PRE_COMMIT_HOME: ${CI_PROJECT_DIR}/.cache/pre-commit
+  cache:
+    paths:
+      - ${PRE_COMMIT_HOME}
+  before_script:
+    - |
+      python3 -m venv ${CI_PROJECT_DIR}/.cache/pre-commit-venv
+      source ${CI_PROJECT_DIR}/.cache/pre-commit-venv/bin/activate
+      pip install --upgrade pip
+      pip install -U pre-commit
+      pip install six
+  script:
+    - pre-commit run --all-files --show-diff-on-failure
+
+build_gcc:
+  tags:
+    - cvmfs
+  image: gitlab-registry.cern.ch/lhcb-docker/os-base/alma9-devel:latest
+  before_script:
+    - source scripts/setup-env-cvmfs.sh || exit 1
+  stage: build
+  script:
+    - |
+      cmake -B build
+      cmake --build build
+      cmake --install build
+
 .select_runner:
   tags:
     - cvmfs
   image: gitlab-registry.cern.ch/lhcb-docker/os-base/alma9-devel:latest
-
-build_gcc:
-  extends: .select_runner
-  stage: build
-  script:
-    - source scripts/setup-env-cvmfs.sh || exit 1
-    - cmake -B build
-    - cmake --build build
-    - cmake --install build
+  before_script:
+    - source scripts/setup-env-cvmfs.sh -c || exit 1
 
 build_clang:
   extends: .select_runner
   stage: build
   script:
-    - source scripts/setup-env-cvmfs.sh -c || exit 1
-    - cmake -B build
-    - cmake --build build
-    - cmake --install build
+    - |
+      cmake -B build
+      cmake --build build
+      cmake --install build
   artifacts:
     when: on_success
     untracked: true
@@ -54,11 +79,10 @@ build_clang:
   stage: test
   dependencies:
     - build_clang
-  before_script:
-    - source scripts/setup-env-cvmfs.sh -c || exit 1
 
-test:
+test-tutorial:
   extends: .test
+  stage: test
   script:
     - python scripts/run_ci_tests.py
   artifacts:

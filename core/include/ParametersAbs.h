@@ -29,7 +29,7 @@ class ParametersAbs {
 
  protected:
   std::vector<Parameter*> m_parameters;
-  inline virtual void defineParameters(){};
+  inline virtual void defineParameters() {};
 };
 
 #endif
