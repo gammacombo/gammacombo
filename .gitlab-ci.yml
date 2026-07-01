@@ -20,7 +20,7 @@ stages:
 variables:
   NO_LBLOGIN: "1"
   GIT_SUBMODULE_STRATEGY: none
-  GAMMACOMBO_BRANCH: master
+  GAMMACOMBO_BRANCH: lhcb-paper-2026
 
 check-formatting:
   stage: pre-commit
