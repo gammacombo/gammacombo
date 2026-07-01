@@ -94,7 +94,7 @@ def read2dscan(h, bf, minnll):
         [h.GetXaxis().GetBinCenter(b) for b in range(1, h.GetNbinsX() + 1)]
     )
     ycenters = np.array(
-        [h.GetYaxis().GetBinCenter(b) for b in range(1, h.GetNbinsX() + 1)]
+        [h.GetYaxis().GetBinCenter(b) for b in range(1, h.GetNbinsY() + 1)]
     )
 
     # get content of each bin
