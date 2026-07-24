@@ -297,6 +297,9 @@ void OptParser::defineOptions() {
   availableOptions.push_back("debug");
   availableOptions.push_back("digits");
   availableOptions.push_back("evol");
+  availableOptions.push_back("externalscan");
+  availableOptions.push_back("externallabel");
+  availableOptions.push_back("externalscanonly");
   availableOptions.push_back("hexfillcolor");
   availableOptions.push_back("hexlinecolor");
   availableOptions.push_back("filename");
@@ -304,6 +307,7 @@ void OptParser::defineOptions() {
   availableOptions.push_back("filltransparency");
   availableOptions.push_back("fillcolor");
   availableOptions.push_back("fix");
+  availableOptions.push_back("fix-from-parfile");
   availableOptions.push_back("ext");
   availableOptions.push_back("hfagLabel");
   availableOptions.push_back("hfagLabelPos");
@@ -328,6 +332,7 @@ void OptParser::defineOptions() {
   availableOptions.push_back("linestyle");
   availableOptions.push_back("linecolor");
   availableOptions.push_back("loadParamsFile");
+  availableOptions.push_back("loadFixParamsFile");
   availableOptions.push_back("log");
   availableOptions.push_back("magnetic");
   availableOptions.push_back("nbatchjobs");
@@ -411,6 +416,9 @@ void OptParser::bookPlottingOptions() {
   bookedOptions.push_back("color");
   bookedOptions.push_back("digits");
   bookedOptions.push_back("ext");
+  bookedOptions.push_back("externalscan");
+  bookedOptions.push_back("externalscanonly");
+  bookedOptions.push_back("externalscanlabel");
   bookedOptions.push_back("leg");
   bookedOptions.push_back("legsize");
   bookedOptions.push_back("legbox");
@@ -490,6 +498,7 @@ void OptParser::bookFlowcontrolOptions() {
   bookedOptions.push_back("action");
   bookedOptions.push_back("combid");
   bookedOptions.push_back("fix");
+  bookedOptions.push_back("fix-from-parfile");
   bookedOptions.push_back("start");
   // bookedOptions.push_back("jobdir");
   bookedOptions.push_back("nosyst");
@@ -633,8 +642,8 @@ void OptParser::parseArguments(int argc, char* argv[]) {
       false, "default", "string");
   TCLAP::ValueArg<std::string> plotgroupArg("", "group",
                                             "Set the group logo. Use '--group off' to disable the logo. "
-                                            "See also --grouppos. Default: GammaCombo",
-                                            false, "GammaCombo", "string");
+                                            "See also --grouppos. Default: CharmFitter",
+                                            false, "CharmFitter", "string");
   TCLAP::ValueArg<std::string> plotgroupposArg(
       "", "grouppos",
       "Set the position of the group logo. "
@@ -770,6 +779,15 @@ void OptParser::parseArguments(int argc, char* argv[]) {
       false);
   TCLAP::SwitchArg squareArg("", "square", "Make a square canvas", false);
   TCLAP::SwitchArg saveAtMinArg("", "saveAtMin", "Save workspace after minimization", false);
+
+  TCLAP::MultiArg<std::string> externalScanArg("", "externalscan",
+                                               "Load external scan data from ROOT file for overlay plotting. "
+                                               "Format: --externalscan path/to/external_scan1.root",
+                                               false, "string");
+  TCLAP::MultiArg<std::string> externalLabelArg("", "externallabel", "Label for external scan in legend", false,
+                                                "string");
+  TCLAP::SwitchArg externalScanOnlyArg("", "externalscanonly",
+                                       "Suppress primary combiner (hack to plot external scans alone)", false);
 
   // --------------- aruments that can be given multiple times
   std::vector<std::string> vAction;
@@ -933,12 +951,23 @@ void OptParser::parseArguments(int argc, char* argv[]) {
       "To fix just the parameters in the second combination, do\n"
       "Example: --fix none --fix 'g=1.7,r_dk=0.09' \n",
       false, "string");
+  TCLAP::MultiArg<std::string> fixFromParfileArg(
+      "", "fix-from-parfile",
+      "Fix one or more parameters in a combination based on the value of the parameter file passed through "
+      "--fix-parfile or, when not passed, --parfile. "
+      "If 'none' is given, all parameters are floated (default). "
+      "If given multiple times, the first --fix-from-parfile argument refers to the first combination, "
+      "the second one to the second and so on. "
+      "If given a single time, it is applied to all combinations, eg, \"--fix-from-parfile 'g,r_dk'\"\n"
+      "To fix just the parameters in the second combination use, eg, "
+      "\"--fix-from-parfile none --fix-from-parfile 'g=1.7,r_dk=0.09'\"\n",
+      false, "string");
   TCLAP::MultiArg<std::string> physrangeArg(
       "", "prange",
       "Adjust the physical range of one or more parameters in a combination. "
       "The ranges are enforced through the --pr option. "
       "If 'def' is given, the default ranges are used. "
-      "If given multiple times, the first --fix argument refers to the first combination, "
+      "If given multiple times, the first --prange argument refers to the first combination, "
       "the second one to the second and so on. "
       "If given a single time, it is applied to all combinations. \n"
       "Example: --prange 'g=1.7:1.9,r_dk=0.09:0.2' \n"
@@ -988,6 +1017,13 @@ void OptParser::parseArguments(int argc, char* argv[]) {
       "If 'default' is given, the default file for that combination is used, which is found in "
       "plots/par/*_start.dat ."
       "Example: --parfile parsForFirstCombination.dat --parfile parsForSecondCombination.dat",
+      false, "string");
+  TCLAP::MultiArg<std::string> loadFixParamsFileArg(
+      "", "fix-parfile",
+      "Load fixed parameters for the corresponding combination from this particular file. "
+      "If 'default' is given, the default file for that combination is used, which is found in "
+      "plots/par/*_start.dat ."
+      "Example: --fix-parfile parsForFirstCombination.dat --fix-parfile parsForSecondCombination.dat",
       false, "string");
   TCLAP::MultiArg<int> asimovArg(
       "", "asimov",
@@ -1117,6 +1153,7 @@ void OptParser::parseArguments(int argc, char* argv[]) {
   if (isIn<TString>(bookedOptions, "magnetic")) cmd.add(plotmagneticArg);
   if (isIn<TString>(bookedOptions, "log")) cmd.add(plotlogArg);
   if (isIn<TString>(bookedOptions, "loadParamsFile")) cmd.add(loadParamsFileArg);
+  if (isIn<TString>(bookedOptions, "loadFixParamsFile")) cmd.add(loadFixParamsFileArg);
   if (isIn<TString>(bookedOptions, "linewidth")) cmd.add(linewidthArg);
   if (isIn<TString>(bookedOptions, "linestyle")) cmd.add(linestyleArg);
   if (isIn<TString>(bookedOptions, "linecolor")) cmd.add(linecolorArg);
@@ -1140,12 +1177,16 @@ void OptParser::parseArguments(int argc, char* argv[]) {
   if (isIn<TString>(bookedOptions, "grouppos")) cmd.add(plotgroupposArg);
   if (isIn<TString>(bookedOptions, "grid")) cmd.add(gridArg);
   if (isIn<TString>(bookedOptions, "fix")) cmd.add(fixArg);
+  if (isIn<TString>(bookedOptions, "fix-from-parfile")) cmd.add(fixFromParfileArg);
   if (isIn<TString>(bookedOptions, "filltransparency")) cmd.add(filltransparencyArg);
   if (isIn<TString>(bookedOptions, "fillstyle")) cmd.add(fillstyleArg);
   if (isIn<TString>(bookedOptions, "fillcolor")) cmd.add(fillcolorArg);
   if (isIn<TString>(bookedOptions, "hexlinecolor")) cmd.add(hexlinecolorArg);
   if (isIn<TString>(bookedOptions, "hexfillcolor")) cmd.add(hexfillcolorArg);
   if (isIn<TString>(bookedOptions, "ext")) cmd.add(filenameadditionArg);
+  if (isIn<TString>(bookedOptions, "externalscan")) cmd.add(externalScanArg);
+  if (isIn<TString>(bookedOptions, "externalscanonly")) cmd.add(externalScanOnlyArg);
+  if (isIn<TString>(bookedOptions, "externallabel")) cmd.add(externalLabelArg);
   if (isIn<TString>(bookedOptions, "filename")) cmd.add(filenamechangeArg);
   if (isIn<TString>(bookedOptions, "evol")) cmd.add(parevolArg);
   if (isIn<TString>(bookedOptions, "digits")) cmd.add(digitsArg);
@@ -1190,6 +1231,8 @@ void OptParser::parseArguments(int argc, char* argv[]) {
   //
   // copy over parsed values into data members
   //
+  std::vector<std::string> tmp;  // for variables that cannot be assigned directly due to TString cast
+
   asimov = asimovArg.getValue();
   cls = clsArg.getValue();
   CL = CLArg.getValue();
@@ -1199,6 +1242,11 @@ void OptParser::parseArguments(int argc, char* argv[]) {
   confirmsols = !noconfsolsArg.getValue();
   digits = digitsArg.getValue();
   enforcePhysRange = prArg.getValue();
+  tmp = externalScanArg.getValue();
+  for (int i = 0; i < tmp.size(); ++i) externalScanFiles.push_back(tmp[i]);
+  tmp = externalLabelArg.getValue();
+  for (int i = 0; i < tmp.size(); ++i) externalScanLabels.push_back(tmp[i]);
+  externalScanOnly = externalScanOnlyArg.getValue();
   filenameaddition = filenameadditionArg.getValue();
   filenamechange = filenamechangeArg.getValue();
   filltransparency = filltransparencyArg.getValue();
@@ -1296,7 +1344,7 @@ void OptParser::parseArguments(int argc, char* argv[]) {
   // for ( int i=0; i<resultAddPdf.size(); i++){cout << "resultAddPdf " << resultAddPdf[i] << std::endl;}
   // for ( int i=0; i<resultDelPdf.size(); i++){cout << "resultDelPdf " << resultDelPdf[i] << std::endl;}
   // std::exit(0);
-  std::vector<std::string> tmp = combidArg.getValue();
+  tmp = combidArg.getValue();
   for (int i = 0; i < tmp.size(); i++) {
     int resultCmbId = 0;
     std::vector<int> resultAddDelPdf;
@@ -1351,6 +1399,10 @@ void OptParser::parseArguments(int argc, char* argv[]) {
   // --parfile
   tmp = loadParamsFileArg.getValue();
   for (int i = 0; i < tmp.size(); i++) loadParamsFile.push_back(tmp[i]);
+
+  // --fix-parfile
+  tmp = loadFixParamsFileArg.getValue();
+  for (const auto& fname : tmp) loadFixParamsFile.push_back(fname);
 
   // --asimovfile
   tmp = asimovFileArg.getValue();
@@ -1568,6 +1620,17 @@ void OptParser::parseArguments(int argc, char* argv[]) {
       }
     }
     fixParameters.push_back(assignments);
+  }
+
+  // --fix-from-parfile
+  tmp = fixFromParfileArg.getValue();
+  for (auto arg : tmp) {
+    std::vector<std::string> pars;
+    if (TString(arg) != TString("none")) {
+      auto parsArray = TString(arg).Tokenize(",");
+      for (auto ptr : *parsArray) pars.push_back(std::string(dynamic_cast<TObjString*>(ptr)->GetString().Data()));
+    }
+    fixParametersFromParfile.push_back(pars);
   }
 
   // --start

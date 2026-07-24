@@ -7,8 +7,11 @@
 
 #include <PDF_Abs.h>
 
+#include <ParameterCache.h>
 #include <Utils.h>
 
+#include <RooAbsData.h>
+#include <RooAbsPdf.h>
 #include <RooFitResult.h>
 #include <RooFormulaVar.h>
 #include <RooMinimizer.h>
@@ -222,6 +225,15 @@ void PDF_Abs::loadExtParameters(const RooFitResult* r) {
   tmp->add(r->constPars());
   Utils::setParameters(parameters, tmp);
   delete tmp;
+}
+
+void PDF_Abs::loadExtParameters(const ParameterCache* pc) {
+  auto tmp = std::make_unique<RooArgSet>();
+  for (auto [name, value] : pc->startingValues[0]) {
+    auto var = new RooRealVar(name, name, value);
+    tmp->add(*var);
+  }
+  Utils::setParameters(parameters, tmp.get());
 }
 
 ///
@@ -564,8 +576,8 @@ bool PDF_Abs::checkConsistency() const {
     if (pObsName != base + "_obs") {
       std::cout << "PDF_Abs::checkConsistency() : " << name << " : " << pTh->GetName()
                 << " doesn't match its observable." << std::endl;
-      std::cout << "                              Expected '" << base + "_obs"
-                << "'. Found '" << pObsName << "'." << std::endl;
+      std::cout << "                              Expected '" << base + "_obs" << "'. Found '" << pObsName << "'."
+                << std::endl;
       std::cout << "                              Check ordering of the 'theory' and 'observables' lists!" << std::endl;
       allOk = false;
     }

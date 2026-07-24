@@ -50,6 +50,9 @@ class OptParser {
   bool debug = false;
   int digits = -99;
   bool enforcePhysRange = false;
+  std::vector<TString> externalScanFiles;
+  std::vector<TString> externalScanLabels;
+  bool externalScanOnly = false;
   std::vector<int> fillstyle;
   std::vector<int> fillcolor;
   std::vector<float> filltransparency;
@@ -61,6 +64,7 @@ class OptParser {
   TString filenamechange;
   TString filenameaddition;
   std::vector<std::vector<Utils::FixPar>> fixParameters;
+  std::vector<std::vector<std::string>> fixParametersFromParfile;
   std::vector<std::vector<Utils::StartPar>> startVals;
   std::vector<std::vector<Utils::RangePar>> physRanges;
   std::vector<std::vector<TString>> removeRanges;
@@ -80,6 +84,7 @@ class OptParser {
   bool largest = false;
   bool latex = false;
   std::vector<TString> loadParamsFile;
+  std::vector<TString> loadFixParamsFile;
   bool lightfiles = false;
   int batchstartn = 1;
   bool batcheos = false;

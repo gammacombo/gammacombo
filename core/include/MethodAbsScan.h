@@ -88,10 +88,10 @@ class MethodAbsScan {
   const RooArgSet* getObservables() const;
   inline TString getObsName() const { return obsName; };
   inline TString getParsName() const { return parsName; };
-  RooRealVar* getScanVar1();
-  RooRealVar* getScanVar2();
-  const RooRealVar* getScanVar1() const;
-  const RooRealVar* getScanVar2() const;
+  virtual RooRealVar* getScanVar1();
+  virtual RooRealVar* getScanVar2();
+  virtual const RooRealVar* getScanVar1() const;
+  virtual const RooRealVar* getScanVar2() const;
   inline TString getScanVar1Name() const { return scanVar1; };
   inline TString getScanVar2Name() const { return scanVar2; };
   double getScanVarSolution(int iVar, int iSol) const;

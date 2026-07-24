@@ -1,0 +1,4 @@
+[submodule "charm"]
+  path = charm
+  url = https://github.com/tpajero/charm-fitter.git
+  branch = master

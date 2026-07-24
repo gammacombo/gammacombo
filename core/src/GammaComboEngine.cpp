@@ -2,6 +2,7 @@
 
 #include <BatchScriptWriter.h>
 #include <Combiner.h>
+#include <ExternalScanWrapper.h>
 #include <FileNameBuilder.h>
 #include <Graphviz.h>
 #include <LatexMaker.h>
@@ -48,6 +49,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <string.h>
 #include <string>
 #include <vector>
@@ -335,6 +337,17 @@ Combiner* GammaComboEngine::getCombiner(int id) {
 }
 
 ///
+/// Get a vector with the indices of all non-trivial combiners created.
+///
+std::vector<int> GammaComboEngine::getCombinersIds() const {
+  std::vector<int> ids;
+  for (int id = 0; id < cmb.size(); ++id) {
+    if (combinerExists(id)) ids.push_back(id);
+  }
+  return ids;
+}
+
+///
 /// Get a PDF.
 /// \param id - PDF ID, set when adding the PDF using addPdf()
 ///
@@ -345,6 +358,12 @@ PDF_Abs* GammaComboEngine::getPdf(int id) {
     std::exit(1);
   }
   return pdf[id];
+}
+
+std::vector<PDF_Abs*> GammaComboEngine::getPdfs() {
+  std::vector<PDF_Abs*> rt;
+  std::ranges::copy_if(pdf, std::back_inserter(rt), [](PDF_Abs* p) { return p; });
+  return rt;
 }
 
 PDF_Abs* GammaComboEngine::operator[](int idx) { return getPdf(idx); }
@@ -1274,15 +1293,31 @@ void GammaComboEngine::make1dCoverageScan(MethodCoverageScan* scanner, int cId) 
 /// \param cId - the id of this combination on the command line
 ///
 void GammaComboEngine::make1dProbPlot(MethodProbScan* scanner, int cId) {
+  auto warning = [](std::string msg) { return Utils::msgBase("GammaComboEngine::make1dProbPlot() : WARNING : ", msg); };
 
   if (!arg->isAction("pluginbatch") && !arg->plotpluginonly) {
     scanner->setDrawSolution(arg->plotsolutions[cId]);
     if (arg->isAction("plugin") || arg->isAction("plot"))
       scanner->computeCLvalues();  // compute new CL values depending on test stat, even if not a rescan is wished
-    if (arg->cls.size() > 0) {
-      if (runOnDataSet) ((MethodDatasetsProbScan*)scanner)->plotFitRes(m_fnamebuilder->getFileNamePlot(cmb) + "_fit");
-      scanner->plotOn(plot, 1);  // for prob ClsType>1 doesn't exist
+    if (!arg->externalScanOnly) {
+      if (arg->cls.size() > 0) {
+        if (runOnDataSet) ((MethodDatasetsProbScan*)scanner)->plotFitRes(m_fnamebuilder->getFileNamePlot(cmb) + "_fit");
+        scanner->plotOn(plot, 1);  // for prob ClsType>1 doesn't exist
+      }
     }
+
+    // Add external scanner if requested and only do it after last internal scanner
+    if (arg->externalScanFiles.size() > 1 && cId == arg->combid.size() - 1) {
+      int files_len = arg->externalScanFiles.size();
+      int labels_len = arg->externalScanLabels.size();
+      if (files_len != labels_len) { warning("More external files provided than labels"); }
+      for (int i = 1; i < files_len; i++) {
+        TString label = (i < labels_len) ? arg->externalScanLabels[i] : TString("External " + std::to_string(i));
+        auto extScanner = createExternalScanner(arg->externalScanFiles[i], label, arg);
+        if (extScanner) { ((OneMinusClPlot*)plot)->addScanner(extScanner, 0); }
+      }
+    }
+
     scanner->plotOn(plot);
     int colorId = cId;
     if (arg->color.size() > cId) colorId = arg->color[cId];
@@ -1294,7 +1329,7 @@ void GammaComboEngine::make1dProbPlot(MethodProbScan* scanner, int cId) {
     scanner->setFillColor(fillColors[cId]);
     scanner->setFillStyle(fillStyles[cId]);
     scanner->setFillTransparency(fillTransparencies[cId]);
-    plot->Draw();
+    if (!arg->externalScanOnly) plot->Draw();
   }
 }
 
@@ -1468,6 +1503,7 @@ void GammaComboEngine::make2dProbScan(MethodProbScan* scanner, int cId) {
 /// Make the 2D plot for a prob scanner.
 ///
 void GammaComboEngine::make2dProbPlot(MethodProbScan* scanner, int cId) {
+  auto warning = [](std::string msg) { return Utils::msgBase("GammaComboEngine::make2dProbPlot() : WARNING : ", msg); };
   // plot full
   OneMinusClPlot2d* plotf;
   if (scanner->getMethodName() == "Prob")
@@ -1507,8 +1543,10 @@ void GammaComboEngine::make2dProbPlot(MethodProbScan* scanner, int cId) {
   scanner->setFillColor(fillColors[cId]);
   scanner->setFillStyle(fillStyles[cId]);
   scanner->setFillTransparency(fillTransparencies[cId]);
-  if (arg->cls.size() > 0) scanner->plotOn(plot, 1);
-  scanner->plotOn(plot, 0);
+  if (!arg->externalScanOnly) {
+    if (arg->cls.size() > 0) scanner->plotOn(plot, 1);
+    scanner->plotOn(plot, 0);
+  }
   // only draw the plot once when multiple scanners are plotted,
   // else we end up with too many graphs, and the transparency setting
   // gets screwed up
@@ -1517,16 +1555,53 @@ void GammaComboEngine::make2dProbPlot(MethodProbScan* scanner, int cId) {
     plot->Draw();
     plot->Show();
   }
+  // Add external scanner if requested, and only do it after last scanner
+  if (arg->externalScanFiles.size() > 1 && cId == arg->combid.size() - 1) {
+    int files_len = arg->externalScanFiles.size();
+    int labels_len = arg->externalScanLabels.size();
+    if (files_len != labels_len) { warning("More external files provided than labels"); }
+    for (int i = 1; i < files_len; ++i) {
+      TString label = (i < labels_len) ? arg->externalScanLabels[i] : TString("External " + std::to_string(i));
+      auto extScanner = createExternalScanner(arg->externalScanFiles[i], label, arg);
+      if (extScanner) { ((OneMinusClPlot2d*)plot)->addScanner(extScanner, 0); }
+    }
+  }
+  if (cId == arg->combid.size() - 1 || arg->combid.empty()) {
+    plot->Draw();
+    plot->Show();
+  }
 }
 
 ///
-/// Helper function for scan(). Fixes parameters, if requested
-/// (only possible before combining).
+/// Fix parameters according to command-line arguments (only possible before combining).
 ///
 void GammaComboEngine::fixParameters(Combiner* c, int cId) {
-  if (cId < arg->fixParameters.size()) {
-    for (int j = 0; j < arg->fixParameters[cId].size(); j++) {
-      c->fixParameter(arg->fixParameters[cId][j].name, arg->fixParameters[cId][j].value);
+  auto error = [](std::string msg) { return Utils::errBase("GammaComboEngine::fixParameters ERROR ", msg); };
+  // Parameters relying on --fix
+  if (!arg->fixParameters.empty()) {
+    const auto nargs = arg->fixParameters.size();
+    if (cId < nargs || nargs == 1) {
+      const int index = (cId < nargs) ? cId : 0;
+      for (const auto fixedParam : arg->fixParameters[index]) c->fixParameter(fixedParam.name, fixedParam.value);
+    }
+  }
+  // Parameters relying on --fix-from-parfile
+  if (!arg->fixParametersFromParfile.empty()) {
+    const auto nargs = arg->fixParametersFromParfile.size();
+    if (cId < nargs || nargs == 1) {
+      const auto fileNames = arg->loadFixParamsFile.empty() ? arg->loadParamsFile : arg->loadFixParamsFile;
+      const auto nParfiles = fileNames.size();
+      const TString parfile = (nargs == 1 && nParfiles == 1) ? fileNames.front() : getStartParFileName(cId);
+      const int index = (cId < nargs) ? cId : 0;
+      auto pCache = std::make_unique<ParameterCache>(arg);
+      pCache->loadPoints(parfile);
+      for (const auto fixedParam : arg->fixParametersFromParfile[index]) {
+        try {
+          c->fixParameter(fixedParam, pCache->startingValues[0].at(TString(fixedParam)));
+        } catch (const std::out_of_range& ex) {
+          error(std::format("Could not find parameter \"{}\" in start file \"{}\"", fixedParam, parfile.Data()));
+        }
+      }
     }
   }
 }
@@ -1544,7 +1619,11 @@ void GammaComboEngine::adjustRanges(Combiner* c, int cId) {
   if (cId < arg->removeRanges.size()) {
     for (int j = 0; j < arg->removeRanges[cId].size(); j++) {
       if (arg->removeRanges[cId][j] == "all") {
-        for (const auto& par : *c->getParameters()) static_cast<RooRealVar*>(par)->removeRange();
+        for (const auto& par : *c->getParameters()) {
+          auto p = static_cast<RooRealVar*>(par);
+          p->removeMin();
+          p->removeMax();
+        }
       } else {
         c->adjustPhysRange(arg->removeRanges[cId][j], -999, -999);
       }
@@ -1943,11 +2022,21 @@ void GammaComboEngine::runToys(Combiner* c) {
 /// scan engine
 ///
 void GammaComboEngine::scan() {
+  auto debug = [](std::string msg) { return Utils::msgBase("GammaComboEngine::scan() : DEBUG : ", msg); };
+
+  if (arg->debug) {
+    debug(std::format("runOnDataSet = {:s}", runOnDataSet ? "true" : "false"));
+    debug(std::format("arg->var.size() = {:d}", arg->var.size()));
+  }
+
   // if we're running with the dataset option then we go off and do that somewhere else
   if (runOnDataSet) {
+    if (arg->debug) debug("Taking dataset path");
     scanDataSet();
     return;
   }
+
+  if (arg->debug) debug(std::format("Taking combiner path, number of combiners: {:d}", arg->combid.size()));
 
   // combination scanning action happens here
   for (int i = 0; i < arg->combid.size(); i++) {
@@ -2032,10 +2121,13 @@ void GammaComboEngine::scan() {
       // 2D SCANS
       else if (arg->var.size() == 2) {
         if (arg->isAction("plot")) {
+          if (arg->debug) debug("Loading scanner for 2D plot");
           scannerProb->loadScanner(m_fnamebuilder->getFileNameScanner(scannerProb));
         } else {
+          if (arg->debug) debug("Running 2D prob scan");
           make2dProbScan(scannerProb, i);
         }
+        if (arg->debug) debug("About to call make2dProbPlot");
         make2dProbPlot(scannerProb, i);
       }
     }

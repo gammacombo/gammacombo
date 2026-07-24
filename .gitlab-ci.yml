@@ -12,40 +12,97 @@
 # This is the CI/CD pipeline for the repository mirror in Gitlab.
 
 stages:
+  - pre-commit
+  - initialisation
   - build
   - test
 
 variables:
   NO_LBLOGIN: "1"
+  GIT_SUBMODULE_STRATEGY: none
+  CHARM_BRANCH: master
+
+check-formatting:
+  stage: pre-commit
+  image: gitlab-registry.cern.ch/lhcb-docker/os-base/alma9-devel:latest
+  variables:
+    PRE_COMMIT_HOME: ${CI_PROJECT_DIR}/.cache/pre-commit
+  cache:
+    paths:
+      - ${PRE_COMMIT_HOME}
+  before_script:
+    - |
+      python3 -m venv ${CI_PROJECT_DIR}/.cache/pre-commit-venv
+      source ${CI_PROJECT_DIR}/.cache/pre-commit-venv/bin/activate
+      pip install --upgrade pip
+      pip install -U pre-commit
+      pip install six
+  script:
+    - pre-commit run --all-files --show-diff-on-failure
+
+charm-init:
+  stage: initialisation
+  tags:
+    - cvmfs
+  image: gitlab-registry.cern.ch/lhcb-docker/os-base/alma9-devel:latest
+  script:
+    - |
+      echo "Initialise charm-fitter repository..."
+      git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.cern.ch/gammacombo/charm.git
+      cd charm
+      git fetch origin
+      echo "Checking out branch ${CHARM_BRANCH}..."
+      git checkout $CHARM_BRANCH
+      git pull origin $CHARM_BRANCH
+      cd ..
+      source scripts/setup-env-cvmfs.sh -c || exit 1
+  artifacts:
+    when: on_success
+    untracked: true
+    paths:
+      - charm
+    access: all
+    expire_in: 1 days
+
+build_gcc:
+  tags:
+    - cvmfs
+  image: gitlab-registry.cern.ch/lhcb-docker/os-base/alma9-devel:latest
+  before_script:
+    - source scripts/setup-env-cvmfs.sh || exit 1
+  stage: build
+  dependencies:
+    - charm-init
+  script:
+    - |
+      cmake -B build
+      cmake --build build
+      cmake --install build
 
 .select_runner:
   tags:
     - cvmfs
   image: gitlab-registry.cern.ch/lhcb-docker/os-base/alma9-devel:latest
-
-build_gcc:
-  extends: .select_runner
-  stage: build
-  script:
-    - source scripts/setup-env-cvmfs.sh || exit 1
-    - cmake -B build
-    - cmake --build build
-    - cmake --install build
+  before_script:
+    - source scripts/setup-env-cvmfs.sh -c || exit 1
 
 build_clang:
   extends: .select_runner
   stage: build
+  dependencies:
+    - charm-init
   script:
-    - source scripts/setup-env-cvmfs.sh -c || exit 1
-    - cmake -B build
-    - cmake --build build
-    - cmake --install build
+    - |
+      cmake -B build
+      cmake --build build
+      cmake --install build
   artifacts:
     when: on_success
     untracked: true
     paths:
       - build
       - tutorial
+      - charm
     access: all
     expire_in: 1 days
 
@@ -54,11 +111,10 @@ build_clang:
   stage: test
   dependencies:
     - build_clang
-  before_script:
-    - source scripts/setup-env-cvmfs.sh -c || exit 1
 
-test:
+test-tutorial:
   extends: .test
+  stage: test
   script:
     - python scripts/run_ci_tests.py
   artifacts:
@@ -68,4 +124,30 @@ test:
       - tutorial/plots
       - tutorial/root
       - tutorial/workspace.root
+    expire_in: 1 days
+
+test-charm:
+  extends: .test
+  stage: test
+  dependencies:
+    - build_clang
+  tags:
+    - cvmfs
+  image: gitlab-registry.cern.ch/lhcb-docker/os-base/alma9-devel:latest
+  before_script:
+    - |
+      source scripts/setup-env-cvmfs.sh -c || exit 1
+      python -m venv venvs/charm
+      source venvs/charm/bin/activate
+      python -m pip install --upgrade pip
+      python -m pip install -e . -e charm
+      cd charm
+  script:
+    - python scripts/mpl-plots.py -a all --config config/2025.py --extra-opts " --ps 1 " --rescan --no-latex
+  artifacts:
+    when: always
+    paths:
+      - charm/plots/matplotlib
+      - charm/plots/par
+      - charm/plots/scanner
     expire_in: 1 days

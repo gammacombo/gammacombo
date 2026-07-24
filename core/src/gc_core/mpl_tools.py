@@ -94,7 +94,7 @@ def read2dscan(h, bf, minnll):
         [h.GetXaxis().GetBinCenter(b) for b in range(1, h.GetNbinsX() + 1)]
     )
     ycenters = np.array(
-        [h.GetYaxis().GetBinCenter(b) for b in range(1, h.GetNbinsX() + 1)]
+        [h.GetYaxis().GetBinCenter(b) for b in range(1, h.GetNbinsY() + 1)]
     )
 
     # get content of each bin
@@ -171,6 +171,102 @@ def read_gc_scan(scanfile, parfile, pars):
     tf.Close()
 
     return res
+
+
+def read_external_scan(rootfile, scanvar1=None, scanvar2=None):
+    """
+    Read an external scan from a ROOT file containing hCL histogram
+
+    Parameters
+    ----------
+    rootfile : str
+        Path to the ROOT file
+    scanvar1 : str, optional
+        Name of x-axis variable (for axis labels)
+    scanvar2 : str, optional
+        Name of y-axis variable (for axis labels)
+
+    Returns
+    -------
+    tuple
+        (x, y, z, bf) where bf is [bfx] for 1D or [bfx, bfy] for 2D
+    """
+    if not os.path.exists(rootfile):
+        raise FileNotFoundError(f"Cannot find external scan file {rootfile}")
+
+    tf = r.TFile(rootfile)
+    hCL = tf.Get("hCL")
+
+    if hCL is None:
+        raise RuntimeError(f"No hCL histogram found in {rootfile}")
+
+    # Determine if 1D or 2D scan first
+    is2D = hCL.InheritsFrom("TH2")
+
+    # Try to read best-fit points
+    bf = None
+    bfX_obj = tf.Get("bestfit_x")
+
+    if bfX_obj and hasattr(bfX_obj, "GetTitle"):
+        try:
+            bfX = float(bfX_obj.GetTitle())
+            bf = [bfX]
+            print(f"Found best-fit X: {bfX}")
+
+            # Only try to read Y for 2D scans
+            if is2D:
+                bfY_obj = tf.Get("bestfit_y")
+                if bfY_obj and hasattr(bfY_obj, "GetTitle"):
+                    try:
+                        bfY = float(bfY_obj.GetTitle())
+                        bf.append(bfY)
+                        print(f"Found best-fit Y: {bfY}")
+                    except (ValueError, ReferenceError, TypeError) as e:
+                        print(f"Warning: Could not read best-fit Y value: {e}")
+        except (ValueError, ReferenceError, TypeError) as e:
+            print(f"Warning: Could not read best-fit X value: {e}")
+            bf = None
+    else:
+        print("Warning: No best-fit point found in external scan file")
+
+    # Process histogram data
+    if is2D:
+        # 2D case
+        xcenters = np.array(
+            [hCL.GetXaxis().GetBinCenter(b) for b in range(1, hCL.GetNbinsX() + 1)]
+        )
+        ycenters = np.array(
+            [hCL.GetYaxis().GetBinCenter(b) for b in range(1, hCL.GetNbinsY() + 1)]
+        )
+
+        # Get bin contents (already as p-values)
+        entries = np.array(
+            [
+                hCL.GetBinContent(xbin + 1, ybin + 1)
+                for xbin, ybin in itertools.product(
+                    range(hCL.GetNbinsX()), range(hCL.GetNbinsY())
+                )
+            ]
+        )
+
+        # Convert to meshgrid format
+        x, y = np.meshgrid(xcenters, ycenters)
+        z = entries.reshape((hCL.GetNbinsX(), hCL.GetNbinsY())).T
+
+        # Convert p-value to chi2 for contour plotting
+        z = chi2.isf(z, 2)  # inverse survival function
+
+    elif hCL.InheritsFrom("TH1"):
+        # 1D case
+        x = np.array([hCL.GetBinCenter(b) for b in range(1, hCL.GetNbinsX() + 1)])
+        y = np.array([hCL.GetBinContent(b) for b in range(1, hCL.GetNbinsX() + 1)])
+        z = None
+    else:
+        raise RuntimeError("hCL is not a TH1 or TH2")
+
+    tf.Close()
+
+    return x, y, z, bf
 
 
 def getfnames(prefix, xpar, ypar=None):
@@ -339,6 +435,10 @@ lhcb_2d_cols = {
         (157, 196, 193),
         (132, 181, 178),
     ],
+    "p": [
+        (203, 176, 197),
+        (186, 150, 178),
+    ],
 }
 
 
@@ -384,7 +484,7 @@ def get_lopts(nscans, lopts, dim=1):
     else:
         defs = def_lopts_2d
 
-    ret = [None for i in range(nscans)]
+    ret = [None for i in range(max(nscans, len(lopts)))]
     for i in range(nscans):
         if i < len(lopts):
             ret[i] = lopts[i]
@@ -392,6 +492,11 @@ def get_lopts(nscans, lopts, dim=1):
             ret[i] = defs[i]
         else:
             raise RuntimeError(f"Can't find a default lopt for iscanner = {i}")
+
+    # Additional options for e.g. lines, markers
+    for i in range(nscans, len(lopts)):
+        ret[i] = lopts[i]
+
     return ret
 
 
@@ -401,7 +506,7 @@ def get_fopts(nscans, fopts, dim=1):
     else:
         defs = def_fopts_2d
 
-    ret = [None for i in range(nscans)]
+    ret = [None for i in range(max(nscans, len(fopts)))]
     for i in range(nscans):
         if i < len(fopts):
             ret[i] = fopts[i]
@@ -409,6 +514,11 @@ def get_fopts(nscans, fopts, dim=1):
             ret[i] = defs[i]
         else:
             raise RuntimeError(f"Can't find a default fopt for iscanner = {i}")
+
+    # Additional options for e.g. lines, markers
+    for i in range(nscans, len(fopts)):
+        ret[i] = fopts[i]
+
     return ret
 
 
@@ -418,7 +528,7 @@ def get_mopts(nscans, mopts, dim=1):
     else:
         defs = def_mopts_2d
 
-    ret = [None for i in range(nscans)]
+    ret = [None for i in range(max(nscans, len(mopts)))]
     for i in range(nscans):
         if i < len(mopts):
             ret[i] = mopts[i]
@@ -426,6 +536,11 @@ def get_mopts(nscans, mopts, dim=1):
             ret[i] = defs[i]
         else:
             raise RuntimeError(f"Can't find a default fopt for iscanner = {i}")
+
+    # Additional options for e.g. lines, markers
+    for i in range(nscans, len(mopts)):
+        ret[i] = mopts[i]
+
     return ret
 
 
@@ -600,7 +715,7 @@ def plot2d(
     prelim=False,
     contourline=False,
     legopts={},
-    axes_origin=(0.14, 0.16),
+    axes_origin=(0.17, 0.16),
     righttop_padding=(0.04, 0.04),
 ):
     """parameters
@@ -689,6 +804,7 @@ def plot2d(
     leg_labels = []
     if legtitles:
         for i, ltitle in enumerate(legtitles):
+            lopt_original = dict(**lopts[i])
             lopt = dict(**lopts[i])
             fopt = dict(**fopts[i])
             mopt = dict(**mopts[i])
@@ -717,12 +833,18 @@ def plot2d(
 
             if ltitle is not None:
                 leg_labels.append(ltitle)
-                leg_opts = {**lopt, **fopt}
-                leg_handle = (
-                    (patches.Patch(**leg_opts), Line2D([0], [0], lw=0, **mopt))
-                    if mopt
-                    else patches.Patch(**leg_opts)
-                )
+                if fopt == {}:
+                    if mopt == {}:
+                        leg_handle = Line2D([0], [0], **lopt_original)
+                    else:
+                        leg_handle = Line2D([0], [0], lw=0, **mopt)
+                else:
+                    leg_opts = {**lopt, **fopt}
+                    leg_handle = (
+                        (patches.Patch(**leg_opts), Line2D([0], [0], lw=0, **mopt))
+                        if mopt
+                        else patches.Patch(**leg_opts)
+                    )
                 leg_handles.append(leg_handle)
 
         # if 'prop' not in legopts:
