@@ -20,7 +20,7 @@ stages:
 variables:
   NO_LBLOGIN: "1"
   GIT_SUBMODULE_STRATEGY: none
-  CHARM_BRANCH: master
+  CHARM_BRANCH: main
 
 check-formatting:
   stage: pre-commit
@@ -48,11 +48,11 @@ charm-init:
   script:
     - |
       echo "Initialise charm-fitter repository..."
-      git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.cern.ch/gammacombo/charm.git
-      cd charm
+      git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.cern.ch/gammacombo/charm.git charm-fitter
+      cd charm-fitter
       git fetch origin
       echo "Checking out branch ${CHARM_BRANCH}..."
-      git checkout $CHARM_BRANCH
+      git checkout $CHARM_BRANCH --
       git pull origin $CHARM_BRANCH
       cd ..
       source scripts/setup-env-cvmfs.sh -c || exit 1
@@ -60,7 +60,7 @@ charm-init:
     when: on_success
     untracked: true
     paths:
-      - charm
+      - charm-fitter
     access: all
     expire_in: 1 days
 
@@ -102,7 +102,7 @@ build_clang:
     paths:
       - build
       - tutorial
-      - charm
+      - charm-fitter
     access: all
     expire_in: 1 days
 
@@ -140,14 +140,18 @@ test-charm:
       python -m venv venvs/charm
       source venvs/charm/bin/activate
       python -m pip install --upgrade pip
-      python -m pip install -e . -e charm
-      cd charm
+      python -m pip install -e . -e charm-fitter
+      cd charm-fitter
   script:
-    - python scripts/mpl-plots.py -a all --config config/2025.py --extra-opts " --ps 1 " --rescan --no-latex
+    - python scripts/BLUE/python/dy.py -c wa-2024 --fs all
+    - python scripts/BLUE/python/d-to-etah.py -c 2025
+    - python scripts/BLUE/python/d0-to-ksks.py -c 2025
+    - python scripts/mpl-plots.py -a 1d --config config/plotting/2025.py --rescan --no-latex
   artifacts:
     when: always
     paths:
-      - charm/plots/matplotlib
-      - charm/plots/par
-      - charm/plots/scanner
+      - charm-fitter/plots/BLUE
+      - charm-fitter/plots/matplotlib
+      - charm-fitter/plots/par
+      - charm-fitter/plots/scanner
     expire_in: 1 days
