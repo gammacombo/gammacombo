@@ -4,6 +4,7 @@
 #include <MethodAbsScan.h>
 #include <OptParser.h>
 #include <RooSlimFitResult.h>
+#include <Utils.h>
 
 #include <RooRealVar.h>
 #include <RooWorkspace.h>
@@ -17,6 +18,7 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <format>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -147,14 +149,15 @@ void ParameterCache::cacheParameters(MethodAbsScan* scanner, TString fileName) {
 /// \return - true, if a file was loaded
 ///
 bool ParameterCache::loadPoints(TString fileName) {
+  auto info = [](std::string msg) { return Utils::msgBase("ParameterCache::loadPoints INFO ", msg); };
+  auto error = [](std::string msg) { return Utils::errBase("ParameterCache::loadPoints ERROR ", msg); };
 
   bool successfullyLoaded = false;
   startingValues.clear();
 
   std::ifstream infile(fileName.Data());
   if (infile) {  // file exists
-    if (m_arg && m_arg->debug)
-      std::cout << "ParameterCache::loadPoints() -- loading parameters from file " << fileName << std::endl;
+    if (m_arg && m_arg->debug) info(std::format("Loading parameters from file \"{}\"", fileName.Data()));
     std::string line;
     if (infile.is_open()) {
       int nSolutions = 0;
@@ -167,6 +170,11 @@ bool ParameterCache::loadPoints(TString fileName) {
           nSolutions++;
           startingValues.push_back(std::map<TString, double>());
         } else {
+          if (nSolutions == 0) {
+            error(std::format(
+                "File \"{}\" has a parameter line before any \"----- SOLUTION ... -----\" separator line: \"{}\"",
+                fileName.Data(), line));
+          }
           std::vector<std::string> els;
           boost::split(els, line, boost::is_any_of(" "), boost::token_compress_on);
           TString name = els[0];
