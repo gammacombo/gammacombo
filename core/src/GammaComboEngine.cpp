@@ -353,9 +353,8 @@ std::vector<int> GammaComboEngine::getCombinersIds() const {
 ///
 PDF_Abs* GammaComboEngine::getPdf(int id) {
   if (!pdfExists(id)) {
-    std::cout << "GammaComboEngine::getPdf() : ERROR : Requested PDF id doesn't exist in GammaComboEngine. Exit."
-              << std::endl;
-    std::exit(1);
+    auto error = [](std::string msg) { return Utils::errBase("GammaComboEngine::getPdf ERROR ", msg); };
+    error(std::format("PDF id \"{}\" doesn't exist in GammaComboEngine", id));
   }
   return pdf[id];
 }

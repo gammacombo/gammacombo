@@ -592,6 +592,7 @@ int MethodProbScan::scan2d() {
 
         RooSlimFitResult* sfr = nullptr;
         auto chi2minScan = std::numeric_limits<double>::max();
+        bool fitConverged = true;
         bool performFit = hasFreePars;
         if (!hasFreePars) {
           // There are no parameters to fit, just calculate NLL
@@ -613,6 +614,12 @@ int MethodProbScan::scan2d() {
           chi2minScan = fr->minNll();
           if (std::isinf(chi2minScan))
             chi2minScan = std::numeric_limits<double>::max();  // else the toys in PDF_testConstraint don't work
+          // A fit that didn't converge can report a spuriously low minNll(); don't let such a
+          // result move the global minimum or overwrite a previously converged fit.
+          fitConverged = fr->status() == 0 && fr->edm() < 1;
+          if (!fitConverged && arg->debug)
+            std::cout << "MethodProbScan::scan2d() : WARNING : fit didn't converge at (" << i << "," << j
+                      << "): status=" << fr->status() << " edm=" << fr->edm() << " minNll=" << chi2minScan << std::endl;
           tFit.Stop();
           tSlimResult.Start(false);
           allResults.push_back(new RooSlimFitResult(fr.get()));  // save memory by using the slim fit result
@@ -624,12 +631,11 @@ int MethodProbScan::scan2d() {
             par2->setConstant(true);
           }
         }
-        bestMinFoundInScan = std::min(chi2minScan, bestMinFoundInScan);
+        if (fitConverged) bestMinFoundInScan = std::min(chi2minScan, bestMinFoundInScan);
 
-        // If we find a new global minumum, this means that all
-        // previous 1-CL values are too high. We'll save the new possible solution, adjust the global
-        // minimum, return a status code, and stop.
-        if (chi2minScan > -500 && chi2minScan < chi2minGlobal) {
+        // If we find a new global minumum, this means that all previous 1-CL values are too high.
+        // We'll save the new possible solution, adjust the global minimum, return a status code, and stop.
+        if (fitConverged && chi2minScan > -500.0 && chi2minScan < chi2minGlobal) {
           // warn only if there was a significant improvement
           if (arg->debug || chi2minScan < chi2minGlobal - 1e-2) {
             if (arg->verbose)
@@ -648,8 +654,10 @@ int MethodProbScan::scan2d() {
         double deltaChi2 = chi2minScan - chi2minGlobal;
         double oneMinusCL = TMath::Prob(deltaChi2, ndof);
 
-        // Save the 1-CL value. But only if better than before!
-        if (hCL2d->GetBinContent(i, j) < oneMinusCL) {
+        // Save the 1-CL value. But only if better than before, and only if the fit that produced
+        // it actually converged (an unconverged fit can report a spuriously low minNll(), which would
+        // otherwise silently overwrite a meaningful value from a previous scan).
+        if (fitConverged && hCL2d->GetBinContent(i, j) < oneMinusCL) {
           hCL2d->SetBinContent(i, j, oneMinusCL);
           hChi2min2d->SetBinContent(i, j, chi2minScan);
           hDbgChi2min2d->SetBinContent(i, j, chi2minScan);

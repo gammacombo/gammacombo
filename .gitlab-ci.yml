@@ -21,6 +21,8 @@ variables:
   NO_LBLOGIN: "1"
   GIT_SUBMODULE_STRATEGY: none
   CHARM_BRANCH: main
+  CONFIG_FILE_WS: config/plotting/ws-2025.py
+  CONFIG_FILE: config/plotting/charm-2025.py
 
 check-formatting:
   stage: pre-commit
@@ -143,10 +145,11 @@ test-charm:
       python -m pip install -e . -e charm-fitter
       cd charm-fitter
   script:
-    - python scripts/BLUE/python/dy.py -c wa-2024 --fs all
-    - python scripts/BLUE/python/d-to-etah.py -c 2025
-    - python scripts/BLUE/python/d0-to-ksks.py -c 2025
-    - python scripts/mpl-plots.py -a 1d --config config/plotting/2025.py --rescan --no-latex
+    - python scripts/BLUE/python/dy.py -c wa-2024 --fs all --no-latex
+    - python scripts/BLUE/python/d-to-etah.py -c 2025 --no-latex
+    - python scripts/BLUE/python/d0-to-ksks.py -c 2025 --no-latex
+    - python scripts/ws-combo.py -a all --rescan --no-latex --config ${CONFIG_FILE_WS}
+    - python scripts/charm-combo.py -a all --rescan --no-latex --config ${CONFIG_FILE}
   artifacts:
     when: always
     paths:

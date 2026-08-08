@@ -153,10 +153,12 @@ def read_gc_scan(scanfile, parfile, pars):
         )
 
     # get chi2 distribution
-    tf = r.TFile(scanfile)
-    # tf.ls()
-    h = tf.Get("hChi2min").Clone()
-    # h.Print()
+    tf = r.TFile.Open(scanfile)
+    h = tf.Get("hChi2min")
+    if not h:
+        raise RuntimeError("No 'hChi2min' found in", scanfile)
+    # Detach from file so it survives tf.Close() (avoids a cppyy dealloc crash)
+    h.SetDirectory(0)
 
     if h is None:
         raise RuntimeError("No 'hChi2min' found in", scanfile)
@@ -704,6 +706,7 @@ def plot2d(
     fopts=[],
     mopts=[],
     title=[None, None],
+    labelpad: tuple[float, float] | float = (4.0, 4.0),
     levels=1,
     legtitles=None,
     angle=[False, False],
@@ -853,9 +856,11 @@ def plot2d(
 
     # style
     if title[0]:
-        ax.set_xlabel(title[0])
+        ax.set_xlabel(
+            title[0], labelpad=labelpad if isinstance(labelpad, int) else labelpad[0]
+        )
     if title[1]:
-        ax.set_ylabel(title[1])
+        ax.set_ylabel(title[1], labelpad=labelpad[1])
 
     # add logos
     if logo:
@@ -1270,6 +1275,3 @@ class plotter:
 
         fig.savefig(self.save)
         fig.savefig(self.save.replace("pdf", "png"))
-
-        # if not args.interactive:
-        #     fig.clf()
