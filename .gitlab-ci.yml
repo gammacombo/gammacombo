@@ -21,8 +21,8 @@ variables:
   NO_LBLOGIN: "1"
   GIT_SUBMODULE_STRATEGY: none
   CHARM_BRANCH: main
-  CONFIG_FILE_WS: config/plotting/ws-2025.py
-  CONFIG_FILE: config/plotting/charm-2025.py
+  CONFIG_FILE_WS: config/ws-combo/plotting/2025.py
+  CONFIG_FILE: config/charm-combo/plotting/world-average-2025.py
 
 check-formatting:
   stage: pre-commit
@@ -128,7 +128,23 @@ test-tutorial:
       - tutorial/workspace.root
     expire_in: 1 days
 
-test-charm:
+test-blue-cpp:
+  extends: .test
+  stage: test
+  dependencies:
+    - build_clang
+  tags:
+    - cvmfs
+  image: gitlab-registry.cern.ch/lhcb-docker/os-base/alma9-devel:latest
+  before_script:
+    - source scripts/setup-env-cvmfs.sh -c || exit 1
+  script:
+    - ./charm-fitter/bin/BLUE/dy 0
+    - ./charm-fitter/bin/BLUE/d0-to-ksks 0
+    - ./charm-fitter/bin/BLUE/ycp 0
+    - ./charm-fitter/bin/BLUE/ycp-minus-ycp-rs 0
+
+test-blue-python:
   extends: .test
   stage: test
   dependencies:
@@ -145,15 +161,39 @@ test-charm:
       python -m pip install -e . -e charm-fitter
       cd charm-fitter
   script:
-    - python scripts/BLUE/python/dy.py -c wa-2024 --fs all --no-latex
-    - python scripts/BLUE/python/d-to-etah.py -c 2025 --no-latex
-    - python scripts/BLUE/python/d0-to-ksks.py -c 2025 --no-latex
+    - python BLUE/scripts/d-to-etah.py --no-latex
+    - python BLUE/scripts/d0-to-ksks.py --no-latex
+    - python BLUE/scripts/dy.py --no-latex
+    - python BLUE/scripts/ycp-minus-ycp-rs.py --no-latex
+    - python BLUE/scripts/ycp.py --no-latex
+  artifacts:
+    when: always
+    paths:
+      - charm-fitter/plots/BLUE
+    expire_in: 1 days
+
+test-charm-combo:
+  extends: .test
+  stage: test
+  dependencies:
+    - build_clang
+  tags:
+    - cvmfs
+  image: gitlab-registry.cern.ch/lhcb-docker/os-base/alma9-devel:latest
+  before_script:
+    - |
+      source scripts/setup-env-cvmfs.sh -c || exit 1
+      python -m venv venvs/charm
+      source venvs/charm/bin/activate
+      python -m pip install --upgrade pip
+      python -m pip install -e . -e charm-fitter
+      cd charm-fitter
+  script:
     - python scripts/ws-combo.py -a all --rescan --no-latex --config ${CONFIG_FILE_WS}
     - python scripts/charm-combo.py -a all --rescan --no-latex --config ${CONFIG_FILE}
   artifacts:
     when: always
     paths:
-      - charm-fitter/plots/BLUE
       - charm-fitter/plots/matplotlib
       - charm-fitter/plots/par
       - charm-fitter/plots/scanner

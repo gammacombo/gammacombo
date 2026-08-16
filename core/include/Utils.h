@@ -138,6 +138,7 @@ namespace Utils {
   TMatrixDSym* buildCovMatrix(TMatrixDSym& cor, double* err);
   TMatrixDSym* buildCovMatrix(TMatrixDSym& cor, std::vector<double>& err);
 
+  RooFormulaVar* makeTheoryVar(TString name, TString formula, RooArgList* pars);
   RooFormulaVar* makeTheoryVar(TString name, TString title, TString formula, RooArgList* pars);
 
   void savePlot(TCanvas* c1, TString name);
