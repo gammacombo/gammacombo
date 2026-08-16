@@ -878,6 +878,10 @@ RooFormulaVar* Utils::makeTheoryVar(TString name, TString title, TString formula
   return new RooFormulaVar(name, title, TString(formula_str), *explicitDependents);
 }
 
+RooFormulaVar* Utils::makeTheoryVar(TString name, TString formula, RooArgList* pars) {
+  return makeTheoryVar(name, name, formula, pars);
+}
+
 void Utils::addSetNamesToList(std::vector<std::string>& list, RooWorkspace* w, TString setName) {
   for (const auto& p : *w->set(setName)) list.push_back(p->GetName());
 }
