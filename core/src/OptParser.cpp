@@ -1210,13 +1210,17 @@ void OptParser::parseArguments(int argc, char* argv[]) {
   if (isIn<TString>(bookedOptions, "action")) cmd.add(actionArg);
 
   // check if the first argument is an integer. This will be discarded as a jobnumber.
-  const int num_of_args = argc - 1;
-  std::string jobnumber(argv[1]);
-  std::stringstream str(jobnumber);
   int number;
-  str >> number;
-  if (str) {
+  bool has_jobnumber = false;
+  if (argc >= 2) {
+    std::string jobnumber(argv[1]);
+    std::stringstream str(jobnumber);
+    str >> number;
+    has_jobnumber = static_cast<bool>(str);
+  }
+  if (has_jobnumber) {
     std::cout << "Use jobnumber " << number << std::endl;
+    const int num_of_args = argc - 1;
     char* args[num_of_args];
 
     // remove jobnumber from cmdline string
