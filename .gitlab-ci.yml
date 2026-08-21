@@ -21,8 +21,8 @@ variables:
   NO_LBLOGIN: "1"
   GIT_SUBMODULE_STRATEGY: none
   CHARM_BRANCH: main
-  CONFIG_FILE_WS: config/ws-combo/plotting/2025.py
-  CONFIG_FILE: config/charm-combo/plotting/world-average-2025.py
+  CONFIG_FILE_WS: config/plotting/ws-2025.py
+  CONFIG_FILE: config/plotting/charm-2025.py
 
 check-formatting:
   stage: pre-commit
@@ -142,7 +142,6 @@ test-blue-cpp:
     - ./charm-fitter/bin/BLUE/dy 0
     - ./charm-fitter/bin/BLUE/d0-to-ksks 0
     - ./charm-fitter/bin/BLUE/ycp 0
-    - ./charm-fitter/bin/BLUE/ycp-minus-ycp-rs 0
 
 test-blue-python:
   extends: .test
@@ -161,11 +160,10 @@ test-blue-python:
       python -m pip install -e . -e charm-fitter
       cd charm-fitter
   script:
-    - python BLUE/scripts/d-to-etah.py --no-latex
-    - python BLUE/scripts/d0-to-ksks.py --no-latex
-    - python BLUE/scripts/dy.py --no-latex
-    - python BLUE/scripts/ycp-minus-ycp-rs.py --no-latex
-    - python BLUE/scripts/ycp.py --no-latex
+    - python BLUE/scripts/d-to-etah.py  --no-latex
+    - python BLUE/scripts/d0-to-ksks.py --no-latex --run-all
+    - python BLUE/scripts/dy.py         --no-latex --run-all
+    - python BLUE/scripts/ycp.py        --no-latex --run-all
   artifacts:
     when: always
     paths:
@@ -189,7 +187,7 @@ test-charm-combo:
       python -m pip install -e . -e charm-fitter
       cd charm-fitter
   script:
-    - python scripts/ws-combo.py -a all --rescan --no-latex --config ${CONFIG_FILE_WS}
+    - python scripts/ws-combo.py    -a all --rescan --no-latex --config ${CONFIG_FILE_WS}
     - python scripts/charm-combo.py -a all --rescan --no-latex --config ${CONFIG_FILE}
   artifacts:
     when: always
