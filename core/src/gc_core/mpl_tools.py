@@ -963,7 +963,7 @@ def hflav_logo(subtitle, pos=[0.02, 0.98], ax=None, scale=1):
     )
 
 
-def corr_plot(df, savef=None, names=None):
+def corr_plot(df, savef=None, names=None, scale=None):
     # symmetrise
     if names == "columns":
         names = df.columns.values
@@ -974,7 +974,9 @@ def corr_plot(df, savef=None, names=None):
         if j > i:
             corr[j, i] = corr[i, j]
 
-    scale = len(names) / 12
+    # never shrink below the default canvas: the annotations have a fixed size and would overlap
+    if scale is None:
+        scale = max(len(names) / 12, 1)
     fig, ax = plt.subplots(figsize=(scale * 6.4, scale * 4.8))
     im = ax.imshow(
         corr,

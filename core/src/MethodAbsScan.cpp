@@ -816,6 +816,13 @@ void MethodAbsScan::calcCLintervals(int CLsType, bool calc_expected, bool quiet)
       CLhi[c] = histogramCL->GetXaxis()->GetXmax();
       double y = 1. - ConfidenceLevels[c];
       double sol = getScanVar1Solution(iSol);
+      // bringBackAngle can leave an angle 2pi outside the scanned window (e.g. phiD, best fit just below 0)
+      if (Utils::isAngle(par)) {
+        const double xmin = histogramCL->GetXaxis()->GetXmin();
+        const double xmax = histogramCL->GetXaxis()->GetXmax();
+        while (sol > xmax && sol - 2. * TMath::Pi() >= xmin) sol -= 2. * TMath::Pi();
+        while (sol < xmin && sol + 2. * TMath::Pi() <= xmax) sol += 2. * TMath::Pi();
+      }
       int sBin = histogramCL->FindBin(sol);
       if (arg->debug) std::cout << "solution bin: " << sBin << std::endl;
       if (histogramCL->IsBinOverflow(sBin) || histogramCL->IsBinUnderflow(sBin)) {
