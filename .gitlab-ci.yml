@@ -144,9 +144,11 @@ test-gammacombo:
       cd gammacombo
   script:
     - bin/gammacharm_lhcb -c 605 --var g --ps 1 --scanrange 0.87:1.40
+    - python scripts/lhcb-paper-2026.py -a 1d --config config/plotting/lhcb_paper_2026.py --extra-opts " --ps 1 " --rescan --no-latex
   artifacts:
     when: always
     paths:
+      - gammacombo/plots/matplotlib
       - gammacombo/plots/par
       - gammacombo/plots/scanner
     expire_in: 1 days

@@ -154,13 +154,12 @@ def read_gc_scan(scanfile, parfile, pars):
         )
 
     # get chi2 distribution
-    tf = r.TFile(scanfile)
-    # tf.ls()
-    h = tf.Get("hChi2min").Clone()
-    # h.Print()
-
-    if h is None:
+    tf = r.TFile.Open(scanfile)
+    h = tf.Get("hChi2min")
+    if not h:
         raise RuntimeError("No 'hChi2min' found in", scanfile)
+    # Detach from file so it survives tf.Close() (avoids a cppyy dealloc crash)
+    h.SetDirectory(0)
 
     if h.InheritsFrom("TH2") and len(pars) == 2:
         res = read2dscan(h, bf, minnll)
@@ -964,7 +963,7 @@ def hflav_logo(subtitle, pos=[0.02, 0.98], ax=None, scale=1):
     )
 
 
-def corr_plot(df, savef=None, names=None):
+def corr_plot(df, savef=None, names=None, scale=None):
     # symmetrise
     if names == "columns":
         names = df.columns.values
@@ -975,7 +974,9 @@ def corr_plot(df, savef=None, names=None):
         if j > i:
             corr[j, i] = corr[i, j]
 
-    scale = len(names) / 12
+    # never shrink below the default canvas: the annotations have a fixed size and would overlap
+    if scale is None:
+        scale = max(len(names) / 12, 1)
     fig, ax = plt.subplots(figsize=(scale * 6.4, scale * 4.8))
     im = ax.imshow(
         corr,
@@ -1241,5 +1242,34 @@ class plotter:
         fig.savefig(self.save)
         fig.savefig(self.save.replace("pdf", "png"))
 
-        # if not args.interactive:
-        #     fig.clf()
+
+def read_par_from_dat(dat_path: str, par: str) -> tuple[float, float, float] | None:
+    """
+    Read the central value and asymmetric errors for one parameter from a result .dat file.
+
+    Reads the first (global-minimum) solution only. Unlike read_gc_scan this also returns the errors.
+
+    :param dat_path: Path to the ParameterCache result .dat file (not a *_start.dat file)
+    :param par: Parameter name to look up, e.g. 'g'
+
+    :returns: (central, neg_err, pos_err), or None if the file or parameter is missing
+    """
+    if not os.path.exists(dat_path):
+        print(f"WARNING: .dat file not found: {dat_path}")
+        return None
+    in_solution = False
+    with open(dat_path) as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith("----- SOLUTION"):
+                if in_solution:
+                    break  # only the first (global-minimum) solution
+                in_solution = True
+                continue
+            if not in_solution or not line or line.startswith("#"):
+                continue
+            parts = line.split()
+            if len(parts) >= 4 and parts[0] == par:
+                return float(parts[1]), abs(float(parts[2])), float(parts[3])
+    print(f"WARNING: Parameter '{par}' not found in {dat_path}")
+    return None
