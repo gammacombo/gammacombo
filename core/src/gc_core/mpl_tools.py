@@ -3,12 +3,14 @@ import importlib
 import itertools
 import os
 
+import matplotlib
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 import ROOT as r
 from matplotlib import rcParams
 from matplotlib.lines import Line2D
+from matplotlib.offsetbox import AnnotationBbox, TextArea, VPacker
 from scipy.interpolate import interp1d
 from scipy.stats import chi2
 from tabulate import tabulate
@@ -847,44 +849,58 @@ def plot2d(
         fig.savefig(save)
 
 
-def lhcb_logo(pos=[0.02, 0.88], prelim=False, date=None, ax=None):
+def text_logo(
+    pos: tuple[float, float],
+    lines: list[tuple[str, float]],
+    *,
+    ax: matplotlib.axes.Axes | None = None,
+    box_alignment: tuple[float, float] = (0, 1),
+) -> None:
+    """Add a text logo at the specified position with given lines and font sizes.
+
+    Args:
+        pos: (x, y) position of the logo in axis coordinates (each in the interval [0, 1]).
+        lines: List of (text, font size) pairs for each line.
+        ax: Matplotlib Axes object to draw the logo on. Defaults to the current axes.
+        box_alignment: Alignment of the text box relative to the position.
+    """
     ax = ax or plt.gca()
-    props = dict(fc="none", ec="none", boxstyle="square,pad=0.1")
     font = {"family": "Times New Roman", "weight": 400}
-    ax.text(
-        *pos,
-        "LHCb",
-        transform=ax.transAxes,
-        size=28,
-        ha="left",
-        bbox=props,
-        fontdict=font,
-        usetex=False,
+    props = dict(fc="none", ec="none", boxstyle="square,pad=0.1")
+
+    children = [
+        TextArea(
+            text,
+            textprops=dict(
+                fontsize=fontsize, usetex=plt.rcParams["text.usetex"], **font
+            ),
+        )
+        for text, fontsize in lines
+    ]
+    box = VPacker(children=children, align="left", sep=1)
+    ab = AnnotationBbox(
+        box,
+        pos,
+        xycoords="axes fraction",
+        box_alignment=box_alignment,
+        frameon=True,
+        bboxprops=props,
     )
-    if prelim:
-        ax.text(
-            pos[0],
-            pos[1] - 0.05,
-            "Preliminary",
-            transform=ax.transAxes,
-            size=14.7,
-            ha="left",
-            bbox=props,
-            fontdict=font,
-            usetex=False,
-        )
-    if date is not None:
-        ax.text(
-            pos[0],
-            pos[1] - 0.10,
-            date,
-            transform=ax.transAxes,
-            size=12.2,
-            ha="left",
-            bbox=props,
-            fontdict=font,
-            usetex=False,
-        )
+    ax.add_artist(ab)
+
+
+def lhcb_logo(
+    pos: tuple[float, float] = (0.02, 0.88),
+    prelim: bool = False,
+    date: str = "",
+    ax: matplotlib.axes.Axes | None = None,
+) -> None:
+    lines = (
+        [("LHCb", 28)]
+        + ([("Preliminary", 14.7)] if prelim else [])
+        + ([(date, 12.2)] if date else [])
+    )
+    text_logo(pos, lines, ax=ax)
 
 
 def hflav_logo(subtitle, pos=[0.02, 0.98], ax=None, scale=1):
