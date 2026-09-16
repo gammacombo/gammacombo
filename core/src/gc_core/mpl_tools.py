@@ -994,7 +994,8 @@ def corr_plot(df, savef=None, names=None, scale=None):
     if names == "columns":
         names = df.columns.values
 
-    corr = df.values
+    # copy: pandas >= 3.0 views are read-only
+    corr = df.to_numpy(dtype=float, copy=True)
 
     for (j, i), value in np.ndenumerate(corr):
         if j > i:
