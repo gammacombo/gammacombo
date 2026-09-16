@@ -50,6 +50,7 @@ MethodAbsScan::MethodAbsScan(Combiner* c) : MethodAbsScan(c->getArg()) {
   combiner = c;
   w = c->getWorkspace();
   name = c->getName();
+  clFilenameBase = name;
   title = c->getTitle();
   pdfName = "pdf_" + combiner->getPdfName();
   obsName = "obs_" + combiner->getPdfName();
@@ -982,9 +983,9 @@ void MethodAbsScan::calcCLintervals(int CLsType, bool calc_expected, bool quiet)
 ///
 void MethodAbsScan::printCLintervals(int CLsType, bool calc_expected) {
   TString unit = w->var(scanVar1)->getUnit();
-  CLIntervalPrinter clp(arg, name, scanVar1, unit, methodName, CLsType);
+  CLIntervalPrinter clp(arg, clFilenameBase, scanVar1, unit, methodName, CLsType);
   if (calc_expected) {
-    clp = CLIntervalPrinter(arg, name, scanVar1, unit, methodName + TString("_expected_standardCLs"));
+    clp = CLIntervalPrinter(arg, clFilenameBase, scanVar1, unit, methodName + TString("_expected_standardCLs"));
   }
   clp.setDegrees(Utils::isAngle(w->var(scanVar1)));
   clp.addIntervals(clintervals1sigma);

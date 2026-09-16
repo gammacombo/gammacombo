@@ -146,6 +146,8 @@ class MethodAbsScan {
   inline void setFillColor(int c) { fillColor = c; };
   inline void setFillTransparency(float c) { fillTransparency = c; };
   inline void setTitle(TString s) { title = s; };
+  /// Base name used for the CL interval files written by printCLintervals().
+  inline void setCLFilenameBase(TString s) { clFilenameBase = s; };
   void setChi2minGlobal(double x);
   void setSolutions(std::vector<RooSlimFitResult*> s);
   inline void setVerbose(bool yesNo = true) { verbose = yesNo; };
@@ -179,6 +181,7 @@ class MethodAbsScan {
   void sortSolutions();
 
   TString name;                ///< basename, e.g. ggsz
+  TString clFilenameBase;      ///< Base name for CL interval files; defaults to `name`, see setCLFilenameBase()
   TString title;               ///< nice string for the legends
   TString methodName = "Abs";  ///< Prob, ...
   TString pdfName;             ///< PDF name in workspace, derived from name

@@ -1155,6 +1155,7 @@ void GammaComboEngine::make1dProbScan(MethodProbScan* scanner, int cId) {
   scanner->printLocalMinima();
   scanner->saveLocalMinima(m_fnamebuilder->getFileNameSolution(scanner));
   scanner->computeCLvalues();
+  scanner->setCLFilenameBase(m_fnamebuilder->getCombinerFileName(scanner));
   if (!arg->confirmsols) scanner->calcCLintervals();
   if (arg->cls.size() > 0) scanner->calcCLintervals(1);  // for prob method CLsType>1 doesn't exist
   if (!arg->isAction("pluginbatch") && !arg->plotpluginonly) {
@@ -1187,6 +1188,7 @@ void GammaComboEngine::make1dPluginScan(MethodPluginScan* scannerPlugin, int cId
     scannerPlugin->scan1d(arg->nrun);
   } else {
     scannerPlugin->readScan1dTrees(arg->jmin[cId], arg->jmax[cId]);
+    scannerPlugin->setCLFilenameBase(m_fnamebuilder->getCombinerFileName(scannerPlugin));
     scannerPlugin->calcCLintervals();
     for (int i = 0; i < arg->cls.size(); i++) {
       scannerPlugin->calcCLintervals(arg->cls[i]);
@@ -1234,6 +1236,7 @@ void GammaComboEngine::make1dBergerBoosScan(MethodBergerBoosScan* scannerBergerB
     scannerBergerBoos->scan1d(arg->nrun);
   } else {
     scannerBergerBoos->readScan1dTrees(arg->jmin[cId], arg->jmax[cId]);
+    scannerBergerBoos->setCLFilenameBase(m_fnamebuilder->getCombinerFileName(scannerBergerBoos));
     scannerBergerBoos->calcCLintervals();
   }
   if (!arg->isAction("bbbatch")) {

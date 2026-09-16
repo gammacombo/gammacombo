@@ -2,6 +2,7 @@ import copy
 import importlib
 import itertools
 import os
+from pathlib import Path
 
 import matplotlib
 import matplotlib.patches as patches
@@ -312,14 +313,23 @@ def getfnames(prefix, xpar, ypar=None):
     return fname, bfname
 
 
-def print_cl(prefix, xpar, ypar=None, prob=True):
+def print_cl(
+    prefix: str, xpar: str, ypar: str | None = None, prob: bool = True
+) -> None:
+    """Print the CL for the given scan prefix and parameter.
+
+    The CL interval file is named after the `prefix` with the `_scanner` token dropped.
+
+    Args:
+        prefix: `<run-basename>_scanner_<combinername>`
+    """
     if ypar is not None:
         return
 
-    pref = prefix.split("scanner")[1]
+    pref = prefix.replace("_scanner", "")
     suff = "Prob" if prob else "Plugin"
-    fname = f"plots/cl/clintervals{pref}_{xpar}_{suff}.py"
-    if not os.path.exists(fname):
+    fname = f"plots/cl/clintervals_{pref}_{xpar}_{suff}.py"
+    if not Path(fname).exists:
         return
 
     try:
