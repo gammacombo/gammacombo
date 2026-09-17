@@ -38,11 +38,16 @@ def read_minimum(fname, indices=[], verbose=True, with_names=False):
 
         if line.strip().startswith("Parameter"):
             p = 0
+            row = 0
             while True:
-                relline = lines[i + 2 + p]
+                relline = lines[i + 2 + row]
                 els = relline.split()
                 if len(els) == 0:
                     break
+                row += 1
+                # parameters held constant are listed unnumbered and are absent from the covariance
+                if not els[0].isdigit():
+                    continue
                 assert int(els[0]) == p
                 name = els[1]
                 val = float(els[2])

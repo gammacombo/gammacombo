@@ -50,6 +50,7 @@ MethodAbsScan::MethodAbsScan(Combiner* c) : MethodAbsScan(c->getArg()) {
   combiner = c;
   w = c->getWorkspace();
   name = c->getName();
+  clFilenameBase = name;
   title = c->getTitle();
   pdfName = "pdf_" + combiner->getPdfName();
   obsName = "obs_" + combiner->getPdfName();
@@ -816,6 +817,13 @@ void MethodAbsScan::calcCLintervals(int CLsType, bool calc_expected, bool quiet)
       CLhi[c] = histogramCL->GetXaxis()->GetXmax();
       double y = 1. - ConfidenceLevels[c];
       double sol = getScanVar1Solution(iSol);
+      // bringBackAngle can leave an angle 2pi outside the scanned window (e.g. phiD, best fit just below 0)
+      if (Utils::isAngle(par)) {
+        const double xmin = histogramCL->GetXaxis()->GetXmin();
+        const double xmax = histogramCL->GetXaxis()->GetXmax();
+        while (sol > xmax && sol - 2. * TMath::Pi() >= xmin) sol -= 2. * TMath::Pi();
+        while (sol < xmin && sol + 2. * TMath::Pi() <= xmax) sol += 2. * TMath::Pi();
+      }
       int sBin = histogramCL->FindBin(sol);
       if (arg->debug) std::cout << "solution bin: " << sBin << std::endl;
       if (histogramCL->IsBinOverflow(sBin) || histogramCL->IsBinUnderflow(sBin)) {
@@ -975,9 +983,9 @@ void MethodAbsScan::calcCLintervals(int CLsType, bool calc_expected, bool quiet)
 ///
 void MethodAbsScan::printCLintervals(int CLsType, bool calc_expected) {
   TString unit = w->var(scanVar1)->getUnit();
-  CLIntervalPrinter clp(arg, name, scanVar1, unit, methodName, CLsType);
+  CLIntervalPrinter clp(arg, clFilenameBase, scanVar1, unit, methodName, CLsType);
   if (calc_expected) {
-    clp = CLIntervalPrinter(arg, name, scanVar1, unit, methodName + TString("_expected_standardCLs"));
+    clp = CLIntervalPrinter(arg, clFilenameBase, scanVar1, unit, methodName + TString("_expected_standardCLs"));
   }
   clp.setDegrees(Utils::isAngle(w->var(scanVar1)));
   clp.addIntervals(clintervals1sigma);

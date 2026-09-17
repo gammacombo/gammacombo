@@ -6,6 +6,29 @@ build-backend = "setuptools.build_meta"
 name = "gc_core"
 version = "0.1.0"
 requires-python = ">=3.10"
+dependencies = [
+  "jinja2",
+  "matplotlib",
+  "numpy",
+  "pandas",
+  "scipy",
+  "tabulate",
+  "uncertainties",
+]
 
 [tool.setuptools.packages.find]
 where = ["core/src"]
+
+[tool.ruff.lint]
+select = [
+    "F", # Pyflakes
+    "E7", # Pycodestyle
+    "E9",
+    "E101",
+    "W1",
+    "W6",
+    "I001", # isort
+]
+ignore = [
+    "E741", # Ambiguous variable name
+]
