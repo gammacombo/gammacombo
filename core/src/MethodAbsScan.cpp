@@ -51,6 +51,7 @@ MethodAbsScan::MethodAbsScan(Combiner* c) : MethodAbsScan(c->getArg()) {
   w = c->getWorkspace();
   name = c->getName();
   clFilenameBase = name;
+  toyFilenameBase = name;
   title = c->getTitle();
   pdfName = "pdf_" + combiner->getPdfName();
   obsName = "obs_" + combiner->getPdfName();

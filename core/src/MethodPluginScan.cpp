@@ -41,6 +41,21 @@
 #include <map>
 #include <vector>
 
+///
+/// Point to toys written under the old names, without the executable's base name.
+///
+void MethodPluginScan::hintLegacyToyFiles(const TString& fileNameBase, int runMin, int runMax) const {
+  if (toyFilenameBase == name || (arg->toyFiles != "" && arg->toyFiles != "default")) return;
+  TString legacy = fileNameBase;
+  legacy.ReplaceAll(toyFilenameBase, name);
+  for (int i = runMin; i <= runMax; i++) {
+    if (Utils::FileExists(Form(legacy + "%i.root", i))) {
+      std::cout << "        Found toys under the old naming scheme, read them with: --toyFiles " << legacy << std::endl;
+      return;
+    }
+  }
+}
+
 void MethodPluginScan::constructorHelper(MethodProbScan* s) {
   methodName = "Plugin";
   title = s->getTitle();
@@ -585,13 +600,13 @@ int MethodPluginScan::scan1d(int nRun) {
   if (arg->isAction("bb")) dirname += "BergerBoos";
   if (arg->isAction("uniform")) dirname += "Uniform";
   if (arg->isAction("gaus")) dirname += "Gaus";
-  dirname += "_" + name + "_" + scanVar1;
+  dirname += "_" + toyFilenameBase + "_" + scanVar1;
   system("mkdir -p " + dirname);
   TString fname = "/scan1dPlugin";
   if (arg->isAction("bb")) fname += "BergerBoos";
   if (arg->isAction("uniform")) fname += "Uniform";
   if (arg->isAction("gaus")) fname += "Gaus";
-  fname += Form("_" + name + "_" + scanVar1 + "_run%i.root", nRun);
+  fname += Form("_" + toyFilenameBase + "_" + scanVar1 + "_run%i.root", nRun);
   t.writeToFile((dirname + fname).Data());
   delete myFit;
   delete pb;
@@ -854,13 +869,13 @@ void MethodPluginScan::scan2d(int nRun) {
   if (arg->isAction("bb")) dirname += "BergerBoos";
   if (arg->isAction("uniform")) dirname += "Uniform";
   if (arg->isAction("gaus")) dirname += "Gaus";
-  dirname += "_" + name + "_" + scanVar1 + "_" + scanVar2;
+  dirname += "_" + toyFilenameBase + "_" + scanVar1 + "_" + scanVar2;
   system("mkdir -p " + dirname);
   TString fname = "/scan2dPlugin";
   if (arg->isAction("bb")) fname += "BergerBoos";
   if (arg->isAction("uniform")) fname += "Uniform";
   if (arg->isAction("gaus")) fname += "Gaus";
-  fname += Form("_" + name + "_" + scanVar1 + "_" + scanVar2 + "_run%i.root", nRun);
+  fname += Form("_" + toyFilenameBase + "_" + scanVar1 + "_" + scanVar2 + "_run%i.root", nRun);
   t.writeToFile((dirname + fname).Data());
   delete pb;
 }
@@ -1288,12 +1303,12 @@ void MethodPluginScan::readScan1dTrees(int runMin, int runMax, TString fName) {
   if (arg->isAction("bb")) dirname += "BergerBoos";
   if (arg->isAction("uniform")) dirname += "Uniform";
   if (arg->isAction("gaus")) dirname += "Gaus";
-  dirname += "_" + name + "_" + scanVar1;
+  dirname += "_" + toyFilenameBase + "_" + scanVar1;
   TString fileNameBase = dirname + "/scan1dPlugin";
   if (arg->isAction("bb")) fileNameBase += "BergerBoos";
   if (arg->isAction("uniform")) fileNameBase += "Uniform";
   if (arg->isAction("gaus")) fileNameBase += "Gaus";
-  fileNameBase += "_" + name + "_" + scanVar1 + "_run";
+  fileNameBase += "_" + toyFilenameBase + "_" + scanVar1 + "_run";
   // read different files if requested
   if (arg->toyFiles != "" && arg->toyFiles != "default") fileNameBase = arg->toyFiles;
   if (arg->debug) std::cout << "MethodPluginScan::readScan1dTrees() : ";
@@ -1314,6 +1329,7 @@ void MethodPluginScan::readScan1dTrees(int runMin, int runMax, TString fName) {
   if (nFilesRead == 0) {
     if (arg->debug) std::cout << "MethodPluginScan::readScan1dTrees() : ";
     std::cerr << "ERROR : no files read!" << std::endl;
+    hintLegacyToyFiles(fileNameBase, runMin, runMax);
     std::exit(EXIT_FAILURE);
   }
 
@@ -1352,12 +1368,12 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax) {
   if (arg->isAction("bb")) dirname += "BergerBoos";
   if (arg->isAction("uniform")) dirname += "Uniform";
   if (arg->isAction("gaus")) dirname += "Gaus";
-  dirname += "_" + name + "_" + scanVar1 + "_" + scanVar2;
+  dirname += "_" + toyFilenameBase + "_" + scanVar1 + "_" + scanVar2;
   TString fileNameBase = dirname + "/scan2dPlugin";
   if (arg->isAction("bb")) fileNameBase += "BergerBoos";
   if (arg->isAction("uniform")) fileNameBase += "Uniform";
   if (arg->isAction("gaus")) fileNameBase += "Gaus";
-  fileNameBase += "_" + name + "_" + scanVar1 + "_" + scanVar2 + "_run";
+  fileNameBase += "_" + toyFilenameBase + "_" + scanVar1 + "_" + scanVar2 + "_run";
   // read different file if requested
   if (arg->toyFiles != "" && arg->toyFiles != "default") fileNameBase = arg->toyFiles;
 
@@ -1379,6 +1395,7 @@ void MethodPluginScan::readScan2dTrees(int runMin, int runMax) {
   if (nFilesRead == 0) {
     if (arg->debug) std::cout << "MethodPluginScan::readScan2dTrees() : ";
     std::cout << "ERROR : no files read!" << std::endl;
+    hintLegacyToyFiles(fileNameBase, runMin, runMax);
     std::exit(1);
   }
 

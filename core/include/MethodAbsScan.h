@@ -148,6 +148,8 @@ class MethodAbsScan {
   inline void setTitle(TString s) { title = s; };
   /// Base name used for the CL interval files written by printCLintervals().
   inline void setCLFilenameBase(TString s) { clFilenameBase = s; };
+  /// Base name of the toy directories and files.
+  inline void setToyFilenameBase(TString s) { toyFilenameBase = s; };
   void setChi2minGlobal(double x);
   void setSolutions(std::vector<RooSlimFitResult*> s);
   inline void setVerbose(bool yesNo = true) { verbose = yesNo; };
@@ -182,6 +184,7 @@ class MethodAbsScan {
 
   TString name;                ///< basename, e.g. ggsz
   TString clFilenameBase;      ///< Base name for CL interval files; defaults to `name`, see setCLFilenameBase()
+  TString toyFilenameBase;     ///< Base name for toy files; defaults to `name`, see setToyFilenameBase()
   TString title;               ///< nice string for the legends
   TString methodName = "Abs";  ///< Prob, ...
   TString pdfName;             ///< PDF name in workspace, derived from name
