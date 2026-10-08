@@ -284,6 +284,7 @@ void OptParser::defineOptions() {
   availableOptions.push_back("batcheos");
   availableOptions.push_back("batchout");
   availableOptions.push_back("batchreqs");
+  availableOptions.push_back("batchsetup");
   availableOptions.push_back("batchsubmit");
   availableOptions.push_back("CL");
   availableOptions.push_back("cls");
@@ -450,6 +451,7 @@ void OptParser::bookPluginOptions() {
   bookedOptions.push_back("batcheos");
   bookedOptions.push_back("batchout");
   bookedOptions.push_back("batchreqs");
+  bookedOptions.push_back("batchsetup");
   bookedOptions.push_back("batchsubmit");
   bookedOptions.push_back("controlplots");
   bookedOptions.push_back("id");
@@ -667,6 +669,11 @@ void OptParser::parseArguments(int argc, char* argv[]) {
                                             "file which provides condor submission file options and requirements, e.g. "
                                             "--batchreqs ../scripts/cam_condor_reqs.txt",
                                             false, "", "string");
+  TCLAP::ValueArg<std::string> batchsetupArg(
+      "", "batchsetup",
+      "script sourced by the batch jobs to set up their environment. Default: the LCG view of the submitting shell, "
+      "if any",
+      false, "", "string");
   TCLAP::ValueArg<int> nBBpointsArg("", "nBBpoints", "number of BergerBoos points per scanpoint", false, 1, "int");
   TCLAP::ValueArg<int> idArg("", "id",
                              "When making controlplots (--controlplots), only consider the "
@@ -1204,6 +1211,7 @@ void OptParser::parseArguments(int argc, char* argv[]) {
   if (isIn<TString>(bookedOptions, "batcheos")) cmd.add(batcheosArg);
   if (isIn<TString>(bookedOptions, "batchout")) cmd.add(batchoutArg);
   if (isIn<TString>(bookedOptions, "batchreqs")) cmd.add(batchreqsArg);
+  if (isIn<TString>(bookedOptions, "batchsetup")) cmd.add(batchsetupArg);
   if (isIn<TString>(bookedOptions, "batchsubmit")) cmd.add(batchsubmitArg);
   if (isIn<TString>(bookedOptions, "asimovfile")) cmd.add(asimovFileArg);
   if (isIn<TString>(bookedOptions, "asimov")) cmd.add(asimovArg);
@@ -1273,6 +1281,7 @@ void OptParser::parseArguments(int argc, char* argv[]) {
   batcheos = batcheosArg.getValue();
   batchout = batchoutArg.getValue();
   batchreqs = batchreqsArg.getValue();
+  batchsetup = batchsetupArg.getValue();
   batchsubmit = batchsubmitArg.getValue();
   nbatchjobs = nbatchjobsArg.getValue();
   nBBpoints = nBBpointsArg.getValue();

@@ -251,7 +251,29 @@ void BatchScriptWriter::writeScript(TString fname, TString outfloc, int jobn, co
   outfile << Form("rm -f %s/%s.log", cwd, fname.Data()) << std::endl;
   outfile << "mkdir -p scratch" << std::endl;
   outfile << "cd scratch" << std::endl;
-  outfile << Form("source %s/../scripts/setup_lxplus.sh", cwd) << std::endl;
+  // batch nodes start from a clean environment, and LCG builds need their view at run time (conda ones use the RPATH)
+  std::string setup;
+  if (arg->batchsetup != "") {
+    std::string script = arg->batchsetup.Data();
+    if (script[0] != '/') script = std::string(cwd) + "/" + script;
+    if (access(script.c_str(), R_OK) != 0) {
+      std::cout << "BatchScriptWriter::writeScript() : ERROR : cannot read --batchsetup " << script << std::endl;
+      std::exit(1);
+    }
+    setup = "source " + shellQuote(script);
+  } else if (const char* view = std::getenv("LCG_VIEW_DIR")) {
+    setup = "source " + shellQuote(std::string(view) + "/setup.sh");
+  } else if (jobn == arg->batchstartn) {
+    std::cout << "BatchScriptWriter::writeScript() : no LCG view set up: the jobs use the default environment of the "
+                 "batch nodes (use --batchsetup to change it)"
+              << std::endl;
+  }
+  if (!setup.empty()) {
+    outfile << "if ! { " << setup << "; }; then" << std::endl;
+    outfile << Form("\ttouch %s/%s.fail", cwd, fname.Data()) << std::endl;
+    outfile << "\texit 1" << std::endl;
+    outfile << "fi" << std::endl;
+  }
   outfile << Form("cp -r %s/ExpNll .", cwd) << std::endl;
   outfile << "mkdir -p bin" << std::endl;
   outfile << Form("cp %s/%s bin/", cwd, subpkg.c_str()) << std::endl;
