@@ -1,4 +1,6 @@
-requirements = (OpSysAndVer =?= "AlmaLinux9")
+job_machine_attrs = Machine
+job_machine_attrs_history_length = 4
+requirements = (OpSysAndVer =?= "AlmaLinux9") && target.Machine =!= MachineAttrMachine1 && target.Machine =!= MachineAttrMachine2 && target.Machine =!= MachineAttrMachine3
 +JobFlavour = "workday"
 +AccountingGroup = "group_u_LHCBT3.e_lhcb_lbd"
 max_materialize = 750
