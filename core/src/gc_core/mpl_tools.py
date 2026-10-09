@@ -2,13 +2,16 @@ import copy
 import importlib
 import itertools
 import os
+from pathlib import Path
 
+import matplotlib
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 import ROOT as r
 from matplotlib import rcParams
 from matplotlib.lines import Line2D
+from matplotlib.offsetbox import AnnotationBbox, TextArea, VPacker
 from scipy.interpolate import interp1d
 from scipy.stats import chi2
 from tabulate import tabulate
@@ -154,13 +157,12 @@ def read_gc_scan(scanfile, parfile, pars):
         )
 
     # get chi2 distribution
-    tf = r.TFile(scanfile)
-    # tf.ls()
-    h = tf.Get("hChi2min").Clone()
-    # h.Print()
-
-    if h is None:
+    tf = r.TFile.Open(scanfile)
+    h = tf.Get("hChi2min")
+    if not h:
         raise RuntimeError("No 'hChi2min' found in", scanfile)
+    # Detach from file so it survives tf.Close() (avoids a cppyy dealloc crash)
+    h.SetDirectory(0)
 
     if h.InheritsFrom("TH2") and len(pars) == 2:
         res = read2dscan(h, bf, minnll)
@@ -311,14 +313,23 @@ def getfnames(prefix, xpar, ypar=None):
     return fname, bfname
 
 
-def print_cl(prefix, xpar, ypar=None, prob=True):
+def print_cl(
+    prefix: str, xpar: str, ypar: str | None = None, prob: bool = True
+) -> None:
+    """Print the CL for the given scan prefix and parameter.
+
+    The CL interval file is named after the `prefix` with the `_scanner` token dropped.
+
+    Args:
+        prefix: `<run-basename>_scanner_<combinername>`
+    """
     if ypar is not None:
         return
 
-    pref = prefix.split("scanner")[1]
+    pref = prefix.replace("_scanner", "")
     suff = "Prob" if prob else "Plugin"
-    fname = f"plots/cl/clintervals{pref}_{xpar}_{suff}.py"
-    if not os.path.exists(fname):
+    fname = f"plots/cl/clintervals_{pref}_{xpar}_{suff}.py"
+    if not Path(fname).exists:
         return
 
     try:
@@ -848,44 +859,58 @@ def plot2d(
         fig.savefig(save)
 
 
-def lhcb_logo(pos=[0.02, 0.88], prelim=False, date=None, ax=None):
+def text_logo(
+    pos: tuple[float, float],
+    lines: list[tuple[str, float]],
+    *,
+    ax: matplotlib.axes.Axes | None = None,
+    box_alignment: tuple[float, float] = (0, 1),
+) -> None:
+    """Add a text logo at the specified position with given lines and font sizes.
+
+    Args:
+        pos: (x, y) position of the logo in axis coordinates (each in the interval [0, 1]).
+        lines: List of (text, font size) pairs for each line.
+        ax: Matplotlib Axes object to draw the logo on. Defaults to the current axes.
+        box_alignment: Alignment of the text box relative to the position.
+    """
     ax = ax or plt.gca()
-    props = dict(fc="none", ec="none", boxstyle="square,pad=0.1")
     font = {"family": "Times New Roman", "weight": 400}
-    ax.text(
-        *pos,
-        "LHCb",
-        transform=ax.transAxes,
-        size=28,
-        ha="left",
-        bbox=props,
-        fontdict=font,
-        usetex=False,
+    props = dict(fc="none", ec="none", boxstyle="square,pad=0.1")
+
+    children = [
+        TextArea(
+            text,
+            textprops=dict(
+                fontsize=fontsize, usetex=plt.rcParams["text.usetex"], **font
+            ),
+        )
+        for text, fontsize in lines
+    ]
+    box = VPacker(children=children, align="left", sep=1)
+    ab = AnnotationBbox(
+        box,
+        pos,
+        xycoords="axes fraction",
+        box_alignment=box_alignment,
+        frameon=True,
+        bboxprops=props,
     )
-    if prelim:
-        ax.text(
-            pos[0],
-            pos[1] - 0.05,
-            "Preliminary",
-            transform=ax.transAxes,
-            size=14.7,
-            ha="left",
-            bbox=props,
-            fontdict=font,
-            usetex=False,
-        )
-    if date is not None:
-        ax.text(
-            pos[0],
-            pos[1] - 0.10,
-            date,
-            transform=ax.transAxes,
-            size=12.2,
-            ha="left",
-            bbox=props,
-            fontdict=font,
-            usetex=False,
-        )
+    ax.add_artist(ab)
+
+
+def lhcb_logo(
+    pos: tuple[float, float] = (0.02, 0.88),
+    prelim: bool = False,
+    date: str = "",
+    ax: matplotlib.axes.Axes | None = None,
+) -> None:
+    lines = (
+        [("LHCb", 28)]
+        + ([("Preliminary", 14.7)] if prelim else [])
+        + ([(date, 12.2)] if date else [])
+    )
+    text_logo(pos, lines, ax=ax)
 
 
 def hflav_logo(subtitle, pos=[0.02, 0.98], ax=None, scale=1):
@@ -964,18 +989,21 @@ def hflav_logo(subtitle, pos=[0.02, 0.98], ax=None, scale=1):
     )
 
 
-def corr_plot(df, savef=None, names=None):
+def corr_plot(df, savef=None, names=None, scale=None):
     # symmetrise
     if names == "columns":
         names = df.columns.values
 
-    corr = df.values
+    # copy: pandas >= 3.0 views are read-only
+    corr = df.to_numpy(dtype=float, copy=True)
 
     for (j, i), value in np.ndenumerate(corr):
         if j > i:
             corr[j, i] = corr[i, j]
 
-    scale = len(names) / 12
+    # never shrink below the default canvas: the annotations have a fixed size and would overlap
+    if scale is None:
+        scale = max(len(names) / 12, 1)
     fig, ax = plt.subplots(figsize=(scale * 6.4, scale * 4.8))
     im = ax.imshow(
         corr,
@@ -1241,5 +1269,34 @@ class plotter:
         fig.savefig(self.save)
         fig.savefig(self.save.replace("pdf", "png"))
 
-        # if not args.interactive:
-        #     fig.clf()
+
+def read_par_from_dat(dat_path: str, par: str) -> tuple[float, float, float] | None:
+    """
+    Read the central value and asymmetric errors for one parameter from a result .dat file.
+
+    Reads the first (global-minimum) solution only. Unlike read_gc_scan this also returns the errors.
+
+    :param dat_path: Path to the ParameterCache result .dat file (not a *_start.dat file)
+    :param par: Parameter name to look up, e.g. 'g'
+
+    :returns: (central, neg_err, pos_err), or None if the file or parameter is missing
+    """
+    if not os.path.exists(dat_path):
+        print(f"WARNING: .dat file not found: {dat_path}")
+        return None
+    in_solution = False
+    with open(dat_path) as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith("----- SOLUTION"):
+                if in_solution:
+                    break  # only the first (global-minimum) solution
+                in_solution = True
+                continue
+            if not in_solution or not line or line.startswith("#"):
+                continue
+            parts = line.split()
+            if len(parts) >= 4 and parts[0] == par:
+                return float(parts[1]), abs(float(parts[2])), float(parts[3])
+    print(f"WARNING: Parameter '{par}' not found in {dat_path}")
+    return None

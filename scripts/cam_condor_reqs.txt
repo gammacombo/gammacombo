@@ -1,1 +1,5 @@
-requirements = OpSysAndVer == "AlmaLinux9"
+job_machine_attrs = Machine
+job_machine_attrs_history_length = 4
+requirements = OpSysAndVer == "AlmaLinux9" && Machine != "wcdc-012.hep.phy.cam.ac.uk" && target.Machine =!= MachineAttrMachine1 && target.Machine =!= MachineAttrMachine2 && target.Machine =!= MachineAttrMachine3
+request_memory = 2048
+max_materialize = 400

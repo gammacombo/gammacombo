@@ -103,6 +103,14 @@ GammaComboEngine::~GammaComboEngine() {
 }
 
 ///
+/// Set the command line that the batch jobs rerun, if it differs from the one passed to the constructor.
+///
+void GammaComboEngine::setBatchArgs(int argc, char* argv[]) {
+  delete m_batchscriptwriter;
+  m_batchscriptwriter = new BatchScriptWriter(argc, argv);
+}
+
+///
 /// Check if a PDF with a certain ID exits.
 ///
 bool GammaComboEngine::pdfExists(const int id) const {
@@ -1155,6 +1163,7 @@ void GammaComboEngine::make1dProbScan(MethodProbScan* scanner, int cId) {
   scanner->printLocalMinima();
   scanner->saveLocalMinima(m_fnamebuilder->getFileNameSolution(scanner));
   scanner->computeCLvalues();
+  scanner->setCLFilenameBase(m_fnamebuilder->getCombinerFileName(scanner));
   if (!arg->confirmsols) scanner->calcCLintervals();
   if (arg->cls.size() > 0) scanner->calcCLintervals(1);  // for prob method CLsType>1 doesn't exist
   if (!arg->isAction("pluginbatch") && !arg->plotpluginonly) {
@@ -1182,11 +1191,15 @@ void GammaComboEngine::make1dProbScan(MethodProbScan* scanner, int cId) {
 /// \param cId - the id of this combination on the command line
 ///
 void GammaComboEngine::make1dPluginScan(MethodPluginScan* scannerPlugin, int cId) {
+  // datasets scanners have no combiner
+  const bool hasCombiner = scannerPlugin->getCombiner();
+  if (hasCombiner) scannerPlugin->setToyFilenameBase(m_fnamebuilder->getCombinerFileName(scannerPlugin));
   scannerPlugin->initScan();
   if (arg->isAction("pluginbatch")) {
     scannerPlugin->scan1d(arg->nrun);
   } else {
     scannerPlugin->readScan1dTrees(arg->jmin[cId], arg->jmax[cId]);
+    if (hasCombiner) scannerPlugin->setCLFilenameBase(m_fnamebuilder->getCombinerFileName(scannerPlugin));
     scannerPlugin->calcCLintervals();
     for (int i = 0; i < arg->cls.size(); i++) {
       scannerPlugin->calcCLintervals(arg->cls[i]);
@@ -1204,6 +1217,7 @@ void GammaComboEngine::make1dPluginScan(MethodPluginScan* scannerPlugin, int cId
 /// \param cId - the id of this combination on the command line
 ///
 void GammaComboEngine::make2dPluginScan(MethodPluginScan* scannerPlugin, int cId) {
+  scannerPlugin->setToyFilenameBase(m_fnamebuilder->getCombinerFileName(scannerPlugin));
   scannerPlugin->initScan();
   if (arg->isAction("pluginbatch")) {
     scannerPlugin->scan2d(arg->nrun);
@@ -1234,6 +1248,7 @@ void GammaComboEngine::make1dBergerBoosScan(MethodBergerBoosScan* scannerBergerB
     scannerBergerBoos->scan1d(arg->nrun);
   } else {
     scannerBergerBoos->readScan1dTrees(arg->jmin[cId], arg->jmax[cId]);
+    scannerBergerBoos->setCLFilenameBase(m_fnamebuilder->getCombinerFileName(scannerBergerBoos));
     scannerBergerBoos->calcCLintervals();
   }
   if (!arg->isAction("bbbatch")) {
@@ -1258,6 +1273,7 @@ void GammaComboEngine::make1dCoverageScan(MethodCoverageScan* scanner, int cId) 
   pCache->loadPoints(arg->loadParamsFile[cId]);
 
   // do scan
+  scanner->setToyFilenameBase(m_fnamebuilder->getCombinerFileName(scanner));
   scanner->initScan();
   scanner->setParameterCache(pCache);  // this can be passed directly to scan
   if (arg->isAction("coveragebatch")) {
@@ -1775,7 +1791,7 @@ void GammaComboEngine::writebatchscripts() {
   if (runOnDataSet) {
     m_batchscriptwriter->writeScripts_datasets(arg, getPdf(0));
   } else {
-    m_batchscriptwriter->writeScripts(arg, &cmb);
+    m_batchscriptwriter->writeScripts(arg, &cmb, m_fnamebuilder);
   }
   std::exit(0);
 }
