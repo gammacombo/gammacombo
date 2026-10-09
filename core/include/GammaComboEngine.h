@@ -77,6 +77,13 @@ class GammaComboEngine {
   PDF_Abs* getPdf(int id);
   std::vector<PDF_Abs*> getPdfs();
   inline OptParser* getArg() const { return arg; };
+  /**
+   * Override the command line written into batch scripts (by default, the argv passed to the constructor).
+   *
+   * Useful when the executable strips its own custom options from argv before passing it to GammaComboEngine, so
+   * that batch jobs still re-run with those options.
+   */
+  void setBatchScriptArgs(int argc, char* argv[]);
   void print() const;
   void printPdfs() const;
   void printCombinations() const;

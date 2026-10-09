@@ -1784,6 +1784,11 @@ void GammaComboEngine::setObservablesFromFile(Combiner* c, int cId) {
   }
 }
 
+void GammaComboEngine::setBatchScriptArgs(int argc, char* argv[]) {
+  delete m_batchscriptwriter;
+  m_batchscriptwriter = new BatchScriptWriter(argc, argv);
+}
+
 ///
 /// write batch scripts
 ///
