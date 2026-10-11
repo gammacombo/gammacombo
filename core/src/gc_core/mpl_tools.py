@@ -176,6 +176,36 @@ def read_gc_scan(scanfile, parfile, pars):
     return res
 
 
+def read_gc_plugin_scan(scanfile, bf):
+    """
+    Read the 1-CL curve of a merged 1D Plugin scan (its `hChi2min` is not filled)
+
+    Parameters
+    ----------
+    scanfile : str
+        The `*_Plugin_<par>.root` scanner file
+    bf : list of float
+        The best-fit point, e.g. from `read_gc_scan` of the Prob scan
+
+    Returns
+    -------
+    tuple
+        (x, y), with the best fit inserted at 1-CL = 1 as in `read1dscan`
+    """
+    if not os.path.exists(scanfile):
+        raise FileNotFoundError(f"Cannot find scan file {scanfile}")
+    tf = r.TFile.Open(scanfile)
+    h = tf.Get("hCL")
+    if not h:
+        raise RuntimeError("No 'hCL' found in", scanfile)
+    x = np.array([h.GetBinCenter(b) for b in range(1, h.GetNbinsX() + 1)])
+    y = np.array([h.GetBinContent(b) for b in range(1, h.GetNbinsX() + 1)])
+    tf.Close()
+
+    index = np.argmax(x > bf[0])
+    return np.insert(x, index, bf[0]), np.insert(y, index, 1.0)
+
+
 def read_external_scan(rootfile, scanvar1=None, scanvar2=None):
     """
     Read an external scan from a ROOT file containing hCL histogram
