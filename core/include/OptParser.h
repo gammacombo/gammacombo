@@ -91,6 +91,7 @@ class OptParser {
   bool batchsubmit = false;
   TString batchout;
   TString batchreqs;
+  TString batchsetup;
   int nbatchjobs = -99;
   int nBBpoints = -99;
   int ndiv = 407;

@@ -48,6 +48,7 @@ TString Utils::ConfigToTString(config s) {
   if (s == excludeKdDdK3pi) return "excludeKdDdK3pi";
   if (s == focus2000) return "focus2000";
   if (s == hfag) return "hfag";
+  if (s == hflavPdg26) return "hflavPdg26";
   if (s == highrb) return "highrb";
   if (s == highstattoy) return "highstattoy";
   if (s == lhcb) return "lhcb";
