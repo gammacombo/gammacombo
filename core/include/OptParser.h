@@ -50,6 +50,9 @@ class OptParser {
   bool debug = false;
   int digits = -99;
   bool enforcePhysRange = false;
+  std::vector<TString> externalScanFiles;
+  std::vector<TString> externalScanLabels;
+  bool externalScanOnly = false;
   std::vector<int> fillstyle;
   std::vector<int> fillcolor;
   std::vector<float> filltransparency;

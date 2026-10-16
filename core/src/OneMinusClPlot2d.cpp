@@ -25,6 +25,7 @@
 #include <TROOT.h>
 #include <TString.h>
 
+#include <format>
 #include <iostream>
 #include <vector>
 
@@ -392,13 +393,16 @@ void OneMinusClPlot2d::makeOneColorPlotStyle(TString htmlColor, int ROOTColor) {
 /// Add a scanner to the list of things to be plotted.
 ///
 void OneMinusClPlot2d::addScanner(MethodAbsScan* s, int CLsType) {
-  if (arg->debug) std::cout << "OneMinusClPlot2d::addScanner() : adding " << s->getName() << std::endl;
+  auto info = [](const std::string& msg) { Utils::msgBase("OneMinusClPlot2d::addScanner() : ", msg); };
+
+  if (arg->debug) info(std::format("Adding {:s}", std::string(s->getName())));
   if ((CLsType == 1 || CLsType == 2) && !s->getHCLs2d()) {
     std::cout << "OneMinusClPlot2d::addScanner() : ERROR : No hCLs available. Will not plot." << std::endl;
     return;
   }
   scanners.push_back(s);
   if ((s->getMethodName().EqualTo("Prob") || s->getMethodName().EqualTo("DatasetsProb")) && CLsType == 0) {
+    if (arg->debug) info(std::format("Adding chi2 {:s}", std::string(s->getName())));
     histosType.push_back(Utils::kChi2);
     histos.push_back(s->getHchisq2d());
   } else {
@@ -413,6 +417,7 @@ void OneMinusClPlot2d::addScanner(MethodAbsScan* s, int CLsType) {
     for (int i = 0; i < arg->nsmooth; i++) { histos[histos.size() - 1]->Smooth(); }
   title = s->getTitle();
   if (CLsType == 1 || CLsType == 2) title = s->getTitle() + " CLs";
+  if (arg->debug) info(std::format("Title: {:s}", std::string(title)));
   m_contours.push_back(0);
   m_contours_computed.push_back(false);
 }

@@ -75,6 +75,7 @@ set(CORE_LIB_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/core/src/ConfidenceContours.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/src/Contour.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/src/ControlPlots.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/src/ExternalScanWrapper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/src/FileNameBuilder.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/src/FitResultCache.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/src/Fitter.cpp
