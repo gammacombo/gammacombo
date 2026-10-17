@@ -398,6 +398,7 @@ void OptParser::defineOptions() {
   availableOptions.push_back("ndiv");
   availableOptions.push_back("ndivy");
   availableOptions.push_back("printcor");
+  availableOptions.push_back("infojson");
 }
 
 ///
@@ -771,6 +772,10 @@ void OptParser::parseArguments(int argc, char* argv[]) {
   TCLAP::SwitchArg nosystArg("", "nosyst", "Sets all systematic errors to zero.", false);
   TCLAP::SwitchArg noconfsolsArg("", "noconfsols", "Do not confirm solutions.", false);
   TCLAP::SwitchArg printcorArg("", "printcor", "Print the correlation matrix of each solution found.", false);
+  TCLAP::SwitchArg infojsonArg("", "infojson",
+                               "Write the inputs of each combination (measurements, observables, uncertainties "
+                               "and correlations at full precision) to plots/json/<name>_<combination>_inputs.json.",
+                               false);
   TCLAP::SwitchArg smooth2dArg(
       "", "smooth2d", "Smooth 2D p-value or cl histograms for nicer contour (particularly useful for 2D plugin)",
       false);
@@ -1101,6 +1106,7 @@ void OptParser::parseArguments(int argc, char* argv[]) {
   if (isIn<TString>(bookedOptions, "printsolx")) cmd.add(printSolXArg);
   if (isIn<TString>(bookedOptions, "printsoly")) cmd.add(printSolYArg);
   if (isIn<TString>(bookedOptions, "printcor")) cmd.add(printcorArg);
+  if (isIn<TString>(bookedOptions, "infojson")) cmd.add(infojsonArg);
   if (isIn<TString>(bookedOptions, "prelim")) cmd.add(plotprelimArg);
   if (isIn<TString>(bookedOptions, "po")) cmd.add(plotpluginonlyArg);
   if (isIn<TString>(bookedOptions, "pluginplotrange")) cmd.add(pluginplotrangeArg);
@@ -1281,6 +1287,7 @@ void OptParser::parseArguments(int argc, char* argv[]) {
   plotpulls = plotpullsArg.getValue();
   plotunoff = plotunoffArg.getValue();
   printcor = printcorArg.getValue();
+  infojson = infojsonArg.getValue();
   printSolX = printSolXArg.getValue();
   printSolY = printSolYArg.getValue();
   probforce = probforceArg.getValue();

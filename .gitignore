@@ -29,6 +29,9 @@ scripts/*_C.d
 scripts/*_C.so
 scripts/*_rdict.pcm
 scripts/__pycache__
+plots/*
+zenodo/*
+**/gc_core.egg-info
 
 # backup files
 *~

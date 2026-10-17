@@ -145,6 +145,7 @@ class OptParser {
   bool probimprove = false;
   TString probScanResult = "notSet";
   bool printcor = false;
+  bool infojson = false;
   double printSolX = -999;
   double printSolY = -999;
   std::vector<int> qh;
