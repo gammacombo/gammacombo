@@ -90,6 +90,12 @@ GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[]) {
   // reconfigure RooFormulaVar output
   RooMsgService::instance().getStream(1).removeTopic(RooFit::InputArguments);
   RooMsgService::instance().getStream(0).addTopic(RooFit::InputArguments);
+
+  // Since ROOT 6.38, RooRealVar::setVal() throws if the value is outside the
+  // variable's range instead of clipping it (e.g. Utils::fitToMinBringBackAngles()
+  // maps angles into [0, 2pi], which overshoots parameters with a [-pi, pi]
+  // range). Restore the previous clipping behaviour so results are unchanged.
+  RooRealVar::enableSilentClipping();
 }
 
 GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[], bool _runOnDataSet) {
