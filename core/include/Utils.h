@@ -93,6 +93,9 @@ namespace Utils {
   // Fit functions
   RooFitResult* fitToMin(RooAbsPdf* pdf, bool thorough, int printLevel);
   RooFitResult* fitToMinBringBackAngles(RooAbsPdf* pdf, bool thorough, int printLevel);
+  /// True for a fit that could not run at all: MIGRAD failed, the minimised
+  /// function was invalid at the points tried, and minNll() is the dummy value 0.
+  bool fitFailedWithInvalidNll(const RooFitResult* r);
   RooFitResult* fitToMinForce(RooWorkspace* w, TString name, TString forceVariables = "", bool debug = true);
   RooFitResult* fitToMinImprove(RooWorkspace* w, TString name);
   double getChi2(RooAbsPdf* pdf);
