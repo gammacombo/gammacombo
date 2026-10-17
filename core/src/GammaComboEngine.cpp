@@ -44,6 +44,7 @@
 #include <TTree.h>
 
 #include <cassert>
+#include <cmath>
 #include <cstdlib>
 #include <format>
 #include <fstream>
@@ -90,6 +91,12 @@ GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[]) {
   // reconfigure RooFormulaVar output
   RooMsgService::instance().getStream(1).removeTopic(RooFit::InputArguments);
   RooMsgService::instance().getStream(0).addTopic(RooFit::InputArguments);
+
+  // Since ROOT 6.38, RooRealVar::setVal() throws if the value is outside the
+  // variable's range instead of clipping it (e.g. Utils::fitToMinBringBackAngles()
+  // maps angles into [0, 2pi], which overshoots parameters with a [-pi, pi]
+  // range). Restore the previous clipping behaviour so results are unchanged.
+  RooRealVar::enableSilentClipping();
 }
 
 GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[], bool _runOnDataSet) {
@@ -873,6 +880,132 @@ void GammaComboEngine::printCombinerStructure(Combiner* c) const {
   Graphviz gviz(arg);
   gviz.printCombiner(c);
   gviz.printCombinerLayer(c);
+}
+
+namespace {
+  std::string jsonString(const TString& text) {
+    std::string out = "\"";
+    for (const char ch : std::string(text.Data())) {
+      switch (ch) {
+      case '"':
+        out += "\\\"";
+        break;
+      case '\\':
+        out += "\\\\";
+        break;
+      case '\n':
+        out += "\\n";
+        break;
+      case '\t':
+        out += "\\t";
+        break;
+      default:
+        if (static_cast<unsigned char>(ch) < 0x20)
+          out += std::format("\\u{:04x}", static_cast<int>(ch));
+        else
+          out += ch;
+      }
+    }
+    return out + "\"";
+  }
+
+  std::string jsonNumber(double x) { return std::isfinite(x) ? std::format("{:.12g}", x) : "null"; }
+
+  std::string jsonMatrix(const TMatrixDSym& m, int n, const std::string& indent) {
+    if (m.GetNrows() < n) return "[]";
+    std::string out = "[";
+    for (int i = 0; i < n; i++) {
+      out += (i ? ",\n" : "\n") + indent + "  [";
+      for (int j = 0; j < n; j++) out += (j ? ", " : "") + jsonNumber(m(i, j));
+      out += "]";
+    }
+    return out + "\n" + indent + "]";
+  }
+
+  std::string jsonNames(const std::vector<std::string>& names) {
+    std::string out = "[";
+    for (size_t i = 0; i < names.size(); i++) out += (i ? ", " : "") + jsonString(names[i]);
+    return out + "]";
+  }
+}  // namespace
+
+///
+/// Write the inputs of a combination to plots/json/<name>_<combination>_inputs.json (option --infojson):
+/// every measurement (PDF) with its GammaCombo id, title and source strings, its observables with
+/// value, statistical and systematic uncertainty, and its total, statistical and systematic correlation
+/// matrices, all at full precision; plus the free parameters of the combination with their unit.
+/// The --info printout rounds the same numbers; scripts/hflav_json.py turns this file into HFLAV.json.
+///
+void GammaComboEngine::writeInputsJson(Combiner* c, int combinerId) const {
+  system("mkdir -p plots/json");
+  TString basename = m_fnamebuilder->getFileBaseName(c);
+  // the file describes the combination, not the scan: drop the trailing scan variable(s) from the name
+  TString suffix = "";
+  for (const auto& v : arg->var) suffix += "_" + v;
+  if (suffix != "" && basename.EndsWith(suffix)) basename.Resize(basename.Length() - suffix.Length());
+  TString fname = "plots/json/" + basename + "_inputs.json";
+  std::ofstream out(fname.Data());
+  if (!out) {
+    std::cout << "GammaComboEngine::writeInputsJson() : ERROR : cannot write " << fname << std::endl;
+    return;
+  }
+  RooWorkspace* w = c->getWorkspace();
+  out << "{\n";
+  out << "  \"software\": " << jsonString(Form("GammaCombo %s", GAMMACOMBO_VERSION)) << ",\n";
+  out << "  \"executable\": " << jsonString(TString(execname).ReplaceAll("bin/", "")) << ",\n";
+  out << "  \"combination_id\": " << combinerId << ",\n";
+  out << "  \"combination_name\": " << jsonString(c->getName()) << ",\n";
+  out << "  \"combination_title\": " << jsonString(c->getTitle()) << ",\n";
+  out << "  \"observables\": " << jsonNames(c->getObservableNames()) << ",\n";
+  out << "  \"parameters\": [";
+  auto pars = c->getParameterNames();
+  for (size_t i = 0; i < pars.size(); i++) {
+    RooRealVar* v = w ? w->var(pars[i].c_str()) : nullptr;
+    out << (i ? "," : "") << "\n    {\"name\": " << jsonString(pars[i])
+        << ", \"title\": " << jsonString(v ? v->GetTitle() : "") << ", \"unit\": " << jsonString(v ? v->getUnit() : "")
+        << "}";
+  }
+  out << "\n  ],\n";
+  out << "  \"measurements\": [";
+  const auto& pdfs = c->getPdfs();
+  for (size_t ip = 0; ip < pdfs.size(); ip++) {
+    PDF_Abs* p = pdfs[ip];
+    TString uid = p->getUniqueID();
+    TString pname = p->getName();
+    pname.ReplaceAll(uid, "");
+    out << (ip ? "," : "") << "\n    {\n";
+    out << "      \"index\": " << ip + 1 << ",\n";
+    out << "      \"measurement_id\": " << p->getGcId() << ",\n";
+    out << "      \"pdf_name\": " << jsonString(pname) << ",\n";
+    out << "      \"title\": " << jsonString(p->getTitle()) << ",\n";
+    out << "      \"values_source\": " << jsonString(p->getObservableSourceString()) << ",\n";
+    out << "      \"errors_source\": " << jsonString(p->getErrorSourceString()) << ",\n";
+    out << "      \"correlation_source\": " << jsonString(p->getCorrelationSourceString()) << ",\n";
+    out << "      \"cross_correlation\": " << (p->isCrossCorPdf() ? "true" : "false") << ",\n";
+    out << "      \"observables\": [";
+    const int n = p->getNobs();
+    for (int i = 0; i < n; i++) {
+      auto* v = static_cast<RooRealVar*>(p->getObservables()->at(i));
+      TString oname = v->GetName();
+      oname.ReplaceAll(uid, "");
+      const double stat = i < int(p->StatErr.size()) ? p->StatErr[i] : 0.;
+      const double syst = i < int(p->SystErr.size()) ? p->SystErr[i] : 0.;
+      out << (i ? "," : "") << "\n        {\"name\": " << jsonString(oname)
+          << ", \"value\": " << jsonNumber(v->getVal()) << ", \"stat\": " << jsonNumber(stat)
+          << ", \"syst\": " << jsonNumber(syst) << ", \"unit\": " << jsonString(v->getUnit()) << "}";
+    }
+    out << "\n      ],\n";
+    out << "      \"correlation\": " << jsonMatrix(p->corMatrix, n, "      ") << ",\n";
+    out << "      \"correlation_stat\": " << jsonMatrix(p->corStatMatrix, n, "      ") << ",\n";
+    out << "      \"correlation_syst\": " << jsonMatrix(p->corSystMatrix, n, "      ") << ",\n";
+    std::vector<std::string> ppars;
+    if (p->getParameters())
+      for (const auto& v : *p->getParameters()) ppars.push_back(v->GetName());
+    out << "      \"parameters\": " << jsonNames(ppars) << "\n";
+    out << "    }";
+  }
+  out << "\n  ]\n}\n";
+  std::cout << "GammaComboEngine::writeInputsJson() : wrote " << fname << std::endl;
 }
 
 ///
@@ -2046,6 +2179,7 @@ void GammaComboEngine::scan() {
 
     // printout and latex
     c->print();
+    if (arg->infojson) writeInputsJson(c, combinerId);
     if (arg->debug) c->getWorkspace()->Print("v");
     if (arg->save != "" && !arg->saveAtMin) saveWorkspace(c, i);
     if (arg->latex) makeLatex(c);
