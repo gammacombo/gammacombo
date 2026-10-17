@@ -887,10 +887,18 @@ namespace {
     std::string out = "\"";
     for (const char ch : std::string(text.Data())) {
       switch (ch) {
-      case '"': out += "\\\""; break;
-      case '\\': out += "\\\\"; break;
-      case '\n': out += "\\n"; break;
-      case '\t': out += "\\t"; break;
+      case '"':
+        out += "\\\"";
+        break;
+      case '\\':
+        out += "\\\\";
+        break;
+      case '\n':
+        out += "\\n";
+        break;
+      case '\t':
+        out += "\\t";
+        break;
       default:
         if (static_cast<unsigned char>(ch) < 0x20)
           out += std::format("\\u{:04x}", static_cast<int>(ch));
@@ -954,8 +962,8 @@ void GammaComboEngine::writeInputsJson(Combiner* c, int combinerId) const {
   for (size_t i = 0; i < pars.size(); i++) {
     RooRealVar* v = w ? w->var(pars[i].c_str()) : nullptr;
     out << (i ? "," : "") << "\n    {\"name\": " << jsonString(pars[i])
-        << ", \"title\": " << jsonString(v ? v->GetTitle() : "")
-        << ", \"unit\": " << jsonString(v ? v->getUnit() : "") << "}";
+        << ", \"title\": " << jsonString(v ? v->GetTitle() : "") << ", \"unit\": " << jsonString(v ? v->getUnit() : "")
+        << "}";
   }
   out << "\n  ],\n";
   out << "  \"measurements\": [";
@@ -982,9 +990,9 @@ void GammaComboEngine::writeInputsJson(Combiner* c, int combinerId) const {
       oname.ReplaceAll(uid, "");
       const double stat = i < int(p->StatErr.size()) ? p->StatErr[i] : 0.;
       const double syst = i < int(p->SystErr.size()) ? p->SystErr[i] : 0.;
-      out << (i ? "," : "") << "\n        {\"name\": " << jsonString(oname) << ", \"value\": " << jsonNumber(v->getVal())
-          << ", \"stat\": " << jsonNumber(stat) << ", \"syst\": " << jsonNumber(syst)
-          << ", \"unit\": " << jsonString(v->getUnit()) << "}";
+      out << (i ? "," : "") << "\n        {\"name\": " << jsonString(oname)
+          << ", \"value\": " << jsonNumber(v->getVal()) << ", \"stat\": " << jsonNumber(stat)
+          << ", \"syst\": " << jsonNumber(syst) << ", \"unit\": " << jsonString(v->getUnit()) << "}";
     }
     out << "\n      ],\n";
     out << "      \"correlation\": " << jsonMatrix(p->corMatrix, n, "      ") << ",\n";

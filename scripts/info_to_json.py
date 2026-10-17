@@ -95,7 +95,12 @@ def parse_detailed_pdf(lines, start_idx):
     idx += 1
 
     # Parse sub-sections
-    pdf["observables"] = {"n_obs": 0, "values_source": "", "errors_source": "", "values": []}
+    pdf["observables"] = {
+        "n_obs": 0,
+        "values_source": "",
+        "errors_source": "",
+        "values": [],
+    }
     pdf["correlations"] = {}
     pdf["parameters"] = {"n_par": 0, "names": []}
     pdf["relations"] = []
@@ -113,7 +118,12 @@ def parse_detailed_pdf(lines, start_idx):
             idx += 1
             while idx < len(lines):
                 l = lines[idx].strip()
-                if l == "" or l.startswith("correlation") or l == "parameters:" or l == "relations:":
+                if (
+                    l == ""
+                    or l.startswith("correlation")
+                    or l == "parameters:"
+                    or l == "relations:"
+                ):
                     break
                 m_nobs = re.match(r"nObs\s*=\s*(\d+)", l)
                 if m_nobs:
@@ -164,7 +174,12 @@ def parse_detailed_pdf(lines, start_idx):
             par_names = []
             while idx < len(lines):
                 l = lines[idx].strip()
-                if l == "" or l == "relations:" or l.startswith("correlation") or re.match(r"\d+\.\s+PDF:", l):
+                if (
+                    l == ""
+                    or l == "relations:"
+                    or l.startswith("correlation")
+                    or re.match(r"\d+\.\s+PDF:", l)
+                ):
                     break
                 m_npar = re.match(r"nPar\s*=\s*(\d+)", l)
                 if m_npar:
@@ -183,14 +198,22 @@ def parse_detailed_pdf(lines, start_idx):
             idx += 1
             while idx < len(lines):
                 l = lines[idx].strip()
-                if l == "" or l.startswith("correlation") or l == "parameters:" or l == "observables:" or re.match(r"\d+\.\s+PDF:", l):
+                if (
+                    l == ""
+                    or l.startswith("correlation")
+                    or l == "parameters:"
+                    or l == "observables:"
+                    or re.match(r"\d+\.\s+PDF:", l)
+                ):
                     break
                 m_rel = re.match(r"(\S+)\s+=\s+(.*)", l)
                 if m_rel:
-                    pdf["relations"].append({
-                        "observable": m_rel.group(1),
-                        "expression": m_rel.group(2).strip(),
-                    })
+                    pdf["relations"].append(
+                        {
+                            "observable": m_rel.group(1),
+                            "expression": m_rel.group(2).strip(),
+                        }
+                    )
                 idx += 1
             continue
 
@@ -214,9 +237,7 @@ def lookup_combination_name(source_path, combination_id):
     with open(source_path) as f:
         source = f.read()
     # newCombiner(ID, "name", ...)
-    m = re.search(
-        rf'gc\.newCombiner\(\s*{combination_id}\s*,\s*"([^"]+)"', source
-    )
+    m = re.search(rf'gc\.newCombiner\(\s*{combination_id}\s*,\s*"([^"]+)"', source)
     if m:
         return m.group(1)
     # cloneCombiner(ID, sourceID, "name", ...)
@@ -265,15 +286,15 @@ def parse_info_output(text):
             continue
 
         # Measurement summary lines like: " 1. [measurement 101] HFLAV    Bd Lifetime"
-        m_meas = re.match(
-            r"(\d+)\.\s+\[measurement\s+(\d+)\]\s+(.*)", stripped
-        )
+        m_meas = re.match(r"(\d+)\.\s+\[measurement\s+(\d+)\]\s+(.*)", stripped)
         if m_meas:
-            result["measurements_summary"].append({
-                "index": int(m_meas.group(1)),
-                "measurement_id": int(m_meas.group(2)),
-                "description": m_meas.group(3).strip(),
-            })
+            result["measurements_summary"].append(
+                {
+                    "index": int(m_meas.group(1)),
+                    "measurement_id": int(m_meas.group(2)),
+                    "description": m_meas.group(3).strip(),
+                }
+            )
             idx += 1
             continue
 
@@ -335,9 +356,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Convert gammacombo --info output to JSON"
     )
-    parser.add_argument(
-        "-o", "--output", required=True, help="Output JSON file path"
-    )
+    parser.add_argument("-o", "--output", required=True, help="Output JSON file path")
     parser.add_argument(
         "-i",
         "--input",

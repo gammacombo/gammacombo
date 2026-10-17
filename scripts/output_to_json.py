@@ -31,17 +31,19 @@ def convert_intervals(input_path):
     output = {"confidence_intervals": []}
     for cl_key, entries in intervals.items():
         for e in entries:
-            output["confidence_intervals"].append({
-                "variable": e["var"],
-                "central_value": float(e["central"]),
-                "interval_min": float(e["min"]),
-                "interval_max": float(e["max"]),
-                "error_neg": float(e["neg"]),
-                "error_pos": float(e["pos"]),
-                "confidence_level": CL_MAP.get(e["cl"], float(e["cl"])),
-                "unit": e["unit"],
-                "method": e["method"],
-            })
+            output["confidence_intervals"].append(
+                {
+                    "variable": e["var"],
+                    "central_value": float(e["central"]),
+                    "interval_min": float(e["min"]),
+                    "interval_max": float(e["max"]),
+                    "error_neg": float(e["neg"]),
+                    "error_pos": float(e["pos"]),
+                    "confidence_level": CL_MAP.get(e["cl"], float(e["cl"])),
+                    "unit": e["unit"],
+                    "method": e["method"],
+                }
+            )
     return output
 
 
@@ -52,9 +54,7 @@ def main():
     parser.add_argument(
         "-i", "--input", required=True, help="Input .py CL intervals file"
     )
-    parser.add_argument(
-        "-o", "--output", required=True, help="Output JSON file path"
-    )
+    parser.add_argument("-o", "--output", required=True, help="Output JSON file path")
     args = parser.parse_args()
 
     result = convert_intervals(args.input)
