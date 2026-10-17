@@ -46,9 +46,7 @@ def parse_correlation_matrix(lines, start_idx):
     if idx >= len(lines):
         return {}, [], idx
 
-    # header row with column indices
-    header = lines[idx].strip().split()
-    col_indices = [int(x) for x in header]
+    # skip header row with column indices
     idx += 1
 
     obs_names = []
@@ -59,10 +57,8 @@ def parse_correlation_matrix(lines, start_idx):
             break
         # line like: obs_name   0  1.000  0.180 ...
         parts = line.split()
-        # find where the row index is (an integer)
         # format: obs_name  row_idx  val val val ...
         obs_name = parts[0]
-        row_idx = int(parts[1])
         values = []
         for v in parts[2:]:
             if v == "-":
