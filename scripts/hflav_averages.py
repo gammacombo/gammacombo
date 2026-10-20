@@ -17,6 +17,7 @@ Run from the top of the gammacombo repository, after building and installing
     python scripts/hflav_averages.py check                  # compare with the backed-up reference
     python scripts/hflav_averages.py plots                  # HFLAV plots (overviews + gamma comparisons)
     python scripts/hflav_averages.py plots --copy-to ~/Scratch/hflav/ut-combo   # ... and the overviews into ut-combo
+    python scripts/hflav_averages.py plots -i --only alpha  # ... and show them at the end (plt.show())
     python scripts/hflav_averages.py zenodo                 # write zenodo/*_wa_{inputs,outputs}.json
     python scripts/hflav_averages.py list                   # print the commands without running
 
@@ -277,35 +278,38 @@ SCANS = [
     dict(
         A,
         name="alpha",
-        comb=50,
+        comb=60,
         vars=["alpha"],
-        out="hflav_pdg2025_alpha",
+        out="hflav_nov26_alpha",
         nominal=True,
         args="--pr --ps 1 --scanrange 0.5:2.0 --npoints 200",
     ),
     dict(
         A,
         name="alpha_pipi",
-        comb=51,
+        comb=61,
         vars=["alpha"],
-        out="hflav_pdg2025_pipi_alpha",
-        args="--scanrange -0.2:3.2 --npoints 2400",
+        out="hflav_nov26_pipi_alpha",
+        # start from the eight pipi solutions of PDG 2021: without it the scan can miss mirror solutions
+        args="--scanrange -0.2:3.2 --npoints 2400 --parfile plots/par/alpha_wa_hflav_pdg2021_pipi_alpha_start.dat",
     ),
     dict(
         A,
         name="alpha_rhorho",
-        comb=52,
+        comb=62,
         vars=["alpha"],
-        out="hflav_pdg2025_rhorho_alpha",
+        out="hflav_nov26_rhorho_alpha",
         args="--pr --scanrange -0.2:3.2 --npoints 1200",
     ),
     dict(
         A,
         name="alpha_rhopi",
-        comb=53,
+        comb=63,
         vars=["alpha"],
-        out="hflav_pdg2025_rhopi_alpha",
-        args="--pr --ps 1 --npoints 400",
+        out="hflav_nov26_rhopi_alpha",
+        # start on the C < 0 branch of the rho-pi Dalitz fit (PDG 2025 start values): from the default
+        # start values (C = +0.79) the scan follows the mirror branch and misses the minima above 100 deg
+        args="--pr --ps 1 --npoints 400 --parfile plots/par/alpha_wa_hflav_pdg2025_rhopi_alpha_start.dat",
     ),
     # ---- rho-eta -----------------------------------------------------------
     # combination 4 (all angles) first: it writes the parfile the others start from
@@ -751,9 +755,11 @@ def beta_ckm(path):
 def cmd_plots(args):
     import matplotlib
 
-    matplotlib.use("Agg")
+    if not args.interactive:
+        matplotlib.use("Agg")
     try:
         import hflav_plots
+        import matplotlib.pyplot as plt
     except ImportError as exc:
         sys.exit(
             f"error: cannot import the plotting code ({exc}); activate the gc_2026 env (PyROOT, matplotlib)"
@@ -762,6 +768,7 @@ def cmd_plots(args):
     outdir = Path("paper_plots") / "HFLAV" / f"{args.version}{args.year}"
     plots = select_plots(args)
     failed = []
+    figures = []  # kept open for plt.show() with --interactive
     for p in plots:
         out = TOP / p["module"] / outdir / f"{p['file']}.pdf"
         out.parent.mkdir(parents=True, exist_ok=True)
@@ -790,7 +797,12 @@ def cmd_plots(args):
                         / f"clintervals_{s['out']}_Prob.py"
                     )
                 plotter.add_scan((*files, s["vars"]), **curve)
-            plotter.plot()
+            fig = plotter.plot(keep_open=args.interactive)
+            if fig is not None:
+                manager = fig.canvas.manager
+                if manager is not None:
+                    manager.set_window_title(p["name"])
+                figures.append(fig)
         except Exception as exc:
             failed.append(p["name"])
             print(f"[FAIL ] {p['name']:18s} {type(exc).__name__}: {exc}", flush=True)
@@ -812,6 +824,9 @@ def cmd_plots(args):
         f"\n{len(plots) - n_failed}/{len(plots)} plots made"
         + (f"; failed: {', '.join(failed)}" if failed else "")
     )
+    if figures:
+        print(f"showing {len(figures)} plot(s); close the windows to finish", flush=True)
+        plt.show()
     return 1 if failed else 0
 
 
@@ -898,8 +913,8 @@ def main():
     )
     p.add_argument(
         "--version",
-        default="Autumn",
-        help="plots: release shown in the logo (default: Autumn)",
+        default="November",
+        help="plots: release shown in the logo (default: November)",
     )
     p.add_argument(
         "--year", default="2026", help="plots: year shown in the logo (default: 2026)"
@@ -908,6 +923,12 @@ def main():
         "--beta-json",
         default="~/Scratch/hflav/ut-combo/hflav/HFLAV.json",
         help="plots: HFLAV.json with beta_CKM, shown in the beta overview (default: the ut-combo one)",
+    )
+    p.add_argument(
+        "-i",
+        "--interactive",
+        action="store_true",
+        help="plots: also show the plots at the end (plt.show()); use --only to limit the number of windows",
     )
     p.add_argument(
         "--copy-to",
