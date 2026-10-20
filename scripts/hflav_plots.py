@@ -116,10 +116,14 @@ def hflav_zenodo_logo(
         # logo.py centres each label's line box (va="center"), which includes room for descenders, so
         # labels without them sit high in their boxes. Put the baseline where the glyphs themselves
         # are centred on the same point instead.
-        ink = TextPath((0, 0), text.get_text(), prop=text.get_fontproperties()).get_extents()
+        ink = TextPath(
+            (0, 0), text.get_text(), prop=text.get_fontproperties()
+        ).get_extents()
         text.set_verticalalignment("baseline")
         text.set_transform(
-            offset_copy(text.get_transform(), fig=fig, y=-(ink.y0 + ink.y1) / 2, units="points")
+            offset_copy(
+                text.get_transform(), fig=fig, y=-(ink.y0 + ink.y1) / 2, units="points"
+            )
         )
 
 

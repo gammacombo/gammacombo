@@ -825,7 +825,9 @@ def cmd_plots(args):
         + (f"; failed: {', '.join(failed)}" if failed else "")
     )
     if figures:
-        print(f"showing {len(figures)} plot(s); close the windows to finish", flush=True)
+        print(
+            f"showing {len(figures)} plot(s); close the windows to finish", flush=True
+        )
         plt.show()
     return 1 if failed else 0
 
