@@ -78,11 +78,14 @@ def read1dscan(h, bf, minnll):
     # convert to p-value
     y = chi2.sf(y, 1)
 
-    # insert the best fit
+    # insert the best fit, if it lies inside the scanned range (a solution outside it, e.g. a
+    # mirror solution or a failed fit at the edge of the physical range, would be put first and
+    # draw a straight line across the plot)
     assert len(x) == len(y)
-    index = np.argmax(x > bf)
-    x = np.insert(x, index, bf)
-    y = np.insert(y, index, 1.0)
+    if x[0] <= bf[0] <= x[-1]:
+        index = np.searchsorted(x, bf[0])
+        x = np.insert(x, index, bf[0])
+        y = np.insert(y, index, 1.0)
 
     return x, y, None, bf
 

@@ -18,6 +18,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Arc
+from matplotlib.textpath import TextPath
+from matplotlib.transforms import offset_copy
 from scipy.stats import chi2
 
 HERE = Path(__file__).resolve().parent
@@ -41,7 +43,13 @@ SHARED_MATERIAL = Path(
 ).expanduser()
 
 # physical size of the official HFLAV logo (shared-material logo.py defaults on an 8x6 in figure)
-HFLAV_LOGO_SIZE_IN = (0.24 * 8, 0.18 * 6)
+# HFLAV_LOGO_SIZE_IN = (0.24 * 8, 0.18 * 6) - this makes official style logo which I find too high
+HFLAV_LOGO_SIZE_IN = (0.23 * 8, 0.13 * 6)
+
+# DOI placeholder in the logo. hflav_fair-upload (hflav_fair.doiedit) rewrites
+# 'doi:10.5281/zenodo.XXXXX' (or XXXXXX) and its hyperlink to the record DOI and fails the upload
+# for any PDF without it. logo.py's default ('XXXXXXXX', 8 X's) is not matched, so pass it explicitly.
+ZENODO_DOI_PLACEHOLDER = "doi:10.5281/zenodo.XXXXX"
 
 _draw_hflav_logo = None
 
@@ -72,7 +80,9 @@ def hflav_zenodo_logo(
       after everything else has been drawn (constrained layout moves the axes);
     - without LaTeX and in DejaVu Sans: gc.mplstyle sets text.usetex=True, which would typeset the
       logo text in Computer Modern (the rest of the plot keeps LaTeX);
-    - opaque, on top of everything else in the axes (hatching, curves, contours, legend).
+    - opaque, on top of everything else in the axes (hatching, curves, contours, legend);
+    - with each label's glyphs centred on its box (logo.py centres the line box, which leaves the
+      text high, more visibly in a lower logo).
     Save with save_figure() so the logo font is embedded as TrueType (needed for the DOI rewriting).
     """
     fig.canvas.draw()  # let constrained layout fix the axes position
@@ -92,11 +102,29 @@ def hflav_zenodo_logo(
             topLeft=topLeft,
             thisVersion=version,
             thisYear=year,
+            doi=ZENODO_DOI_PLACEHOLDER,
             dx=dx,
             dy=dy,
         )
     for artist in ax.patches[n_patches:] + ax.texts[n_texts:]:
         artist.set_zorder(artist.get_zorder() + 10)
+    for text in ax.texts[n_texts:]:
+        # logo.py asks for italic 'light' text, but DejaVu Sans has no light oblique face: matplotlib
+        # uses DejaVu Sans Oblique (regular), as in the official hflav_zenodo_label_only_2026.pdf, and
+        # warns "findfont: Failed to find font weight light". Ask for that face directly (same output).
+        text.set_fontweight("normal")
+        # logo.py centres each label's line box (va="center"), which includes room for descenders, so
+        # labels without them sit high in their boxes. Put the baseline where the glyphs themselves
+        # are centred on the same point instead.
+        ink = TextPath(
+            (0, 0), text.get_text(), prop=text.get_fontproperties()
+        ).get_extents()
+        text.set_verticalalignment("baseline")
+        text.set_transform(
+            offset_copy(
+                text.get_transform(), fig=fig, y=-(ink.y0 + ink.y1) / 2, units="points"
+            )
+        )
 
 
 def save_figure(fig, path, **kwargs):
@@ -277,13 +305,21 @@ class Plotter:
             )
         return legopts
 
-    def plot(self):
-        """Draw the plot and save it as PDF and PNG."""
+    def plot(self, keep_open=False):
+        """Draw the plot and save it as PDF and PNG.
+
+        keep_open: leave the figure open (e.g. for plt.show()) and return it; otherwise it is closed.
+        """
         fig, ax = plt.subplots()
         try:
             self._draw(fig, ax)
-        finally:
+        except BaseException:
             plt.close(fig)
+            raise
+        if keep_open:
+            return fig
+        plt.close(fig)
+        return None
 
     def _draw(self, fig, ax):
         legopts = self.legend_options()
