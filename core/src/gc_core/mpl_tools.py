@@ -2,7 +2,9 @@ import copy
 import importlib
 import itertools
 import os
+from collections.abc import Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING, Literal
 
 import matplotlib
 import matplotlib.patches as patches
@@ -10,11 +12,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import ROOT as r
 from matplotlib import rcParams
+from matplotlib.font_manager import FontProperties
 from matplotlib.lines import Line2D
 from matplotlib.offsetbox import AnnotationBbox, TextArea, VPacker
 from scipy.interpolate import interp1d
 from scipy.stats import chi2
 from tabulate import tabulate
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 
 def load_interval(fname):
@@ -1019,19 +1025,37 @@ def hflav_logo(subtitle, pos=[0.02, 0.98], ax=None, scale=1):
     )
 
 
-def corr_plot(df, savef=None, names=None, scale=None):
-    # symmetrise
+def corr_plot(
+    df: "pd.DataFrame",
+    savef: str | None = None,
+    names: Sequence[str] | Literal["columns"] | None = None,
+    scale: float | None = None,
+) -> None:
+    """Draw a correlation matrix as an annotated colour map.
+
+    Only the upper triangle of `df` is read, and is mirrored onto the lower one. Cells with |rho| < 0.01 or NaN are left
+    unannotated.
+
+    Args:
+        df: Square correlation matrix.
+        savef: Output file name. A `.pdf` is also saved as `.png` and `.ps`. If None, the figure is not saved.
+        names: Axis tick labels, in the order of the rows/columns of `df`; `"columns"` takes them from `df.columns`.
+            The unit suffixes `\\,[^\\circ]` and `\\, [\\%]` are stripped. Required if `scale` is None.
+        scale: Linear size of the canvas relative to the default matplotlib figure size (6.4 x 4.8 in).
+            If None, it grows with the number of parameters as `max(len(names) / 12, 1)`.
+    """
     if names == "columns":
         names = df.columns.values
 
     # copy: pandas >= 3.0 views are read-only
     corr = df.to_numpy(dtype=float, copy=True)
 
+    # symmetrise
     for (j, i), value in np.ndenumerate(corr):
         if j > i:
             corr[j, i] = corr[i, j]
 
-    # never shrink below the default canvas: the annotations have a fixed size and would overlap
+    # never shrink below the default canvas: the fonts scale with it and would become too small to read
     if scale is None:
         scale = max(len(names) / 12, 1)
     fig, ax = plt.subplots(figsize=(scale * 6.4, scale * 4.8))
@@ -1047,16 +1071,10 @@ def corr_plot(df, savef=None, names=None, scale=None):
     cb = fig.colorbar(
         im,
         ax=ax,
-        format=lambda x, pos: f"${x:+3.1f}$",
+        format="${x:+3.1f}$",
         pad=0.03 / scale,
         aspect=15 * scale,
     )
-    font_size = rcParams["font.size"] * scale
-    cb.set_label("Correlation", size=font_size)
-
-    for (j, i), value in np.ndenumerate(corr):
-        if not np.isnan(value) and abs(value) >= 0.01:
-            ax.text(i, j, f"${value:+4.2f}$", ha="center", va="center", fontsize=8)
 
     if names is not None:
         labels = [
@@ -1069,6 +1087,46 @@ def corr_plot(df, savef=None, names=None, scale=None):
         ax.tick_params(axis="x", labelrotation=45)
         ax.tick_params(direction="out")
         ax.minorticks_off()
+
+    # tick labels grow with the canvas, so they keep the size relative to the plot that the style gives them
+    def points(size):
+        return FontProperties(size=size).get_size_in_points()
+
+    tick_size = points(rcParams["xtick.labelsize"]) * scale
+    ax.tick_params(labelsize=tick_size)
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    # ... but well within a cell height, or neighbouring y labels would overlap and squeeze the matrix
+    max_tick_size = (
+        0.6 * ax.get_window_extent(renderer).height / corr.shape[0] * 72 / fig.dpi
+    )
+    tick_size = min(tick_size, max_tick_size)
+    ax.tick_params(labelsize=tick_size)
+    cb.ax.tick_params(labelsize=tick_size)
+    title_ratio = points(rcParams["axes.labelsize"]) / points(
+        rcParams["xtick.labelsize"]
+    )
+    cb.set_label("Correlation", size=tick_size * title_ratio)
+    fig.canvas.draw()
+
+    # size the annotations to fill the cells: measure the widest label at a reference size on the final layout
+    # (after the tick labels and colour bar have taken their space), then rescale it to the cell size
+    ref_size = 10
+    probe = ax.text(0, 0, "$-0.00$", fontsize=ref_size, ha="center", va="center")
+    text_bb = probe.get_window_extent(renderer)
+    probe.remove()
+    ax_bb = ax.get_window_extent(renderer)
+    cell_w, cell_h = ax_bb.width / corr.shape[1], ax_bb.height / corr.shape[0]
+    # leave a margin of ~25% horizontally and ~40% vertically
+    annot_size = ref_size * min(
+        0.75 * cell_w / text_bb.width, 0.6 * cell_h / text_bb.height
+    )
+
+    for (j, i), value in np.ndenumerate(corr):
+        if not np.isnan(value) and abs(value) >= 0.01:
+            ax.text(
+                i, j, f"${value:+.2f}$", ha="center", va="center", fontsize=annot_size
+            )
 
     if savef is not None:
         fig.savefig(savef)
