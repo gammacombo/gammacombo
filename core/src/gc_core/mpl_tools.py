@@ -169,7 +169,7 @@ def slice_at_y(x, y, z, y0, above=False):
     xs, zs = [], []
     for k in range(z.shape[1]):
         col = z[:, k]
-        ok = col >= 0  # negative: failed fits
+        ok = np.isfinite(col) & (col < 1e5)  # failed fits are left at 1e6 or DBL_MAX
         if above:
             ok &= ys >= y0 - dy / 4
         if ok.sum() < 2:

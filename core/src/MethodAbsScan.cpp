@@ -393,6 +393,7 @@ void MethodAbsScan::saveScanner(TString fName) const {
       if (curveResults2d.empty()) break;
       auto hPar = std::unique_ptr<TH2F>(static_cast<TH2F*>(hChi2min2d->Clone("hPar_" + par)));
       hPar->Reset();
+      hPar->SetTitle(par);
       for (int i = 1; i <= hPar->GetNbinsX(); i++)
         for (int j = 1; j <= hPar->GetNbinsY(); j++) {
           RooSlimFitResult* r =
