@@ -158,7 +158,9 @@ void RooSlimFitResult::SaveLatex(std::ofstream& outfile, bool verbose, bool prin
   outfile << "  Parameter &  Value & & Uncertainty \\\\" << std::endl;
   std::vector<TString> myParNames;
   for (int i = 0; i < _parsNames.size(); i++) {
-    TString printName = "\\" + TString(_parsNames[i]).ReplaceAll("_", "");
+    // LaTeX macros can't contain digits: x12 -> \xth, y12 -> \yth
+    TString printName =
+        "\\" + TString(_parsNames[i]).ReplaceAll("_", "").ReplaceAll("x12", "xth").ReplaceAll("y12", "yth");
     float val = _parsVal[i];
     float err = _parsErr[i];
     if (_parsAngle[i]) {

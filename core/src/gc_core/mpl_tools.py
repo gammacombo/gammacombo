@@ -2,16 +2,25 @@ import copy
 import importlib
 import itertools
 import os
+from collections.abc import Sequence
+from pathlib import Path
+from typing import TYPE_CHECKING, Literal
 
+import matplotlib
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 import ROOT as r
 from matplotlib import rcParams
+from matplotlib.font_manager import FontProperties
 from matplotlib.lines import Line2D
+from matplotlib.offsetbox import AnnotationBbox, TextArea, VPacker
 from scipy.interpolate import interp1d
 from scipy.stats import chi2
 from tabulate import tabulate
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 
 def load_interval(fname):
@@ -116,6 +125,89 @@ def read2dscan(h, bf, minnll):
     return x, y, z, bf
 
 
+def read2dpar(scanfile, par):
+    """
+    Profiled value of a parameter at each point of a 2D scan, as saved with `--save-pars-2d`.
+
+    Returns
+    -------
+    numpy array in the layout of the `z` of `read2dscan` (NaN where no fit result), or None if the scanner file has
+    no `hPar_<par>`
+    """
+    tf = r.TFile.Open(scanfile)
+    h = tf.Get("hPar_" + par)
+    if not h:
+        tf.Close()
+        return None
+    vals = np.array(
+        [
+            [h.GetBinContent(i, j) for i in range(1, h.GetNbinsX() + 1)]
+            for j in range(1, h.GetNbinsY() + 1)
+        ]
+    )
+    tf.Close()
+    return vals
+
+
+def slice_at_y(x, y, z, y0, above=False):
+    """
+    Delta chi2 of a 2D scan along y = y0, interpolated between the grid rows.
+
+    Parameters
+    ----------
+    above : extrapolate linearly from the two rows nearest y0 at y >= y0 (within a quarter bin) instead, for a cusp
+        at y0 such as that of the profile of r at r = 0
+
+    Returns
+    -------
+    (x, z) 1D arrays, without the points that failed to converge, or None if y0 is more than one bin outside the grid
+    """
+    ys = y[:, 0]
+    dy = ys[1] - ys[0]
+    if y0 < ys[0] - dy or y0 > ys[-1] + dy:
+        return None
+    xs, zs = [], []
+    for k in range(z.shape[1]):
+        col = z[:, k]
+        ok = np.isfinite(col) & (col < 1e5)  # failed fits are left at 1e6 or DBL_MAX
+        if above:
+            ok &= ys >= y0 - dy / 4
+        if ok.sum() < 2:
+            continue
+        xs.append(x[0, k])
+        if above:
+            (y1, y2), (z1, z2) = ys[ok][:2], col[ok][:2]
+            zs.append(z1 + (z2 - z1) * (y0 - y1) / (y2 - y1))
+        else:
+            zs.append(np.interp(y0, ys[ok], col[ok]))
+    return np.array(xs), np.array(zs)
+
+
+def mask_negative_r(x, z, rprof, r0=None):
+    """
+    Replace the points of a 2D scan where the profiled r < 0 (the r -> -r, delta -> delta + pi mirror of a scan
+    without `--pr`) by the r = 0 boundary value, where delta drops out.
+
+    Parameters
+    ----------
+    x : x grid of the scan, as `z`
+    z : delta chi2 of the scan
+    rprof : profiled r at each point, as `z` (see `read2dpar`)
+    r0 : (x, delta chi2) at r = 0, e.g. from `slice_at_y`; None removes the points
+
+    Returns
+    -------
+    copy of `z`
+    """
+    z = z.copy()
+    neg = rprof < 0
+    if r0 is None:
+        z[neg] = 1e9
+    else:
+        z[neg] = np.interp(x[neg], *r0, left=1e9, right=1e9)
+    return z
+
+
 def eval1DPoint(res, x):
     f = interp1d(res[0], res[1], kind="quadratic")
     return f(x)
@@ -154,13 +246,12 @@ def read_gc_scan(scanfile, parfile, pars):
         )
 
     # get chi2 distribution
-    tf = r.TFile(scanfile)
-    # tf.ls()
-    h = tf.Get("hChi2min").Clone()
-    # h.Print()
-
-    if h is None:
+    tf = r.TFile.Open(scanfile)
+    h = tf.Get("hChi2min")
+    if not h:
         raise RuntimeError("No 'hChi2min' found in", scanfile)
+    # Detach from file so it survives tf.Close() (avoids a cppyy dealloc crash)
+    h.SetDirectory(0)
 
     if h.InheritsFrom("TH2") and len(pars) == 2:
         res = read2dscan(h, bf, minnll)
@@ -172,6 +263,36 @@ def read_gc_scan(scanfile, parfile, pars):
     tf.Close()
 
     return res
+
+
+def read_gc_plugin_scan(scanfile, bf):
+    """
+    Read the 1-CL curve of a merged 1D Plugin scan (its `hChi2min` is not filled)
+
+    Parameters
+    ----------
+    scanfile : str
+        The `*_Plugin_<par>.root` scanner file
+    bf : list of float
+        The best-fit point, e.g. from `read_gc_scan` of the Prob scan
+
+    Returns
+    -------
+    tuple
+        (x, y), with the best fit inserted at 1-CL = 1 as in `read1dscan`
+    """
+    if not os.path.exists(scanfile):
+        raise FileNotFoundError(f"Cannot find scan file {scanfile}")
+    tf = r.TFile.Open(scanfile)
+    h = tf.Get("hCL")
+    if not h:
+        raise RuntimeError("No 'hCL' found in", scanfile)
+    x = np.array([h.GetBinCenter(b) for b in range(1, h.GetNbinsX() + 1)])
+    y = np.array([h.GetBinContent(b) for b in range(1, h.GetNbinsX() + 1)])
+    tf.Close()
+
+    index = np.argmax(x > bf[0])
+    return np.insert(x, index, bf[0]), np.insert(y, index, 1.0)
 
 
 def read_external_scan(rootfile, scanvar1=None, scanvar2=None):
@@ -311,14 +432,23 @@ def getfnames(prefix, xpar, ypar=None):
     return fname, bfname
 
 
-def print_cl(prefix, xpar, ypar=None, prob=True):
+def print_cl(
+    prefix: str, xpar: str, ypar: str | None = None, prob: bool = True
+) -> None:
+    """Print the CL for the given scan prefix and parameter.
+
+    The CL interval file is named after the `prefix` with the `_scanner` token dropped.
+
+    Args:
+        prefix: `<run-basename>_scanner_<combinername>`
+    """
     if ypar is not None:
         return
 
-    pref = prefix.split("scanner")[1]
+    pref = prefix.replace("_scanner", "")
     suff = "Prob" if prob else "Plugin"
-    fname = f"plots/cl/clintervals{pref}_{xpar}_{suff}.py"
-    if not os.path.exists(fname):
+    fname = f"plots/cl/clintervals_{pref}_{xpar}_{suff}.py"
+    if not Path(fname).exists:
         return
 
     try:
@@ -848,44 +978,58 @@ def plot2d(
         fig.savefig(save)
 
 
-def lhcb_logo(pos=[0.02, 0.88], prelim=False, date=None, ax=None):
+def text_logo(
+    pos: tuple[float, float],
+    lines: list[tuple[str, float]],
+    *,
+    ax: matplotlib.axes.Axes | None = None,
+    box_alignment: tuple[float, float] = (0, 1),
+) -> None:
+    """Add a text logo at the specified position with given lines and font sizes.
+
+    Args:
+        pos: (x, y) position of the logo in axis coordinates (each in the interval [0, 1]).
+        lines: List of (text, font size) pairs for each line.
+        ax: Matplotlib Axes object to draw the logo on. Defaults to the current axes.
+        box_alignment: Alignment of the text box relative to the position.
+    """
     ax = ax or plt.gca()
-    props = dict(fc="none", ec="none", boxstyle="square,pad=0.1")
     font = {"family": "Times New Roman", "weight": 400}
-    ax.text(
-        *pos,
-        "LHCb",
-        transform=ax.transAxes,
-        size=28,
-        ha="left",
-        bbox=props,
-        fontdict=font,
-        usetex=False,
+    props = dict(fc="none", ec="none", boxstyle="square,pad=0.1")
+
+    children = [
+        TextArea(
+            text,
+            textprops=dict(
+                fontsize=fontsize, usetex=plt.rcParams["text.usetex"], **font
+            ),
+        )
+        for text, fontsize in lines
+    ]
+    box = VPacker(children=children, align="left", sep=1)
+    ab = AnnotationBbox(
+        box,
+        pos,
+        xycoords="axes fraction",
+        box_alignment=box_alignment,
+        frameon=True,
+        bboxprops=props,
     )
-    if prelim:
-        ax.text(
-            pos[0],
-            pos[1] - 0.05,
-            "Preliminary",
-            transform=ax.transAxes,
-            size=14.7,
-            ha="left",
-            bbox=props,
-            fontdict=font,
-            usetex=False,
-        )
-    if date is not None:
-        ax.text(
-            pos[0],
-            pos[1] - 0.10,
-            date,
-            transform=ax.transAxes,
-            size=12.2,
-            ha="left",
-            bbox=props,
-            fontdict=font,
-            usetex=False,
-        )
+    ax.add_artist(ab)
+
+
+def lhcb_logo(
+    pos: tuple[float, float] = (0.02, 0.88),
+    prelim: bool = False,
+    date: str = "",
+    ax: matplotlib.axes.Axes | None = None,
+) -> None:
+    lines = (
+        [("LHCb", 28)]
+        + ([("Preliminary", 14.7)] if prelim else [])
+        + ([(date, 12.2)] if date else [])
+    )
+    text_logo(pos, lines, ax=ax)
 
 
 def hflav_logo(subtitle, pos=[0.02, 0.98], ax=None, scale=1):
@@ -964,18 +1108,39 @@ def hflav_logo(subtitle, pos=[0.02, 0.98], ax=None, scale=1):
     )
 
 
-def corr_plot(df, savef=None, names=None):
-    # symmetrise
+def corr_plot(
+    df: "pd.DataFrame",
+    savef: str | None = None,
+    names: Sequence[str] | Literal["columns"] | None = None,
+    scale: float | None = None,
+) -> None:
+    """Draw a correlation matrix as an annotated colour map.
+
+    Only the upper triangle of `df` is read, and is mirrored onto the lower one. Cells with |rho| < 0.01 or NaN are left
+    unannotated.
+
+    Args:
+        df: Square correlation matrix.
+        savef: Output file name. A `.pdf` is also saved as `.png` and `.ps`. If None, the figure is not saved.
+        names: Axis tick labels, in the order of the rows/columns of `df`; `"columns"` takes them from `df.columns`.
+            The unit suffixes `\\,[^\\circ]` and `\\, [\\%]` are stripped. Required if `scale` is None.
+        scale: Linear size of the canvas relative to the default matplotlib figure size (6.4 x 4.8 in).
+            If None, it grows with the number of parameters as `max(len(names) / 12, 1)`.
+    """
     if names == "columns":
         names = df.columns.values
 
-    corr = df.values
+    # copy: pandas >= 3.0 views are read-only
+    corr = df.to_numpy(dtype=float, copy=True)
 
+    # symmetrise
     for (j, i), value in np.ndenumerate(corr):
         if j > i:
             corr[j, i] = corr[i, j]
 
-    scale = len(names) / 12
+    # never shrink below the default canvas: the fonts scale with it and would become too small to read
+    if scale is None:
+        scale = max(len(names) / 12, 1)
     fig, ax = plt.subplots(figsize=(scale * 6.4, scale * 4.8))
     im = ax.imshow(
         corr,
@@ -989,16 +1154,10 @@ def corr_plot(df, savef=None, names=None):
     cb = fig.colorbar(
         im,
         ax=ax,
-        format=lambda x, pos: f"${x:+3.1f}$",
+        format="${x:+3.1f}$",
         pad=0.03 / scale,
         aspect=15 * scale,
     )
-    font_size = rcParams["font.size"] * scale
-    cb.set_label("Correlation", size=font_size)
-
-    for (j, i), value in np.ndenumerate(corr):
-        if not np.isnan(value) and abs(value) >= 0.01:
-            ax.text(i, j, f"${value:+4.2f}$", ha="center", va="center", fontsize=8)
 
     if names is not None:
         labels = [
@@ -1011,6 +1170,46 @@ def corr_plot(df, savef=None, names=None):
         ax.tick_params(axis="x", labelrotation=45)
         ax.tick_params(direction="out")
         ax.minorticks_off()
+
+    # tick labels grow with the canvas, so they keep the size relative to the plot that the style gives them
+    def points(size):
+        return FontProperties(size=size).get_size_in_points()
+
+    tick_size = points(rcParams["xtick.labelsize"]) * scale
+    ax.tick_params(labelsize=tick_size)
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    # ... but well within a cell height, or neighbouring y labels would overlap and squeeze the matrix
+    max_tick_size = (
+        0.6 * ax.get_window_extent(renderer).height / corr.shape[0] * 72 / fig.dpi
+    )
+    tick_size = min(tick_size, max_tick_size)
+    ax.tick_params(labelsize=tick_size)
+    cb.ax.tick_params(labelsize=tick_size)
+    title_ratio = points(rcParams["axes.labelsize"]) / points(
+        rcParams["xtick.labelsize"]
+    )
+    cb.set_label("Correlation", size=tick_size * title_ratio)
+    fig.canvas.draw()
+
+    # size the annotations to fill the cells: measure the widest label at a reference size on the final layout
+    # (after the tick labels and colour bar have taken their space), then rescale it to the cell size
+    ref_size = 10
+    probe = ax.text(0, 0, "$-0.00$", fontsize=ref_size, ha="center", va="center")
+    text_bb = probe.get_window_extent(renderer)
+    probe.remove()
+    ax_bb = ax.get_window_extent(renderer)
+    cell_w, cell_h = ax_bb.width / corr.shape[1], ax_bb.height / corr.shape[0]
+    # leave a margin of ~25% horizontally and ~40% vertically
+    annot_size = ref_size * min(
+        0.75 * cell_w / text_bb.width, 0.6 * cell_h / text_bb.height
+    )
+
+    for (j, i), value in np.ndenumerate(corr):
+        if not np.isnan(value) and abs(value) >= 0.01:
+            ax.text(
+                i, j, f"${value:+.2f}$", ha="center", va="center", fontsize=annot_size
+            )
 
     if savef is not None:
         fig.savefig(savef)
@@ -1241,5 +1440,34 @@ class plotter:
         fig.savefig(self.save)
         fig.savefig(self.save.replace("pdf", "png"))
 
-        # if not args.interactive:
-        #     fig.clf()
+
+def read_par_from_dat(dat_path: str, par: str) -> tuple[float, float, float] | None:
+    """
+    Read the central value and asymmetric errors for one parameter from a result .dat file.
+
+    Reads the first (global-minimum) solution only. Unlike read_gc_scan this also returns the errors.
+
+    :param dat_path: Path to the ParameterCache result .dat file (not a *_start.dat file)
+    :param par: Parameter name to look up, e.g. 'g'
+
+    :returns: (central, neg_err, pos_err), or None if the file or parameter is missing
+    """
+    if not os.path.exists(dat_path):
+        print(f"WARNING: .dat file not found: {dat_path}")
+        return None
+    in_solution = False
+    with open(dat_path) as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith("----- SOLUTION"):
+                if in_solution:
+                    break  # only the first (global-minimum) solution
+                in_solution = True
+                continue
+            if not in_solution or not line or line.startswith("#"):
+                continue
+            parts = line.split()
+            if len(parts) >= 4 and parts[0] == par:
+                return float(parts[1]), abs(float(parts[2])), float(parts[3])
+    print(f"WARNING: Parameter '{par}' not found in {dat_path}")
+    return None

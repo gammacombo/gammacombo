@@ -105,6 +105,7 @@ namespace Utils {
     hflavMoriond19,
     hflavMoriond24,
     hflavMor19,
+    hflavPdg26,
     highrb,
     highstattoy,
     lhcb,

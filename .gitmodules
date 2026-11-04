@@ -1,4 +1,4 @@
 [submodule "gammacombo"]
 	path = gammacombo
 	url = https://gitlab.cern.ch/gammacombo/gammacombo.git
-	branch = master
+	branch = lhcb-paper-2026

@@ -91,6 +91,7 @@ class OptParser {
   bool batchsubmit = false;
   TString batchout;
   TString batchreqs;
+  TString batchsetup;
   int nbatchjobs = -99;
   int nBBpoints = -99;
   int ndiv = 407;
@@ -159,6 +160,7 @@ class OptParser {
   std::vector<double> savenuisances1d;
   std::vector<double> savenuisances2dx;
   std::vector<double> savenuisances2dy;
+  std::vector<TString> savepars2d;
   bool scanforce = false;
   double scanrangeMin = -101;
   double scanrangeMax = -101;
