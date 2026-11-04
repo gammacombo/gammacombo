@@ -373,6 +373,7 @@ void OptParser::defineOptions() {
   availableOptions.push_back("removeRange");
   availableOptions.push_back("save");
   availableOptions.push_back("saveAtMin");
+  availableOptions.push_back("save-pars-2d");
   availableOptions.push_back("sn");
   availableOptions.push_back("sn2d");
   availableOptions.push_back("scanforce");
@@ -486,6 +487,7 @@ void OptParser::bookProbOptions() {
   bookedOptions.push_back("physrange");
   bookedOptions.push_back("sn");
   bookedOptions.push_back("sn2d");
+  bookedOptions.push_back("save-pars-2d");
   bookedOptions.push_back("probforce");
   // bookedOptions.push_back("probimprove");
   bookedOptions.push_back("pulls");
@@ -1017,6 +1019,12 @@ void OptParser::parseArguments(int argc, char* argv[]) {
                                        "Save nuisances as for --sn (1d case) but for 2d scans at the given points. "
                                        "Format: x:y",
                                        false, "string");
+  TCLAP::ValueArg<std::string> savePars2dArg(
+      "", "save-pars-2d",
+      "After a 2d scan, save the profiled values of these parameters at every grid point "
+      "to the scanner file, as histograms hPar_<name>. Comma-separated list. "
+      "Example: --save-pars-2d 'r_dk,k_dkst'",
+      false, "", "string");
   TCLAP::MultiArg<std::string> loadParamsFileArg(
       "", "parfile",
       "Load starting parameters for the corresponding "
@@ -1103,6 +1111,7 @@ void OptParser::parseArguments(int argc, char* argv[]) {
   if (isIn<TString>(bookedOptions, "toyFiles")) cmd.add(toyFilesArg);
   if (isIn<TString>(bookedOptions, "teststat")) cmd.add(teststatArg);
   if (isIn<TString>(bookedOptions, "sn2d")) cmd.add(sn2dArg);
+  if (isIn<TString>(bookedOptions, "save-pars-2d")) cmd.add(savePars2dArg);
   if (isIn<TString>(bookedOptions, "sn")) cmd.add(snArg);
   if (isIn<TString>(bookedOptions, "start")) cmd.add(startArg);
   if (isIn<TString>(bookedOptions, "smooth2d")) cmd.add(smooth2dArg);
@@ -1442,6 +1451,12 @@ void OptParser::parseArguments(int argc, char* argv[]) {
     savenuisances2dx.push_back(x.Atof());
     savenuisances2dy.push_back(y.Atof());
   }
+
+  // --save-pars-2d
+  TObjArray* savePars2dArray = TString(savePars2dArg.getValue()).Tokenize(",");
+  for (int i = 0; i < savePars2dArray->GetEntries(); i++)
+    savepars2d.push_back(((TObjString*)savePars2dArray->At(i))->GetString());
+  delete savePars2dArray;
 
   // --jobs
   if (jobsArg.getValue().size() > 1 && jobsArg.getValue().size() != combid.size()) {

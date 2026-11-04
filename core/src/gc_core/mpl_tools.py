@@ -125,6 +125,89 @@ def read2dscan(h, bf, minnll):
     return x, y, z, bf
 
 
+def read2dpar(scanfile, par):
+    """
+    Profiled value of a parameter at each point of a 2D scan, as saved with `--save-pars-2d`.
+
+    Returns
+    -------
+    numpy array in the layout of the `z` of `read2dscan` (NaN where no fit result), or None if the scanner file has
+    no `hPar_<par>`
+    """
+    tf = r.TFile.Open(scanfile)
+    h = tf.Get("hPar_" + par)
+    if not h:
+        tf.Close()
+        return None
+    vals = np.array(
+        [
+            [h.GetBinContent(i, j) for i in range(1, h.GetNbinsX() + 1)]
+            for j in range(1, h.GetNbinsY() + 1)
+        ]
+    )
+    tf.Close()
+    return vals
+
+
+def slice_at_y(x, y, z, y0, above=False):
+    """
+    Delta chi2 of a 2D scan along y = y0, interpolated between the grid rows.
+
+    Parameters
+    ----------
+    above : extrapolate linearly from the two rows nearest y0 at y >= y0 (within a quarter bin) instead, for a cusp
+        at y0 such as that of the profile of r at r = 0
+
+    Returns
+    -------
+    (x, z) 1D arrays, without the points that failed to converge, or None if y0 is more than one bin outside the grid
+    """
+    ys = y[:, 0]
+    dy = ys[1] - ys[0]
+    if y0 < ys[0] - dy or y0 > ys[-1] + dy:
+        return None
+    xs, zs = [], []
+    for k in range(z.shape[1]):
+        col = z[:, k]
+        ok = col >= 0  # negative: failed fits
+        if above:
+            ok &= ys >= y0 - dy / 4
+        if ok.sum() < 2:
+            continue
+        xs.append(x[0, k])
+        if above:
+            (y1, y2), (z1, z2) = ys[ok][:2], col[ok][:2]
+            zs.append(z1 + (z2 - z1) * (y0 - y1) / (y2 - y1))
+        else:
+            zs.append(np.interp(y0, ys[ok], col[ok]))
+    return np.array(xs), np.array(zs)
+
+
+def mask_negative_r(x, z, rprof, r0=None):
+    """
+    Replace the points of a 2D scan where the profiled r < 0 (the r -> -r, delta -> delta + pi mirror of a scan
+    without `--pr`) by the r = 0 boundary value, where delta drops out.
+
+    Parameters
+    ----------
+    x : x grid of the scan, as `z`
+    z : delta chi2 of the scan
+    rprof : profiled r at each point, as `z` (see `read2dpar`)
+    r0 : (x, delta chi2) at r = 0, e.g. from `slice_at_y`; None removes the points
+
+    Returns
+    -------
+    copy of `z`
+    """
+    z = z.copy()
+    neg = rprof < 0
+    if r0 is None:
+        z[neg] = 1e9
+    else:
+        z[neg] = np.interp(x[neg], *r0, left=1e9, right=1e9)
+    return z
+
+
 def eval1DPoint(res, x):
     f = interp1d(res[0], res[1], kind="quadratic")
     return f(x)

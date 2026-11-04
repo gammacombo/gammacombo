@@ -1488,6 +1488,14 @@ void GammaComboEngine::make2dProbScan(MethodProbScan* scanner, int cId) {
   // load start parameters
   ParameterCache* pCache = new ParameterCache(arg);
   loadStartParameters(scanner, pCache, cId);
+  // check --save-pars-2d before the scan, not after it
+  for (const auto& par : arg->savepars2d) {
+    if (!scanner->getWorkspace()->var(par)) {
+      std::cout << "GammaComboEngine::make2dProbScan() : ERROR : --save-pars-2d: no such parameter: " << par
+                << std::endl;
+      std::exit(1);
+    }
+  }
   // scan
   scanner->initScan();
   scanStrategy2d(scanner, pCache);
