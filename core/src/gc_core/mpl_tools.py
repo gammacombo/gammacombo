@@ -1142,15 +1142,15 @@ def corr_plot(
     if scale is None:
         scale = max(len(names) / 12, 1)
     fig, ax = plt.subplots(figsize=(scale * 6.4, scale * 4.8))
-    im = ax.imshow(
-        corr,
-        cmap="coolwarm",
-        interpolation="none",
-        aspect="auto",
-        vmin=-1,
-        vmax=1,
-        rasterized=True,
+    # vector cells rather than an image: the pgf backend (used with usetex) stores every image with an alpha channel,
+    # which PostScript cannot express, so pdftops would turn the whole EPS page into a bitmap. NaN cells
+    # (non-floating parameters) are left empty, showing the white background
+    edges = np.arange(corr.shape[0] + 1) - 0.5
+    im = ax.pcolormesh(
+        edges, edges, np.ma.masked_invalid(corr), cmap="coolwarm", vmin=-1, vmax=1
     )
+    ax.set_xlim(edges[0], edges[-1])
+    ax.set_ylim(edges[-1], edges[0])  # first parameter at the top, as with imshow
     cb = fig.colorbar(
         im,
         ax=ax,
@@ -1158,6 +1158,8 @@ def corr_plot(
         pad=0.03 / scale,
         aspect=15 * scale,
     )
+    # the colour bar would be rasterised as an image as well
+    cb.solids.set_rasterized(False)
 
     if names is not None:
         labels = [
