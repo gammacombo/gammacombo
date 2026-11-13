@@ -264,51 +264,36 @@ def read_corr_as_df(fname, verbose=True, with_names=True):
 
 
 def df_corr_to_latex(df, savef):
-    """Take the dataframe of correlations and print it out in latex format."""
-    # Remove the elements below the diagonal
-    N = len(df.columns)
-    for i in range(N):
-        for j in range(N):
-            if i > j:
-                df.iloc[i, j] = 9.99
-    # Suppress values under 0.001
-    df = df.mask(abs(df) < 0.01)
-    # Rename vars to remove _
-    renames = {}
-    for col in df.columns:
-        renames[col] = col.replace("_", "")
-    df = df.rename(columns=renames, index=renames)
-    # Make latex
-    df.to_latex(savef, float_format="{: .2f}".format, na_rep="-")
+    """Write the upper triangle of a correlation dataframe as a LaTeX tabular.
 
-    # Manipulate the latex
-    with open(savef) as f:
-        lines = f.readlines()
+    Column names (``_`` removed) are used as macros. Needs siunitx and a math-mode ``C`` column type
+    (``\\newcolumntype{C}{>{$}c<{$}}``). Values below 0.01 in absolute value are written as "-".
+    """
+    names = ["\\" + str(col).replace("_", "") for col in df.columns]
+    n = len(names)
+    w = max(len(name) for name in names) + 2
 
+    def cell(i, j):
+        if j < i:
+            return ""
+        if i == j:
+            return "1"
+        value = df.iloc[i, j]
+        return "{-}" if abs(value) < 0.01 else f"{value:.2f}"
+
+    lines = [rf"\begin{{tabular}}{{C*{{{n}}}{{S[table-format=-1.2]}}}}", r"\hline"]
+    lines.append(
+        " & ".join([" " * w] + [f"{{{name}}}".rjust(w) for name in names]) + r" \\"
+    )
+    lines.append(r"\hline")
+    for i in range(n):
+        lines.append(
+            " & ".join([names[i].ljust(w)] + [cell(i, j).rjust(w) for j in range(n)])
+            + r" \\"
+        )
+    lines += [r"\hline", r"\end{tabular}"]
     with open(savef, "w") as f:
-        for i, line in enumerate(lines):
-            line = line.replace("9.99", "    ")
-            if i == 2:
-                variables = line.split("&")[1:]
-                max_var_length = max(len(var) for var in variables)
-                format_string_r = f"{{:>{max_var_length}s}}"
-                format_string_l = format_string_r.replace(">", "<")
-                mels = [format_string_r.format("\\" + var.strip()) for var in variables]
-                line = " & ".join([max_var_length * " "] + mels) + "\n"
-            elif i > 2 and not line.startswith("\\"):
-                line = "\\" + line.replace("-", "--").replace(" -- ", " - ")
-                els = line.split("&")
-                for i, el in enumerate(els):
-                    if i == 0:
-                        els[0] = format_string_l.format(el.strip())
-                    else:
-                        els[i] = format_string_r.format(el.strip())
-                line = " & ".join(els) + "\n"
-            if "rule" in line:
-                line = "\\hline\n"
-            f.write(line)
-
-    return df
+        f.write("\n".join(lines) + "\n")
 
 
 def input_log_to_latex(fname, outfname):
