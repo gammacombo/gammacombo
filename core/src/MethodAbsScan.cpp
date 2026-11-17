@@ -43,6 +43,8 @@
 #include <format>
 #include <fstream>
 #include <iostream>
+#include <limits>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -50,6 +52,8 @@ MethodAbsScan::MethodAbsScan(Combiner* c) : MethodAbsScan(c->getArg()) {
   combiner = c;
   w = c->getWorkspace();
   name = c->getName();
+  clFilenameBase = name;
+  toyFilenameBase = name;
   title = c->getTitle();
   pdfName = "pdf_" + combiner->getPdfName();
   obsName = "obs_" + combiner->getPdfName();
@@ -376,6 +380,29 @@ void MethodAbsScan::saveScanner(TString fName) const {
     hChi2min2d->Write("hChi2min");
   else
     hChi2min->Write("hChi2min");
+  // save profiled parameters per 2d grid point (--save-pars-2d)
+  if (scanVar2 == "" && !arg->savepars2d.empty())
+    std::cout << "MethodAbsScan::saveScanner() : WARNING : --save-pars-2d only applies to 2d scans, ignored."
+              << std::endl;
+  if (scanVar2 != "" && !arg->savepars2d.empty()) {
+    if (curveResults2d.empty()) {
+      std::cout << "MethodAbsScan::saveScanner() : WARNING : no 2d fit results in memory, "
+                << "--save-pars-2d ignored." << std::endl;
+    }
+    for (const auto& par : arg->savepars2d) {
+      if (curveResults2d.empty()) break;
+      auto hPar = std::unique_ptr<TH2F>(static_cast<TH2F*>(hChi2min2d->Clone("hPar_" + par)));
+      hPar->Reset();
+      hPar->SetTitle(par);
+      for (int i = 1; i <= hPar->GetNbinsX(); i++)
+        for (int j = 1; j <= hPar->GetNbinsY(); j++) {
+          RooSlimFitResult* r =
+              curveResults2d[i - 1][j - 1];  // -1 because it starts counting at 0, but histograms at 1
+          hPar->SetBinContent(i, j, r ? r->getParVal(par) : std::numeric_limits<double>::quiet_NaN());
+        }
+      hPar->Write("hPar_" + par);
+    }
+  }
   // save solutions
   for (int i = 0; i < solutions.size(); i++) { f.WriteObject(solutions[i], Form("sol%i", i)); }
 }
@@ -816,6 +843,13 @@ void MethodAbsScan::calcCLintervals(int CLsType, bool calc_expected, bool quiet)
       CLhi[c] = histogramCL->GetXaxis()->GetXmax();
       double y = 1. - ConfidenceLevels[c];
       double sol = getScanVar1Solution(iSol);
+      // bringBackAngle can leave an angle 2pi outside the scanned window (e.g. phiD, best fit just below 0)
+      if (Utils::isAngle(par)) {
+        const double xmin = histogramCL->GetXaxis()->GetXmin();
+        const double xmax = histogramCL->GetXaxis()->GetXmax();
+        while (sol > xmax && sol - 2. * TMath::Pi() >= xmin) sol -= 2. * TMath::Pi();
+        while (sol < xmin && sol + 2. * TMath::Pi() <= xmax) sol += 2. * TMath::Pi();
+      }
       int sBin = histogramCL->FindBin(sol);
       if (arg->debug) std::cout << "solution bin: " << sBin << std::endl;
       if (histogramCL->IsBinOverflow(sBin) || histogramCL->IsBinUnderflow(sBin)) {
@@ -975,9 +1009,9 @@ void MethodAbsScan::calcCLintervals(int CLsType, bool calc_expected, bool quiet)
 ///
 void MethodAbsScan::printCLintervals(int CLsType, bool calc_expected) {
   TString unit = w->var(scanVar1)->getUnit();
-  CLIntervalPrinter clp(arg, name, scanVar1, unit, methodName, CLsType);
+  CLIntervalPrinter clp(arg, clFilenameBase, scanVar1, unit, methodName, CLsType);
   if (calc_expected) {
-    clp = CLIntervalPrinter(arg, name, scanVar1, unit, methodName + TString("_expected_standardCLs"));
+    clp = CLIntervalPrinter(arg, clFilenameBase, scanVar1, unit, methodName + TString("_expected_standardCLs"));
   }
   clp.setDegrees(Utils::isAngle(w->var(scanVar1)));
   clp.addIntervals(clintervals1sigma);

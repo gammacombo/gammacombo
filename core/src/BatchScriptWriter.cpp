@@ -1,6 +1,7 @@
 #include <BatchScriptWriter.h>
 
 #include <Combiner.h>
+#include <FileNameBuilder.h>
 #include <OptParser.h>
 #include <PDF_Abs.h>
 
@@ -10,6 +11,17 @@
 #include <string>
 #include <unistd.h>
 #include <vector>
+
+namespace {
+  /// Quote an argument for the shell if needed.
+  std::string shellQuote(const std::string& s) {
+    const std::string safe = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_@%+=:,./-";
+    if (!s.empty() && s.find_first_not_of(safe) == std::string::npos) return s;
+    std::string quoted = "'";
+    for (const char ch : s) quoted += ch == '\'' ? std::string("'\\''") : std::string(1, ch);
+    return quoted + "'";
+  }
+}  // namespace
 
 BatchScriptWriter::BatchScriptWriter(int argc, char* argv[]) {
   for (int i = 0; i < argc; i++) {
@@ -21,12 +33,12 @@ BatchScriptWriter::BatchScriptWriter(int argc, char* argv[]) {
         std::string(argv[i]) == std::string("--batcheos") || std::string(argv[i]) == std::string("-i")) {
       continue;
     }
-    exec += std::string(argv[i]) + " ";
+    exec += shellQuote(argv[i]) + " ";
   }
   subpkg = std::string(argv[0]);
 }
 
-void BatchScriptWriter::writeScripts(const OptParser* arg, std::vector<Combiner*>* cmb) {
+void BatchScriptWriter::writeScripts(const OptParser* arg, std::vector<Combiner*>* cmb, const FileNameBuilder* fnb) {
 
   for (int i = 0; i < arg->combid.size(); i++) {
     int combinerId = arg->combid[i];
@@ -49,8 +61,10 @@ void BatchScriptWriter::writeScripts(const OptParser* arg, std::vector<Combiner*
 
     std::cout << "Writing submission scripts for combination " << c->getName() << std::endl;
 
-    TString dirname = "scan1d" + methodname + "_" + c->getName() + "_" + arg->var[0];
-    if (arg->var.size() == 2) { dirname = "scan2d" + methodname + "_" + c->getName() + "_" + arg->var[0]; }
+    // same as MethodAbsScan::toyFilenameBase
+    const TString combname = fnb->getCombinerFileName(c);
+    TString dirname = "scan1d" + methodname + "_" + combname + "_" + arg->var[0];
+    if (arg->var.size() == 2) { dirname = "scan2d" + methodname + "_" + combname + "_" + arg->var[0]; }
     if (arg->var.size() > 1) { dirname += "_" + arg->var[1]; }
     if (arg->isAction("coveragebatch")) { dirname += arg->id < 0 ? "_id0" : Form("_id%d", arg->id); }
 
@@ -60,7 +74,7 @@ void BatchScriptWriter::writeScripts(const OptParser* arg, std::vector<Combiner*
     TString scripts_dir_path = "sub/" + dirname;
     TString outf_dir = TString(cwd) + "/root/" + dirname;
     system(Form("mkdir -p %s", scripts_dir_path.Data()));
-    TString scriptname = "scan1d" + methodname + "_" + c->getName() + "_" + arg->var[0];
+    TString scriptname = "scan1d" + methodname + "_" + combname + "_" + arg->var[0];
     if (arg->isAction("coveragebatch")) { scriptname += arg->id < 0 ? "_id0" : Form("_id%d", arg->id); }
     // if write to eos then make the directory
     if (arg->batchout != "" || arg->batcheos) {
@@ -85,7 +99,7 @@ void BatchScriptWriter::writeScripts(const OptParser* arg, std::vector<Combiner*
         outf_dir = Form("%s/%02d%02d%04d/%s", arg->batchout.Data(), day, month, year, dirname.Data());
       }
     }
-    if (arg->var.size() == 2) { scriptname = "scan2d" + methodname + "_" + c->getName() + "_" + arg->var[0]; }
+    if (arg->var.size() == 2) { scriptname = "scan2d" + methodname + "_" + combname + "_" + arg->var[0]; }
     if (arg->var.size() > 1) { scriptname += "_" + arg->var[1]; }
     scriptname = scripts_dir_path + "/" + scriptname;
 
@@ -218,8 +232,10 @@ void BatchScriptWriter::writeCondorScript(TString fname, const OptParser* arg) {
 
 void BatchScriptWriter::writeScript(TString fname, TString outfloc, int jobn, const OptParser* arg) {
 
+  // sub/<dir>/<name>.sh -> root/<dir>/<name>.root
   TString rootfilename = fname;
-  (rootfilename.ReplaceAll("sub", "root")).ReplaceAll(".sh", ".root");
+  rootfilename.Replace(0, 3, "root");
+  rootfilename.Replace(rootfilename.Length() - 3, 3, ".root");
   std::cout << "\t" << fname << std::endl;
   std::ofstream outfile;
   outfile.open(fname);
@@ -235,7 +251,29 @@ void BatchScriptWriter::writeScript(TString fname, TString outfloc, int jobn, co
   outfile << Form("rm -f %s/%s.log", cwd, fname.Data()) << std::endl;
   outfile << "mkdir -p scratch" << std::endl;
   outfile << "cd scratch" << std::endl;
-  outfile << Form("source %s/../scripts/setup_lxplus.sh", cwd) << std::endl;
+  // batch nodes start from a clean environment, and LCG builds need their view at run time (conda ones use the RPATH)
+  std::string setup;
+  if (arg->batchsetup != "") {
+    std::string script = arg->batchsetup.Data();
+    if (script[0] != '/') script = std::string(cwd) + "/" + script;
+    if (access(script.c_str(), R_OK) != 0) {
+      std::cout << "BatchScriptWriter::writeScript() : ERROR : cannot read --batchsetup " << script << std::endl;
+      std::exit(1);
+    }
+    setup = "source " + shellQuote(script);
+  } else if (const char* view = std::getenv("LCG_VIEW_DIR")) {
+    setup = "source " + shellQuote(std::string(view) + "/setup.sh");
+  } else if (jobn == arg->batchstartn) {
+    std::cout << "BatchScriptWriter::writeScript() : no LCG view set up: the jobs use the default environment of the "
+                 "batch nodes (use --batchsetup to change it)"
+              << std::endl;
+  }
+  if (!setup.empty()) {
+    outfile << "if ! { " << setup << "; }; then" << std::endl;
+    outfile << Form("\ttouch %s/%s.fail", cwd, fname.Data()) << std::endl;
+    outfile << "\texit 1" << std::endl;
+    outfile << "fi" << std::endl;
+  }
   outfile << Form("cp -r %s/ExpNll .", cwd) << std::endl;
   outfile << "mkdir -p bin" << std::endl;
   outfile << Form("cp %s/%s bin/", cwd, subpkg.c_str()) << std::endl;

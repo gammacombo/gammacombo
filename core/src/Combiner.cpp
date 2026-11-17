@@ -51,6 +51,7 @@ Combiner* Combiner::Clone(TString name, TString title) {
   Combiner* cNew = new Combiner(this->arg, name, title);
   cNew->pdfName = this->pdfName;
   for (int i = 0; i < pdfs.size(); i++) cNew->addPdf(pdfs[i]);
+  cNew->constVars = this->constVars;
   cNew->_isCombined = this->_isCombined;
   return cNew;
 }
