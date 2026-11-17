@@ -4,9 +4,11 @@ Run the HFLAV CKM-angle averages (gamma, alpha, rho-eta) with GammaCombo,
 check them against a reference set of scans, make the HFLAV plots of them,
 and export the Zenodo JSON.
 
-The scan list reproduces the published PDG 2025 scans (same combinations,
-options, ranges and number of points as the files in <module>/plots/scanner),
-so that "rerun as is" gives bin-by-bin identical 1-CL curves.
+The release (tag of the combiner names hflav_<tag>[_<sub>] in main/<exe>.cpp, and the
+"HFLAV <version> <year>" label of the plots) is set in scripts/hflav_release.py; combiner ids
+are looked up by name in the .cpp. For a new iteration edit that file, and here only the scan
+ranges that need to follow a result. The options, ranges and numbers of points of the scans are
+those of the published PDG 2025 scans.
 
 Run from the top of the gammacombo repository, after building and installing
 (scripts/build-macos-conda.sh):
@@ -41,6 +43,8 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+import hflav_release as release
+
 TOP = Path(__file__).resolve().parent.parent
 
 # ---------------------------------------------------------------------------
@@ -59,305 +63,82 @@ G = dict(module="gammacombo", exe="gamma_wa")
 A = dict(module="alphacombo", exe="alpha_wa")
 R = dict(module="RhoEta", exe="rhoeta_wa")
 
+
+def scan(base, name, sub, var, args, **more):
+    """A scan of `var` (one name, or "x y" for a 2D scan) in the combiner hflav_<tag>[_<sub>] of the current release."""
+    variables = var.split()
+    if len(variables) == 1:
+        # GammaCombo only computes and saves the CL intervals (plots/cl/clintervals_*.py, read by
+        # hflav_json.py) when the solution is drawn on its own plot, i.e. with --ps
+        if "--ps " not in args:
+            args += " --ps 1"
+        if "--digits" not in args:
+            args += " --digits 3"  # precision of those intervals
+    return dict(
+        base,
+        name=name,
+        comb=release.combiner_id(base["module"], base["exe"], sub),
+        vars=variables,
+        out=f"{release.combiner_name(sub)}_{'_'.join(variables)}",
+        args=args,
+        **more,
+    )
+
+
+# parameter file written by the nominal rho-eta scan: the single-angle scans start from it
+RHOETA_PAR = f"--parfile plots/par/rhoeta_wa_{release.combiner_name()}_rho_eta.dat"
+
+
+# fmt: off
 SCANS = [
     # ---- gamma -------------------------------------------------------------
-    dict(
-        G,
-        name="gamma",
-        comb=360,
-        vars=["g"],
-        out="hflav_pdg2025_g",
-        nominal=True,
-        args="--pr --ps 1 --scanrange 0.8:1.4 --npoints 200 --digits 3",
-    ),
+    #       name               sub-combiner  variable  options
+    scan(G, "gamma",           "",           "g", "--pr --ps 1 --scanrange 0.8:1.4 --npoints 200 --digits 3", nominal=True),
     # D-decay categories, TD/TI (comp_methods / comp_tdti)
-    dict(
-        G,
-        name="gamma_2body",
-        comb=361,
-        vars=["g"],
-        out="hflav_pdg2025_2body_g",
-        args="--ps 1 --scanrange 0.6:1.8 --npoints 100",
-    ),
-    dict(
-        G,
-        name="gamma_3body",
-        comb=362,
-        vars=["g"],
-        out="hflav_pdg2025_3body_g",
-        args="--ps 1 --scanrange 0.6:1.8 --npoints 100",
-    ),
-    dict(
-        G,
-        name="gamma_4body",
-        comb=363,
-        vars=["g"],
-        out="hflav_pdg2025_4body_g",
-        args="--ps 1 --scanrange 0.6:1.6 --npoints 100",
-    ),
-    dict(
-        G,
-        name="gamma_td",
-        comb=364,
-        vars=["g"],
-        out="hflav_pdg2025_td_g",
-        args="--ps 1 --scanrange 0.6:2.8 --npoints 100",
-    ),
-    dict(
-        G,
-        name="gamma_ti",
-        comb=375,
-        vars=["g"],
-        out="hflav_pdg2025_ti_g",
-        args="--pr --ps 1 --scanrange 0:3.14159265359 --npoints 100",
-    ),
+    scan(G, "gamma_2body",     "2body",      "g", "--ps 1 --scanrange 0.6:1.8 --npoints 100"),
+    scan(G, "gamma_3body",     "3body",      "g", "--ps 1 --scanrange 0.6:1.8 --npoints 100"),
+    scan(G, "gamma_4body",     "4body",      "g", "--ps 1 --scanrange 0.6:1.6 --npoints 100"),
+    scan(G, "gamma_td",        "td",         "g", "--ps 1 --scanrange 0.6:2.8 --npoints 100"),
+    scan(G, "gamma_ti",        "ti",         "g", "--pr --ps 1 --scanrange 0:3.14159265359 --npoints 100"),
     # B-meson species (comp_states)
-    dict(
-        G,
-        name="gamma_bu",
-        comb=365,
-        vars=["g"],
-        out="hflav_pdg2025_bu_g",
-        args="--pr --ps 1 --scanrange 0.6:1.6 --prange k_dkpipi=-2:2",
-    ),
-    dict(
-        G,
-        name="gamma_bd",
-        comb=366,
-        vars=["g"],
-        out="hflav_pdg2025_bd_g",
-        args="--pr --ps 1 --scanrange 0.2:2.8 --npoints 400",
-    ),
-    dict(
-        G,
-        name="gamma_bs",
-        comb=367,
-        vars=["g"],
-        out="hflav_pdg2025_bs_g",
-        args="--pr --ps 1 --scanrange 0.3:3.0",
-    ),
+    scan(G, "gamma_bu",        "bu",         "g", "--pr --ps 1 --scanrange 0.6:1.6 --prange k_dkpipi=-2:2"),
+    scan(G, "gamma_bd",        "bd",         "g", "--pr --ps 1 --scanrange 0.2:2.8 --npoints 400"),
+    scan(G, "gamma_bs",        "bs",         "g", "--pr --ps 1 --scanrange 0.3:3.0"),
     # B decay modes (comp_modes)
-    dict(
-        G,
-        name="gamma_bu2dk",
-        comb=368,
-        vars=["g"],
-        out="hflav_pdg2025_bu2dk_g",
-        args="--pr --ps 1 --scanrange 0.8:1.4",
-    ),
-    dict(
-        G,
-        name="gamma_bu2dkst",
-        comb=369,
-        vars=["g"],
-        out="hflav_pdg2025_bu2dkst_g",
-        args="--pr --ps 1 --scanrange 0.0:3.0",
-    ),
-    dict(
-        G,
-        name="gamma_bu2dstk",
-        comb=370,
-        vars=["g"],
-        out="hflav_pdg2025_bu2dstk_g",
-        args="--pr --ps 1 --scanrange 0.3:3.0",
-    ),
-    dict(
-        G,
-        name="gamma_bd2dkstz",
-        comb=371,
-        vars=["g"],
-        out="hflav_pdg2025_bd2dkstz_g",
-        args="--pr --ps 1 --scanrange -0.1:3.0 --npoints 400",
-    ),
-    dict(
-        G,
-        name="gamma_bs2dsk",
-        comb=372,
-        vars=["g"],
-        out="hflav_pdg2025_bs2dsk_g",
-        args="--pr --ps 1 --scanrange 0.3:3.8",
-    ),
-    dict(
-        G,
-        name="gamma_bs2dskpp",
-        comb=373,
-        vars=["g"],
-        out="hflav_pdg2025_bs2dskpp_g",
-        args="--pr --ps 1 --scanrange 0.0:3.0",
-    ),
-    # hadronic parameters of the combination (comp_ratios / print_res)
-    dict(
-        G,
-        name="gamma_l_dskpipi",
-        comb=360,
-        vars=["l_dskpipi"],
-        out="hflav_pdg2025_l_dskpipi",
-        args="--ps 1 --scanrange 0.0:0.8 --npoints 100",
-    ),
-    dict(
-        G,
-        name="gamma_l_dsk",
-        comb=360,
-        vars=["l_dsk"],
-        out="hflav_pdg2025_l_dsk",
-        args="--ps 1 --scanrange 0.1:0.5 --npoints 100",
-    ),
-    dict(
-        G,
-        name="gamma_r_dkst",
-        comb=360,
-        vars=["r_dkst"],
-        out="hflav_pdg2025_r_dkst",
-        args="--ps 1 --scanrange 0.0:0.2 --npoints 100",
-    ),
-    dict(
-        G,
-        name="gamma_r_dstk",
-        comb=360,
-        vars=["r_dstk"],
-        out="hflav_pdg2025_r_dstk",
-        args="--ps 1 --scanrange 0.0:0.2 --npoints 100",
-    ),
-    dict(
-        G,
-        name="gamma_r_dkstz",
-        comb=360,
-        vars=["r_dkstz"],
-        out="hflav_pdg2025_r_dkstz",
-        args="--ps 1 --scanrange 0.1:0.4 --npoints 100",
-    ),
-    dict(
-        G,
-        name="gamma_r_dk",
-        comb=360,
-        vars=["r_dk"],
-        out="hflav_pdg2025_r_dk",
-        args="--ps 1 --scanrange 0.08:0.12 --npoints 100",
-    ),
-    dict(
-        G,
-        name="gamma_d_dk",
-        comb=360,
-        vars=["d_dk"],
-        out="hflav_pdg2025_d_dk",
-        args="--ps 1 --scanrange 2.0:2.6 --npoints 200",
-    ),
-    dict(
-        G,
-        name="gamma_d_dkst",
-        comb=360,
-        vars=["d_dkst"],
-        out="hflav_pdg2025_d_dkst",
-        args="--ps 1 --scanrange 0.0:3.0 --npoints 200",
-    ),
-    dict(
-        G,
-        name="gamma_d_dkstz",
-        comb=360,
-        vars=["d_dkstz"],
-        out="hflav_pdg2025_d_dkstz",
-        args="--ps 1 --scanrange 3.0:5.0 --npoints 200",
-    ),
-    dict(
-        G,
-        name="gamma_d_dsk",
-        comb=360,
-        vars=["d_dsk"],
-        out="hflav_pdg2025_d_dsk",
-        args="--ps 1 --scanrange 5.0:7.0 --npoints 200",
-    ),
-    dict(
-        G,
-        name="gamma_d_dstk",
-        comb=360,
-        vars=["d_dstk"],
-        out="hflav_pdg2025_d_dstk",
-        args="--ps 1 --scanrange 4.5:6.0 --npoints 200",
-    ),
+    scan(G, "gamma_bu2dk",     "bu2dk",      "g", "--pr --ps 1 --scanrange 0.8:1.4"),
+    scan(G, "gamma_bu2dkst",   "bu2dkst",    "g", "--pr --ps 1 --scanrange 0.0:3.0"),
+    scan(G, "gamma_bu2dstk",   "bu2dstk",    "g", "--pr --ps 1 --scanrange 0.3:3.0"),
+    scan(G, "gamma_bd2dkstz",  "bd2dkstz",   "g", "--pr --ps 1 --scanrange -0.1:3.0 --npoints 400"),
+    scan(G, "gamma_bs2dsk",    "bs2dsk",     "g", "--pr --ps 1 --scanrange 0.3:3.8"),
+    scan(G, "gamma_bs2dskpp",  "bs2dskpp",   "g", "--pr --ps 1 --scanrange 0.0:3.0"),
+    # hadronic parameters of the full combination (comp_ratios / print_res)
+    scan(G, "gamma_l_dskpipi", "", "l_dskpipi", "--ps 1 --scanrange 0.0:0.8 --npoints 100"),
+    scan(G, "gamma_l_dsk",     "", "l_dsk",     "--ps 1 --scanrange 0.1:0.5 --npoints 100"),
+    scan(G, "gamma_r_dkst",    "", "r_dkst",    "--ps 1 --scanrange 0.0:0.2 --npoints 100"),
+    scan(G, "gamma_r_dstk",    "", "r_dstk",    "--ps 1 --scanrange 0.0:0.2 --npoints 100"),
+    scan(G, "gamma_r_dkstz",   "", "r_dkstz",   "--ps 1 --scanrange 0.1:0.4 --npoints 100"),
+    scan(G, "gamma_r_dk",      "", "r_dk",      "--ps 1 --scanrange 0.08:0.12 --npoints 100"),
+    scan(G, "gamma_d_dk",      "", "d_dk",      "--ps 1 --scanrange 2.0:2.6 --npoints 200"),
+    scan(G, "gamma_d_dkst",    "", "d_dkst",    "--ps 1 --scanrange 0.0:3.0 --npoints 200"),
+    scan(G, "gamma_d_dkstz",   "", "d_dkstz",   "--ps 1 --scanrange 3.0:5.0 --npoints 200"),
+    scan(G, "gamma_d_dsk",     "", "d_dsk",     "--ps 1 --scanrange 5.0:7.0 --npoints 200"),
+    scan(G, "gamma_d_dstk",    "", "d_dstk",    "--ps 1 --scanrange 4.5:6.0 --npoints 200"),
     # ---- alpha -------------------------------------------------------------
-    dict(
-        A,
-        name="alpha",
-        comb=60,
-        vars=["alpha"],
-        out="hflav_nov26_alpha",
-        nominal=True,
-        args="--pr --ps 1 --scanrange 0.5:2.0 --npoints 200",
-    ),
-    dict(
-        A,
-        name="alpha_pipi",
-        comb=61,
-        vars=["alpha"],
-        out="hflav_nov26_pipi_alpha",
-        # start from the eight pipi solutions of PDG 2021: without it the scan can miss mirror solutions
-        args="--scanrange -0.2:3.2 --npoints 2400 --parfile plots/par/alpha_wa_hflav_pdg2021_pipi_alpha_start.dat",
-    ),
-    dict(
-        A,
-        name="alpha_rhorho",
-        comb=62,
-        vars=["alpha"],
-        out="hflav_nov26_rhorho_alpha",
-        args="--pr --scanrange -0.2:3.2 --npoints 1200",
-    ),
-    dict(
-        A,
-        name="alpha_rhopi",
-        comb=63,
-        vars=["alpha"],
-        out="hflav_nov26_rhopi_alpha",
-        # start on the C < 0 branch of the rho-pi Dalitz fit (PDG 2025 start values): from the default
-        # start values (C = +0.79) the scan follows the mirror branch and misses the minima above 100 deg
-        args="--pr --ps 1 --npoints 400 --parfile plots/par/alpha_wa_hflav_pdg2025_rhopi_alpha_start.dat",
-    ),
+    scan(A, "alpha",           "",           "alpha", "--pr --ps 1 --scanrange 0.5:2.0 --npoints 200 --digits 3", nominal=True),
+    # start from the eight pipi solutions of PDG 2021: without it the scan can miss mirror solutions
+    scan(A, "alpha_pipi",      "pipi",       "alpha", "--scanrange -0.2:3.2 --npoints 2400 --parfile plots/par/alpha_wa_hflav_pdg2021_pipi_alpha_start.dat"),
+    scan(A, "alpha_rhorho",    "rhorho",     "alpha", "--pr --scanrange -0.2:3.2 --npoints 1200"),
+    # start on the C < 0 branch of the rho-pi Dalitz fit (PDG 2025 start values): from the default
+    # start values (C = +0.79) the scan follows the mirror branch and misses the minima above 100 deg
+    scan(A, "alpha_rhopi",     "rhopi",      "alpha", "--pr --ps 1 --npoints 400 --parfile plots/par/alpha_wa_hflav_pdg2025_rhopi_alpha_start.dat"),
     # ---- rho-eta -----------------------------------------------------------
-    # combination 4 (all angles) first: it writes the parfile the others start from
-    dict(
-        R,
-        name="rhoeta",
-        comb=4,
-        vars=["rho", "eta"],
-        out="hflav_angles_rho_eta",
-        nominal=True,
-        args="--ps 1 --scanrange 0.04:0.2 --scanrangey 0.25:0.45 --npoints2dx 100 --npoints2dy 100",
-    ),
-    dict(
-        R,
-        name="rhoeta_gamma",
-        comb=1,
-        vars=["rho", "eta"],
-        out="hflav_gamma_rho_eta",
-        after="rhoeta",
-        args="--ps 1 --scanrange -0.02:1.02 --scanrangey -0.02:1.02 --npoints 400 --parfile plots/par/rhoeta_wa_hflav_angles_rho_eta.dat",
-    ),
-    dict(
-        R,
-        name="rhoeta_beta",
-        comb=2,
-        vars=["rho", "eta"],
-        out="hflav_beta_rho_eta",
-        after="rhoeta",
-        args="--ps 1 --scanrange -0.22:1.22 --scanrangey -0.22:1.22 --npoints 1600 --parfile plots/par/rhoeta_wa_hflav_angles_rho_eta.dat",
-    ),
-    dict(
-        R,
-        name="rhoeta_alpha",
-        comb=3,
-        vars=["rho", "eta"],
-        out="hflav_alpha_rho_eta",
-        after="rhoeta",
-        args="--ps 1 --scanrange -0.02:1.02 --scanrangey -0.02:1.02 --npoints 800 --parfile plots/par/rhoeta_wa_hflav_angles_rho_eta.dat",
-    ),
-    dict(
-        R,
-        name="rhoeta_beta_alt",
-        comb=6,
-        vars=["rho", "eta"],
-        out="hflav_beta_alt_rho_eta",
-        after="rhoeta",
-        args="--ps 1 --scanrange -0.22:1.22 --scanrangey -0.22:1.22 --npoints 800 --parfile plots/par/rhoeta_wa_hflav_angles_rho_eta.dat",
-    ),
+    # the combination of all angles first: it writes the parfile the others start from
+    scan(R, "rhoeta",          "",           "rho eta", "--ps 1 --scanrange 0.04:0.2 --scanrangey 0.25:0.45 --npoints2dx 100 --npoints2dy 100", nominal=True),
+    scan(R, "rhoeta_gamma",    "gamma",      "rho eta", f"--ps 1 --scanrange -0.02:1.02 --scanrangey -0.02:1.02 --npoints 400 {RHOETA_PAR}", after="rhoeta"),
+    scan(R, "rhoeta_beta",     "beta",       "rho eta", f"--ps 1 --scanrange -0.22:1.22 --scanrangey -0.22:1.22 --npoints 1600 {RHOETA_PAR}", after="rhoeta"),
+    scan(R, "rhoeta_alpha",    "alpha",      "rho eta", f"--ps 1 --scanrange -0.02:1.02 --scanrangey -0.02:1.02 --npoints 800 {RHOETA_PAR}", after="rhoeta"),
+    scan(R, "rhoeta_beta_alt", "beta_alt",   "rho eta", f"--ps 1 --scanrange -0.22:1.22 --scanrangey -0.22:1.22 --npoints 800 {RHOETA_PAR}", after="rhoeta"),
+    # fmt: on
 ]
 
 # ---------------------------------------------------------------------------
@@ -367,8 +148,10 @@ SCANS = [
 #   module   : combiner subdirectory
 #   file     : output file name, without extension
 #   overview : the ut-combo overview figure of this angle (--copy-to <ut-combo>/<angle>/<angle>_wa_hflav_pub.pdf)
+#   subaverages : comparison plot of sub-averages shown on the web page next to their values
+#              (--copy-to <ut-combo>/<angle>/<file>.pdf; published by ut-combo make_hflav_json.py)
 #   opts     : hflav_plots.Plotter options (axes, legend and logo position, CL lines, ...)
-#   curves   : (scan name in SCANS, hflav_plots.Plotter.add_scan options: col, hatch, lw, label, bf)
+#   curves   : (scan name in SCANS, hflav_plots.Plotter.add_scan options: col, hatch, lw, label, bf, dof)
 #   beta_label: draw the beta solutions with beta_CKM from the ut-combo HFLAV.json (--beta-json)
 # ---------------------------------------------------------------------------
 GAMMA_1D = dict(dim=1, xtitle=r"$\gamma$ [$^\circ$]", xangle=True)
@@ -376,6 +159,8 @@ RHOETA_2D = dict(
     dim=2, xtitle=r"$\bar{\rho}$", ytitle=r"$\bar{\eta}$", legfontsize=14, levels=2
 )
 COMBINED = dict(col="k", hatch=None, lw=2, label="Combined")
+# long legend below a right-hand logo, ending above the 68.3% CL line (1 - CL = 0.317)
+LEGEND_ABOVE_68 = dict(bbox_to_anchor=(0.73, 0.34, 0.2, 0.43), loc="upper right")
 
 PLOTS = [
     # ---- gamma -------------------------------------------------------------
@@ -384,7 +169,14 @@ PLOTS = [
         module="gammacombo",
         file="gamma_wa_hflav_pub_mode",
         overview="gamma",
-        opts=dict(GAMMA_1D, xrange=(0, 165), logo="r", legpos="r", cls="r"),
+        opts=dict(
+            GAMMA_1D,
+            xrange=(0, 165),
+            logo="r",
+            legpos="r",
+            cls="r",
+            legopts=dict(LEGEND_ABOVE_68, labelspacing=0.25),
+        ),
         curves=[
             (
                 "gamma_bs2dsk",
@@ -422,8 +214,9 @@ PLOTS = [
         name="gamma_method",
         module="gammacombo",
         file="gamma_wa_hflav_pub_method",
+        subaverages=True,
         opts=dict(
-            GAMMA_1D, xrange=(0, 160), logo="l", legpos="l", legfontsize=14, cls="l"
+            GAMMA_1D, xrange=(20, 140), logo="r", legpos="r", legfontsize=14, cls="l"
         ),
         curves=[
             ("gamma_2body", dict(col="g", hatch=r"\\\\", lw=1, label=r"$D\to$2-body")),
@@ -437,8 +230,9 @@ PLOTS = [
         name="gamma_tdti",
         module="gammacombo",
         file="gamma_wa_hflav_pub_tdti",
+        subaverages=True,
         opts=dict(
-            GAMMA_1D, xrange=(30, 130), logo="l", legpos="l", legfontsize=14, cls="l"
+            GAMMA_1D, xrange=(40, 130), logo="r", legpos="r", legfontsize=14, cls="l"
         ),
         curves=[
             ("gamma_ti", dict(col="g", hatch=r"\\\\", lw=1, label=r"TI")),
@@ -450,6 +244,7 @@ PLOTS = [
         name="gamma_state",
         module="gammacombo",
         file="gamma_wa_hflav_pub_state",
+        subaverages=True,
         opts=dict(GAMMA_1D, xrange=(30, 130), logo="r", legpos="r", cls="r"),
         curves=[
             ("gamma_bs", dict(col="r", hatch=".....", lw=1, label=r"$B_s^0$ decays")),
@@ -462,8 +257,16 @@ PLOTS = [
         name="gamma_ratios",
         module="gammacombo",
         file="gamma_wa_hflav_pub_ratios",
+        subaverages=True,
         opts=dict(
-            dim=1, xtitle=r"$r_B$", xrange=(0, 0.7), logo="r", legpos="r", cls="r"
+            dim=1,
+            xtitle=r"$r_B$",
+            xrange=(0, 1.0),
+            logo="r",
+            legpos="r",
+            cls="r",
+            legfontsize=11,
+            legopts=dict(LEGEND_ABOVE_68, labelspacing=0.05),
         ),
         curves=[
             (
@@ -536,9 +339,9 @@ PLOTS = [
         overview="rhoeta",
         opts=dict(RHOETA_2D, xrange=(0, 1), yrange=(0, 0.744), logo="r", legpos="l"),
         curves=[
-            ("rhoeta_alpha", dict(col="r", label=r"$\alpha$")),
-            ("rhoeta_beta", dict(col="g", label=r"$\beta$")),
-            ("rhoeta_gamma", dict(col="b", label=r"$\gamma$")),
+            ("rhoeta_alpha", dict(col="r", label=r"$\alpha$", dof=1)),
+            ("rhoeta_beta", dict(col="g", label=r"$\beta$", dof=1)),
+            ("rhoeta_gamma", dict(col="b", label=r"$\gamma$", dof=1)),
             ("rhoeta", dict(col="k", label=None, bf=True)),
         ],
     ),
@@ -556,7 +359,10 @@ PLOTS = [
             legpos="l",
             cl_text=(0.12, 0.02),
         ),
-        curves=[("rhoeta_beta", dict(col="r")), ("rhoeta_beta_alt", dict(col="r"))],
+        curves=[
+            ("rhoeta_beta", dict(col="r", dof=1)),
+            ("rhoeta_beta_alt", dict(col="r", dof=1)),
+        ],
     ),
 ]
 
@@ -565,19 +371,14 @@ ANGLE_OF_MODULE = {"gammacombo": "gamma", "alphacombo": "alpha", "RhoEta": "rhoe
 # Zenodo export: (angle, module, exe, comb id, clintervals file of the nominal scan)
 ZENODO = [
     (
-        "gamma",
-        "gammacombo",
-        "gamma_wa",
-        360,
-        "plots/cl/clintervals_hflav_pdg2025_g_Prob.py",
-    ),
-    (
-        "alpha",
-        "alphacombo",
-        "alpha_wa",
-        50,
-        "plots/cl/clintervals_hflav_pdg2025_alpha_Prob.py",
-    ),
+        ANGLE_OF_MODULE[s["module"]],
+        s["module"],
+        s["exe"],
+        s["comb"],
+        f"plots/cl/clintervals_{s['out']}_Prob.py",
+    )
+    for s in SCANS
+    if s.get("nominal") and len(s["vars"]) == 1
 ]
 
 
@@ -808,9 +609,13 @@ def cmd_plots(args):
             print(f"[FAIL ] {p['name']:18s} {type(exc).__name__}: {exc}", flush=True)
             continue
         print(f"[done ] {p['name']:18s} {out.relative_to(TOP)} (+ .png)", flush=True)
-        if args.copy_to and p.get("overview"):
-            angle = p["overview"]
-            dest = Path(args.copy_to).expanduser() / angle / f"{angle}_wa_hflav_pub.pdf"
+        if args.copy_to and (p.get("overview") or p.get("subaverages")):
+            if p.get("overview"):
+                angle = p["overview"]
+                dest = Path(args.copy_to).expanduser() / angle / f"{angle}_wa_hflav_pub.pdf"
+            else:
+                angle = ANGLE_OF_MODULE[p["module"]]
+                dest = Path(args.copy_to).expanduser() / angle / f"{p['file']}.pdf"
             if dest.parent.is_dir():
                 shutil.copyfile(out, dest)
                 print(f"          copied to {dest}")
@@ -915,11 +720,13 @@ def main():
     )
     p.add_argument(
         "--version",
-        default="November",
-        help="plots: release shown in the logo (default: November)",
+        default=release.VERSION,
+        help=f"plots: release shown in the logo (default: {release.VERSION}, from hflav_release.py)",
     )
     p.add_argument(
-        "--year", default="2026", help="plots: year shown in the logo (default: 2026)"
+        "--year",
+        default=release.YEAR,
+        help=f"plots: year shown in the logo (default: {release.YEAR}, from hflav_release.py)",
     )
     p.add_argument(
         "--beta-json",
