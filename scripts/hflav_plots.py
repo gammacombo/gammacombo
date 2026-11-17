@@ -171,6 +171,38 @@ CONTOUR_STYLES = {
 }
 
 
+def despike(z, gap=0.5):
+    """
+    Replace isolated one-bin spikes of a 2D chi2 grid by the median of their 8 neighbours.
+
+    The 2D scanner writes the chi2 of the start point into the bin that holds it. For a scan
+    started from the solution of another combiner (--parfile, e.g. a single angle in the
+    (rho-bar, eta-bar) plane started from the full fit) that is 0 in the middle of a slope and
+    draws a ring wherever a contour level lies below the surrounding values.
+
+    A spike is a bin further from all 8 neighbours than they are from each other, and by more
+    than `gap`. A true minimum never qualifies (in a parabola the neighbours differ among
+    themselves by at least as much as the nearest one differs from the minimum), nor do bins
+    next to negative values (failed fits).
+    """
+    p = np.pad(z, 1, mode="edge")
+    n, m = z.shape
+    nb = np.stack(
+        [
+            p[1 + dj : 1 + dj + n, 1 + di : 1 + di + m]
+            for dj in (-1, 0, 1)
+            for di in (-1, 0, 1)
+            if (dj, di) != (0, 0)
+        ]
+    )
+    lo, hi = nb.min(0), nb.max(0)
+    dist = np.maximum(lo - z, z - hi)  # distance from the range spanned by the neighbours
+    spike = (dist > gap) & (dist > hi - lo) & (lo >= 0)
+    out = z.copy()
+    out[spike] = np.median(nb, 0)[spike]
+    return out
+
+
 class Plotter:
     """
     One HFLAV plot: add the scans with add_scan(), then plot().
@@ -184,6 +216,8 @@ class Plotter:
                  left), 'ol' (above the axes, two columns) or None
     legfill    : legend on a white, semi-transparent box
     legfontsize: legend font size
+    legopts    : matplotlib legend options overriding the ones derived from legpos (e.g. bbox_to_anchor,
+                 labelspacing), to fit a long legend into a given space
     cls        : 'l' or 'r': dotted 68.3%/95.4% CL lines labelled on that side (1D)
     levels     : number of 2D contours
     cl_text    : (x, y) in axes fractions of the "contours hold ..." note (2D), None for none
@@ -206,6 +240,7 @@ class Plotter:
         legpos=None,
         legfill=False,
         legfontsize=12,
+        legopts=None,
         cls=None,
         levels=2,
         cl_text=(0.03, 0.03),
@@ -226,6 +261,7 @@ class Plotter:
         self.legpos = legpos
         self.legfill = legfill
         self.legfontsize = legfontsize
+        self.legopts = dict(legopts or {})
         self.cls = cls
         self.levels = levels
         self.cl_text = cl_text
@@ -241,13 +277,32 @@ class Plotter:
         self.fopts = []
         self.mopts = []
 
-    def add_scan(self, scan, label=None, bf=False, col=None, hatch=None, lw=None):
+    def add_scan(
+        self, scan, label=None, bf=False, col=None, hatch=None, lw=None, dof=2
+    ):
         """
         scan : (scanner ROOT file, parameter file, [scan variables]) or None for an empty entry
         (keeps the colour/legend order when a scan does not exist).
+        dof  : (2D only) number of parameters the scan actually constrains. A single angle drawn
+               in the (rho-bar, eta-bar) plane constrains one combination of the two, so its
+               Delta chi2 has one degree of freedom (dof=1) and its 68.3%/95.4% CL bands are at
+               Delta chi2 = 1 and 4, not at the two-parameter values 2.30 and 6.18.
         """
         if scan is not None:
             x, y, z, pt = read_gc_scan(str(scan[0]), str(scan[1]), list(scan[2]))
+            if self.dim == 2:
+                # A grid point can sit a rounding error below the minimum quoted in the parameter
+                # file (e.g. chi2 = 0 exactly against FCN = 2.5e-10). plot2d treats any negative
+                # value as a failed fit and blanks it, which leaves a dot inside the contour.
+                z[(z < 0) & (z > -1e-3)] = 0.0
+                z = despike(z)
+                if dof != 2:
+                    # plot2d draws every scan at the two-parameter levels. Map Delta chi2 to the
+                    # two-parameter value of the same CL, so that those levels fall where this
+                    # scan reaches 68.3%, 95.4%, ... (capped at 100, far beyond any contour;
+                    # negative values keep flagging failed fits).
+                    ok = z >= 0
+                    z[ok] = chi2.isf(chi2.sf(np.minimum(z[ok], 100.0), dof), 2)
         else:
             x = y = z = np.empty((2, 2)) * np.nan
             pt = None
@@ -303,6 +358,7 @@ class Plotter:
                 edgecolor="0.7",
                 borderpad=0.3,
             )
+        legopts.update(self.legopts)
         return legopts
 
     def plot(self, keep_open=False):

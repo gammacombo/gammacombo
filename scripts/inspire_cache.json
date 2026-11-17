@@ -220,11 +220,22 @@
     "doi": "10.1103/PhysRevD.111.092001",
     "pub": "Phys.Rev.D 111 (2025) 9, 092001"
   },
+  "3170857": {
+    "arxiv": "2606.20797",
+    "bibtex": "Belle-II:2026kzq",
+    "pub": "arXiv:2606.20797"
+  },
   "708781": {
     "arxiv": "hep-ex/0601032",
     "bibtex": "Belle:2006cuz",
     "doi": "10.1103/PhysRevD.73.051106",
     "pub": "Phys.Rev.D 73 (2006) 051106"
+  },
+  "715530": {
+    "arxiv": "hep-ex/0604054",
+    "bibtex": "Belle:2006lys",
+    "doi": "10.1103/PhysRevD.73.112009",
+    "pub": "Phys.Rev.D 73 (2006) 112009"
   },
   "747154": {
     "arxiv": "hep-ex/0703037",
@@ -238,11 +249,23 @@
     "doi": "10.1103/PhysRevD.76.052007",
     "pub": "Phys.Rev.D 76 (2007) 052007"
   },
+  "790791": {
+    "arxiv": "0807.2408",
+    "bibtex": "BaBar:2008qcq",
+    "doi": "10.1103/PhysRevD.78.092002",
+    "pub": "Phys.Rev.D 78 (2008) 092002"
+  },
   "791881": {
     "arxiv": "0807.4977",
     "bibtex": "BaBar:2008xku",
     "doi": "10.1103/PhysRevD.78.071104",
     "pub": "Phys.Rev.D 78 (2008) 071104"
+  },
+  "831874": {
+    "arxiv": "0909.3981",
+    "bibtex": "BaBar:2009dzx",
+    "doi": "10.1103/PhysRevD.80.092001",
+    "pub": "Phys.Rev.D 80 (2009) 092001"
   },
   "835839": {
     "arxiv": "0911.0425",

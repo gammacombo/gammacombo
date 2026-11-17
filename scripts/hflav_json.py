@@ -13,21 +13,29 @@ ut-combo/make_hflav_json.py and by hflav-web). Each file holds one group:
                        HFLAV Zenodo record for inputs that are HFLAV averages)
   inputs_correlation   the measurements' own total (stat+syst) correlations, block diagonal
 
-Run from the top of the gammacombo repository after building (scripts/build-macos-conda.sh), in
-the conda env with ROOT (PyROOT is used to read the fit result from the scanner file):
+No scan is run here: everything is read from the files written by `python scripts/hflav_averages.py
+run` (the nominal scan of each angle, and the sub-combination scans), so the JSON holds exactly the
+numbers of those scans and of the plots made from them. Run from the top of the gammacombo
+repository, in the conda env with ROOT (PyROOT reads the fit result from the scanner file):
 
-    python scripts/hflav_json.py                        # all three: run, write zenodo/<angle>_wa_hflav.json
+    python scripts/hflav_averages.py run                # first: the scans
+    python scripts/hflav_json.py                        # all three: write zenodo/<angle>_wa_hflav.json
     python scripts/hflav_json.py gamma alpha            # some of them
-    python scripts/hflav_json.py rhoeta --no-run        # re-use the last scan; only rewrite the JSON
     python scripts/hflav_json.py --copy-to ~/Scratch/hflav/ut-combo
     python scripts/hflav_json.py --validate             # check with hflav_fair (if importable)
 
-For each angle this runs, from the combiner directory,
-  1. the scan, exactly as configured in COMBINATIONS below (Matt's headline commands);
-  2. for 1D scans, the same command with "-a plot --ps 1 --digits N" (reads the scan back and writes
-     the confidence intervals to plots/cl/clintervals_*.py);
-  3. "-c N --info --infojson", which writes all inputs at full precision to plots/json/*_inputs.json.
-Logs: <module>/plots/logs/hflav_<angle>_{scan,intervals,info}.log
+For each angle this reads, in the combiner directory,
+  - plots/scanner/<exe>_scanner_<out>.root: the global minimum of the nominal scan (all free
+    parameters, HESSE errors and correlations, chi2);
+  - plots/cl/clintervals_<out>_Prob.py (1D scans): the confidence intervals of the headline variable;
+and runs only "bin/<exe> -c N --info --infojson", which lists the inputs of the combination at full
+precision in plots/json/*_inputs.json (no fit). Log: <module>/plots/logs/hflav_<angle>_info.log
+
+Sub-combinations (gamma: by D decay, TD/TI, B species, B decay; alpha: pipi, rhorho, rhopi) are
+added to the same file as groups <group>_<sub> (gamma_CKM_bu2dk, alpha_CKM_pipi, ...). These hold
+only the angle (its CL intervals, as for the headline group), the fit quality and the inputs used;
+the other fit parameters, their correlations and inputs_correlation are not written. They are the 1D scans of the headline variable listed in hflav_averages.py (SCANS) and
+are read in the same way; a sub-combination without scan is skipped with a warning. --no-subs leaves them out.
 
 References: <module>/RunScripts/HFLAV/references.json maps each measurement id (the id given to
 gc.addPdf in main/<exe>.cpp) to an Inspire record ("inspire": 1838001) or a DOI with a label
@@ -42,24 +50,25 @@ import json
 import math
 import os
 import re
-import shlex
 import shutil
 import subprocess
 import sys
 import urllib.request
 from pathlib import Path
 
+import hflav_averages
+import hflav_release as release
+
 TOP = Path(__file__).resolve().parent.parent
 SCHEMA_VERSION = "1.2.0"
 CL_LEVELS = {"0.68": 0.683, "0.95": 0.954, "1.00": 0.997}
 
+# the combiner hflav_<tag> of the current release (scripts/hflav_release.py)
 COMBINATIONS = {
     "gamma": dict(
         module="gammacombo",
         exe="gamma_wa",
-        comb=360,
-        args="--var g --scanrange 0.7:1.7 --printcor",
-        digits=3,
+        comb=release.combiner_id("gammacombo", "gamma_wa"),
         group="gamma_CKM",
         headline={"g": ("gamma_CKM", r"$\gamma$")},
         # observables that are angles (GammaCombo uses radians): written in degrees
@@ -69,9 +78,7 @@ COMBINATIONS = {
     "alpha": dict(
         module="alphacombo",
         exe="alpha_wa",
-        comb=50,
-        args="--var alpha --scanrange 1:2 --pr --printcor",
-        digits=3,
+        comb=release.combiner_id("alphacombo", "alpha_wa"),
         group="alpha_CKM",
         headline={"alpha": ("alpha_CKM", r"$\alpha$")},
         angle_observables=None,
@@ -80,9 +87,7 @@ COMBINATIONS = {
     "rhoeta": dict(
         module="RhoEta",
         exe="rhoeta_wa",
-        comb=4,
-        args="--ps 1 --var rho --var eta --scanrange 0.1:0.2 --scanrangey 0.3:0.4 --npoints 100 --printcor",
-        digits=None,  # 2D scan: the averages are the values at the minimum with their HESSE errors
+        comb=release.combiner_id("RhoEta", "rhoeta_wa"),
         group="rhoeta_CKM",
         headline={
             "rho": ("rhobar_CKM", r"$\bar{\rho}$"),
@@ -171,6 +176,32 @@ OBS_MODE_LATEX = {
     "rhozrhoz": "\\rho^0\\rho^0",
     "rhoprhoz": "\\rho^+\\rho^0",
 }
+# A measurement whose GammaCombo title starts with one of these method labels holds observables of
+# several methods in one PDF (kept together in the fit for their correlations). In the JSON its
+# description is given per observable, "<method> <experiment and B decay> [<D decay>]", so that the
+# website lists each observable under its method, like the measurements with one PDF per method.
+# (observable-name pattern, method, D decay): first match wins.
+MIXED_METHODS = {
+    "GLW/ADS": [
+        (r"_(4pi|pipipipi)_", "GLW-like", "[D->4pi]"),
+        (r"_(kk|pipi)_", "GLW", "[D->hh]"),
+        (r"_k3pi_", "ADS", "[D->K3pi]"),
+        (r"_kpi_", "ADS", "[D->Kpi]"),
+    ],
+}
+
+
+def describe(title, observable):
+    """Description of a measurement for one of its observables (see MIXED_METHODS)."""
+    desc = " ".join(title.split())
+    label, _, rest = desc.partition(" ")
+    for pattern, method, decay in MIXED_METHODS.get(label, []):
+        if re.search(pattern, observable):
+            where = re.sub(r" *\[.*$", "", rest)  # experiment and B decay
+            return f"{method} {where} {decay}"
+    return desc
+
+
 ALPHA_B = {"bd": "B^0", "bp": "B^+"}
 SIGN = {"p": "+", "m": "-", "z": "0", "pm": "+-", "pz": "+0", "mz": "-0"}
 
@@ -356,23 +387,6 @@ def run(cmd, cwd, logfile):
         sys.exit(
             f"error: '{cmd}' failed (exit {r.returncode}); end of {logfile}:\n{tail}"
         )
-
-
-def plot_args(args, digits):
-    """Scan arguments -> arguments that read the scan back and compute the CL intervals."""
-    toks = shlex.split(args)
-    out, skip = [], False
-    for t in toks:
-        if skip:
-            skip = False
-            continue
-        if t in ("--printcor",):
-            continue
-        if t in ("--ps", "--digits", "-a"):
-            skip = True
-            continue
-        out.append(t)
-    return " ".join(out + ["-a", "plot", "--ps", "1", "--digits", str(digits)])
 
 
 def find_core_library():
@@ -582,7 +596,12 @@ def build(angle, cfg, info, sol, intervals, refmap, inspire, commands):
                 }
                 input_order.append(name)
             inputs[name]["sources"].append(
-                {"name": src_name, "comment": desc, "value": value, "references": refs}
+                {
+                    "name": src_name,
+                    "comment": describe(m["title"], name),
+                    "value": value,
+                    "references": refs,
+                }
             )
             names.append(name)
             flat.append((name, m["index"]))
@@ -654,6 +673,95 @@ def validate(path):
 # ---------------------------------------------------------------------------------------------
 
 
+def load_info(cwd, exe, comb):
+    """The newest plots/json/<exe>_*_inputs.json of combination `comb` (written by --info --infojson)."""
+    files = sorted(
+        (cwd / "plots" / "json").glob(f"{exe}_*_inputs.json"), key=os.path.getmtime
+    )
+    for f in reversed(files):
+        d = json.loads(f.read_text())
+        if d.get("combination_id") == comb:
+            return d
+    sys.exit(f"error: no plots/json/{exe}_*_inputs.json for combination {comb}")
+
+
+def sub_combinations(angle, cfg, refmap, inspire):
+    """Groups <group>_<sub> for the sub-combination scans of hflav_averages.py (see the module docstring)."""
+    if len(cfg["headline"]) != 1:
+        return [], []
+    cwd = TOP / cfg["module"]
+    exe = cfg["exe"]
+    (var, (_, latex)), = cfg["headline"].items()
+    groups, unresolved = [], []
+    for s in hflav_averages.SCANS:
+        if (
+            s["module"] != cfg["module"]
+            or s["exe"] != exe
+            or s["vars"] != [var]
+            or s["comb"] == cfg["comb"]
+        ):
+            continue
+        sub = s["name"].removeprefix(f"{angle}_")
+        name = f"{cfg['group']}_{sub}"
+        scanner = hflav_averages.scanner_file(s)
+        clfile = cwd / "plots" / "cl" / f"clintervals_{s['out']}_Prob.py"
+        missing = [str(p.relative_to(TOP)) for p in (scanner, clfile) if not p.exists()]
+        if missing:
+            log(
+                f"  WARNING: {name} skipped, missing {', '.join(missing)} "
+                f"(python scripts/hflav_averages.py run --only {s['name']})"
+            )
+            continue
+        info_cmd = f"bin/{exe} -c {s['comb']} --info --infojson"
+        run(info_cmd, cwd, cwd / "plots" / "logs" / f"hflav_{s['name']}_info.log")
+        info = load_info(cwd, exe, s["comb"])
+        sub_cfg = dict(cfg, group=name, headline={var: (name, latex)})
+        commands = {"scan": hflav_averages.command(s)}
+        group, unres = build(
+            angle,
+            sub_cfg,
+            info,
+            read_solution(scanner),
+            read_intervals(clfile),
+            refmap,
+            inspire,
+            commands,
+        )
+        # only the headline angle is kept (no other fit parameters, no correlations)
+        group["averages"] = group["averages"][:1]
+        group["averages_correlation"] = [[1.0]]
+        del group["inputs_correlation"]
+        group["comment"] = (
+            f"Sub-combination of {cfg['group']}: "
+            + group["comment"]
+            .replace(
+                "Averages: the headline result from the profile-likelihood scan, then all other free "
+                "parameters at the global minimum with their HESSE uncertainties; averages_correlation is "
+                "the HESSE correlation matrix at the minimum.",
+                "Average: the result of the profile-likelihood scan (the other fit parameters are not given).",
+            )
+            .replace("Inputs: the measurements used with their total (stat+syst) correlations.",
+                     f"Inputs: the measurements used (a subset of those of {cfg['group']}, where their correlations are given).")
+        )
+        groups.append(group)
+        unresolved += unres
+        v = group["averages"][0]["average"]["value"]
+        log(
+            f"  {name}: {v['central']:.6g} {v['uncertainty']} {v.get('unit', '')}; "
+            f"chi2/ndf = {group['fit']['chi2']:.2f}/{group['fit']['ndf']}, "
+            f"{len(info['measurements'])} measurements"
+        )
+    return groups, unresolved
+
+
+def nominal_scan(cfg):
+    """The headline scan of this combination in hflav_averages.py (SCANS, nominal=True)."""
+    for s in hflav_averages.SCANS:
+        if s["module"] == cfg["module"] and s.get("nominal"):
+            return s
+    sys.exit(f"error: no nominal scan for {cfg['module']} in scripts/hflav_averages.py")
+
+
 def process(angle, args, inspire):
     cfg = COMBINATIONS[angle]
     cwd = TOP / cfg["module"]
@@ -662,57 +770,46 @@ def process(angle, args, inspire):
         sys.exit(
             f"error: {cfg['module']}/bin/{exe} not found (build and install first)"
         )
-    logs = cwd / "plots" / "logs"
-    commands = {"scan": f"bin/{exe} -c {comb} {cfg['args']}"}
-    one_d = cfg["digits"] is not None
-    if one_d:
-        commands["intervals"] = (
-            f"bin/{exe} -c {comb} {plot_args(cfg['args'], cfg['digits'])}"
+    # nothing is scanned here: the results are read from the files of the nominal scan
+    scan = nominal_scan(cfg)
+    if scan["comb"] != comb or scan["vars"] != list(cfg["headline"]):
+        sys.exit(
+            f"error: nominal scan '{scan['name']}' of hflav_averages.py does not match {angle} here"
         )
-    commands["info"] = f"bin/{exe} -c {comb} --info --infojson"
-    log(f"{angle}:")
-    if not args.no_run:
-        run(commands["scan"], cwd, logs / f"hflav_{angle}_scan.log")
-        if one_d:
-            run(commands["intervals"], cwd, logs / f"hflav_{angle}_intervals.log")
-    run(commands["info"], cwd, logs / f"hflav_{angle}_info.log")
-
-    info_files = sorted(
-        (cwd / "plots" / "json").glob(f"{exe}_*_inputs.json"), key=os.path.getmtime
-    )
-    info = None
-    for f in reversed(info_files):
-        d = json.loads(f.read_text())
-        if d.get("combination_id") == comb:
-            info = d
-            break
-    if not info:
-        sys.exit(f"error: no plots/json/{exe}_*_inputs.json for combination {comb}")
-    vars_ = re.findall(r"--var\s+(\S+)", cfg["args"])
-    scanner = (
-        cwd
-        / "plots"
-        / "scanner"
-        / f"{exe}_scanner_{info['combination_name']}_{'_'.join(vars_)}.root"
-    )
+    scanner = hflav_averages.scanner_file(scan)
+    one_d = len(scan["vars"]) == 1
+    clfile = cwd / "plots" / "cl" / f"clintervals_{scan['out']}_Prob.py"
+    missing = [
+        str(p.relative_to(TOP))
+        for p in ([scanner, clfile] if one_d else [scanner])
+        if not p.exists()
+    ]
+    if missing:
+        sys.exit(
+            f"error: missing {', '.join(missing)} "
+            f"(python scripts/hflav_averages.py run --only {scan['name']})"
+        )
+    commands = {
+        "scan": hflav_averages.command(scan),
+        "info": f"bin/{exe} -c {comb} --info --infojson",
+    }
+    log(f"{angle}: from the scan '{scan['name']}' ({commands['scan']})")
+    # the list of inputs of the combination (no fit, no scan)
+    run(commands["info"], cwd, cwd / "plots" / "logs" / f"hflav_{angle}_info.log")
+    info = load_info(cwd, exe, comb)
     sol = read_solution(scanner)
-    intervals = []
-    if one_d:
-        clfile = (
-            cwd
-            / "plots"
-            / "cl"
-            / f"clintervals_{info['combination_name']}_{vars_[0]}_Prob.py"
-        )
-        if not clfile.exists():
-            sys.exit(f"error: {clfile} not found (the intervals step writes it)")
-        intervals = read_intervals(clfile)
+    intervals = read_intervals(clfile) if one_d else []
     refpath = cwd / "RunScripts" / "HFLAV" / "references.json"
     refmap = json.loads(refpath.read_text()) if refpath.exists() else {}
     group, unresolved = build(
         angle, cfg, info, sol, intervals, refmap, inspire, commands
     )
-    doc = {"metadata": metadata(cfg, args, info), "groups": [group]}
+    groups = [group]
+    if not args.no_subs:
+        subs, sub_unresolved = sub_combinations(angle, cfg, refmap, inspire)
+        groups += subs
+        unresolved += [u for u in sub_unresolved if u not in unresolved]
+    doc = {"metadata": metadata(cfg, args, info), "groups": groups}
 
     out = TOP / "zenodo" / f"{exe}_hflav.json"
     out.parent.mkdir(exist_ok=True)
@@ -759,7 +856,12 @@ def main():
     ap.add_argument(
         "--no-run",
         action="store_true",
-        help="do not rerun the scan; use the last scanner file",
+        help=argparse.SUPPRESS,  # accepted for old command lines: scans are never run here
+    )
+    ap.add_argument(
+        "--no-subs",
+        action="store_true",
+        help="only the headline group, without the sub-combination groups <group>_<sub>",
     )
     ap.add_argument(
         "--offline",
