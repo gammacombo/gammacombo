@@ -196,7 +196,9 @@ def despike(z, gap=0.5):
         ]
     )
     lo, hi = nb.min(0), nb.max(0)
-    dist = np.maximum(lo - z, z - hi)  # distance from the range spanned by the neighbours
+    dist = np.maximum(
+        lo - z, z - hi
+    )  # distance from the range spanned by the neighbours
     spike = (dist > gap) & (dist > hi - lo) & (lo >= 0)
     out = z.copy()
     out[spike] = np.median(nb, 0)[spike]

@@ -63,6 +63,7 @@ G = dict(module="gammacombo", exe="gamma_wa")
 A = dict(module="alphacombo", exe="alpha_wa")
 R = dict(module="RhoEta", exe="rhoeta_wa")
 
+
 def scan(base, name, sub, var, args, **more):
     """A scan of `var` (one name, or "x y" for a 2D scan) in the combiner hflav_<tag>[_<sub>] of the current release."""
     variables = var.split()

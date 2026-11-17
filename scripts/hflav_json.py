@@ -691,7 +691,7 @@ def sub_combinations(angle, cfg, refmap, inspire):
         return [], []
     cwd = TOP / cfg["module"]
     exe = cfg["exe"]
-    (var, (_, latex)), = cfg["headline"].items()
+    ((var, (_, latex)),) = cfg["headline"].items()
     groups, unresolved = [], []
     for s in hflav_averages.SCANS:
         if (
@@ -731,17 +731,16 @@ def sub_combinations(angle, cfg, refmap, inspire):
         group["averages"] = group["averages"][:1]
         group["averages_correlation"] = [[1.0]]
         del group["inputs_correlation"]
-        group["comment"] = (
-            f"Sub-combination of {cfg['group']}: "
-            + group["comment"]
-            .replace(
-                "Averages: the headline result from the profile-likelihood scan, then all other free "
-                "parameters at the global minimum with their HESSE uncertainties; averages_correlation is "
-                "the HESSE correlation matrix at the minimum.",
-                "Average: the result of the profile-likelihood scan (the other fit parameters are not given).",
-            )
-            .replace("Inputs: the measurements used with their total (stat+syst) correlations.",
-                     f"Inputs: the measurements used (a subset of those of {cfg['group']}, where their correlations are given).")
+        group["comment"] = f"Sub-combination of {cfg['group']}: " + group[
+            "comment"
+        ].replace(
+            "Averages: the headline result from the profile-likelihood scan, then all other free "
+            "parameters at the global minimum with their HESSE uncertainties; averages_correlation is "
+            "the HESSE correlation matrix at the minimum.",
+            "Average: the result of the profile-likelihood scan (the other fit parameters are not given).",
+        ).replace(
+            "Inputs: the measurements used with their total (stat+syst) correlations.",
+            f"Inputs: the measurements used (a subset of those of {cfg['group']}, where their correlations are given).",
         )
         groups.append(group)
         unresolved += unres
