@@ -1,10 +1,3 @@
-/**
- * Gamma Combination
- * Author: Till Moritz Karbach, moritz.karbach@cern.ch
- * Date: August 2014
- *
- **/
-
 #ifndef CLIntervalPrinter_h
 #define CLIntervalPrinter_h
 
@@ -12,6 +5,9 @@
 
 #include <TString.h>
 
+#include <memory>
+#include <set>
+#include <string>
 #include <vector>
 
 class OptParser;
@@ -23,22 +19,22 @@ class CLIntervalPrinter {
  public:
   CLIntervalPrinter(const OptParser* arg, TString name, TString var, TString unit, TString method, int CLsType = 0);
 
-  void print();
-  void savePython();
-  inline void setDegrees(bool yesno = true) { convertToDegrees = yesno; };
   void addIntervals(std::vector<CLInterval>& intervals);
+  void addIntervals(const std::vector<std::vector<std::unique_ptr<CLInterval>>>& intervals);
+
+  void print() const;
+  void savePython() const;
+  inline void setDegrees(bool yesno = true) { convertToDegrees = yesno; };
 
  private:
-  static bool compareByMin(const CLInterval& a, const CLInterval& b);
-
-  const OptParser* _arg = nullptr;                  ///< command line arguments
-  TString _name;                                    ///< name of combination
-  TString _var;                                     ///< name of scan variable
-  TString _unit;                                    ///< unit of scan variable
-  TString _method;                                  ///< method name (e.g. Prob)
-  bool convertToDegrees = false;                    ///< convert values into degrees
-  std::vector<std::vector<CLInterval>> _intervals;  ///< container of intervals
-  int _clstype = 0;                                 ///< Type of CLs intervals, 0 means no CLs method
+  const OptParser* _arg = nullptr;  ///< Command line arguments
+  std::string _name;                ///< Name of combination
+  std::string _var;                 ///< Name of scan variable
+  std::string _unit;                ///< Unit of scan variable
+  std::string _method;              ///< Method name (e.g. Prob)
+  bool convertToDegrees = false;    ///< Convert values into degrees
+  std::set<CLInterval> _intervals;  ///< Container of intervals sorted according to default less (@see CLInterval).
+  int _clstype = 0;                 ///< Type of CLs intervals, 0 means no CLs method
 };
 
 #endif
