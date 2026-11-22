@@ -474,7 +474,7 @@ void OneMinusClPlot2d::drawCLcontent(bool isFull) {
   t1->SetTextAlign(12);
   t1->SetTextFont(font);
   t1->SetTextSize(labelsize * 0.6);
-  t1->SetTextColor(kGray + 1);
+  t1->SetTextColor(kGray + 2);
   if (isFull) t1->SetTextColor(kRed);
   TString text;
   text = "contours hold ";
