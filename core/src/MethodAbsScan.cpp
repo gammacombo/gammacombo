@@ -1391,6 +1391,12 @@ void MethodAbsScan::confirmSolutions() {
       rejectReason =
           Form("too large chi2: DeltaChi2>25 - chi2minGlobal: %e and confirmed NLL: %e", chi2minGlobal, r->minNll());
     }
+    // a failed refit (e.g. at the edge of the physical range) returns minNll 0 with no errors:
+    // it would pass the checks above and become the global minimum
+    if (Utils::fitFailedWithInvalidNll(r)) {
+      isConfirmed = false;
+      rejectReason = "refit failed (status != 0, minNll 0 after invalid NLL evaluations)";
+    }
     if (isConfirmed) {
       if (arg->debug) std::cout << "MethodAbsScan::confirmSolutions() : solution " << i << " accepted." << std::endl;
       RooSlimFitResult* sr = new RooSlimFitResult(r, true);  // true saves correlation matrix

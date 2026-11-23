@@ -203,6 +203,15 @@ RooFitResult* Utils::fitToMinBringBackAngles(RooAbsPdf* pdf, bool thorough, int 
 }
 
 ///
+/// A fit that could not run at all (e.g. the likelihood underflows to zero at
+/// the start values, so every evaluated point is invalid) returns MIGRAD status
+/// -1 and minNll() == 0. Scans must not take that 0 as a new global minimum.
+///
+bool Utils::fitFailedWithInvalidNll(const RooFitResult* r) {
+  return r && r->status() != 0 && r->minNll() == 0. && r->numInvalidNLL() > 0;
+}
+
+///
 /// Find the global minimum in a more thorough way.
 /// First fit with external start parameters, then
 /// for each parameter that starts with "d" or "r" (typically angles and ratios):

@@ -239,7 +239,7 @@ int MethodProbScan::scan1d(bool fast, bool reverse, bool quiet) {
         else
           fr = std::unique_ptr<RooFitResult>(Utils::fitToMinBringBackAngles(likelihood, false, -1));
         chi2minScan = fr->minNll();
-        if (std::isinf(chi2minScan))
+        if (std::isinf(chi2minScan) || Utils::fitFailedWithInvalidNll(fr.get()))
           chi2minScan = std::numeric_limits<double>::max();    // else the toys in PDF_testConstraint don't work
         allResults.push_back(new RooSlimFitResult(fr.get()));  // save memory by using the slim fit result
         sfr = allResults.back();
@@ -611,7 +611,7 @@ int MethodProbScan::scan2d() {
           else
             fr = std::unique_ptr<RooFitResult>(Utils::fitToMinBringBackAngles(likelihood, false, -1));
           chi2minScan = fr->minNll();
-          if (std::isinf(chi2minScan))
+          if (std::isinf(chi2minScan) || Utils::fitFailedWithInvalidNll(fr.get()))
             chi2minScan = std::numeric_limits<double>::max();  // else the toys in PDF_testConstraint don't work
           tFit.Stop();
           tSlimResult.Start(false);
