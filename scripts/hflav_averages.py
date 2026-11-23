@@ -128,6 +128,8 @@ SCANS = [
     # start from the eight pipi solutions of PDG 2021: without it the scan can miss mirror solutions
     scan(A, "alpha_pipi",      "pipi",       "alpha", "--scanrange -0.2:3.2 --npoints 2400 --parfile plots/par/alpha_wa_hflav_pdg2021_pipi_alpha_start.dat"),
     scan(A, "alpha_rhorho",    "rhorho",     "alpha", "--pr --scanrange -0.2:3.2 --npoints 1200"),
+    # the full combination without B0 -> (rho pi)0; full range: the mirror solutions near 0 and 180 deg come back
+    scan(A, "alpha_pipi_rhorho", "pipi_rhorho", "alpha", "--pr --scanrange -0.2:3.2 --npoints 1200"),
     # start on the C < 0 branch of the rho-pi Dalitz fit (PDG 2025 start values): from the default
     # start values (C = +0.79) the scan follows the mirror branch and misses the minima above 100 deg
     scan(A, "alpha_rhopi",     "rhopi",      "alpha", "--pr --ps 1 --npoints 400 --parfile plots/par/alpha_wa_hflav_pdg2025_rhopi_alpha_start.dat"),
@@ -329,6 +331,32 @@ PLOTS = [
                 dict(col="r", hatch=".....", lw=1, label=r"$B^0\to(\rho\pi)^0$"),
             ),
             ("alpha", dict(COMBINED, label="Combination")),
+        ],
+    ),
+    dict(
+        name="alpha_pipi_rhorho",
+        module="alphacombo",
+        file="alpha_wa_hflav_pub_pipi_rhorho",
+        subaverages=True,
+        opts=dict(
+            dim=1,
+            xtitle=r"$\alpha$ [$^\circ$]",
+            xangle=True,
+            xrange=(0, 180),
+            logo="r",
+            legpos="l",
+            legfill=True,
+            # right of the mirror solutions near 0 deg (they reach 14 deg at 95.4% CL), left of the curves from 73 deg
+            legopts=dict(bbox_to_anchor=(0.10, 0.79, 0.2, 0.21), loc="upper left"),
+            tight=True,
+        ),
+        curves=[
+            ("alpha_pipi", dict(col="g", hatch="////", lw=1, label=r"$B\to\pi\pi$")),
+            (
+                "alpha_rhorho",
+                dict(col="b", hatch=r"\\\\", lw=1, label=r"$B\to\rho\rho$"),
+            ),
+            ("alpha_pipi_rhorho", dict(COMBINED, label=r"$B\to\pi\pi,\,\rho\rho$")),
         ],
     ),
     # ---- rho-eta (and the beta overview) -----------------------------------
