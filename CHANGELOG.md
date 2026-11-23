@@ -38,6 +38,9 @@ and this project adheres to
 * Batch job arguments are shell-quoted.
 * The per-toy fit to the bkg-only toys (CLs) only runs with `--cls`, about a third less CPU. Merging with `--cls`
   needs toys made with `--cls`.
+* Combiner scanner files only hold the CLs histograms that are computed: `hCLsFreq`, `hCLsExp` and `hCLsErr*` only
+  for Plugin scans with `--cls`, `hCLs` only for Prob scans with `--cls` (no longer for Plugin scans). Loading such a
+  file with `--cls 1` warns that `hCLs` is missing. Datasets scanner files are unchanged.
 * Removed stateless classes `ColorBuilder`, `FitResultDump` and `TGraphTools`
 * Moved `float` -> `double` for all variables except for the ones stored in
   `TTree`s and the ones that are `float` in ROOT (`Minuit` internally uses
@@ -53,5 +56,8 @@ and this project adheres to
 * `Combiner::Clone` dropped the fixed parameters.
 * CL intervals of angles whose best fit is wrapped 2π outside the scan range (e.g. phiD just below 0).
 * LaTeX macro names with digits in `RooSlimFitResult::SaveLatex` (`x12`, `y12`).
+* Plugin scans with `--cls 1` used an empty `hCLs` (1-CL = 0 everywhere) for the CLs intervals and plot; they now
+  fall back to normalising `hCL` to its first bin.
+* Segfault when loading a scanner file without `hCLs` with `--cls 1`.
 * Python: `read_minimum` with parameters held constant; `read_gc_scan` crash on file close; `corr_plot` with
   read-only pandas >= 3.0 views.

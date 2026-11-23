@@ -237,7 +237,7 @@ void MethodAbsScan::initScan() {
   hChi2min = new TH1F("hChi2min" + getUniqueRootName(), "hChi2min" + pdfName, nPoints1d, min1, max1);
   if (hCLs) delete hCLs;
   hCLs = new TH1F("hCLs" + getUniqueRootName(), "hCLs" + pdfName, nPoints1d, min1, max1);
-  if (hCLs) delete hCLsFreq;
+  if (hCLsFreq) delete hCLsFreq;
   hCLsFreq = new TH1F("hCLsFreq" + getUniqueRootName(), "hCLsFreq" + pdfName, nPoints1d, min1, max1);
   if (hCLsExp) delete hCLsExp;
   hCLsExp = new TH1F("hCLsExp" + getUniqueRootName(), "hCLsExp" + pdfName, nPoints1d, min1, max1);
@@ -462,8 +462,10 @@ bool MethodAbsScan::loadScanner(TString fName) {
           << "MethodAbsScan::loadScanner() : WARNING : 'hCLs' not found in root file - you can ignore this if you're "
              "not running in dataset mode "
           << fName << std::endl;
-    }
-    if (scanVar2 != "") {
+      // drop the empty histogram from initScan(), so that CLs type 1 falls back to normalising hCL
+      delete hCLs;
+      hCLs = nullptr;
+    } else if (scanVar2 != "") {
       hCLs2d = (TH2F*)obj;
       hCLs2d->SetName("hCLs2d" + getUniqueRootName());
     } else {

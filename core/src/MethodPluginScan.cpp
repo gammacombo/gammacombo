@@ -925,6 +925,8 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id, bool quiet) {
   Long64_t nwrongrun = 0;
   Long64_t ntoysid = 0;   // if id is not -1, this will count the number of toys with that id
   Long64_t nbkgfits = 0;  // toys with a fit to the bkg-only toys, only done with --cls
+  // CLb and CLs need the fits to the bkg-only toys, which are only run with --cls
+  const bool doCLs = arg->cls.size() > 0;
 
   t->activateCoreBranchesOnly();  // speeds up the event loop
   ProgressBar* pb = nullptr;
@@ -995,7 +997,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id, bool quiet) {
 
     if (inPhysicalRegion && sb_teststat_toy > teststat_measured) { h_better->Fill(t->scanpoint); }
 
-    if (inPhysicalRegion && b_teststat_toy > teststat_measured) { h_better_clb->Fill(t->scanpoint); }
+    if (doCLs && inPhysicalRegion && b_teststat_toy > teststat_measured) { h_better_clb->Fill(t->scanpoint); }
 
     // goodness-of-fit
     if (inPhysicalRegion && t->chi2minGlobalToy > t->chi2minGlobal) { h_gof->Fill(t->scanpoint); }
@@ -1019,7 +1021,7 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id, bool quiet) {
 
     // if(b_teststat_toy<0&&b_teststat_toy>-1.e-4) b_teststat_toy=0.0;
 
-    if (inPhysicalRegion) {
+    if (doCLs && inPhysicalRegion) {
       // bkgTestStatVal = t->scanbestBkgfitBkg <= 0. ? bkgTestStatVal : 0.;  // if muhat < mu then q_mu = 0
       // if(hBin==2){
       //     // std::cout << bkgTestStatVal << std::endl;
@@ -1081,6 +1083,12 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id, bool quiet) {
     if (pvalueCorrectorSet) { p = pvalueCorrector->transform(p); }
     hCL->SetBinContent(i, p);
     hCL->SetBinError(i, sqrt(p * (1. - p) / nall));
+    if (!doCLs) {
+      if (arg->debug)
+        std::cout << "At scanpoint " << std::scientific << hCL->GetBinCenter(i) << ": ===== pValue:         " << p
+                  << std::endl;
+      continue;
+    }
     double p_bkg = TMath::Min(p / hCL->GetBinContent(1), 1.);
 
     // determine CLs value
@@ -1273,7 +1281,19 @@ TH1F* MethodPluginScan::analyseToys(ToyTree* t, int id, bool quiet) {
     // hCLsExp->SetBinError(i , (cls_vals[cls_vals.size()/2+k-1] - cls_vals[cls_vals.size()/2-k-1])/2.);
   }
 
-  if (arg->controlplot && arg->cls.size() > 0) makeControlPlotsCLs(sampledBValues, sampledSchi2Values);
+  if (arg->controlplot && doCLs) makeControlPlotsCLs(sampledBValues, sampledSchi2Values);
+
+  // hCLs (CLs type 1) is not computed for Plugin scans: drop it, so that saveScanner() does not write an empty
+  // histogram and CLs type 1 falls back to normalising hCL to its first bin
+  delete hCLs;
+  hCLs = nullptr;
+  // without --cls the CLs histograms would be meaningless: drop them, so that saveScanner() does not write them
+  if (!doCLs) {
+    for (TH1F** h : {&hCLsFreq, &hCLsExp, &hCLsErr1Up, &hCLsErr1Dn, &hCLsErr2Up, &hCLsErr2Dn}) {
+      delete *h;
+      *h = nullptr;
+    }
+  }
 
   // goodness-of-fit
   if (id == -1) {
@@ -1543,7 +1563,7 @@ void MethodPluginScan::makeControlPlotsCLs(std::map<int, std::vector<double>> bV
   std::vector<double> clb_vals = {1. - TMath::Prob(4, 1), 1. - TMath::Prob(1, 1), 0.5, TMath::Prob(1, 1),
                                   TMath::Prob(4, 1)};
 
-  for (int i = 1; i <= hCLs->GetNbinsX(); i++) {
+  for (int i = 1; i <= hCLsFreq->GetNbinsX(); i++) {
 
     std::vector<double> quantiles = Utils::Quantile<double>(bVals[i], probs);
     std::vector<double> clsb_vals;
@@ -1621,7 +1641,7 @@ void MethodPluginScan::makeControlPlotsCLs(std::map<int, std::vector<double>> bV
     lD->Draw("same");
 
     TLegend* leg = new TLegend(0.74, 0.54, 0.94, 0.7);
-    leg->SetHeader(Form("p=%4.2g", hCLs->GetBinCenter(i)));
+    leg->SetHeader(Form("p=%4.2g", hCLsFreq->GetBinCenter(i)));
     leg->SetFillColor(0);
     leg->AddEntry(hb, "B-only Toys", "LF");
     leg->AddEntry(hsb, "S+B Toys", "LF");
