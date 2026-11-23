@@ -551,11 +551,15 @@ def build(angle, cfg, info, sol, intervals, refmap, inspire, commands, prefer=No
             # which of them the minimiser calls the global minimum is then arbitrary: with `prefer` the
             # interval quoted is the one closest to that value (the result of the full combination).
             x0 = p["value"] * scale
-            target = x0 if prefer is None or p["name"] not in cfg["headline"] else prefer
+            target = (
+                x0 if prefer is None or p["name"] not in cfg["headline"] else prefer
+            )
             main = min(
                 (c for c in mine if abs(c["cl"] - 0.683) < 0.01),
                 key=lambda c: (
-                    0 if c["min"] <= target <= c["max"] else min(abs(c["min"] - target), abs(c["max"] - target)),
+                    0
+                    if c["min"] <= target <= c["max"]
+                    else min(abs(c["min"] - target), abs(c["max"] - target)),
                     abs(c["central"] - target),
                 ),
             )
@@ -575,7 +579,9 @@ def build(angle, cfg, info, sol, intervals, refmap, inspire, commands, prefer=No
                 f"at the global minimum {p['value'] * scale:.6g} +- {p['error'] * scale:.3g}{u} (HESSE)"
             )
             if not chosen_is_global:
-                parts.append(f"quoted: the solution closest to the full combination ({fmt(prefer)}{u})")
+                parts.append(
+                    f"quoted: the solution closest to the full combination ({fmt(prefer)}{u})"
+                )
             avg["comment"] = "; ".join(parts)
         averages.append(avg)
     corr = [[sig(sol["correlation"][a][b]) for b in order] for a in order]
