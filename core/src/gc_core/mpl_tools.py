@@ -249,6 +249,7 @@ def read_gc_scan(scanfile, parfile, pars):
     tf = r.TFile.Open(scanfile)
     h = tf.Get("hChi2min")
     if not h:
+        tf.Close()
         raise RuntimeError("No 'hChi2min' found in", scanfile)
     # Detach from file so it survives tf.Close() (avoids a cppyy dealloc crash)
     h.SetDirectory(0)
@@ -258,6 +259,7 @@ def read_gc_scan(scanfile, parfile, pars):
     elif h.InheritsFrom("TH1"):
         res = read1dscan(h, bf, minnll)
     else:
+        tf.Close()
         raise RuntimeError("hchi2min does not appear to be a TH1 or TH2")
 
     tf.Close()
@@ -286,6 +288,7 @@ def read_gc_plugin_scan(scanfile, bf):
     tf = r.TFile.Open(scanfile)
     h = tf.Get("hCL")
     if not h:
+        tf.Close()
         raise RuntimeError("No 'hCL' found in", scanfile)
     x = np.array([h.GetBinCenter(b) for b in range(1, h.GetNbinsX() + 1)])
     y = np.array([h.GetBinContent(b) for b in range(1, h.GetNbinsX() + 1)])
@@ -448,7 +451,7 @@ def print_cl(
     pref = prefix.replace("_scanner", "")
     suff = "Prob" if prob else "Plugin"
     fname = f"plots/cl/clintervals_{pref}_{xpar}_{suff}.py"
-    if not Path(fname).exists:
+    if not Path(fname).exists():
         return
 
     try:
