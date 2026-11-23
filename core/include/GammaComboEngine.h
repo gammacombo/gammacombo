@@ -114,6 +114,7 @@ class GammaComboEngine {
   void make2dProbPlot(MethodProbScan* scanner, int cId);
   void make2dProbScan(MethodProbScan* scanner, int cId);
   void printCombinerStructure(Combiner* c) const;
+  void writeInputsJson(Combiner* c, int combinerId) const;
   void printBanner() const;
   bool pdfExists(int id) const;
   void savePlot();
