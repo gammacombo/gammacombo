@@ -31,7 +31,7 @@ For each angle this reads, in the combiner directory,
 and runs only "bin/<exe> -c N --info --infojson", which lists the inputs of the combination at full
 precision in plots/json/*_inputs.json (no fit). Log: <module>/plots/logs/hflav_<angle>_info.log
 
-Sub-combinations (gamma: by D decay, TD/TI, B species, B decay; alpha: pipi, rhorho, rhopi) are
+Sub-combinations (gamma: by D decay, TD/TI, B species, B decay; alpha: pipi, rhorho, rhopi, pipi_rhorho) are
 added to the same file as groups <group>_<sub> (gamma_CKM_bu2dk, alpha_CKM_pipi, ...). These hold
 only the angle (its CL intervals, as for the headline group), the fit quality and the inputs used;
 the other fit parameters, their correlations and inputs_correlation are not written. They are the 1D scans of the headline variable listed in hflav_averages.py (SCANS) and
@@ -39,7 +39,8 @@ are read in the same way; a sub-combination without scan is skipped with a warni
 
 References: <module>/RunScripts/HFLAV/references.json maps each measurement id (the id given to
 gc.addPdf in main/<exe>.cpp) to an Inspire record ("inspire": 1838001) or a DOI with a label
-("doi": "10.5281/zenodo.19371140", "pub": "HFLAV ..."). Inspire metadata (bibtex key, journal
+("doi": "10.5281/zenodo.19371140", "pub": "HFLAV ..."), or to a label alone ("pub": "This record
+...", written without a link). Inspire metadata (bibtex key, journal
 reference, doi, arXiv) is cached in scripts/inspire_cache.json; records missing from the cache are
 fetched from inspirehep.net when online.
 """
@@ -364,6 +365,10 @@ def references_for(entry, inspire):
         refs = inspire.get(ids[0])
     elif entry.get("doi"):
         refs = {"doi": entry["doi"], "url": f"https://doi.org/{entry['doi']}"}
+    elif entry.get("pub"):
+        # label only, no link: an input that is an average of the record being written
+        # (the angles in the rho-eta fit), which has no DOI until it is uploaded
+        refs = {}
     else:
         return None
     for key in ("pub", "bibtex", "arxiv"):
@@ -496,7 +501,9 @@ def sig(x, n=6):
     return float(f"{x:.{n}g}") if math.isfinite(x) else x
 
 
-def build(angle, cfg, info, sol, intervals, refmap, inspire, commands):
+def build(angle, cfg, info, sol, intervals, refmap, inspire, commands, prefer=None):
+    """`prefer`: for a scan with several solutions, quote the 68.3% CL interval closest to this value
+    (in the units of the headline) instead of the one containing the global minimum."""
     pdeg = 180.0 / math.pi
     par_info = {p["name"]: p for p in info["parameters"]}
     angle_obs = (
@@ -540,13 +547,19 @@ def build(angle, cfg, info, sol, intervals, refmap, inspire, commands):
         if mine:
             # profile-likelihood scan of this parameter: the result is the 68.3% CL interval
             # containing the minimum; the other intervals go to the comment (read by the website)
+            # A subset of the measurements can leave several (often exactly degenerate) solutions, and
+            # which of them the minimiser calls the global minimum is then arbitrary: with `prefer` the
+            # interval quoted is the one closest to that value (the result of the full combination).
             x0 = p["value"] * scale
+            target = x0 if prefer is None or p["name"] not in cfg["headline"] else prefer
             main = min(
                 (c for c in mine if abs(c["cl"] - 0.683) < 0.01),
                 key=lambda c: (
-                    0 if c["min"] <= x0 <= c["max"] else abs(c["central"] - x0)
+                    0 if c["min"] <= target <= c["max"] else min(abs(c["min"] - target), abs(c["max"] - target)),
+                    abs(c["central"] - target),
                 ),
             )
+            chosen_is_global = main["min"] <= x0 <= main["max"]
             value["central"] = main["central"]
             value["uncertainty"] = [-abs(main["neg"]), abs(main["pos"])]
             u = " deg" if unit == "deg" else ""
@@ -561,6 +574,8 @@ def build(angle, cfg, info, sol, intervals, refmap, inspire, commands):
             parts.append(
                 f"at the global minimum {p['value'] * scale:.6g} +- {p['error'] * scale:.3g}{u} (HESSE)"
             )
+            if not chosen_is_global:
+                parts.append(f"quoted: the solution closest to the full combination ({fmt(prefer)}{u})")
             avg["comment"] = "; ".join(parts)
         averages.append(avg)
     corr = [[sig(sol["correlation"][a][b]) for b in order] for a in order]
@@ -685,7 +700,7 @@ def load_info(cwd, exe, comb):
     sys.exit(f"error: no plots/json/{exe}_*_inputs.json for combination {comb}")
 
 
-def sub_combinations(angle, cfg, refmap, inspire):
+def sub_combinations(angle, cfg, refmap, inspire, prefer=None):
     """Groups <group>_<sub> for the sub-combination scans of hflav_averages.py (see the module docstring)."""
     if len(cfg["headline"]) != 1:
         return [], []
@@ -726,6 +741,7 @@ def sub_combinations(angle, cfg, refmap, inspire):
             refmap,
             inspire,
             commands,
+            prefer=prefer,
         )
         # only the headline angle is kept (no other fit parameters, no correlations)
         group["averages"] = group["averages"][:1]
@@ -805,7 +821,9 @@ def process(angle, args, inspire):
     )
     groups = [group]
     if not args.no_subs:
-        subs, sub_unresolved = sub_combinations(angle, cfg, refmap, inspire)
+        # several solutions in a sub-combination: quote the one closest to the full combination
+        prefer = group["averages"][0]["average"]["value"]["central"] if one_d else None
+        subs, sub_unresolved = sub_combinations(angle, cfg, refmap, inspire, prefer)
         groups += subs
         unresolved += [u for u in sub_unresolved if u not in unresolved]
     doc = {"metadata": metadata(cfg, args, info), "groups": groups}
