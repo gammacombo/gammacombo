@@ -16,6 +16,7 @@
 class BatchScriptWriter;
 class Combiner;
 class FileNameBuilder;
+class MethodAbsScan;
 class MethodBergerBoosScan;
 class MethodCoverageScan;
 class MethodPluginScan;
@@ -101,6 +102,7 @@ class GammaComboEngine {
   void fixParameters(Combiner* c, int cId);
   TString getStartParFileName(int cId) const;
   bool isScanVarObservable(Combiner* c, TString scanVar) const;
+  void loadScanner(MethodAbsScan* scanner);
   void loadStartParameters(MethodProbScan* s, ParameterCache* pCache, int cId);
   void make1dPluginOnlyPlot(MethodPluginScan* sPlugin, int cId);
   void make1dPluginPlot(MethodPluginScan* sPlugin, MethodProbScan* sProb, int cId);
@@ -122,6 +124,7 @@ class GammaComboEngine {
   void scaleStatErrors();
   void scaleStatAndSystErrors();
   void scaleDownErrors();  // now defunct
+  void setFilenameBases(MethodAbsScan* scanner) const;
   void scan();
   void scanDataSet();
   void setAsimovObservables(Combiner* c);

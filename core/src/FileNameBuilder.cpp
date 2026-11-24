@@ -39,9 +39,10 @@ TString FileNameBuilder::getBaseName() const { return m_basename; }
 ///
 TString FileNameBuilder::getCombinerFileName(const Combiner* c) const { return m_basename + "_" + c->getName(); }
 
-TString FileNameBuilder::getCombinerFileName(const MethodAbsScan* s) const {
-  return getCombinerFileName(s->getCombiner());
-}
+///
+/// Same as above for a scanner, using its name: this also works for the datasets plugin scanner, which has no combiner.
+///
+TString FileNameBuilder::getCombinerFileName(const MethodAbsScan* s) const { return m_basename + "_" + s->getName(); }
 
 ///
 /// Compute the file base name of individual combinations.

@@ -148,6 +148,8 @@ class MethodAbsScan {
   inline void setTitle(TString s) { title = s; };
   /// Base name used for the CL interval files written by printCLintervals().
   inline void setCLFilenameBase(TString s) { clFilenameBase = s; };
+  /// Base name of the CL interval files: the one set by setCLFilenameBase(), else `name`.
+  inline TString getCLFilenameBase() const { return clFilenameBase.IsNull() ? name : clFilenameBase; };
   /// Base name of the toy directories and files.
   inline void setToyFilenameBase(TString s) { toyFilenameBase = s; };
   void setChi2minGlobal(double x);
@@ -183,7 +185,7 @@ class MethodAbsScan {
   void sortSolutions();
 
   TString name;                ///< basename, e.g. ggsz
-  TString clFilenameBase;      ///< Base name for CL interval files; defaults to `name`, see setCLFilenameBase()
+  TString clFilenameBase;      ///< Base name for CL interval files; empty means `name`, see getCLFilenameBase()
   TString toyFilenameBase;     ///< Base name for toy files; defaults to `name`, see setToyFilenameBase()
   TString title;               ///< nice string for the legends
   TString methodName = "Abs";  ///< Prob, ...
