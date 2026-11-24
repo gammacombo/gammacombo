@@ -93,3 +93,23 @@ test-tutorial:
       - tutorial/root
       - tutorial/workspace.root
     expire_in: 1 days
+
+# Template for jobs needing the gc_core Python package (and, through EXTRA_PIP_PACKAGES, e.g. the
+# Python package of a combiner module, such as "-e <module-dir>").
+.python_venv:
+  extends: .test
+  variables:
+    EXTRA_PIP_PACKAGES: ""
+  before_script:
+    - |
+      source scripts/setup-env-cvmfs.sh -c || exit 1
+      python -m venv --system-site-packages venvs/gc
+      source venvs/gc/bin/activate
+      python -m pip install --upgrade pip
+      python -m pip install -e . ${EXTRA_PIP_PACKAGES}
+
+test-python:
+  extends: .python_venv
+  stage: test
+  script:
+    - python -c "import gc_core.mpl_tools, gc_core.pyfitres, gc_core.utils; gc_core.utils.load_gc_core_lib()"

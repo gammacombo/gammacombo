@@ -29,5 +29,6 @@ COPY . /code
 RUN rm -rf /code/build
 
 RUN cmake -B build && cmake --build build -j$(nproc) && cmake --install build
+RUN python -m pip install -e .
 
 CMD ["/bin/bash"]

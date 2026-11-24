@@ -14,4 +14,7 @@ def load_gc_core_lib():
         raise RuntimeError(f'Platform "{platform}" not supported')
     repo_path = Path(__file__).resolve().parents[3]
     libpath = (repo_path / "build" / f"libGammaComboCore.{ext}").resolve()
-    ROOT.gSystem.Load(str(libpath))
+    if ROOT.gSystem.Load(str(libpath)) < 0:
+        raise RuntimeError(
+            f'Could not load "{libpath}" (was GammaCombo built in "build"?)'
+        )
