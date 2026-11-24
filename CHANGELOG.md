@@ -56,8 +56,9 @@ and this project adheres to
 * `Combiner::Clone` dropped the fixed parameters.
 * CL intervals of angles whose best fit is wrapped 2π outside the scan range (e.g. phiD just below 0).
 * LaTeX macro names with digits in `RooSlimFitResult::SaveLatex` (`x12`, `y12`).
-* Plugin scans with `--cls 1` used an empty `hCLs` (1-CL = 0 everywhere) for the CLs intervals and plot; they now
-  fall back to normalising `hCL` to its first bin.
+* Plugin scans with `--cls 1` used an empty `hCLs` (1-CL = 0 everywhere) for the CLs intervals and plot. The
+  intervals now fall back to normalising `hCL` to its first bin (none if its p value is 0); the plot leaves out the
+  CLs type 1 curve, with a warning.
 * Segfault when loading a scanner file without `hCLs` with `--cls 1`.
 * Python: `read_minimum` with parameters held constant; `read_gc_scan` crash on file close; `corr_plot` with
   read-only pandas >= 3.0 views.

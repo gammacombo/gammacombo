@@ -46,6 +46,7 @@
 #include <limits>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 MethodAbsScan::MethodAbsScan(Combiner* c) : MethodAbsScan(c->getArg()) {
@@ -457,10 +458,10 @@ bool MethodAbsScan::loadScanner(TString fName) {
   if (std::find(arg->cls.begin(), arg->cls.end(), 1) != arg->cls.end()) {
     obj = f->Get("hCLs");
     if (obj == 0) {
-      std::cout
-          << "MethodAbsScan::loadScanner() : WARNING : 'hCLs' not found in root file - you can ignore this if you're "
-             "not running in dataset mode "
-          << fName << std::endl;
+      std::cout << "MethodAbsScan::loadScanner() : WARNING : no 'hCLs' (CLs type 1) in " << fName
+                << ": Plugin scanners never store it, Prob scanners only when run with --cls. CLs type 1 falls back "
+                   "to normalising hCL to its first bin."
+                << std::endl;
       // drop the empty histogram from initScan(), so that CLs type 1 falls back to normalising hCL
       delete hCLs;
       hCLs = nullptr;
@@ -472,68 +473,26 @@ bool MethodAbsScan::loadScanner(TString fName) {
       hCLs->SetName("hCLs" + getUniqueRootName());
     }
   }
-  // load CLs histograms
+  // load CLs type 2 histograms
   bool lookForMixedCLs =
       std::find(arg->cls.begin(), arg->cls.end(), 2) != arg->cls.end() && !methodName.Contains("Prob");
   if (lookForMixedCLs) {
-    obj = f->Get("hCLsFreq");
-    if (obj == 0) {
-      std::cout
-          << "MethodAbsScan::loadScanner() : WARNING : 'hCLsFreq' not found in root file - you can ignore this if "
-             "you're not running in dataset mode "
-          << fName << std::endl;
-    } else if (scanVar2 == "") {
-      hCLsFreq = (TH1F*)obj;
-      hCLsFreq->SetName("hCLsFreq" + getUniqueRootName());
+    const std::vector<std::pair<TString, TH1F**>> clsHists = {{"hCLsFreq", &hCLsFreq},     {"hCLsExp", &hCLsExp},
+                                                              {"hCLsErr1Up", &hCLsErr1Up}, {"hCLsErr1Dn", &hCLsErr1Dn},
+                                                              {"hCLsErr2Up", &hCLsErr2Up}, {"hCLsErr2Dn", &hCLsErr2Dn}};
+    TString missing;
+    for (const auto& [hName, h] : clsHists) {
+      obj = f->Get(hName);
+      if (obj == 0) {
+        missing += " '" + hName + "'";
+      } else if (scanVar2 == "") {
+        *h = (TH1F*)obj;
+        (*h)->SetName(hName + getUniqueRootName());
+      }
     }
-    obj = f->Get("hCLsExp");
-    if (obj == 0) {
-      std::cout << "MethodAbsScan::loadScanner() : WARNING : 'hCLsExp' not found in root file - you can ignore this if "
-                   "you're not running in dataset mode "
-                << fName << std::endl;
-    } else if (scanVar2 == "") {
-      hCLsExp = (TH1F*)obj;
-      hCLsExp->SetName("hCLsExp" + getUniqueRootName());
-    }
-    obj = f->Get("hCLsErr1Up");
-    if (obj == 0) {
-      std::cout
-          << "MethodAbsScan::loadScanner() : WARNING : 'hCLsErr1Up' not found in root file - you can ignore this if "
-             "you're not running in dataset mode "
-          << fName << std::endl;
-    } else if (scanVar2 == "") {
-      hCLsErr1Up = (TH1F*)obj;
-      hCLsErr1Up->SetName("hCLsErr1Up" + getUniqueRootName());
-    }
-    obj = f->Get("hCLsErr1Dn");
-    if (obj == 0) {
-      std::cout
-          << "MethodAbsScan::loadScanner() : WARNING : 'hCLsErr1Dn' not found in root file - you can ignore this if "
-             "you're not running in dataset mode "
-          << fName << std::endl;
-    } else if (scanVar2 == "") {
-      hCLsErr1Dn = (TH1F*)obj;
-      hCLsErr1Dn->SetName("hCLsErr1Dn" + getUniqueRootName());
-    }
-    obj = f->Get("hCLsErr2Up");
-    if (obj == 0) {
-      std::cout
-          << "MethodAbsScan::loadScanner() : WARNING : 'hCLsErr2Up' not found in root file - you can ignore this if "
-             "you're not running in dataset mode "
-          << fName << std::endl;
-    } else if (scanVar2 == "") {
-      hCLsErr2Up = (TH1F*)obj;
-      hCLsErr2Up->SetName("hCLsErr2Up" + getUniqueRootName());
-    }
-    obj = f->Get("hCLsErr2Dn");
-    if (obj == 0) {
-      std::cout
-          << "MethodAbsScan::loadScanner() : WARNING : 'hCLsErr2Dn' not found in root file - you can ignore this if "
-             "you're not running in dataset mode "
-          << fName << std::endl;
-    } else if (scanVar2 == "") {
-      hCLsErr2Dn = (TH1F*)obj;
-      hCLsErr2Dn->SetName("hCLsErr2Dn" + getUniqueRootName());
+    if (!missing.IsNull()) {
+      std::cout << "MethodAbsScan::loadScanner() : WARNING : no" << missing << " (CLs type 2) in " << fName
+                << ": the Plugin scan was run without --cls. Rerun it with --cls to get CLs type 2." << std::endl;
     }
   }
   // load solutions: try the first one hundred
@@ -786,6 +745,17 @@ void MethodAbsScan::calcCLintervals(int CLsType, bool calc_expected, bool quiet)
   }
 
   if (CLsType != 0) { std::cout << "Confidence Intervals for CLs method " << CLsType << ":" << std::endl; }
+
+  // Without the CLs histogram (e.g. CLs type 1 for Plugin scans), the code below would compute the plain 1-CL
+  // intervals from hCL. Use the simple method instead, which normalises hCL to its first bin.
+  if ((CLsType == 1 && !getHCLs()) || (CLsType == 2 && !getHCLsFreq())) {
+    std::cout << "MethodAbsScan::calcCLintervals() : No CLs type " << CLsType << " histogram. "
+              << "Using simple method with linear splines." << std::endl;
+    calcCLintervalsSimple(CLsType, calc_expected);
+    if (!quiet && !clintervals1sigma.empty()) printCLintervals(CLsType, calc_expected);
+    return;
+  }
+
   if (arg->isQuickhack(8)) {
     // \todo Switch to the new CLIntervalMaker mechanism. It can be activated
     // already using --qh 8, but it really is in beta stage still
@@ -817,9 +787,6 @@ void MethodAbsScan::calcCLintervals(int CLsType, bool calc_expected, bool quiet)
               << "Using simple method with  linear splines." << std::endl;
     this->calcCLintervalsSimple(CLsType, calc_expected);
     return;
-  } else if ((CLsType == 1 || CLsType == 2) && !this->getHCLs()) {
-    std::cout << "Using simple method with  linear splines." << std::endl;
-    this->calcCLintervalsSimple(CLsType, calc_expected);
   }
 
   if (arg->debug) std::cout << "MethodAbsScan::calcCLintervals() : ";
@@ -1580,8 +1547,12 @@ void MethodAbsScan::setYscanRange(double min, double max) {
 void MethodAbsScan::calcCLintervalsSimple(int CLsType, bool calc_expected) {
   clintervals1sigma.clear();
   clintervals2sigma.clear();
+  clintervals3sigma.clear();
   clintervalsuser.clear();
   // double levels[3] = {0.6827, 0.9545, CLuser};
+
+  // best-fit value as central value, as in calcCLintervals(); -1 if there are no solutions
+  const double central = solutions.empty() ? -1. : getScanVar1Solution(0);
 
   TH1F* histogramCL = this->hCL;
   if (this->hCLs && CLsType == 1) {
@@ -1597,7 +1568,7 @@ void MethodAbsScan::calcCLintervalsSimple(int CLsType, bool calc_expected) {
       cli.pvalue = 1. - ConfidenceLevels[c];
       cli.min = borders.first;
       cli.max = borders.second;
-      cli.central = -1;
+      cli.central = central;
       if (c == 0) clintervals1sigma.push_back(cli);
       if (c == 1) clintervals2sigma.push_back(cli);
       if (c == 2) clintervalsuser.push_back(cli);
@@ -1627,7 +1598,14 @@ void MethodAbsScan::calcCLintervalsSimple(int CLsType, bool calc_expected) {
               << std::endl;
     clintervals1sigma.clear();
     clintervals2sigma.clear();
+    clintervals3sigma.clear();
     clintervalsuser.clear();
+
+    if (!(histogramCL->GetBinContent(1) > 0.)) {
+      std::cout << "MethodAbsScan::calcCLintervalsSimple() : ERROR : the p value of the first bin is "
+                << histogramCL->GetBinContent(1) << ", cannot normalise to it. No CL_s intervals." << std::endl;
+      return;
+    }
 
     for (int c = 0; c < 3; c++) {
       const std::pair<double, double> borders_CLs = getBorders_CLs(TGraph(histogramCL), ConfidenceLevels[c]);
@@ -1635,7 +1613,7 @@ void MethodAbsScan::calcCLintervalsSimple(int CLsType, bool calc_expected) {
       cli.pvalue = 1. - ConfidenceLevels[c];
       cli.min = borders_CLs.first;
       cli.max = borders_CLs.second;
-      cli.central = -1;
+      cli.central = central;
       if (c == 0) clintervals1sigma.push_back(cli);
       if (c == 1) clintervals2sigma.push_back(cli);
       if (c == 2) clintervalsuser.push_back(cli);
