@@ -31,7 +31,6 @@ scripts/*_rdict.pcm
 scripts/__pycache__
 plots/*
 zenodo/*
-**/gc_core.egg-info
 
 # backup files
 *~
@@ -67,6 +66,9 @@ DoxyWarnings.log
 *.launch.py
 *.launch.opts
 *_cache
+
+# Python packaging
+*.egg-info/
 
 # QMTest byproducts
 **/tests/qmtest/*.*

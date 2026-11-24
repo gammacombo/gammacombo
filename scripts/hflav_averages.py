@@ -756,7 +756,7 @@ def cmd_plots(args):
         import hflav_plots
     except ImportError as exc:
         sys.exit(
-            f"error: cannot import the plotting code ({exc}); activate the gc_2026 env (PyROOT, matplotlib)"
+            f"error: cannot import the plotting code ({exc}); activate the gc_2026 env (PyROOT, matplotlib) and install gc_core (pip install -e .)"
         )
     scans = {s["name"]: s for s in SCANS}
     outdir = Path("paper_plots") / "HFLAV" / f"{args.version}{args.year}"

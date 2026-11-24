@@ -3,10 +3,14 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python>=3.9
+  - python>=3.10
   - numpy
   - scipy
   - matplotlib
+  - pandas
+  - tabulate
+  - uncertainties
+  - jinja2
   - root>=6.38
   - cmake>=3.30
   - boost

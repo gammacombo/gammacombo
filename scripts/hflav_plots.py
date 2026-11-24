@@ -12,23 +12,21 @@ The logo comes from logo.py of the HFLAV shared-material repository
 
 import importlib.util
 import os
-import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.patches import Arc
-from scipy.stats import chi2
-
-HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE))
-from gc_mpl_tools import (  # noqa: E402
+from gc_core.mpl_tools import (
     hflav_cols,
     plot1d,
     plot2d,
     print_interval,
     read_gc_scan,
 )
+from matplotlib.patches import Arc
+from scipy.stats import chi2
+
+HERE = Path(__file__).resolve().parent
 
 plt.style.use(str(HERE / "gc.mplstyle"))
 
