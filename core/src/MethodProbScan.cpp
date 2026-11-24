@@ -274,7 +274,7 @@ int MethodProbScan::scan1d(bool fast, bool reverse, bool quiet) {
       double deltaChi2Bkg = TMath::Max(chi2minScan - hChi2min->GetBinContent(1), 0.0);
       if (i == 0) deltaChi2Bkg = 0.0;
       double oneMinusCLBkg = TMath::Prob(deltaChi2Bkg, 1);
-      hCLs->SetBinContent(hCLs->FindBin(scanvalue), oneMinusCLBkg);
+      if (hCLs) hCLs->SetBinContent(hCLs->FindBin(scanvalue), oneMinusCLBkg);
 
       if (i == 0) chi2minBkg = chi2minScan;
 
@@ -308,6 +308,17 @@ int MethodProbScan::scan1d(bool fast, bool reverse, bool quiet) {
       pvalueProb = pvalueCorrector->transform(pvalueProb);
       hCL->SetBinContent(k, pvalueProb);
     }
+  }
+
+  // hCLs only becomes CLs in computeCLvalues() with --cls: drop it otherwise, so that saveScanner() does not write it
+  if (arg->cls.empty()) {
+    delete hCLs;
+    hCLs = nullptr;
+  }
+  // CLs type 2 does not exist for Prob scans: drop its empty histograms from initScan()
+  for (TH1F** h : {&hCLsFreq, &hCLsExp, &hCLsErr1Up, &hCLsErr1Dn, &hCLsErr2Up, &hCLsErr2Dn}) {
+    delete *h;
+    *h = nullptr;
   }
 
   Utils::setParameters(w, parsName, startPars->get(0));
@@ -359,7 +370,7 @@ int MethodProbScan::computeCLvalues() {
       // is drawn as p=1
       CLb = 1. - normal_cdf(TMath::Sqrt(teststat_measured) - ((scanvalue - 0.) / bestfitpointerr));
     }
-    if (arg->cls.size() > 0) hCLs->SetBinContent(k, std::min(1., hCL->GetBinContent(k) / CLb));
+    if (arg->cls.size() > 0 && hCLs) hCLs->SetBinContent(k, std::min(1., hCL->GetBinContent(k) / CLb));
     // std::cout << "MethodProbScan::" << k << "\t" << hCL->GetBinContent(k) << "\t" << CLb << "\t" <<
     // hCLs->GetBinContent(k) <<std::endl;
   }

@@ -103,6 +103,14 @@ GammaComboEngine::~GammaComboEngine() {
 }
 
 ///
+/// Set the command line that the batch jobs rerun, if it differs from the one passed to the constructor.
+///
+void GammaComboEngine::setBatchArgs(int argc, char* argv[]) {
+  delete m_batchscriptwriter;
+  m_batchscriptwriter = new BatchScriptWriter(argc, argv);
+}
+
+///
 /// Check if a PDF with a certain ID exits.
 ///
 bool GammaComboEngine::pdfExists(const int id) const {
@@ -1138,12 +1146,31 @@ void GammaComboEngine::scanStrategy2d(MethodProbScan* scanner, ParameterCache* p
 }
 
 ///
+/// Set the base names of the CL interval and toy files of a scanner, so that they carry the engine name.
+/// Datasets scanners write their toys under their own names, so only the CL interval name matters for them.
+///
+void GammaComboEngine::setFilenameBases(MethodAbsScan* scanner) const {
+  const TString base = m_fnamebuilder->getCombinerFileName(scanner);
+  scanner->setCLFilenameBase(base);
+  scanner->setToyFilenameBase(base);
+}
+
+///
+/// Load a scanner from its file, setting the same file base names as for a freshly run one.
+///
+void GammaComboEngine::loadScanner(MethodAbsScan* scanner) {
+  scanner->loadScanner(m_fnamebuilder->getFileNameScanner(scanner));
+  setFilenameBases(scanner);
+}
+
+///
 /// Perform the prob scan.
 ///
 /// \param scanner - the scanner to run the scan with
 /// \param cId - the id of this combination on the command line
 ///
 void GammaComboEngine::make1dProbScan(MethodProbScan* scanner, int cId) {
+  setFilenameBases(scanner);
   // load start parameters
   ParameterCache* pCache = new ParameterCache(arg);
   loadStartParameters(scanner, pCache, cId);
@@ -1182,6 +1209,7 @@ void GammaComboEngine::make1dProbScan(MethodProbScan* scanner, int cId) {
 /// \param cId - the id of this combination on the command line
 ///
 void GammaComboEngine::make1dPluginScan(MethodPluginScan* scannerPlugin, int cId) {
+  setFilenameBases(scannerPlugin);
   scannerPlugin->initScan();
   if (arg->isAction("pluginbatch")) {
     scannerPlugin->scan1d(arg->nrun);
@@ -1204,6 +1232,7 @@ void GammaComboEngine::make1dPluginScan(MethodPluginScan* scannerPlugin, int cId
 /// \param cId - the id of this combination on the command line
 ///
 void GammaComboEngine::make2dPluginScan(MethodPluginScan* scannerPlugin, int cId) {
+  setFilenameBases(scannerPlugin);
   scannerPlugin->initScan();
   if (arg->isAction("pluginbatch")) {
     scannerPlugin->scan2d(arg->nrun);
@@ -1228,6 +1257,7 @@ void GammaComboEngine::make2dPluginScan(MethodPluginScan* scannerPlugin, int cId
 /// \param cId - the id of this combination on the command line
 ///
 void GammaComboEngine::make1dBergerBoosScan(MethodBergerBoosScan* scannerBergerBoos, int cId) {
+  setFilenameBases(scannerBergerBoos);
   scannerBergerBoos->initScan();
   scannerBergerBoos->setNBergerBoosPointsPerScanpoint(arg->nBBpoints);
   if (arg->isAction("bbbatch")) {
@@ -1258,6 +1288,7 @@ void GammaComboEngine::make1dCoverageScan(MethodCoverageScan* scanner, int cId) 
   pCache->loadPoints(arg->loadParamsFile[cId]);
 
   // do scan
+  setFilenameBases(scanner);
   scanner->initScan();
   scanner->setParameterCache(pCache);  // this can be passed directly to scan
   if (arg->isAction("coveragebatch")) {
@@ -1472,6 +1503,14 @@ void GammaComboEngine::make2dProbScan(MethodProbScan* scanner, int cId) {
   // load start parameters
   ParameterCache* pCache = new ParameterCache(arg);
   loadStartParameters(scanner, pCache, cId);
+  // check --save-pars-2d before the scan, not after it
+  for (const auto& par : arg->savepars2d) {
+    if (!scanner->getWorkspace()->var(par)) {
+      std::cout << "GammaComboEngine::make2dProbScan() : ERROR : --save-pars-2d: no such parameter: " << par
+                << std::endl;
+      std::exit(1);
+    }
+  }
   // scan
   scanner->initScan();
   scanStrategy2d(scanner, pCache);
@@ -1775,7 +1814,7 @@ void GammaComboEngine::writebatchscripts() {
   if (runOnDataSet) {
     m_batchscriptwriter->writeScripts_datasets(arg, getPdf(0));
   } else {
-    m_batchscriptwriter->writeScripts(arg, &cmb);
+    m_batchscriptwriter->writeScripts(arg, &cmb, m_fnamebuilder);
   }
   std::exit(0);
 }
@@ -2094,7 +2133,7 @@ void GammaComboEngine::scan() {
       // 1D SCANS
       if (arg->var.size() == 1) {
         if (arg->isAction("plot")) {
-          scannerProb->loadScanner(m_fnamebuilder->getFileNameScanner(scannerProb));
+          loadScanner(scannerProb);
         } else {
           make1dProbScan(scannerProb, i);
         }
@@ -2105,7 +2144,7 @@ void GammaComboEngine::scan() {
       else if (arg->var.size() == 2) {
         if (arg->isAction("plot")) {
           if (arg->debug) debug("Loading scanner for 2D plot");
-          scannerProb->loadScanner(m_fnamebuilder->getFileNameScanner(scannerProb));
+          loadScanner(scannerProb);
         } else {
           if (arg->debug) debug("Running 2D prob scan");
           make2dProbScan(scannerProb, i);
@@ -2149,7 +2188,7 @@ void GammaComboEngine::scan() {
           MethodProbScan* scannerProb = new MethodProbScan(c);
           if (!arg->plotpluginonly || (arg->plotpluginonly && !arg->isAction("plot"))) {
             if (Utils::FileExists(m_fnamebuilder->getFileNameScanner(scannerProb))) {
-              scannerProb->loadScanner(m_fnamebuilder->getFileNameScanner(scannerProb));
+              loadScanner(scannerProb);
             } else {
               std::cout << "\nWARNING : Couldn't load the Prob scanner, will rerun the Prob" << std::endl;
               std::cout << "          scan now. You should have run the Prob scan locally" << std::endl;
@@ -2162,7 +2201,7 @@ void GammaComboEngine::scan() {
           // create Plugin scanner
           MethodPluginScan* scannerPlugin = new MethodPluginScan(scannerProb);
           if (arg->isAction("plot")) {
-            scannerPlugin->loadScanner(m_fnamebuilder->getFileNameScanner(scannerPlugin));
+            loadScanner(scannerPlugin);
           } else {
             if (arg->coverageCorrectionID > 0) {
               PValueCorrection* pvalueCorrector = new PValueCorrection(arg->coverageCorrectionID, arg->verbose);
@@ -2192,11 +2231,11 @@ void GammaComboEngine::scan() {
           MethodProbScan* scannerProb = new MethodProbScan(c);
           if (!(arg->isAction("plot") && arg->plotpluginonly)) {
             // we don't need the prob scanner if we just want to replot the plugin only
-            scannerProb->loadScanner(m_fnamebuilder->getFileNameScanner(scannerProb));
+            loadScanner(scannerProb);
           }
           MethodPluginScan* scannerPlugin = new MethodPluginScan(scannerProb);
           if (arg->isAction("plot")) {
-            scannerPlugin->loadScanner(m_fnamebuilder->getFileNameScanner(scannerPlugin));
+            loadScanner(scannerPlugin);
           } else {
             make2dPluginScan(scannerPlugin, i);
           }
@@ -2226,7 +2265,7 @@ void GammaComboEngine::scan() {
       } else if (arg->isAction("coverage")) {
         if (arg->isAction("plot")) {
           if (Utils::FileExists(m_fnamebuilder->getFileNameScanner(coverageScan))) {
-            coverageScan->loadScanner(m_fnamebuilder->getFileNameScanner(coverageScan));
+            loadScanner(coverageScan);
           } else {
             std::cout << "\nERROR : Couldn't load the coverage scanner: "
                       << m_fnamebuilder->getFileNameScanner(coverageScan) << std::endl;
@@ -2273,7 +2312,7 @@ void GammaComboEngine::scanDataSet() {
     // 1D SCANS
     if (arg->var.size() == 1) {
       if (arg->isAction("plot")) {
-        probScanner->loadScanner(m_fnamebuilder->getFileNameScanner(probScanner));
+        loadScanner(probScanner);
       } else {
         make1dProbScan(probScanner, 0);
       }
@@ -2282,7 +2321,7 @@ void GammaComboEngine::scanDataSet() {
     // 2D SCANS
     else if (arg->var.size() == 2) {
       if (arg->isAction("plot")) {
-        probScanner->loadScanner(m_fnamebuilder->getFileNameScanner(probScanner));
+        loadScanner(probScanner);
       } else {
         make2dProbScan(probScanner, 0);
       }
@@ -2303,7 +2342,7 @@ void GammaComboEngine::scanDataSet() {
         MethodDatasetsProbScan* scannerProb = new MethodDatasetsProbScan((PDF_Datasets*)pdf[0], arg);
         if (Utils::FileExists(m_fnamebuilder->getFileNameScanner(scannerProb))) {
           scannerProb->initScan();
-          scannerProb->loadScanner(m_fnamebuilder->getFileNameScanner(scannerProb));
+          loadScanner(scannerProb);
         } else {
           std::cout << "\nWARNING : Couldn't load the Prob scanner, will rerun the Prob" << std::endl;
           std::cout << "          scan now. You should have run the Prob scan locally" << std::endl;
@@ -2319,7 +2358,7 @@ void GammaComboEngine::scanDataSet() {
         if (!arg->plotpluginonly || (arg->plotpluginonly && !arg->isAction("plot"))) {
           if (Utils::FileExists(m_fnamebuilder->getFileNameScanner(scannerProb))) {
             scannerProb->initScan();
-            scannerProb->loadScanner(m_fnamebuilder->getFileNameScanner(scannerProb));
+            loadScanner(scannerProb);
           } else {
             std::cout << "\nWARNING : Couldn't load the Prob scanner, will rerun the Prob" << std::endl;
             std::cout << "          scan now. You should have run the Prob scan locally" << std::endl;
@@ -2332,7 +2371,7 @@ void GammaComboEngine::scanDataSet() {
         // create Plugin scanner
         MethodDatasetsPluginScan* scannerPlugin = new MethodDatasetsPluginScan(scannerProb, (PDF_Datasets*)pdf[0], arg);
         if (arg->isAction("plot")) {
-          scannerPlugin->loadScanner(m_fnamebuilder->getFileNameScanner(scannerPlugin));
+          loadScanner(scannerPlugin);
         } else {
           make1dPluginScan(scannerPlugin, 0);
         }

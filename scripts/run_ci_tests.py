@@ -176,6 +176,28 @@ def check_comb_plugin_plot():
     return True
 
 
+def check_cart_2d_save_pars():
+    import math
+
+    import ROOT
+
+    cmd = "bin/cartesian -c 1 --var g --var d_dk --npoints2dx 20 --npoints2dy 20 --ps 1 --save-pars-2d r_dk"
+    outn = "cart_2d_save_pars"
+    os.system("%s > ci_logs/%s.log 2>&1" % (cmd, outn))
+    f = ROOT.TFile.Open("plots/scanner/cartesian_scanner_cartesian1_g_d_dk.root")
+    h, hchi2 = f.Get("hPar_r_dk"), f.Get("hChi2min")
+    assert h and hchi2
+    assert (h.GetNbinsX(), h.GetNbinsY()) == (hchi2.GetNbinsX(), hchi2.GetNbinsY())
+    vals = [h.GetBinContent(i, j) for i in range(1, 21) for j in range(1, 21)]
+    assert all(math.isfinite(v) for v in vals)
+    # the r -> -r, d -> d+pi mirror: some grid points profile to r_dk < 0
+    assert any(v < 0 for v in vals) and any(v > 0 for v in vals)
+    f.Close()
+    copy_plot("cartesian_cartesian1_g_d_dk", outn)
+    write_html_entry(cmd, outn)
+    return True
+
+
 def check_dsets_build_workspace():
     os.system(
         "bin/tutorial_dataset_build_workspace > ci_logs/dsets_build_workspace.log 2>&1"
@@ -268,6 +290,7 @@ checks = [
     check_comb_plugin_gen,
     check_comb_plugin_run,
     check_comb_plugin_plot,
+    check_cart_2d_save_pars,
     check_dsets_build_workspace,
     check_dsets_prob_run,
     check_dsets_prob_plot,

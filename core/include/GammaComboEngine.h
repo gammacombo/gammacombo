@@ -16,6 +16,7 @@
 class BatchScriptWriter;
 class Combiner;
 class FileNameBuilder;
+class MethodAbsScan;
 class MethodBergerBoosScan;
 class MethodCoverageScan;
 class MethodPluginScan;
@@ -83,6 +84,8 @@ class GammaComboEngine {
   void scanStrategy1d(MethodProbScan* scanner, ParameterCache* pCache);
   void scanStrategy2d(MethodProbScan* scanner, ParameterCache* pCache);
   inline void setRunOnDataSet(bool opt) { runOnDataSet = opt; };
+  /// Command line for the batch jobs, e.g. the full argv when the executable strips its own options.
+  void setBatchArgs(int argc, char* argv[]);
   PDF_Abs* operator[](int idx);
 
  private:
@@ -99,6 +102,7 @@ class GammaComboEngine {
   void fixParameters(Combiner* c, int cId);
   TString getStartParFileName(int cId) const;
   bool isScanVarObservable(Combiner* c, TString scanVar) const;
+  void loadScanner(MethodAbsScan* scanner);
   void loadStartParameters(MethodProbScan* s, ParameterCache* pCache, int cId);
   void make1dPluginOnlyPlot(MethodPluginScan* sPlugin, int cId);
   void make1dPluginPlot(MethodPluginScan* sPlugin, MethodProbScan* sProb, int cId);
@@ -120,6 +124,7 @@ class GammaComboEngine {
   void scaleStatErrors();
   void scaleStatAndSystErrors();
   void scaleDownErrors();  // now defunct
+  void setFilenameBases(MethodAbsScan* scanner) const;
   void scan();
   void scanDataSet();
   void setAsimovObservables(Combiner* c);

@@ -43,11 +43,10 @@ void OneMinusClPlotAbs::addScanner(MethodAbsScan* s, int CLsType) {
   if (CLsType == 0 || (CLsType == 1 && s->getHCLs()) || (CLsType == 2 && s->getHCLsFreq())) {
     scanners.push_back(s);
     do_CLs.push_back(CLsType);
+  } else {
+    std::cout << "OneMinusClPlotAbs::addScanner() : WARNING : no CLs type " << CLsType << " histogram for "
+              << s->getName() << " (" << s->getMethodName() << "), not plotting its CLs curve." << std::endl;
   }
-  // else if ((CLsType==1 && !s->getHCLs()) || (CLsType==2 && !s->getHCLsFreq()))
-  // {
-  //  std::cout << "No CLs histogram was determined. Will not plot." << std::endl;
-  // }
 }
 
 ///

@@ -1,0 +1,72 @@
+{
+  "title": "gammacombo/gammacombo: LHCb-PAPER-2026-058",
+  "upload_type": "software",
+  "version": "lhcb-paper-2026-058",
+  "description": "<p>Release of the GammaCombo code used for LHCb-PAPER-2026-058, \"Progress in measurements of the CKM angle gamma and charm mixing at LHCb\". The LHCb-specific inputs are in a separate private sub-package (gitlab.cern.ch/gammacombo/gammacombo), which is not included here. The D→Kπππ inputs enter as a Gaussian constraint derived from a standalone pre-combination of LHCb, BESIII and CLEO results, performed with the k3pi-combiner package (https://gitlab.cern.ch/lhcb-b2oc/CommonAnalysisTools/k3pi-combiner, LHCb-internal).</p>",
+  "license": "GPL-3.0-or-later",
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/gammacombo/gammacombo/tree/lhcb-paper-2026-058",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    }
+  ],
+  "creators": [
+    {
+      "name": "Butter, Jordy Sebastiaan",
+      "affiliation": "CERN",
+      "orcid": "0000-0002-1816-536X"
+    },
+    {
+      "name": "Evans, Timothy David",
+      "affiliation": "Nikhef",
+      "orcid": "0000-0003-3016-1879"
+    },
+    {
+      "name": "Gilman, Alexander Leon",
+      "affiliation": "University of Cincinnati; University of Oxford",
+      "orcid": "0000-0001-5934-7541"
+    },
+    {
+      "name": "Kenzie, Matthew William",
+      "affiliation": "University of Cambridge",
+      "orcid": "0000-0001-7910-4109"
+    },
+    {
+      "name": "Pajero, Tommaso",
+      "affiliation": "CERN",
+      "orcid": "0000-0001-9630-2000"
+    },
+    {
+      "name": "Whitehead, Mark Peter",
+      "affiliation": "University of Glasgow",
+      "orcid": "0000-0002-2142-3673"
+    },
+    {
+      "name": "Karbach, Till Moritz"
+    },
+    {
+      "name": "Mombächer, Titus",
+      "affiliation": "Universidade da Coruña",
+      "orcid": "0000-0002-5612-979X"
+    },
+    {
+      "name": "Podolsky, Pasha"
+    },
+    {
+      "name": "Schiller, Manuel Tobias",
+      "affiliation": "Heidelberg University",
+      "orcid": "0000-0001-8750-863X"
+    },
+    {
+      "name": "Schlupp, Maximilian"
+    },
+    {
+      "name": "Schubert, Konstantin"
+    },
+    {
+      "name": "Tully, Alison Maria",
+      "orcid": "0000-0002-8712-9055"
+    }
+  ]
+}

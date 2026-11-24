@@ -31,6 +31,20 @@ FileNameBuilder::FileNameBuilder(const OptParser* arg, TString name) : m_basenam
 TString FileNameBuilder::getBaseName() const { return m_basename; }
 
 ///
+/// Compute the base name identifying a combination performed in a given GammaComboEngine setting, without any scan
+/// variable.
+///
+/// @param c Combiner object
+/// @return  Filename, in the format `<GammaComboEngine-instance-name>_<combiner-name>`
+///
+TString FileNameBuilder::getCombinerFileName(const Combiner* c) const { return m_basename + "_" + c->getName(); }
+
+///
+/// Same as above for a scanner, using its name: this also works for the datasets plugin scanner, which has no combiner.
+///
+TString FileNameBuilder::getCombinerFileName(const MethodAbsScan* s) const { return m_basename + "_" + s->getName(); }
+
+///
 /// Compute the file base name of individual combinations.
 /// Format of returned filename:
 ///

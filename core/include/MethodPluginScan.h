@@ -62,6 +62,7 @@ class MethodPluginScan : public MethodAbsScan {
 
  private:
   void constructorHelper(MethodProbScan* s);
+  void hintLegacyToyFiles(const TString& fileNameBase, int runMin, int runMax) const;
 };
 
 #endif
