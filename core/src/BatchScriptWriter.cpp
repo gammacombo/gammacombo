@@ -11,6 +11,17 @@
 #include <unistd.h>
 #include <vector>
 
+namespace {
+  /// Quote an argument for the shell if needed.
+  std::string shellQuote(const std::string& s) {
+    const std::string safe = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_@%+=:,./-";
+    if (!s.empty() && s.find_first_not_of(safe) == std::string::npos) return s;
+    std::string quoted = "'";
+    for (const char ch : s) quoted += ch == '\'' ? std::string("'\\''") : std::string(1, ch);
+    return quoted + "'";
+  }
+}  // namespace
+
 BatchScriptWriter::BatchScriptWriter(int argc, char* argv[]) {
   for (int i = 0; i < argc; i++) {
     // skip arguments we dont need
@@ -21,7 +32,7 @@ BatchScriptWriter::BatchScriptWriter(int argc, char* argv[]) {
         std::string(argv[i]) == std::string("--batcheos") || std::string(argv[i]) == std::string("-i")) {
       continue;
     }
-    exec += std::string(argv[i]) + " ";
+    exec += shellQuote(argv[i]) + " ";
   }
   subpkg = std::string(argv[0]);
 }
@@ -218,8 +229,10 @@ void BatchScriptWriter::writeCondorScript(TString fname, const OptParser* arg) {
 
 void BatchScriptWriter::writeScript(TString fname, TString outfloc, int jobn, const OptParser* arg) {
 
+  // sub/<dir>/<name>.sh -> root/<dir>/<name>.root
   TString rootfilename = fname;
-  (rootfilename.ReplaceAll("sub", "root")).ReplaceAll(".sh", ".root");
+  rootfilename.Replace(0, 3, "root");
+  rootfilename.Replace(rootfilename.Length() - 3, 3, ".root");
   std::cout << "\t" << fname << std::endl;
   std::ofstream outfile;
   outfile.open(fname);

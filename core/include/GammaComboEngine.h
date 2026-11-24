@@ -73,7 +73,9 @@ class GammaComboEngine {
   }
 
   Combiner* getCombiner(int id);
+  std::vector<int> getCombinersIds() const;
   PDF_Abs* getPdf(int id);
+  std::vector<PDF_Abs*> getPdfs();
   inline OptParser* getArg() const { return arg; };
   void print() const;
   void printPdfs() const;
@@ -83,6 +85,8 @@ class GammaComboEngine {
   void scanStrategy1d(MethodProbScan* scanner, ParameterCache* pCache);
   void scanStrategy2d(MethodProbScan* scanner, ParameterCache* pCache);
   inline void setRunOnDataSet(bool opt) { runOnDataSet = opt; };
+  /// Command line for the batch jobs, e.g. the full argv when the executable strips its own options.
+  void setBatchArgs(int argc, char* argv[]);
   PDF_Abs* operator[](int idx);
 
  private:

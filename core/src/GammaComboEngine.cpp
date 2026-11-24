@@ -43,12 +43,14 @@
 #include <TString.h>
 #include <TTree.h>
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
 #include <format>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <memory>
 #include <string.h>
@@ -107,6 +109,14 @@ GammaComboEngine::GammaComboEngine(TString name, int argc, char* argv[], bool _r
 GammaComboEngine::~GammaComboEngine() {
   delete m_fnamebuilder;
   delete m_batchscriptwriter;
+}
+
+///
+/// Set the command line that the batch jobs rerun, if it differs from the one passed to the constructor.
+///
+void GammaComboEngine::setBatchArgs(int argc, char* argv[]) {
+  delete m_batchscriptwriter;
+  m_batchscriptwriter = new BatchScriptWriter(argc, argv);
 }
 
 ///
@@ -344,6 +354,17 @@ Combiner* GammaComboEngine::getCombiner(int id) {
 }
 
 ///
+/// Get the IDs of all the combiners defined.
+///
+std::vector<int> GammaComboEngine::getCombinersIds() const {
+  std::vector<int> ids;
+  for (int id = 0; id < cmb.size(); ++id) {
+    if (combinerExists(id)) ids.push_back(id);
+  }
+  return ids;
+}
+
+///
 /// Get a PDF.
 /// \param id - PDF ID, set when adding the PDF using addPdf()
 ///
@@ -354,6 +375,15 @@ PDF_Abs* GammaComboEngine::getPdf(int id) {
     std::exit(1);
   }
   return pdf[id];
+}
+
+///
+/// Get all the PDFs added.
+///
+std::vector<PDF_Abs*> GammaComboEngine::getPdfs() {
+  std::vector<PDF_Abs*> rt;
+  std::ranges::copy_if(pdf, std::back_inserter(rt), [](PDF_Abs* p) { return p; });
+  return rt;
 }
 
 PDF_Abs* GammaComboEngine::operator[](int idx) { return getPdf(idx); }
